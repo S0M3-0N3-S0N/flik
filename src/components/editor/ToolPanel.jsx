@@ -12,22 +12,7 @@ import {
   Layers,
   Focus,
   Contrast,
-  Droplets,
-  Trash2,
-  CloudRain,
-  Smile,
-  Grid3x3,
-  Zap,
-  CircleDot,
-  Scan,
-  Blend,
-  Mountain,
-  User,
-  Sparkle,
-  Film,
-  Eye,
-  Copy,
-  Scissors
+  Droplets
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -89,118 +74,6 @@ const tools = [
     description: "Enhance dynamic range",
     prompt: "Apply HDR effect to this image, enhance dynamic range, bring out details in shadows and highlights, make it more vivid"
   },
-  { 
-    id: "remove_object", 
-    icon: Trash2, 
-    label: "Remove Object", 
-    description: "Remove unwanted objects",
-    prompt: "Remove unwanted objects and people from this image, clean up the scene, fill in the areas naturally"
-  },
-  { 
-    id: "sky_replace", 
-    icon: CloudRain, 
-    label: "Replace Sky", 
-    description: "Change sky to dramatic sunset",
-    prompt: "Replace the sky in this image with a dramatic sunset sky, golden hour colors, clouds, maintain natural lighting on the scene"
-  },
-  { 
-    id: "face_enhance", 
-    icon: Smile, 
-    label: "Face Enhance", 
-    description: "Perfect skin & features",
-    prompt: "Enhance facial features, perfect skin texture, remove blemishes, natural beauty enhancement, professional portrait quality"
-  },
-  { 
-    id: "denoise", 
-    icon: Grid3x3, 
-    label: "Denoise", 
-    description: "Remove grain & noise",
-    prompt: "Remove all noise and grain from this image, clean it up, make it crystal clear while preserving detail"
-  },
-  { 
-    id: "sharpen", 
-    icon: Zap, 
-    label: "Super Sharp", 
-    description: "Ultra sharp details",
-    prompt: "Make this image super sharp, enhance all details and edges, crystal clear focus, professional sharpness"
-  },
-  { 
-    id: "colorize", 
-    icon: Droplets, 
-    label: "Colorize", 
-    description: "Add color to B&W photos",
-    prompt: "Colorize this black and white image with realistic natural colors, historically accurate tones"
-  },
-  { 
-    id: "relighting", 
-    icon: CircleDot, 
-    label: "Relight Scene", 
-    description: "Change lighting direction",
-    prompt: "Relight this scene with dramatic lighting from a different angle, add depth with shadows and highlights"
-  },
-  { 
-    id: "restore", 
-    icon: Scan, 
-    label: "Photo Restore", 
-    description: "Fix old damaged photos",
-    prompt: "Restore this old or damaged photo, remove scratches, tears, stains, improve quality, make it look new"
-  },
-  { 
-    id: "blend", 
-    icon: Blend, 
-    label: "Smart Blur", 
-    description: "Selective background blur",
-    prompt: "Add selective blur to background while keeping main subject in perfect focus, professional depth of field"
-  },
-  { 
-    id: "landscape", 
-    icon: Mountain, 
-    label: "Landscape Pro", 
-    description: "Enhance landscapes",
-    prompt: "Enhance this landscape photo, vivid colors, dramatic sky, sharp details, professional nature photography"
-  },
-  { 
-    id: "age_change", 
-    icon: User, 
-    label: "Age Modify", 
-    description: "Make younger or older",
-    prompt: "Modify the age of the person in this image, make them look younger with smooth skin and youthful features"
-  },
-  { 
-    id: "glamour", 
-    icon: Sparkle, 
-    label: "Glamour Shot", 
-    description: "Magazine quality portrait",
-    prompt: "Transform this portrait into a glamour magazine cover shot, professional makeup look, perfect lighting, high fashion"
-  },
-  { 
-    id: "motion_blur", 
-    icon: Film, 
-    label: "Motion Blur", 
-    description: "Add dynamic motion",
-    prompt: "Add professional motion blur effect to create sense of speed and movement, dynamic action shot"
-  },
-  { 
-    id: "depth_map", 
-    icon: Eye, 
-    label: "Depth Control", 
-    description: "Adjust depth of field",
-    prompt: "Create professional depth of field effect, control focus zones, cinematic bokeh, adjust depth map"
-  },
-  { 
-    id: "duplicate", 
-    icon: Copy, 
-    label: "Clone & Fix", 
-    description: "Clone parts of image",
-    prompt: "Intelligently clone and duplicate parts of this image to fill in areas or remove unwanted elements seamlessly"
-  },
-  { 
-    id: "crop_smart", 
-    icon: Scissors, 
-    label: "Smart Crop", 
-    description: "AI-powered cropping",
-    prompt: "Intelligently crop this image to improve composition, rule of thirds, remove distractions, perfect framing"
-  },
 ];
 
 export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
@@ -210,7 +83,6 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
         <div className="mb-6">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4 px-2">
             AI Tools
-            <span className="ml-2 text-[#FF6B35] font-bold">{tools.length}</span>
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {tools.map((tool, index) => (
