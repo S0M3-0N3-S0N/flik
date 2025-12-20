@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, RefreshCw, Copy, Check, Wand2, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Download, RefreshCw, Copy, Check, Wand2, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { base44 } from "@/api/base44Client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const stylePresets = [
   { id: "photo", label: "Photorealistic", prompt: "ultra realistic photograph, 8k, detailed" },
@@ -22,29 +23,36 @@ export default function Generate() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     
     setIsGenerating(true);
+    setError(null);
     
     try {
       const stylePrompt = selectedStyle 
         ? stylePresets.find(s => s.id === selectedStyle)?.prompt 
         : "";
       
-      const fullPrompt = `${prompt}. ${stylePrompt}. High quality, masterpiece, best quality`;
+      const fullPrompt = `${prompt}${stylePrompt ? `. ${stylePrompt}` : ''}. High quality, masterpiece, best quality`;
+      
+      console.log("Generating with prompt:", fullPrompt);
       
       const result = await base44.integrations.Core.GenerateImage({
         prompt: fullPrompt
       });
       
+      console.log("Generation result:", result);
+      
       setGeneratedImages([
         { id: Date.now(), url: result.url, prompt: prompt },
         ...generatedImages
       ]);
-    } catch (error) {
-      console.error("Error generating image:", error);
+    } catch (err) {
+      console.error("Error generating image:", err);
+      setError(err.message || "Failed to generate image. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -116,6 +124,11 @@ export default function Generate() {
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe the image you want to create... (e.g., 'A majestic lion standing on a cliff at sunset, golden hour lighting')"
               className="min-h-[120px] bg-transparent border-0 text-white placeholder:text-white/30 text-lg resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                  handleGenerate();
+                }
+              }}
             />
             
             {/* Style Presets */}
@@ -140,6 +153,13 @@ export default function Generate() {
               </div>
             </div>
             
+            {error && (
+              <Alert className="mt-4 bg-red-500/10 border-red-500/20 text-red-400">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
             <div className="mt-6 flex justify-end">
               <Button
                 onClick={handleGenerate}
@@ -149,7 +169,7 @@ export default function Generate() {
                 {isGenerating ? (
                   <>
                     <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-                    Generating...
+                    Generating (5-10s)...
                   </>
                 ) : (
                   <>
@@ -228,7 +248,7 @@ export default function Generate() {
             </AnimatePresence>
           </div>
           
-          {generatedImages.length === 0 && (
+          {generatedImages.length === 0 && !isGenerating && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -238,6 +258,7 @@ export default function Generate() {
                 <ImageIcon className="w-8 h-8 text-white/30" />
               </div>
               <p className="text-white/40">Your generated images will appear here</p>
+              <p className="text-white/30 text-sm mt-2">Tip: Press Ctrl+Enter to generate quickly</p>
             </motion.div>
           )}
         </div>
