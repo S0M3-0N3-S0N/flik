@@ -137,25 +137,7 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4 px-2">
             Quick Actions
           </h3>
-          <div className="space-y-2">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-white/60 hover:text-white hover:bg-white/5"
-              disabled={!hasImage}
-            >
-              <Layers className="w-4 h-4 mr-3" />
-              Add Layer
-            </Button>
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-white/60 hover:text-white hover:bg-white/5"
-              disabled={!hasImage}
-            >
-              <Droplets className="w-4 h-4 mr-3" />
-              Add Filter
-            </Button>
           </div>
-        </div>
       </div>
     </TooltipProvider>
   );
