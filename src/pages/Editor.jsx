@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Undo2, Redo2, Settings2, Sparkles, Filter, Type, Crop, RotateCw } from "lucide-react";
+import { Download, Undo2, Redo2, Settings2, Sparkles, Filter, Wand2, RotateCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
@@ -9,7 +9,7 @@ import ToolPanel from "@/components/editor/ToolPanel";
 import AdjustmentsPanel from "@/components/editor/AdjustmentsPanel";
 import FiltersPanel from "@/components/editor/FiltersPanel";
 import TransformPanel from "@/components/editor/TransformPanel";
-import TextOverlay from "@/components/editor/TextOverlay";
+import SpotRemoval from "@/components/editor/SpotRemoval";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 
@@ -34,28 +34,27 @@ export default function Editor() {
   });
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [transform, setTransform] = useState({ rotate: 0, flipH: false, flipV: false });
-  const [textLayers, setTextLayers] = useState([]);
+  const [spots, setSpots] = useState([]);
   
   const canvasRef = useRef(null);
+  const imageRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
 
   const handleImageSelect = (image) => {
     setCurrentImage(image);
     if (image) {
-      setHistory([{ image, adjustments: { ...adjustments }, filter: null, transform: { ...transform }, textLayers: [] }]);
+      const initialState = {
+        image,
+        adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
+        filter: null,
+        transform: { rotate: 0, flipH: false, flipV: false },
+      };
+      setHistory([initialState]);
       setHistoryIndex(0);
-      setAdjustments({
-        brightness: 0,
-        contrast: 0,
-        saturation: 0,
-        blur: 0,
-        hue: 0,
-        sepia: 0,
-        grayscale: 0,
-      });
+      setAdjustments(initialState.adjustments);
       setSelectedFilter(null);
-      setTransform({ rotate: 0, flipH: false, flipV: false });
-      setTextLayers([]);
+      setTransform(initialState.transform);
+      setSpots([]);
     } else {
       setHistory([]);
       setHistoryIndex(-1);
@@ -69,16 +68,12 @@ export default function Editor() {
     setIsProcessing(true);
     
     try {
-      // First, render the current canvas state to get the edited image
       const editedImageUrl = await getCanvasImage();
-      
-      // Upload the edited image
       const blob = await fetch(editedImageUrl).then(r => r.blob());
       const file = new File([blob], "edited.png", { type: "image/png" });
       
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
       
-      // Generate enhanced image using AI
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
         existing_image_urls: [uploadResult.file_url]
@@ -96,23 +91,24 @@ export default function Editor() {
 
   const handleApplyResult = () => {
     if (resultImage) {
-      const newImage = {
-        url: resultImage,
-        preview: resultImage,
-        name: "enhanced_image.png"
-      };
+      const newImage = { url: resultImage, preview: resultImage, name: "enhanced_image.png" };
       setCurrentImage(newImage);
       
+      const newState = {
+        image: newImage,
+        adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
+        filter: null,
+        transform: { rotate: 0, flipH: false, flipV: false },
+      };
+      
       const newHistory = history.slice(0, historyIndex + 1);
-      newHistory.push({ 
-        image: newImage, 
-        adjustments: { ...adjustments }, 
-        filter: selectedFilter,
-        transform: { ...transform },
-        textLayers: [...textLayers]
-      });
+      newHistory.push(newState);
       setHistory(newHistory);
       setHistoryIndex(newHistory.length - 1);
+      
+      setAdjustments(newState.adjustments);
+      setSelectedFilter(null);
+      setTransform(newState.transform);
     }
     setShowResult(false);
     setResultImage(null);
@@ -141,6 +137,19 @@ export default function Editor() {
     }
   };
 
+  const saveToHistory = () => {
+    const newState = {
+      image: currentImage,
+      adjustments: { ...adjustments },
+      filter: selectedFilter,
+      transform: { ...transform },
+    };
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(newState);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
   const handleUndo = () => {
     if (historyIndex > 0) {
       const prevState = history[historyIndex - 1];
@@ -149,7 +158,6 @@ export default function Editor() {
       setAdjustments(prevState.adjustments);
       setSelectedFilter(prevState.filter);
       setTransform(prevState.transform);
-      setTextLayers(prevState.textLayers);
     }
   };
 
@@ -161,21 +169,7 @@ export default function Editor() {
       setAdjustments(nextState.adjustments);
       setSelectedFilter(nextState.filter);
       setTransform(nextState.transform);
-      setTextLayers(nextState.textLayers);
     }
-  };
-
-  const saveToHistory = () => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push({ 
-      image: currentImage, 
-      adjustments: { ...adjustments },
-      filter: selectedFilter,
-      transform: { ...transform },
-      textLayers: [...textLayers]
-    });
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
   };
 
   const handleAdjustmentChange = (newAdjustments) => {
@@ -184,7 +178,7 @@ export default function Editor() {
 
   const handleFilterSelect = (filter) => {
     setSelectedFilter(filter);
-    saveToHistory();
+    setTimeout(saveToHistory, 100);
   };
 
   const handleTransform = (type) => {
@@ -204,15 +198,54 @@ export default function Editor() {
         break;
     }
     setTransform(newTransform);
-    saveToHistory();
+    setTimeout(saveToHistory, 100);
   };
 
-  const handleAddText = (textData) => {
-    setTextLayers([...textLayers, { ...textData, id: Date.now() }]);
-    saveToHistory();
+  const handleCanvasClick = (e) => {
+    if (activeTab !== "remove") return;
+    
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    setSpots([...spots, { x, y, id: Date.now() }]);
   };
 
-  // Render canvas with all effects
+  const handleRemoveSpots = async () => {
+    if (spots.length === 0) return;
+    
+    setIsProcessing(true);
+    setActiveTool({ label: "Spot Removal" });
+    
+    try {
+      const editedImageUrl = await getCanvasImage();
+      const blob = await fetch(editedImageUrl).then(r => r.blob());
+      const file = new File([blob], "edited.png", { type: "image/png" });
+      
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      
+      const spotDescriptions = spots.map((_, i) => `spot ${i + 1}`).join(", ");
+      
+      const result = await base44.integrations.Core.GenerateImage({
+        prompt: `Remove the marked spots and unwanted objects from this image. Clean up the image by intelligently filling in the removed areas. Maintain the original composition and quality. The spots to remove are at the marked locations. Make it look natural and seamless.`,
+        existing_image_urls: [uploadResult.file_url]
+      });
+      
+      setResultImage(result.url);
+      setShowResult(true);
+      setSpots([]);
+    } catch (error) {
+      console.error("Error removing spots:", error);
+    } finally {
+      setIsProcessing(false);
+      setActiveTool(null);
+    }
+  };
+
+  // Render canvas with all effects in real-time
   useEffect(() => {
     if (!currentImage || !canvasRef.current) return;
 
@@ -254,7 +287,7 @@ export default function Editor() {
         filters.push(selectedFilter.filter);
       }
       
-      ctx.filter = filters.join(" ");
+      ctx.filter = filters.join(" ") || "none";
 
       // Draw image
       if (transform.rotate === 90 || transform.rotate === 270) {
@@ -265,24 +298,23 @@ export default function Editor() {
       
       ctx.restore();
 
-      // Draw text layers
-      ctx.filter = "none";
-      textLayers.forEach((layer) => {
-        ctx.font = `${layer.fontSize}px ${layer.fontFamily}`;
-        ctx.fillStyle = layer.color;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        const x = (canvas.width * layer.x) / 100;
-        const y = (canvas.height * layer.y) / 100;
-        
-        // Add stroke for better visibility
-        ctx.strokeStyle = "rgba(0,0,0,0.5)";
-        ctx.lineWidth = 2;
-        ctx.strokeText(layer.text, x, y);
-        ctx.fillText(layer.text, x, y);
-      });
+      // Draw spot markers
+      if (activeTab === "remove" && spots.length > 0) {
+        spots.forEach((spot) => {
+          ctx.fillStyle = "rgba(255, 107, 53, 0.5)";
+          ctx.beginPath();
+          ctx.arc(spot.x, spot.y, 20, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.strokeStyle = "#FF6B35";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(spot.x, spot.y, 20, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+      }
     };
-  }, [currentImage, adjustments, selectedFilter, transform, textLayers]);
+  }, [currentImage, adjustments, selectedFilter, transform, spots, activeTab]);
 
   return (
     <div className="min-h-screen flex">
@@ -306,8 +338,8 @@ export default function Editor() {
             <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <RotateCw className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Type className="w-4 h-4" />
+            <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Wand2 className="w-4 h-4" />
             </TabsTrigger>
           </TabsList>
 
@@ -355,10 +387,31 @@ export default function Editor() {
               )}
             </TabsContent>
 
-            <TabsContent value="text" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Add Text</h3>
+            <TabsContent value="remove" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Magic Wand</h3>
               {currentImage ? (
-                <TextOverlay onAddText={handleAddText} />
+                <>
+                  <SpotRemoval 
+                    onRemoveSpot={handleRemoveSpots}
+                    isProcessing={isProcessing}
+                  />
+                  {spots.length > 0 && (
+                    <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white/80">{spots.length} spot(s) marked</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSpots([])}
+                          className="text-white/60 hover:text-white h-7 px-2"
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-white/40 text-sm">Upload an image to start</p>
               )}
@@ -394,6 +447,11 @@ export default function Editor() {
             >
               <Redo2 className="w-4 h-4" />
             </Button>
+            {activeTab === "remove" && currentImage && (
+              <div className="ml-4 text-sm text-white/60 bg-white/5 px-3 py-1 rounded-lg">
+                Click on image to mark spots
+              </div>
+            )}
           </div>
           
           <div className="flex items-center gap-3">
@@ -430,7 +488,10 @@ export default function Editor() {
             <div className="w-full h-full flex items-center justify-center p-8">
               <canvas
                 ref={canvasRef}
-                className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                onClick={handleCanvasClick}
+                className={`max-w-full max-h-full object-contain rounded-2xl shadow-2xl ${
+                  activeTab === "remove" ? "cursor-crosshair" : ""
+                }`}
                 style={{ display: 'block' }}
               />
             </div>
