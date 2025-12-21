@@ -19,8 +19,6 @@ export default function Editor() {
   const [activeTool, setActiveTool] = useState(null);
   const [resultImage, setResultImage] = useState(null);
   const [showResult, setShowResult] = useState(false);
-  const [history, setHistory] = useState([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
   
   // Manual editing states
   const [adjustments, setAdjustments] = useState({
@@ -36,28 +34,25 @@ export default function Editor() {
   const [transform, setTransform] = useState({ rotate: 0, flipH: false, flipV: false });
   const [spots, setSpots] = useState([]);
   
-  const canvasRef = useRef(null);
-  const imageRef = useRef(null);
+  const imageContainerRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
 
   const handleImageSelect = (image) => {
     setCurrentImage(image);
     if (image) {
-      const initialState = {
-        image,
-        adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
-        filter: null,
-        transform: { rotate: 0, flipH: false, flipV: false },
-      };
-      setHistory([initialState]);
-      setHistoryIndex(0);
-      setAdjustments(initialState.adjustments);
+      // Reset all edits when new image is uploaded
+      setAdjustments({
+        brightness: 0,
+        contrast: 0,
+        saturation: 0,
+        blur: 0,
+        hue: 0,
+        sepia: 0,
+        grayscale: 0,
+      });
       setSelectedFilter(null);
-      setTransform(initialState.transform);
+      setTransform({ rotate: 0, flipH: false, flipV: false });
       setSpots([]);
-    } else {
-      setHistory([]);
-      setHistoryIndex(-1);
     }
   };
 
@@ -68,21 +63,28 @@ export default function Editor() {
     setIsProcessing(true);
     
     try {
-      const editedImageUrl = await getCanvasImage();
-      const blob = await fetch(editedImageUrl).then(r => r.blob());
-      const file = new File([blob], "edited.png", { type: "image/png" });
+      // Get the current display image URL
+      let imageUrl = currentImage.url || currentImage.preview;
       
-      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      // If we have a file, upload it first
+      if (currentImage.file) {
+        const uploadResult = await base44.integrations.Core.UploadFile({
+          file: currentImage.file
+        });
+        imageUrl = uploadResult.file_url;
+      }
       
+      // Generate enhanced image using AI
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
-        existing_image_urls: [uploadResult.file_url]
+        existing_image_urls: [imageUrl]
       });
       
       setResultImage(result.url);
       setShowResult(true);
     } catch (error) {
       console.error("Error processing image:", error);
+      alert("Error processing image. Please try again.");
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
@@ -91,170 +93,40 @@ export default function Editor() {
 
   const handleApplyResult = () => {
     if (resultImage) {
-      const newImage = { url: resultImage, preview: resultImage, name: "enhanced_image.png" };
+      const newImage = { 
+        url: resultImage, 
+        preview: resultImage, 
+        name: "enhanced_image.png" 
+      };
       setCurrentImage(newImage);
       
-      const newState = {
-        image: newImage,
-        adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
-        filter: null,
-        transform: { rotate: 0, flipH: false, flipV: false },
-      };
-      
-      const newHistory = history.slice(0, historyIndex + 1);
-      newHistory.push(newState);
-      setHistory(newHistory);
-      setHistoryIndex(newHistory.length - 1);
-      
-      setAdjustments(newState.adjustments);
+      // Reset adjustments after applying AI result
+      setAdjustments({
+        brightness: 0,
+        contrast: 0,
+        saturation: 0,
+        blur: 0,
+        hue: 0,
+        sepia: 0,
+        grayscale: 0,
+      });
       setSelectedFilter(null);
-      setTransform(newState.transform);
+      setTransform({ rotate: 0, flipH: false, flipV: false });
     }
     setShowResult(false);
     setResultImage(null);
   };
 
-  const getCanvasImage = () => {
-    return new Promise((resolve) => {
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        resolve(currentImage?.preview || currentImage?.url);
-        return;
-      }
-      resolve(canvas.toDataURL("image/png"));
-    });
-  };
-
   const handleDownload = async () => {
-    const imageUrl = await getCanvasImage();
-    if (imageUrl) {
-      const link = document.createElement("a");
-      link.href = imageUrl;
-      link.download = "flik_edited_image.png";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
-  const saveToHistory = () => {
-    const newState = {
-      image: currentImage,
-      adjustments: { ...adjustments },
-      filter: selectedFilter,
-      transform: { ...transform },
-    };
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(newState);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  const handleUndo = () => {
-    if (historyIndex > 0) {
-      const prevState = history[historyIndex - 1];
-      setHistoryIndex(historyIndex - 1);
-      setCurrentImage(prevState.image);
-      setAdjustments(prevState.adjustments);
-      setSelectedFilter(prevState.filter);
-      setTransform(prevState.transform);
-    }
-  };
-
-  const handleRedo = () => {
-    if (historyIndex < history.length - 1) {
-      const nextState = history[historyIndex + 1];
-      setHistoryIndex(historyIndex + 1);
-      setCurrentImage(nextState.image);
-      setAdjustments(nextState.adjustments);
-      setSelectedFilter(nextState.filter);
-      setTransform(nextState.transform);
-    }
-  };
-
-  const handleAdjustmentChange = (newAdjustments) => {
-    setAdjustments(newAdjustments);
-  };
-
-  const handleFilterSelect = (filter) => {
-    setSelectedFilter(filter);
-    setTimeout(saveToHistory, 100);
-  };
-
-  const handleTransform = (type) => {
-    const newTransform = { ...transform };
-    switch (type) {
-      case "rotate-right":
-        newTransform.rotate = (newTransform.rotate + 90) % 360;
-        break;
-      case "rotate-left":
-        newTransform.rotate = (newTransform.rotate - 90 + 360) % 360;
-        break;
-      case "flip-horizontal":
-        newTransform.flipH = !newTransform.flipH;
-        break;
-      case "flip-vertical":
-        newTransform.flipV = !newTransform.flipV;
-        break;
-    }
-    setTransform(newTransform);
-    setTimeout(saveToHistory, 100);
-  };
-
-  const handleCanvasClick = (e) => {
-    if (activeTab !== "remove") return;
+    if (!currentImage) return;
     
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    
-    setSpots([...spots, { x, y, id: Date.now() }]);
-  };
-
-  const handleRemoveSpots = async () => {
-    if (spots.length === 0) return;
-    
-    setIsProcessing(true);
-    setActiveTool({ label: "Spot Removal" });
-    
-    try {
-      const editedImageUrl = await getCanvasImage();
-      const blob = await fetch(editedImageUrl).then(r => r.blob());
-      const file = new File([blob], "edited.png", { type: "image/png" });
-      
-      const uploadResult = await base44.integrations.Core.UploadFile({ file });
-      
-      const spotDescriptions = spots.map((_, i) => `spot ${i + 1}`).join(", ");
-      
-      const result = await base44.integrations.Core.GenerateImage({
-        prompt: `Remove the marked spots and unwanted objects from this image. Clean up the image by intelligently filling in the removed areas. Maintain the original composition and quality. The spots to remove are at the marked locations. Make it look natural and seamless.`,
-        existing_image_urls: [uploadResult.file_url]
-      });
-      
-      setResultImage(result.url);
-      setShowResult(true);
-      setSpots([]);
-    } catch (error) {
-      console.error("Error removing spots:", error);
-    } finally {
-      setIsProcessing(false);
-      setActiveTool(null);
-    }
-  };
-
-  // Render canvas with all effects in real-time
-  useEffect(() => {
-    if (!currentImage || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    // Create a temporary canvas to render the final image
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = currentImage.preview || currentImage.url;
-
+    
     img.onload = () => {
       // Set canvas size based on rotation
       if (transform.rotate === 90 || transform.rotate === 270) {
@@ -265,9 +137,6 @@ export default function Editor() {
         canvas.height = img.height;
       }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Apply transforms
       ctx.save();
       ctx.translate(canvas.width / 2, canvas.height / 2);
       ctx.rotate((transform.rotate * Math.PI) / 180);
@@ -289,7 +158,6 @@ export default function Editor() {
       
       ctx.filter = filters.join(" ") || "none";
 
-      // Draw image
       if (transform.rotate === 90 || transform.rotate === 270) {
         ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
       } else {
@@ -298,23 +166,147 @@ export default function Editor() {
       
       ctx.restore();
 
-      // Draw spot markers
-      if (activeTab === "remove" && spots.length > 0) {
-        spots.forEach((spot) => {
-          ctx.fillStyle = "rgba(255, 107, 53, 0.5)";
-          ctx.beginPath();
-          ctx.arc(spot.x, spot.y, 20, 0, Math.PI * 2);
-          ctx.fill();
-          
-          ctx.strokeStyle = "#FF6B35";
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(spot.x, spot.y, 20, 0, Math.PI * 2);
-          ctx.stroke();
-        });
-      }
+      // Download
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "flik_edited_image.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
     };
-  }, [currentImage, adjustments, selectedFilter, transform, spots, activeTab]);
+  };
+
+  const handleAdjustmentChange = (newAdjustments) => {
+    setAdjustments(newAdjustments);
+  };
+
+  const handleFilterSelect = (filter) => {
+    setSelectedFilter(filter);
+  };
+
+  const handleTransform = (type) => {
+    const newTransform = { ...transform };
+    switch (type) {
+      case "rotate-right":
+        newTransform.rotate = (newTransform.rotate + 90) % 360;
+        break;
+      case "rotate-left":
+        newTransform.rotate = (newTransform.rotate - 90 + 360) % 360;
+        break;
+      case "flip-horizontal":
+        newTransform.flipH = !newTransform.flipH;
+        break;
+      case "flip-vertical":
+        newTransform.flipV = !newTransform.flipV;
+        break;
+    }
+    setTransform(newTransform);
+  };
+
+  const handleImageClick = (e) => {
+    if (activeTab !== "remove" || !currentImage) return;
+    
+    const container = imageContainerRef.current;
+    if (!container) return;
+    
+    const img = container.querySelector('img');
+    if (!img) return;
+    
+    const rect = img.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100; // Percentage
+    const y = ((e.clientY - rect.top) / rect.height) * 100; // Percentage
+    
+    setSpots([...spots, { x, y, id: Date.now() }]);
+  };
+
+  const handleRemoveSpots = async () => {
+    if (spots.length === 0 || !currentImage) return;
+    
+    setIsProcessing(true);
+    setActiveTool({ label: "Spot Removal" });
+    
+    try {
+      // Get the current display image URL
+      let imageUrl = currentImage.url || currentImage.preview;
+      
+      // If we have a file, upload it first
+      if (currentImage.file) {
+        const uploadResult = await base44.integrations.Core.UploadFile({
+          file: currentImage.file
+        });
+        imageUrl = uploadResult.file_url;
+      }
+      
+      const result = await base44.integrations.Core.GenerateImage({
+        prompt: `Remove unwanted spots, blemishes, and objects from this image at the marked locations. Clean up the image by intelligently filling in the removed areas to match the surrounding context. Maintain the original composition, colors, and quality. Make it look natural and seamless with no visible artifacts.`,
+        existing_image_urls: [imageUrl]
+      });
+      
+      setResultImage(result.url);
+      setShowResult(true);
+      setSpots([]);
+    } catch (error) {
+      console.error("Error removing spots:", error);
+      alert("Error removing spots. Please try again.");
+    } finally {
+      setIsProcessing(false);
+      setActiveTool(null);
+    }
+  };
+
+  // Build CSS filter string for real-time preview
+  const getFilterStyle = () => {
+    const filters = [];
+    
+    if (adjustments.brightness !== 0) {
+      filters.push(`brightness(${100 + adjustments.brightness}%)`);
+    }
+    if (adjustments.contrast !== 0) {
+      filters.push(`contrast(${100 + adjustments.contrast}%)`);
+    }
+    if (adjustments.saturation !== 0) {
+      filters.push(`saturate(${100 + adjustments.saturation}%)`);
+    }
+    if (adjustments.blur > 0) {
+      filters.push(`blur(${adjustments.blur}px)`);
+    }
+    if (adjustments.hue !== 0) {
+      filters.push(`hue-rotate(${adjustments.hue}deg)`);
+    }
+    if (adjustments.sepia > 0) {
+      filters.push(`sepia(${adjustments.sepia}%)`);
+    }
+    if (adjustments.grayscale > 0) {
+      filters.push(`grayscale(${adjustments.grayscale}%)`);
+    }
+    
+    if (selectedFilter && selectedFilter.id !== "none") {
+      filters.push(selectedFilter.filter);
+    }
+    
+    return filters.length > 0 ? filters.join(" ") : "none";
+  };
+
+  // Build transform style
+  const getTransformStyle = () => {
+    const transforms = [];
+    
+    if (transform.rotate !== 0) {
+      transforms.push(`rotate(${transform.rotate}deg)`);
+    }
+    if (transform.flipH) {
+      transforms.push(`scaleX(-1)`);
+    }
+    if (transform.flipV) {
+      transforms.push(`scaleY(-1)`);
+    }
+    
+    return transforms.length > 0 ? transforms.join(" ") : "none";
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -429,26 +421,9 @@ export default function Editor() {
           className="h-14 border-b border-white/5 flex items-center justify-between px-6 glass-card"
         >
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={historyIndex <= 0}
-              onClick={handleUndo}
-              className="text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30"
-            >
-              <Undo2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={historyIndex >= history.length - 1}
-              onClick={handleRedo}
-              className="text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30"
-            >
-              <Redo2 className="w-4 h-4" />
-            </Button>
             {activeTab === "remove" && currentImage && (
-              <div className="ml-4 text-sm text-white/60 bg-white/5 px-3 py-1 rounded-lg">
+              <div className="text-sm text-white/60 bg-white/5 px-3 py-1 rounded-lg flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
                 Click on image to mark spots
               </div>
             )}
@@ -485,15 +460,41 @@ export default function Editor() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
           {currentImage ? (
-            <div className="w-full h-full flex items-center justify-center p-8">
-              <canvas
-                ref={canvasRef}
-                onClick={handleCanvasClick}
-                className={`max-w-full max-h-full object-contain rounded-2xl shadow-2xl ${
-                  activeTab === "remove" ? "cursor-crosshair" : ""
-                }`}
-                style={{ display: 'block' }}
-              />
+            <div 
+              ref={imageContainerRef}
+              className="w-full h-full flex items-center justify-center p-8"
+              onClick={handleImageClick}
+            >
+              <div className="relative max-w-full max-h-full">
+                <img
+                  src={currentImage.preview || currentImage.url}
+                  alt="Editor"
+                  className={`max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl transition-all duration-200 ${
+                    activeTab === "remove" ? "cursor-crosshair" : ""
+                  }`}
+                  style={{
+                    filter: getFilterStyle(),
+                    transform: getTransformStyle(),
+                  }}
+                />
+                
+                {/* Spot markers overlay */}
+                {activeTab === "remove" && spots.length > 0 && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    {spots.map((spot) => (
+                      <div
+                        key={spot.id}
+                        className="absolute w-10 h-10 rounded-full border-4 border-[#FF6B35] bg-[#FF6B35]/30 animate-pulse"
+                        style={{
+                          left: `${spot.x}%`,
+                          top: `${spot.y}%`,
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <ImageUploader 
