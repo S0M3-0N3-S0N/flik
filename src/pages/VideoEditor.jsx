@@ -41,6 +41,7 @@ export default function VideoEditor() {
   const [removeStrokes, setRemoveStrokes] = useState([]);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [undoHistory, setUndoHistory] = useState([]);
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
@@ -176,6 +177,12 @@ export default function VideoEditor() {
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
+      
+      if (videoRef.current.currentTime >= videoRef.current.duration - 0.1) {
+        setIsPlaying(false);
+        videoRef.current.currentTime = 0;
+        setCurrentTime(0);
+      }
     }
   };
 
@@ -260,6 +267,8 @@ export default function VideoEditor() {
   };
 
   const handleDeleteClip = (trackId, clipId) => {
+    setUndoHistory([...undoHistory, { action: 'delete', tracks: JSON.parse(JSON.stringify(tracks)) }]);
+    
     if (audioRefs.current[clipId]) {
       audioRefs.current[clipId].pause();
       delete audioRefs.current[clipId];
@@ -276,6 +285,14 @@ export default function VideoEditor() {
     });
     setTracks(newTracks);
     setSelectedClip(null);
+  };
+
+  const handleUndo = () => {
+    if (undoHistory.length > 0) {
+      const previous = undoHistory[undoHistory.length - 1];
+      setTracks(JSON.parse(JSON.stringify(previous.tracks)));
+      setUndoHistory(undoHistory.slice(0, -1));
+    }
   };
 
   const handleSplitClip = () => {
@@ -559,6 +576,19 @@ export default function VideoEditor() {
         </div>
         
         <div className="flex items-center gap-3">
+          {undoHistory.length > 0 && (
+            <Button
+              onClick={handleUndo}
+              variant="ghost"
+              className="text-white hover:bg-white/10"
+              title="Undo"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+              Undo
+            </Button>
+          )}
           {selectedClip && selectedClip.type === 'video' && (
             <Button
               onClick={handleSplitClip}

@@ -26,6 +26,8 @@ export default function Generate() {
   const [aiModel, setAiModel] = useState("default");
   const [uploadedImage, setUploadedImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [promptHistory, setPromptHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -102,6 +104,11 @@ Respond with ONLY the enhanced prompt, nothing else.`,
       }
 
       setGeneratedImages([newImage, ...generatedImages]);
+      
+      if (prompt.trim()) {
+        setPromptHistory(prev => [prompt, ...prev.filter(p => p !== prompt)].slice(0, 10));
+      }
+      
       setPrompt("");
       setSelectedStyle(null);
       setUploadedImage(null);
@@ -240,17 +247,36 @@ Respond with ONLY the enhanced prompt, nothing else.`,
               </div>
             </div>
 
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe what you want to create or edit..."
-              className="w-full min-h-[120px] bg-[#1a1a1a] border border-white/10 rounded-lg text-white placeholder:text-white/40 text-lg resize-none focus:ring-2 focus:ring-[#FF6B35] focus:outline-none p-4 mb-4"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                  handleGenerate();
-                }
-              }}
-            />
+            <div className="relative">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onFocus={() => setShowHistory(true)}
+                placeholder="Describe what you want to create or edit..."
+                className="w-full min-h-[120px] bg-[#1a1a1a] border border-white/10 rounded-lg text-white placeholder:text-white/40 text-lg resize-none focus:ring-2 focus:ring-[#FF6B35] focus:outline-none p-4 mb-4"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    handleGenerate();
+                  }
+                }}
+              />
+              {showHistory && promptHistory.length > 0 && (
+                <div className="absolute z-10 w-full bg-[#1a1a1a] border border-white/10 rounded-lg mt-1 max-h-40 overflow-y-auto">
+                  {promptHistory.map((p, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setPrompt(p);
+                        setShowHistory(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition-colors"
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             
             <div className="mb-4">
               <p className="text-xs text-white/40 mb-3 text-left">Style Presets (Optional)</p>

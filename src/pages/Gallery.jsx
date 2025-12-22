@@ -21,6 +21,9 @@ export default function Gallery() {
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [dateFilter, setDateFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const itemsPerPage = 20;
   const queryClient = useQueryClient();
 
   const { data: creations = [], isLoading } = useQuery({
@@ -39,7 +42,8 @@ export default function Gallery() {
   const filteredCreations = creations.filter(item => {
     const matchesSearch = !searchQuery || 
       item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.prompt?.toLowerCase().includes(searchQuery.toLowerCase());
+      item.prompt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.metadata?.toString().toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === 'all' || item.type === filterType;
     
     let matchesDate = true;
@@ -60,6 +64,12 @@ export default function Gallery() {
     if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
     return 0;
   });
+
+  const totalPages = Math.ceil(filteredCreations.length / itemsPerPage);
+  const paginatedCreations = filteredCreations.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleDownload = async (url, title) => {
     try {
@@ -100,6 +110,25 @@ export default function Gallery() {
       setSelectedItem(null);
       setDeleteConfirm(null);
     }
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedItems.length === 0) return;
+    setDeleteConfirm('batch');
+  };
+
+  const confirmBatchDelete = async () => {
+    for (const id of selectedItems) {
+      await deleteMutation.mutateAsync(id);
+    }
+    setSelectedItems([]);
+    setDeleteConfirm(null);
+  };
+
+  const toggleSelectItem = (id) => {
+    setSelectedItems(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   const stats = {
@@ -205,17 +234,50 @@ export default function Gallery() {
             <p className="text-white/30 text-sm">Start creating amazing content with FLIK</p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <AnimatePresence mode="popLayout">
-              {filteredCreations.map((item, index) => (
+          <>
+            {selectedItems.length > 0 && (
+              <div className="mb-4 p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <span className="text-white">{selectedItems.length} items selected</span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedItems([])}
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBatchDelete}
+                    className="border-red-500/50 text-red-400 hover:bg-red-500/20"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Selected
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <AnimatePresence mode="popLayout">
+                {paginatedCreations.map((item, index) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.02 }}
-                  className="group relative aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/10 cursor-pointer"
-                  onClick={() => setSelectedItem(item)}
+                  className={`group relative aspect-square rounded-xl overflow-hidden bg-white/5 border-2 cursor-pointer ${
+                    selectedItems.includes(item.id) ? 'border-[#FF6B35]' : 'border-white/10'
+                  }`}
+                  onClick={(e) => {
+                    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                      toggleSelectItem(item.id);
+                    } else {
+                      setSelectedItem(item);
+                    }
+                  }}
                 >
                   {item.thumbnail_url || item.url ? (
                     <img
@@ -235,6 +297,19 @@ export default function Gallery() {
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                    <div className="absolute top-3 right-3 flex gap-2">
+                     <Button
+                       size="icon"
+                       variant="ghost"
+                       onClick={(e) => { 
+                         e.stopPropagation(); 
+                         toggleSelectItem(item.id);
+                       }}
+                       className={`bg-black/50 hover:bg-white/20 text-white ${
+                         selectedItems.includes(item.id) ? 'bg-[#FF6B35]/50' : ''
+                       }`}
+                     >
+                       {selectedItems.includes(item.id) ? '✓' : '○'}
+                     </Button>
                      <Button
                        size="icon"
                        variant="ghost"
@@ -280,15 +355,67 @@ export default function Gallery() {
               ))}
             </AnimatePresence>
           </div>
+          
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <Button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                size="sm"
+                className="border-white/20 text-white hover:bg-white/10 disabled:opacity-30"
+              >
+                Previous
+              </Button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    className={currentPage === pageNum 
+                      ? "btn-gradient text-white" 
+                      : "border-white/20 text-white hover:bg-white/10"
+                    }
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+              <Button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                variant="outline"
+                size="sm"
+                className="border-white/20 text-white hover:bg-white/10 disabled:opacity-30"
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
         )}
       </div>
 
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent className="bg-[#1a1a1a] border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-xl text-white">Delete Creation?</DialogTitle>
+            <DialogTitle className="text-xl text-white">
+              {deleteConfirm === 'batch' ? `Delete ${selectedItems.length} Items?` : 'Delete Creation?'}
+            </DialogTitle>
             <DialogDescription className="text-white/50">
-              This action cannot be undone. This will permanently delete your creation.
+              This action cannot be undone. This will permanently delete {deleteConfirm === 'batch' ? 'these creations' : 'your creation'}.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 mt-4">
@@ -300,10 +427,10 @@ export default function Gallery() {
               Cancel
             </Button>
             <Button
-              onClick={confirmDelete}
+              onClick={deleteConfirm === 'batch' ? confirmBatchDelete : confirmDelete}
               className="flex-1 bg-red-500 hover:bg-red-600 text-white"
             >
-              Delete
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </DialogContent>
