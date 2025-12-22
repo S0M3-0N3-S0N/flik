@@ -132,12 +132,7 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
           </div>
         </div>
         
-        {/* Quick Actions */}
-        <div className="mt-8 pt-6 border-t border-white/5">
-          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4 px-2">
-            Quick Actions
-          </h3>
-          </div>
+
       </div>
     </TooltipProvider>
   );
