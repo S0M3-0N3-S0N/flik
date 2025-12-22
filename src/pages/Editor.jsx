@@ -49,6 +49,15 @@ export default function Editor() {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
+  const [undoHistory, setUndoHistory] = useState([]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const loadUrl = urlParams.get('load');
+    if (loadUrl) {
+      setCurrentImage({ url: loadUrl, preview: loadUrl, name: 'loaded_image.png' });
+    }
+  }, []);
 
   const handleImageSelect = (image) => {
     setCurrentImage(image);
@@ -82,13 +91,17 @@ export default function Editor() {
     setBatchImages(images);
   };
 
+  const [batchProgress, setBatchProgress] = useState(0);
+
   const handleBatchProcess = async (tool) => {
     if (batchImages.length === 0) return;
     
     setIsBatchProcessing(true);
+    setBatchProgress(0);
     const results = [];
     
-    for (const image of batchImages) {
+    for (let i = 0; i < batchImages.length; i++) {
+      const image = batchImages[i];
       try {
         const uploadResult = await base44.integrations.Core.UploadFile({ file: image.file });
         const result = await base44.integrations.Core.GenerateImage({
@@ -96,12 +109,13 @@ export default function Editor() {
           existing_image_urls: [uploadResult.file_url]
         });
         results.push({ original: image, result: result.url });
+        setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
       } catch (err) {
         console.error('Batch error:', err);
       }
     }
     
-    alert(`Processed ${results.length} images! Check your downloads.`);
+    alert(`Successfully processed ${results.length} of ${batchImages.length} images!`);
     results.forEach((r, i) => {
       setTimeout(() => {
         const link = document.createElement('a');
@@ -113,6 +127,7 @@ export default function Editor() {
     
     setIsBatchProcessing(false);
     setBatchImages([]);
+    setBatchProgress(0);
   };
 
   const handleToolSelect = async (tool) => {
@@ -149,6 +164,7 @@ export default function Editor() {
 
   const handleApplyResult = () => {
     if (resultImage) {
+      setUndoHistory([...undoHistory, currentImage]);
       setCurrentImage({ 
         url: resultImage, 
         preview: resultImage, 
@@ -171,6 +187,29 @@ export default function Editor() {
     setShowResult(false);
     setResultImage(null);
   };
+
+  const handleUndo = () => {
+    if (undoHistory.length > 0) {
+      const previous = undoHistory[undoHistory.length - 1];
+      setCurrentImage(previous);
+      setUndoHistory(undoHistory.slice(0, -1));
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleDownload();
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [undoHistory, currentImage]);
 
   const handleDownload = async () => {
     if (!currentImage) return;
@@ -588,7 +627,7 @@ export default function Editor() {
                         disabled={isBatchProcessing}
                         className="w-full btn-gradient text-white"
                       >
-                        {isBatchProcessing ? 'Processing...' : tool.label}
+                        {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
                       </Button>
                     ))}
                   </div>
@@ -701,6 +740,17 @@ export default function Editor() {
           </div>
           
           <div className="flex items-center gap-3">
+            {undoHistory.length > 0 && (
+              <Button
+                onClick={handleUndo}
+                variant="ghost"
+                className="text-white hover:bg-white/10"
+                title="Undo (Ctrl+Z)"
+              >
+                <RotateCw className="w-4 h-4 mr-2" />
+                Undo
+              </Button>
+            )}
             {currentImage && (
               <Button
                 onClick={async () => {
@@ -735,6 +785,7 @@ export default function Editor() {
                   }
                 }}
                 className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20"
+                title="Save to Gallery"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 Save
@@ -744,6 +795,7 @@ export default function Editor() {
               disabled={!currentImage}
               onClick={handleDownload}
               className="btn-gradient text-white text-sm disabled:opacity-30"
+              title="Download (Ctrl+S)"
             >
               <Download className="w-4 h-4 mr-2" />
               Export

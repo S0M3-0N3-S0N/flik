@@ -47,6 +47,14 @@ export default function VideoEditor() {
   const audioRefs = useRef({});
   const canvasRef = useRef(null);
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const loadUrl = urlParams.get('load');
+    if (loadUrl) {
+      setVideoFile({ url: loadUrl, name: 'loaded_video.mp4' });
+    }
+  }, []);
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('video/')) {

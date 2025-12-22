@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Download, Trash2, Image as ImageIcon, Video, Search } from "lucide-react";
+import { Sparkles, Download, Trash2, Image as ImageIcon, Video, Search, Edit } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,10 +78,27 @@ export default function Gallery() {
     }
   };
 
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [editingTitle, setEditingTitle] = useState(null);
+  const [newTitle, setNewTitle] = useState('');
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Creation.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['creations'] });
+      setEditingTitle(null);
+    },
+  });
+
   const handleDelete = (id) => {
-    if (confirm('Delete this creation?')) {
-      deleteMutation.mutate(id);
+    setDeleteConfirm(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm) {
+      deleteMutation.mutate(deleteConfirm);
       setSelectedItem(null);
+      setDeleteConfirm(null);
     }
   };
 
@@ -266,6 +283,32 @@ export default function Gallery() {
         )}
       </div>
 
+      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-white">Delete Creation?</DialogTitle>
+            <DialogDescription className="text-white/50">
+              This action cannot be undone. This will permanently delete your creation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 mt-4">
+            <Button
+              onClick={() => setDeleteConfirm(null)}
+              variant="outline"
+              className="flex-1 border-white/20 text-white hover:bg-white/10"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
         <DialogContent className="max-w-4xl bg-[#1a1a1a] border-white/10 text-white">
           <DialogHeader>
@@ -288,6 +331,45 @@ export default function Gallery() {
               </div>
             )}
             
+            <div className="p-4 rounded-lg bg-white/5 border border-white/10 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-white/40">Title</p>
+                {editingTitle === selectedItem?.id ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } });
+                    }}
+                    className="btn-gradient text-white h-6 text-xs"
+                  >
+                    Save
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingTitle(selectedItem?.id);
+                      setNewTitle(selectedItem?.title || '');
+                    }}
+                    className="text-white/60 hover:text-white h-6"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+              {editingTitle === selectedItem?.id ? (
+                <Input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="bg-white/10 border-white/10 text-white"
+                  placeholder="Enter title..."
+                />
+              ) : (
+                <p className="text-sm text-white/80">{selectedItem?.title || 'Untitled'}</p>
+              )}
+            </div>
+
             {selectedItem?.prompt && (
               <div className="p-4 rounded-lg bg-white/5 border border-white/10 mb-4">
                 <p className="text-xs text-white/40 mb-1">Prompt</p>
@@ -296,6 +378,16 @@ export default function Gallery() {
             )}
 
             <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  const url = selectedItem.type === 'image' ? '/Editor' : '/VideoEditor';
+                  window.location.href = url + '?load=' + encodeURIComponent(selectedItem.url);
+                }}
+                className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
               <Button
                 onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt)}
                 className="flex-1 btn-gradient text-white"
@@ -308,8 +400,7 @@ export default function Gallery() {
                 variant="outline"
                 className="border-white/20 text-white hover:bg-red-500/20"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           </div>

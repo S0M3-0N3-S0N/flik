@@ -88,14 +88,19 @@ Respond with ONLY the enhanced prompt, nothing else.`,
         timestamp: new Date().toISOString()
       };
       
-      await base44.entities.Creation.create({
-        title: prompt.slice(0, 100),
-        type: 'image',
-        url: imageResult.url,
-        prompt: prompt,
-        metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt }
-      });
-      
+      try {
+        await base44.entities.Creation.create({
+          title: prompt.slice(0, 100) || 'AI Generated Image',
+          type: 'image',
+          url: imageResult.url,
+          thumbnail_url: imageResult.url,
+          prompt: prompt,
+          metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt }
+        });
+      } catch (saveErr) {
+        console.error('Failed to save to gallery:', saveErr);
+      }
+
       setGeneratedImages([newImage, ...generatedImages]);
       setPrompt("");
       setSelectedStyle(null);
@@ -203,10 +208,17 @@ Respond with ONLY the enhanced prompt, nothing else.`,
 
               <div className="flex-shrink-0">
                 <label className="text-xs text-white/40 block mb-2">Upload Image</label>
-                <label className="cursor-pointer">
+                <label className="cursor-pointer" title="Upload reference image">
                   <div className="w-24 h-24 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 transition-colors flex items-center justify-center bg-white/5">
                     {uploadedImage ? (
-                      <img src={uploadedImage.url} className="w-full h-full object-cover rounded-lg" />
+                      <div className="relative w-full h-full">
+                        <img src={uploadedImage.url} className="w-full h-full object-cover rounded-lg" />
+                        {isUploading && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          </div>
+                        )}
+                      </div>
                     ) : isUploading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
