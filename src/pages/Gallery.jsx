@@ -243,7 +243,7 @@ export default function Gallery() {
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedItems([])}
-                    className="border-white/20 text-white hover:bg-white/10"
+                    className="bg-transparent border-white/20 text-white hover:bg-white/10"
                   >
                     Clear
                   </Button>
@@ -363,7 +363,7 @@ export default function Gallery() {
                 disabled={currentPage === 1}
                 variant="outline"
                 size="sm"
-                className="border-white/20 text-white hover:bg-white/10 disabled:opacity-30"
+                className="bg-transparent border-white/20 text-white hover:bg-white/10 disabled:opacity-30"
               >
                 Previous
               </Button>
@@ -386,7 +386,7 @@ export default function Gallery() {
                     size="sm"
                     className={currentPage === pageNum 
                       ? "btn-gradient text-white" 
-                      : "border-white/20 text-white hover:bg-white/10"
+                      : "bg-transparent border-white/20 text-white hover:bg-white/10"
                     }
                   >
                     {pageNum}
@@ -398,7 +398,7 @@ export default function Gallery() {
                 disabled={currentPage === totalPages}
                 variant="outline"
                 size="sm"
-                className="border-white/20 text-white hover:bg-white/10 disabled:opacity-30"
+                className="bg-transparent border-white/20 text-white hover:bg-white/10 disabled:opacity-30"
               >
                 Next
               </Button>
@@ -422,7 +422,7 @@ export default function Gallery() {
             <Button
               onClick={() => setDeleteConfirm(null)}
               variant="outline"
-              className="flex-1 border-white/20 text-white hover:bg-white/10"
+              className="flex-1 bg-transparent border-white/20 text-white hover:bg-white/10"
             >
               Cancel
             </Button>
