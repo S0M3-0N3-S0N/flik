@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap } from "lucide-react";
+import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,10 +24,27 @@ export default function Generate() {
   const [copiedId, setCopiedId] = useState(null);
   const [error, setError] = useState(null);
   const [aiModel, setAiModel] = useState("default");
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    
+    setIsUploading(true);
+    try {
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      setUploadedImage({ url: uploadResult.file_url, file });
+      setIsUploading(false);
+    } catch (err) {
+      setError("Failed to upload image");
+      setIsUploading(false);
+    }
+  };
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) {
-      setError("Please enter a prompt to generate an image");
+    if (!prompt.trim() && !uploadedImage) {
+      setError("Please enter a prompt or upload an image");
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -36,9 +53,9 @@ export default function Generate() {
     setError(null);
     
     try {
-      let finalPrompt = prompt;
+      let finalPrompt = prompt || "enhance this image, improve quality, professional result";
       
-      if (aiModel === "gemini") {
+      if (aiModel === "gemini" && prompt) {
         const result = await base44.integrations.Core.InvokeLLM({
           prompt: `You are an expert at creating detailed image generation prompts. Take this user request and expand it into a highly detailed, specific image generation prompt that will produce amazing results. Keep the core idea but add artistic details, lighting, composition, style elements, and technical quality specifications.
 
@@ -57,7 +74,8 @@ Respond with ONLY the enhanced prompt, nothing else.`,
       const fullPrompt = `${finalPrompt}${stylePrompt ? `, ${stylePrompt}` : ''}, masterpiece, high quality, detailed`;
       
       const imageResult = await base44.integrations.Core.GenerateImage({
-        prompt: fullPrompt
+        prompt: fullPrompt,
+        existing_image_urls: uploadedImage ? [uploadedImage.url] : undefined
       });
       
       const newImage = {
@@ -81,6 +99,7 @@ Respond with ONLY the enhanced prompt, nothing else.`,
       setGeneratedImages([newImage, ...generatedImages]);
       setPrompt("");
       setSelectedStyle(null);
+      setUploadedImage(null);
     } catch (err) {
       console.error("Error generating image:", err);
       setError("Failed to generate image. " + (err.message || "Please try again."));
@@ -158,33 +177,61 @@ Respond with ONLY the enhanced prompt, nothing else.`,
             transition={{ delay: 0.3 }}
             className="relative p-6 max-w-3xl mx-auto bg-[#141414] rounded-2xl border border-white/10"
           >
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs text-white/40">AI Model</label>
-                <Select value={aiModel} onValueChange={setAiModel}>
-                  <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Standard</SelectItem>
-                    <SelectItem value="gemini">
-                      <div className="flex items-center gap-2">
-                        <Zap className="w-3 h-3" />
-                        Gemini Enhanced
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="mb-4 flex gap-4">
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs text-white/40">AI Model</label>
+                  <Select value={aiModel} onValueChange={setAiModel}>
+                    <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Standard</SelectItem>
+                      <SelectItem value="gemini">
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-3 h-3" />
+                          Gemini Enhanced
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {aiModel === "gemini" && (
+                  <p className="text-xs text-[#FF6B35]">✨ AI will enhance your prompt for better results</p>
+                )}
               </div>
-              {aiModel === "gemini" && (
-                <p className="text-xs text-[#FF6B35]">✨ AI will enhance your prompt for better results</p>
-              )}
+
+              <div className="flex-shrink-0">
+                <label className="text-xs text-white/40 block mb-2">Upload Image</label>
+                <label className="cursor-pointer">
+                  <div className="w-24 h-24 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 transition-colors flex items-center justify-center bg-white/5">
+                    {uploadedImage ? (
+                      <img src={uploadedImage.url} className="w-full h-full object-cover rounded-lg" />
+                    ) : isUploading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Upload className="w-6 h-6 text-white/40" />
+                    )}
+                  </div>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+                {uploadedImage && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setUploadedImage(null)}
+                    className="w-full mt-1 text-xs text-white/60 hover:text-white"
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
             </div>
 
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="A majestic lion on a cliff at sunset, golden hour lighting..."
+              placeholder="Describe what you want to create or edit..."
               className="w-full min-h-[120px] bg-[#1a1a1a] border border-white/10 rounded-lg text-white placeholder:text-white/40 text-lg resize-none focus:ring-2 focus:ring-[#FF6B35] focus:outline-none p-4 mb-4"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -220,12 +267,12 @@ Respond with ONLY the enhanced prompt, nothing else.`,
             
             <div className="flex justify-between items-center">
               <div className="text-xs text-white/40">
-                Tip: Press {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter
+                {uploadedImage ? "Image uploaded - AI will enhance it" : "Tip: Press Cmd/Ctrl+Enter"}
               </div>
               <Button
                 onClick={handleGenerate}
-                disabled={!prompt.trim() || isGenerating}
-                className="btn-gradient border-0 text-white px-8 py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={(!prompt.trim() && !uploadedImage) || isGenerating}
+                className="btn-gradient text-white px-8 py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isGenerating ? (
                   <>
@@ -235,7 +282,7 @@ Respond with ONLY the enhanced prompt, nothing else.`,
                 ) : (
                   <>
                     <Wand2 className="w-5 h-5 mr-2" />
-                    Generate Image
+                    {uploadedImage ? "Enhance Image" : "Generate Image"}
                   </>
                 )}
               </Button>
