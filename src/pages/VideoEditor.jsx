@@ -42,12 +42,8 @@ export default function VideoEditor() {
   const [isRemoving, setIsRemoving] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [undoHistory, setUndoHistory] = useState([]);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(0);
 
   const videoRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
   const timelineRef = useRef(null);
   const audioRefs = useRef({});
   const canvasRef = useRef(null);
@@ -470,7 +466,7 @@ export default function VideoEditor() {
     setVideoEffects(newEffects);
   };
 
-  const handleExportFrame = () => {
+  const handleExport = () => {
     if (!videoFile) return;
 
     const canvas = document.createElement('canvas');
@@ -480,160 +476,53 @@ export default function VideoEditor() {
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     
-    // Draw current state
-    ctx.filter = getVideoFilterStyle();
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    video.pause();
+    const originalTime = video.currentTime;
+    video.currentTime = currentTime;
     
-    const textTrack = tracks.find(t => t.type === 'text');
-    if (textTrack) {
-      textTrack.clips.forEach(clip => {
-        if (currentTime >= clip.start && currentTime < clip.start + clip.duration) {
-          ctx.filter = 'none';
-          ctx.font = `${clip.style.fontWeight} ${clip.style.fontSize}px Arial`;
-          ctx.fillStyle = clip.style.color;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          
-          let y = canvas.height / 2;
-          if (clip.style.position === 'top') y = canvas.height * 0.15;
-          if (clip.style.position === 'bottom') y = canvas.height * 0.85;
-          
-          ctx.shadowColor = 'rgba(0,0,0,0.8)';
-          ctx.shadowBlur = 10;
-          ctx.fillText(clip.text, canvas.width / 2, y);
-        }
-      });
-    }
-    
-    canvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `flik_frame_${Date.now()}.png`;
-      link.click();
-      URL.revokeObjectURL(url);
-    });
-  };
-
-  const handleExportVideo = async () => {
-    if (!videoFile || isExporting) return;
-    
-    setIsExporting(true);
-    setIsPlaying(false);
-    setExportProgress(0);
-    
-    try {
-      const video = videoRef.current;
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
+    video.onseeked = () => {
+      const filters = [];
+      if (videoEffects.brightness !== 100) filters.push(`brightness(${videoEffects.brightness}%)`);
+      if (videoEffects.contrast !== 100) filters.push(`contrast(${videoEffects.contrast}%)`);
+      if (videoEffects.saturation !== 100) filters.push(`saturate(${videoEffects.saturation}%)`);
+      if (videoEffects.blur > 0) filters.push(`blur(${videoEffects.blur}px)`);
+      if (videoEffects.sepia > 0) filters.push(`sepia(${videoEffects.sepia}%)`);
       
-      const stream = canvas.captureStream(30); // 30 FPS
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9'
-      });
+      ctx.filter = filters.join(' ');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
-      chunksRef.current = [];
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        
-        // Save to Gallery
-        const file = new File([blob], `flik_export_${Date.now()}.webm`, { type: 'video/webm' });
-        const uploadResult = await base44.integrations.Core.UploadFile({ file });
-        
-        await base44.entities.Creation.create({
-          title: `Video Export - ${new Date().toLocaleString()}`,
-          type: 'video',
-          url: uploadResult.file_url,
-          thumbnail_url: null 
+      const textTrack = tracks.find(t => t.type === 'text');
+      if (textTrack) {
+        textTrack.clips.forEach(clip => {
+          if (currentTime >= clip.start && currentTime < clip.start + clip.duration) {
+            ctx.filter = 'none';
+            ctx.font = `${clip.style.fontWeight} ${clip.style.fontSize}px Arial`;
+            ctx.fillStyle = clip.style.color;
+            ctx.textAlign = 'center';
+            
+            let y = canvas.height / 2;
+            if (clip.style.position === 'top') y = 100;
+            if (clip.style.position === 'bottom') y = canvas.height - 100;
+            
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = 10;
+            ctx.fillText(clip.text, canvas.width / 2, y);
+          }
         });
-
-        // Download locally
+      }
+      
+      canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `flik_video_${Date.now()}.webm`;
+        link.download = `flik_frame_${Date.now()}.png`;
         link.click();
         URL.revokeObjectURL(url);
         
-        setIsExporting(false);
-        setExportProgress(0);
-        video.currentTime = 0; // Reset
-      };
-      
-      mediaRecorder.start();
-      
-      // Play through video frame by frame for recording
-      const fps = 30;
-      const interval = 1000 / fps;
-      let frame = 0;
-      const totalFrames = duration * fps;
-      
-      const processFrame = () => {
-        if (frame >= totalFrames) {
-          mediaRecorder.stop();
-          return;
-        }
-        
-        const time = frame / fps;
-        video.currentTime = time;
-        setCurrentTime(time);
-        setExportProgress(Math.round((frame / totalFrames) * 100));
-        
-        // Wait for seek to complete
-        const onSeek = () => {
-            // Draw frame
-            ctx.filter = getVideoFilterStyle();
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Draw overlays
-            const textTrack = tracks.find(t => t.type === 'text');
-            if (textTrack) {
-              textTrack.clips.forEach(clip => {
-                if (time >= clip.start && time < clip.start + clip.duration) {
-                  ctx.filter = 'none';
-                  ctx.font = `${clip.style.fontWeight} ${clip.style.fontSize}px Arial`;
-                  ctx.fillStyle = clip.style.color;
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'middle';
-                  
-                  let y = canvas.height / 2;
-                  if (clip.style.position === 'top') y = canvas.height * 0.15;
-                  if (clip.style.position === 'bottom') y = canvas.height * 0.85;
-                  
-                  ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                  ctx.shadowBlur = 10;
-                  ctx.fillText(clip.text, canvas.width / 2, y);
-                }
-              });
-            }
-            
-            frame++;
-            setTimeout(processFrame, interval);
-        };
-        
-        // We use a one-time event listener for the seek
-        // But since we are manually stepping, we can just call it 
-        // Note: setting currentTime is async-ish, best to wait a tiny bit or use 'seeked' event
-        // Using 'seeked' is safer
-        video.onseeked = () => {
-            video.onseeked = null; // Clear listener
-            onSeek();
-        };
-      };
-      
-      processFrame();
-      
-    } catch (err) {
-      console.error("Export error:", err);
-      alert("Export failed: " + err.message);
-      setIsExporting(false);
-    }
+        video.currentTime = originalTime;
+        if (isPlaying) video.play();
+      });
+    };
   };
 
   const formatTime = (seconds) => {
@@ -744,34 +633,14 @@ export default function VideoEditor() {
               Save Frame
             </Button>
           )}
-          <div className="flex gap-2">
-            <Button
-              onClick={handleExportFrame}
-              disabled={!videoFile || isExporting}
-              variant="outline"
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              <Image className="w-4 h-4 mr-2" />
-              Frame
-            </Button>
-            <Button
-              onClick={handleExportVideo}
-              disabled={!videoFile || isExporting}
-              className="btn-gradient text-white disabled:opacity-30 min-w-[140px]"
-            >
-              {isExporting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  {exportProgress}%
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Video
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={handleExport}
+            disabled={!videoFile}
+            className="btn-gradient text-white disabled:opacity-30"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export Frame
+          </Button>
         </div>
       </motion.div>
 

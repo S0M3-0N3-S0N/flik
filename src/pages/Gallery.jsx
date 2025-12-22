@@ -256,21 +256,6 @@ export default function Gallery() {
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete Selected
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                       selectedItems.forEach(id => {
-                         const item = creations.find(c => c.id === id);
-                         if (item) handleDownload(item.url, item.title || 'batch_download');
-                       });
-                       setSelectedItems([]);
-                    }}
-                    className="border-white/20 text-white hover:bg-white/10"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download All
-                  </Button>
                 </div>
               </div>
             )}

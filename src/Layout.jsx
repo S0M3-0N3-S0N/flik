@@ -2,7 +2,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { Sparkles, Image, Wand2, Settings } from "lucide-react";
-import KeyboardShortcutsHelper from "@/components/KeyboardShortcutsHelper";
 
 export default function Layout({ children, currentPageName }) {
   return (
@@ -145,8 +144,6 @@ export default function Layout({ children, currentPageName }) {
       <main className="pt-16">
         {children}
       </main>
-      
-      <KeyboardShortcutsHelper />
     </div>
   );
 }
