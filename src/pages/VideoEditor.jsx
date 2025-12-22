@@ -562,28 +562,32 @@ export default function VideoEditor() {
         animate={{ y: 0, opacity: 1 }}
         className="h-14 border-b border-white/5 flex items-center justify-between px-6 glass-card"
       >
-        <div className="flex items-center gap-4">
-
-          
-          {videoFile && (
+        <div className="flex items-center gap-2">
+          {activeTab === "remove" && videoFile && (
+            <div className="text-sm text-white/60 bg-white/5 px-3 py-1 rounded-lg flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
+              Drag to paint areas to remove
+            </div>
+          )}
+          {videoFile && activeTab !== "remove" && (
             <span className="text-sm text-white/40">{videoFile.name}</span>
           )}
         </div>
         
         <div className="flex items-center gap-3">
-          {undoHistory.length > 0 && (
+          <div className="flex items-center gap-1">
             <Button
               onClick={handleUndo}
               variant="ghost"
-              className="text-white hover:bg-white/10"
+              disabled={undoHistory.length === 0}
+              className="text-white hover:bg-white/10 disabled:opacity-30"
               title="Undo"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-              </svg>
+              <RotateCw className="w-4 h-4 mr-2" />
               Undo
             </Button>
-          )}
+          </div>
+
           {selectedClip && selectedClip.type === 'video' && (
             <Button
               onClick={handleSplitClip}
@@ -594,6 +598,7 @@ export default function VideoEditor() {
               Split
             </Button>
           )}
+          
           {videoFile && (
             <Button
               onClick={async () => {
@@ -622,7 +627,8 @@ export default function VideoEditor() {
                   alert('Error saving: ' + err.message);
                 }
               }}
-              className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
+              className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20"
+              title="Save Frame"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Save Frame
@@ -631,7 +637,8 @@ export default function VideoEditor() {
           <Button
             onClick={handleExport}
             disabled={!videoFile}
-            className="btn-gradient text-white disabled:opacity-30"
+            className="btn-gradient text-white text-sm disabled:opacity-30"
+            title="Export Frame"
           >
             <Download className="w-4 h-4 mr-2" />
             Export Frame
