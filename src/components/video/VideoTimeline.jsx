@@ -1,6 +1,7 @@
 import React from "react";
 import { Edit2, Trash2, ZoomIn, ZoomOut, Scissors, Undo2, Redo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 
 export default function VideoTimeline({ 
   tracks, 
