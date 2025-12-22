@@ -604,7 +604,7 @@ export default function Editor() {
         className="w-80 border-r border-white/5 glass-card hidden lg:block overflow-y-auto"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-7 bg-white/5 m-4">
+          <TabsList className="grid grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
