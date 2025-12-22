@@ -701,6 +701,45 @@ export default function Editor() {
           </div>
           
           <div className="flex items-center gap-3">
+            {currentImage && (
+              <Button
+                onClick={async () => {
+                  try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.src = currentImage.preview || currentImage.url;
+                    
+                    img.onload = async () => {
+                      canvas.width = img.width;
+                      canvas.height = img.height;
+                      ctx.drawImage(img, 0, 0);
+                      
+                      canvas.toBlob(async (blob) => {
+                        const file = new File([blob], 'image.png', { type: 'image/png' });
+                        const uploadResult = await base44.integrations.Core.UploadFile({ file });
+                        
+                        await base44.entities.Creation.create({
+                          title: 'Edited Image',
+                          type: 'image',
+                          url: uploadResult.file_url,
+                          thumbnail_url: uploadResult.file_url
+                        });
+                        
+                        alert('Saved to Gallery!');
+                      });
+                    };
+                  } catch (err) {
+                    alert('Error saving: ' + err.message);
+                  }
+                }}
+                className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Save
+              </Button>
+            )}
             <Button
               disabled={!currentImage}
               onClick={handleDownload}
