@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Undo2, Redo2, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
@@ -33,20 +33,19 @@ export default function Editor() {
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [transform, setTransform] = useState({ rotate: 0, flipH: false, flipV: false });
   
-  // Spot removal with brush
   const [brushStrokes, setBrushStrokes] = useState([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(30);
-  const brushCanvasRef = useRef(null);
   
-  // Crop
   const [isCropping, setIsCropping] = useState(false);
   const [cropArea, setCropArea] = useState({ x: 10, y: 10, width: 80, height: 80 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
-  const [dragType, setDragType] = useState(null); // 'move', 'nw', 'ne', 'sw', 'se'
+  const [dragType, setDragType] = useState(null);
   
-  const imageContainerRef = useRef(null);
+  const imageRef = useRef(null);
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
 
   const handleImageSelect = (image) => {
@@ -103,12 +102,11 @@ export default function Editor() {
 
   const handleApplyResult = () => {
     if (resultImage) {
-      const newImage = { 
+      setCurrentImage({ 
         url: resultImage, 
         preview: resultImage, 
         name: "enhanced_image.png" 
-      };
-      setCurrentImage(newImage);
+      });
       
       setAdjustments({
         brightness: 0,
@@ -121,6 +119,7 @@ export default function Editor() {
       });
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
+      setBrushStrokes([]);
     }
     setShowResult(false);
     setResultImage(null);
@@ -212,38 +211,93 @@ export default function Editor() {
     setTransform(newTransform);
   };
 
-  // Brush drawing for spot removal
+  const getRelativePosition = (e) => {
+    if (!imageRef.current) return null;
+    const rect = imageRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    if (x < 0 || x > 100 || y < 0 || y > 100) return null;
+    return { x, y };
+  };
+
   const handleMouseDown = (e) => {
     if (activeTab === "remove" && currentImage) {
-      e.preventDefault();
-      const point = getMousePos(e);
-      if (point) {
+      const pos = getRelativePosition(e);
+      if (pos) {
         setIsDrawing(true);
-        setBrushStrokes([...brushStrokes, [point]]);
+        setBrushStrokes([...brushStrokes, [pos]]);
       }
     } else if (activeTab === "crop" && isCropping) {
-      const point = getMousePos(e);
-      if (point) {
-        handleCropMouseDown(e, point);
+      const pos = getRelativePosition(e);
+      if (pos) {
+        const handleSize = 5;
+        let type = null;
+        
+        if (Math.abs(pos.x - cropArea.x) < handleSize && Math.abs(pos.y - cropArea.y) < handleSize) {
+          type = 'nw';
+        } else if (Math.abs(pos.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(pos.y - cropArea.y) < handleSize) {
+          type = 'ne';
+        } else if (Math.abs(pos.x - cropArea.x) < handleSize && Math.abs(pos.y - (cropArea.y + cropArea.height)) < handleSize) {
+          type = 'sw';
+        } else if (Math.abs(pos.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(pos.y - (cropArea.y + cropArea.height)) < handleSize) {
+          type = 'se';
+        } else if (pos.x >= cropArea.x && pos.x <= cropArea.x + cropArea.width && pos.y >= cropArea.y && pos.y <= cropArea.y + cropArea.height) {
+          type = 'move';
+        }
+        
+        if (type) {
+          setDragType(type);
+          setIsDragging(true);
+          setDragStart(pos);
+        }
       }
     }
   };
 
   const handleMouseMove = (e) => {
     if (activeTab === "remove" && isDrawing && currentImage) {
-      e.preventDefault();
-      const point = getMousePos(e);
-      if (point) {
+      const pos = getRelativePosition(e);
+      if (pos && brushStrokes.length > 0) {
         const newStrokes = [...brushStrokes];
-        if (newStrokes.length > 0) {
-          newStrokes[newStrokes.length - 1].push(point);
-          setBrushStrokes(newStrokes);
-        }
+        newStrokes[newStrokes.length - 1].push(pos);
+        setBrushStrokes(newStrokes);
       }
-    } else if (activeTab === "crop" && isDragging) {
-      const point = getMousePos(e);
-      if (point) {
-        handleCropMouseMove(point);
+    } else if (activeTab === "crop" && isDragging && dragStart && dragType) {
+      const pos = getRelativePosition(e);
+      if (pos) {
+        const deltaX = pos.x - dragStart.x;
+        const deltaY = pos.y - dragStart.y;
+        let newCrop = { ...cropArea };
+
+        if (dragType === 'move') {
+          newCrop.x = Math.max(0, Math.min(100 - cropArea.width, cropArea.x + deltaX));
+          newCrop.y = Math.max(0, Math.min(100 - cropArea.height, cropArea.y + deltaY));
+        } else if (dragType === 'nw') {
+          const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 10, cropArea.x + deltaX));
+          const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 10, cropArea.y + deltaY));
+          newCrop.width = cropArea.width + (cropArea.x - newX);
+          newCrop.height = cropArea.height + (cropArea.y - newY);
+          newCrop.x = newX;
+          newCrop.y = newY;
+        } else if (dragType === 'ne') {
+          const newWidth = Math.max(10, Math.min(100 - cropArea.x, cropArea.width + deltaX));
+          const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 10, cropArea.y + deltaY));
+          newCrop.width = newWidth;
+          newCrop.height = cropArea.height + (cropArea.y - newY);
+          newCrop.y = newY;
+        } else if (dragType === 'sw') {
+          const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 10, cropArea.x + deltaX));
+          const newHeight = Math.max(10, Math.min(100 - cropArea.y, cropArea.height + deltaY));
+          newCrop.width = cropArea.width + (cropArea.x - newX);
+          newCrop.height = newHeight;
+          newCrop.x = newX;
+        } else if (dragType === 'se') {
+          newCrop.width = Math.max(10, Math.min(100 - cropArea.x, cropArea.width + deltaX));
+          newCrop.height = Math.max(10, Math.min(100 - cropArea.y, cropArea.height + deltaY));
+        }
+
+        setCropArea(newCrop);
+        setDragStart(pos);
       }
     }
   };
@@ -252,22 +306,6 @@ export default function Editor() {
     setIsDrawing(false);
     setIsDragging(false);
     setDragType(null);
-  };
-
-  const getMousePos = (e) => {
-    const container = imageContainerRef.current;
-    if (!container) return null;
-    
-    const img = container.querySelector('img');
-    if (!img) return null;
-    
-    const rect = img.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
-    if (x < 0 || x > 100 || y < 0 || y > 100) return null;
-    
-    return { x, y };
   };
 
   const handleRemoveSpots = async () => {
@@ -303,7 +341,6 @@ export default function Editor() {
     }
   };
 
-  // Crop functions
   const handleStartCrop = () => {
     setIsCropping(true);
     setCropArea({ x: 10, y: 10, width: 80, height: 80 });
@@ -329,7 +366,6 @@ export default function Editor() {
         img.onload = resolve;
       });
 
-      // Calculate crop dimensions
       const cropX = (cropArea.x / 100) * img.width;
       const cropY = (cropArea.y / 100) * img.height;
       const cropWidth = (cropArea.width / 100) * img.width;
@@ -338,20 +374,15 @@ export default function Editor() {
       canvas.width = cropWidth;
       canvas.height = cropHeight;
 
-      ctx.drawImage(
-        img,
-        cropX, cropY, cropWidth, cropHeight,
-        0, 0, cropWidth, cropHeight
-      );
+      ctx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
-        const newImage = {
+        setCurrentImage({
           url: url,
           preview: url,
           name: "cropped_image.png"
-        };
-        setCurrentImage(newImage);
+        });
         setIsCropping(false);
         setIsProcessing(false);
       });
@@ -361,105 +392,36 @@ export default function Editor() {
     }
   };
 
-  const handleCropMouseDown = (e, point) => {
-    const handleSize = 5; // percentage
-    let type = null;
-    
-    // Check corners
-    if (Math.abs(point.x - cropArea.x) < handleSize && Math.abs(point.y - cropArea.y) < handleSize) {
-      type = 'nw';
-    } else if (Math.abs(point.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(point.y - cropArea.y) < handleSize) {
-      type = 'ne';
-    } else if (Math.abs(point.x - cropArea.x) < handleSize && Math.abs(point.y - (cropArea.y + cropArea.height)) < handleSize) {
-      type = 'sw';
-    } else if (Math.abs(point.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(point.y - (cropArea.y + cropArea.height)) < handleSize) {
-      type = 'se';
-    } else if (
-      point.x >= cropArea.x && 
-      point.x <= cropArea.x + cropArea.width &&
-      point.y >= cropArea.y && 
-      point.y <= cropArea.y + cropArea.height
-    ) {
-      type = 'move';
-    }
-    
-    if (type) {
-      setDragType(type);
-      setIsDragging(true);
-      setDragStart(point);
-    }
-  };
-
-  const handleCropMouseMove = (point) => {
-    if (!dragStart || !dragType) return;
-
-    const deltaX = point.x - dragStart.x;
-    const deltaY = point.y - dragStart.y;
-
-    let newCrop = { ...cropArea };
-
-    if (dragType === 'move') {
-      newCrop.x = Math.max(0, Math.min(100 - cropArea.width, cropArea.x + deltaX));
-      newCrop.y = Math.max(0, Math.min(100 - cropArea.height, cropArea.y + deltaY));
-    } else if (dragType === 'nw') {
-      const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 10, cropArea.x + deltaX));
-      const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 10, cropArea.y + deltaY));
-      newCrop.width = cropArea.width + (cropArea.x - newX);
-      newCrop.height = cropArea.height + (cropArea.y - newY);
-      newCrop.x = newX;
-      newCrop.y = newY;
-    } else if (dragType === 'ne') {
-      const newWidth = Math.max(10, Math.min(100 - cropArea.x, cropArea.width + deltaX));
-      const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 10, cropArea.y + deltaY));
-      newCrop.width = newWidth;
-      newCrop.height = cropArea.height + (cropArea.y - newY);
-      newCrop.y = newY;
-    } else if (dragType === 'sw') {
-      const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 10, cropArea.x + deltaX));
-      const newHeight = Math.max(10, Math.min(100 - cropArea.y, cropArea.height + deltaY));
-      newCrop.width = cropArea.width + (cropArea.x - newX);
-      newCrop.height = newHeight;
-      newCrop.x = newX;
-    } else if (dragType === 'se') {
-      newCrop.width = Math.max(10, Math.min(100 - cropArea.x, cropArea.width + deltaX));
-      newCrop.height = Math.max(10, Math.min(100 - cropArea.y, cropArea.height + deltaY));
-    }
-
-    setCropArea(newCrop);
-    setDragStart(point);
-  };
-
-  // Draw brush strokes on canvas overlay
   useEffect(() => {
-    if (activeTab !== "remove" || !brushCanvasRef.current) {
-      return;
-    }
+    if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
 
-    const canvas = brushCanvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    const rect = img.getBoundingClientRect();
     
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     if (brushStrokes.length === 0) return;
     
     ctx.strokeStyle = 'rgba(255, 107, 53, 0.8)';
-    ctx.lineWidth = Math.max(2, brushSize / 5);
+    ctx.fillStyle = 'rgba(255, 107, 53, 0.8)';
+    ctx.lineWidth = brushSize / 5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.shadowColor = 'rgba(255, 107, 53, 0.5)';
-    ctx.shadowBlur = 5;
 
     brushStrokes.forEach(stroke => {
-      if (stroke.length < 1) return;
-      
-      ctx.beginPath();
+      if (stroke.length === 0) return;
       
       if (stroke.length === 1) {
-        // Single point - draw a circle
+        ctx.beginPath();
         ctx.arc((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // Multiple points - draw stroke
+        ctx.beginPath();
         ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
         
         for (let i = 1; i < stroke.length; i++) {
@@ -474,27 +436,13 @@ export default function Editor() {
   const getFilterStyle = () => {
     const filters = [];
     
-    if (adjustments.brightness !== 0) {
-      filters.push(`brightness(${100 + adjustments.brightness}%)`);
-    }
-    if (adjustments.contrast !== 0) {
-      filters.push(`contrast(${100 + adjustments.contrast}%)`);
-    }
-    if (adjustments.saturation !== 0) {
-      filters.push(`saturate(${100 + adjustments.saturation}%)`);
-    }
-    if (adjustments.blur > 0) {
-      filters.push(`blur(${adjustments.blur}px)`);
-    }
-    if (adjustments.hue !== 0) {
-      filters.push(`hue-rotate(${adjustments.hue}deg)`);
-    }
-    if (adjustments.sepia > 0) {
-      filters.push(`sepia(${adjustments.sepia}%)`);
-    }
-    if (adjustments.grayscale > 0) {
-      filters.push(`grayscale(${adjustments.grayscale}%)`);
-    }
+    if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
+    if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
+    if (adjustments.saturation !== 0) filters.push(`saturate(${100 + adjustments.saturation}%)`);
+    if (adjustments.blur > 0) filters.push(`blur(${adjustments.blur}px)`);
+    if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
+    if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
+    if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
     
     if (selectedFilter && selectedFilter.id !== "none") {
       filters.push(selectedFilter.filter);
@@ -506,15 +454,9 @@ export default function Editor() {
   const getTransformStyle = () => {
     const transforms = [];
     
-    if (transform.rotate !== 0) {
-      transforms.push(`rotate(${transform.rotate}deg)`);
-    }
-    if (transform.flipH) {
-      transforms.push(`scaleX(-1)`);
-    }
-    if (transform.flipV) {
-      transforms.push(`scaleY(-1)`);
-    }
+    if (transform.rotate !== 0) transforms.push(`rotate(${transform.rotate}deg)`);
+    if (transform.flipH) transforms.push(`scaleX(-1)`);
+    if (transform.flipV) transforms.push(`scaleY(-1)`);
     
     return transforms.length > 0 ? transforms.join(" ") : "none";
   };
@@ -605,7 +547,7 @@ export default function Editor() {
                   {brushStrokes.length > 0 && (
                     <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-white/80">{brushStrokes.length} stroke(s) painted</span>
+                        <span className="text-sm text-white/80">{brushStrokes.length} stroke(s)</span>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -657,7 +599,7 @@ export default function Editor() {
             {activeTab === "crop" && isCropping && (
               <div className="text-sm text-white/60 bg-white/5 px-3 py-1 rounded-lg flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-                Drag corners to resize, drag center to move
+                Drag corners to resize, center to move
               </div>
             )}
           </div>
@@ -674,14 +616,18 @@ export default function Editor() {
           </div>
         </motion.div>
         
-        <div className="flex-1 relative overflow-hidden bg-[#0A0A0A]">
+        <div 
+          ref={containerRef}
+          className="flex-1 relative overflow-hidden bg-[#0A0A0A]"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
           <div 
             className="absolute inset-0 opacity-[0.03]"
             style={{
-              backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-              `,
+              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
               backgroundSize: "40px 40px"
             }}
           />
@@ -690,19 +636,13 @@ export default function Editor() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
           {currentImage ? (
-            <div 
-              ref={imageContainerRef}
-              className="w-full h-full flex items-center justify-center p-8"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
-              <div className="relative max-w-full max-h-full">
+            <div className="w-full h-full flex items-center justify-center p-8">
+              <div className="relative">
                 <img
+                  ref={imageRef}
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
-                  className={`max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl transition-all duration-200 ${
+                  className={`max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl ${
                     activeTab === "remove" ? "cursor-crosshair" : activeTab === "crop" && isCropping ? "cursor-move" : ""
                   }`}
                   style={{
@@ -712,35 +652,25 @@ export default function Editor() {
                   draggable={false}
                 />
                 
-                {/* Brush canvas overlay */}
                 {activeTab === "remove" && (
                   <canvas
-                    ref={brushCanvasRef}
+                    ref={canvasRef}
                     className="absolute top-0 left-0 pointer-events-none rounded-2xl"
-                    width={1200}
-                    height={900}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                    }}
                   />
                 )}
 
-                {/* Crop overlay */}
                 {activeTab === "crop" && isCropping && (
                   <>
-                    <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+                    <div className="absolute inset-0 bg-black/50 pointer-events-none rounded-2xl" />
                     <div
-                      className="absolute border-2 border-[#FF6B35] bg-transparent pointer-events-auto"
+                      className="absolute border-2 border-[#FF6B35] bg-transparent"
                       style={{
                         left: `${cropArea.x}%`,
                         top: `${cropArea.y}%`,
                         width: `${cropArea.width}%`,
                         height: `${cropArea.height}%`,
-                        cursor: 'move'
                       }}
                     >
-                      {/* Corner handles */}
                       <div className="absolute -top-2 -left-2 w-4 h-4 bg-[#FF6B35] rounded-full cursor-nw-resize" />
                       <div className="absolute -top-2 -right-2 w-4 h-4 bg-[#FF6B35] rounded-full cursor-ne-resize" />
                       <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-[#FF6B35] rounded-full cursor-sw-resize" />
