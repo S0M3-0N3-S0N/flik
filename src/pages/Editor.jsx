@@ -1013,6 +1013,48 @@ export default function Editor() {
           <AnimatePresence>
             {isProcessing && <ProcessingOverlay tool={activeTool} />}
           </AnimatePresence>
+
+          {batchImages.length > 0 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-2xl p-2 flex items-center gap-2 max-w-[80%] overflow-x-auto shadow-2xl z-20">
+              {batchImages.map((img, idx) => (
+                <div 
+                  key={img.id}
+                  onClick={() => {
+                    saveCurrentStateToBatch();
+                    switchToBatchImage(idx);
+                  }}
+                  className={`relative w-16 h-16 rounded-lg overflow-hidden cursor-pointer border-2 transition-all flex-shrink-0 group ${
+                    activeBatchIndex === idx ? 'border-[#FF6B35]' : 'border-transparent hover:border-white/20'
+                  }`}
+                >
+                  <img src={img.preview} className="w-full h-full object-cover" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newBatch = batchImages.filter((_, i) => i !== idx);
+                      setBatchImages(newBatch);
+                      if (activeBatchIndex === idx) {
+                        if (newBatch.length > 0) switchToBatchImage(0, newBatch);
+                        else {
+                          setCurrentImage(null);
+                          setActiveBatchIndex(null);
+                        }
+                      } else if (activeBatchIndex > idx) {
+                        setActiveBatchIndex(activeBatchIndex - 1);
+                      }
+                    }}
+                    className="absolute top-0 right-0 p-0.5 bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <label className="w-16 h-16 rounded-lg border-2 border-dashed border-white/10 flex items-center justify-center cursor-pointer hover:bg-white/5 hover:border-white/20 transition-all flex-shrink-0">
+                <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
+                <span className="text-2xl text-white/20">+</span>
+              </label>
+            </div>
+          )}
         </div>
       </main>
       
