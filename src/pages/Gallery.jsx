@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "../utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, Download, Trash2, Image as ImageIcon, Video, Search, Edit } from "lucide-react";
@@ -25,6 +27,7 @@ export default function Gallery() {
   const [selectedItems, setSelectedItems] = useState([]);
   const itemsPerPage = 20;
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: creations = [], isLoading } = useQuery({
     queryKey: ['creations'],
@@ -327,8 +330,8 @@ export default function Gallery() {
                        <Button
                          onClick={(e) => {
                            e.stopPropagation();
-                           const url = item.type === 'image' ? '/Editor' : '/VideoEditor';
-                           window.location.href = url + '?load=' + encodeURIComponent(item.url);
+                           const pageName = item.type === 'image' ? 'Editor' : 'VideoEditor';
+                           navigate(createPageUrl(pageName) + '?load=' + encodeURIComponent(item.url));
                          }}
                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs h-8"
                        >
@@ -499,8 +502,8 @@ export default function Gallery() {
             <div className="flex gap-2">
               <Button
                 onClick={() => {
-                  const url = selectedItem.type === 'image' ? '/Editor' : '/VideoEditor';
-                  window.location.href = url + '?load=' + encodeURIComponent(selectedItem.url);
+                  const pageName = selectedItem.type === 'image' ? 'Editor' : 'VideoEditor';
+                  navigate(createPageUrl(pageName) + '?load=' + encodeURIComponent(selectedItem.url));
                 }}
                 className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
               >
