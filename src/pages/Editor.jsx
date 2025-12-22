@@ -706,15 +706,41 @@ export default function Editor() {
 
               {batchImages.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-sm text-white/70">{batchImages.length} images selected</p>
-                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                    {batchImages.map(img => (
-                      <img key={img.id} src={img.preview} className="w-full h-20 object-cover rounded" />
-                    ))}
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                    <p className="text-xs text-white/60 font-medium uppercase">Workspace Actions</p>
+                    <Button 
+                      onClick={() => {
+                        const updatedBatch = batchImages.map(img => ({
+                          ...img,
+                          adjustments: { ...adjustments },
+                          filter: selectedFilter,
+                          transform: { ...transform }
+                        }));
+                        setBatchImages(updatedBatch);
+                        alert('Synced current edits to all images!');
+                      }}
+                      variant="outline"
+                      className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white justify-start"
+                    >
+                      <Layers className="w-4 h-4 mr-2" />
+                      Sync Current Edits to All
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setBatchImages([]);
+                        setCurrentImage(null);
+                        setActiveBatchIndex(null);
+                      }}
+                      variant="ghost"
+                      className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 justify-start"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Clear Workspace
+                    </Button>
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-xs text-white/60">Apply to all:</p>
+                    <p className="text-xs text-white/60">AI Batch Actions:</p>
                     {[
                       { label: "AI Enhance", prompt: "Enhance this image with better colors, improved clarity, professional quality" },
                       { label: "Upscale 4x", prompt: "Upscale to higher resolution, enhance details" },
