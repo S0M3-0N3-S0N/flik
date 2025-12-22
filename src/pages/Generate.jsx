@@ -241,7 +241,6 @@ Respond with ONLY the enhanced prompt, nothing else.`,
                 >
                   <Video className="w-4 h-4" />
                   Video
-                  <span className="ml-1.5 text-[10px] bg-white/10 border border-white/10 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
                 </button>
               </div>
             </div>
