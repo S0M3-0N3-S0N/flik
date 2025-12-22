@@ -216,20 +216,48 @@ export default function Gallery() {
                     </div>
                   )}
                   
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <div className="flex items-center gap-1 mb-2">
-                        {item.type === 'video' ? (
-                          <Video className="w-3 h-3 text-[#FF6B35]" />
-                        ) : (
-                          <ImageIcon className="w-3 h-3 text-[#FF6B35]" />
-                        )}
-                        <span className="text-xs text-white/60">{item.type}</span>
-                      </div>
-                      <p className="text-sm text-white line-clamp-2">
-                        {item.title || item.prompt || 'Untitled'}
-                      </p>
-                    </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                   <div className="absolute top-3 right-3 flex gap-2">
+                     <Button
+                       size="icon"
+                       variant="ghost"
+                       onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                       className="bg-black/50 hover:bg-red-500/80 text-white"
+                     >
+                       <Trash2 className="w-4 h-4" />
+                     </Button>
+                   </div>
+                   <div className="absolute bottom-0 left-0 right-0 p-3">
+                     <div className="flex items-center gap-1 mb-2">
+                       {item.type === 'video' ? (
+                         <Video className="w-3 h-3 text-[#FF6B35]" />
+                       ) : (
+                         <ImageIcon className="w-3 h-3 text-[#FF6B35]" />
+                       )}
+                       <span className="text-xs text-white/60">{item.type}</span>
+                     </div>
+                     <p className="text-sm text-white line-clamp-1 mb-2">
+                       {item.title || item.prompt || 'Untitled'}
+                     </p>
+                     <div className="flex gap-2">
+                       <Button
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           const url = item.type === 'image' ? '/Editor' : '/VideoEditor';
+                           window.location.href = url;
+                         }}
+                         className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs h-8"
+                       >
+                         Edit
+                       </Button>
+                       <Button
+                         onClick={(e) => e.stopPropagation()}
+                         className="flex-1 btn-gradient text-white text-xs h-8"
+                       >
+                         View
+                       </Button>
+                     </div>
+                   </div>
                   </div>
                 </motion.div>
               ))}
