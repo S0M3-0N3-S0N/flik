@@ -563,12 +563,7 @@ export default function VideoEditor() {
         className="h-14 border-b border-white/5 flex items-center justify-between px-6 glass-card"
       >
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg btn-gradient flex items-center justify-center">
-              <Video className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-bold gradient-text">Video Editor</span>
-          </div>
+
           
           {videoFile && (
             <span className="text-sm text-white/40">{videoFile.name}</span>
