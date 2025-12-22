@@ -359,26 +359,28 @@ export default function Editor() {
 
   const handleCropMouseDown = (e, point) => {
     const handleSize = 5; // percentage
+    let type = null;
     
     // Check corners
     if (Math.abs(point.x - cropArea.x) < handleSize && Math.abs(point.y - cropArea.y) < handleSize) {
-      setDragType('nw');
+      type = 'nw';
     } else if (Math.abs(point.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(point.y - cropArea.y) < handleSize) {
-      setDragType('ne');
+      type = 'ne';
     } else if (Math.abs(point.x - cropArea.x) < handleSize && Math.abs(point.y - (cropArea.y + cropArea.height)) < handleSize) {
-      setDragType('sw');
+      type = 'sw';
     } else if (Math.abs(point.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(point.y - (cropArea.y + cropArea.height)) < handleSize) {
-      setDragType('se');
+      type = 'se';
     } else if (
       point.x >= cropArea.x && 
       point.x <= cropArea.x + cropArea.width &&
       point.y >= cropArea.y && 
       point.y <= cropArea.y + cropArea.height
     ) {
-      setDragType('move');
+      type = 'move';
     }
     
-    if (setDragType) {
+    if (type) {
+      setDragType(type);
       setIsDragging(true);
       setDragStart(point);
     }
@@ -425,29 +427,43 @@ export default function Editor() {
 
   // Draw brush strokes on canvas overlay
   useEffect(() => {
-    if (activeTab !== "remove" || !brushCanvasRef.current || brushStrokes.length === 0) return;
+    if (activeTab !== "remove" || !brushCanvasRef.current) {
+      return;
+    }
 
     const canvas = brushCanvasRef.current;
     const ctx = canvas.getContext('2d');
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    ctx.strokeStyle = 'rgba(255, 107, 53, 0.7)';
-    ctx.lineWidth = brushSize / 10;
+    if (brushStrokes.length === 0) return;
+    
+    ctx.strokeStyle = 'rgba(255, 107, 53, 0.8)';
+    ctx.lineWidth = Math.max(2, brushSize / 5);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(255, 107, 53, 0.5)';
+    ctx.shadowBlur = 5;
 
     brushStrokes.forEach(stroke => {
-      if (stroke.length < 2) return;
+      if (stroke.length < 1) return;
       
       ctx.beginPath();
-      ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
       
-      for (let i = 1; i < stroke.length; i++) {
-        ctx.lineTo((stroke[i].x / 100) * canvas.width, (stroke[i].y / 100) * canvas.height);
+      if (stroke.length === 1) {
+        // Single point - draw a circle
+        ctx.arc((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Multiple points - draw stroke
+        ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
+        
+        for (let i = 1; i < stroke.length; i++) {
+          ctx.lineTo((stroke[i].x / 100) * canvas.width, (stroke[i].y / 100) * canvas.height);
+        }
+        
+        ctx.stroke();
       }
-      
-      ctx.stroke();
     });
   }, [brushStrokes, brushSize, activeTab]);
 
@@ -693,12 +709,12 @@ export default function Editor() {
                 />
                 
                 {/* Brush canvas overlay */}
-                {activeTab === "remove" && brushStrokes.length > 0 && (
+                {activeTab === "remove" && (
                   <canvas
                     ref={brushCanvasRef}
-                    className="absolute inset-0 pointer-events-none"
-                    width={800}
-                    height={600}
+                    className="absolute top-0 left-0 pointer-events-none rounded-2xl"
+                    width={1200}
+                    height={900}
                     style={{
                       width: '100%',
                       height: '100%',
