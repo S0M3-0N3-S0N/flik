@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export default function Generate() {
   const [isUploading, setIsUploading] = useState(false);
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -215,8 +216,12 @@ Respond with ONLY the enhanced prompt, nothing else.`,
 
               <div className="flex-shrink-0">
                 <label className="text-xs text-white/40 block mb-2">Upload Image</label>
-                <label className="cursor-pointer" title="Upload reference image">
-                  <div className="w-24 h-24 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 transition-colors flex items-center justify-center bg-white/5">
+                <div title="Upload reference image">
+                  <button 
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-24 h-24 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 hover:bg-white/5 transition-all flex items-center justify-center bg-transparent p-0 cursor-pointer"
+                  >
                     {uploadedImage ? (
                       <div className="relative w-full h-full">
                         <img src={uploadedImage.url} className="w-full h-full object-cover rounded-lg" />
@@ -231,9 +236,15 @@ Respond with ONLY the enhanced prompt, nothing else.`,
                     ) : (
                       <Upload className="w-6 h-6 text-white/40" />
                     )}
-                  </div>
-                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                </label>
+                  </button>
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                    className="hidden" 
+                  />
+                </div>
                 {uploadedImage && (
                   <Button
                     size="sm"
