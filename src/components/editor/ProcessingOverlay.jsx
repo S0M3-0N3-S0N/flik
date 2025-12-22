@@ -29,15 +29,7 @@ export default function ProcessingOverlay({ tool }) {
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             className="absolute inset-4 rounded-full border-2 border-[#FF6B35]/30"
           />
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <div className="w-16 h-16 rounded-2xl btn-gradient flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-          </motion.div>
+
         </div>
         
         <motion.h3
