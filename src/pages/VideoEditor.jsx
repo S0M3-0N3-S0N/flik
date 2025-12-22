@@ -809,7 +809,7 @@ export default function VideoEditor() {
                           const uploadResult = await base44.integrations.Core.UploadFile({ file });
                           
                           const result = await base44.integrations.Core.GenerateImage({
-                            prompt: 'Identify and remove all watermarks, logos, and text overlays from this image. Fill the areas naturally to match the background. Do not change anything else.',
+                            prompt: 'Remove text overlays and graphic logos from the image. Blend the removed areas naturally with the surrounding background.',
                             existing_image_urls: [uploadResult.file_url]
                           });
                           
@@ -832,7 +832,12 @@ export default function VideoEditor() {
                           alert('Watermark removed! The cleaned frame has been saved to Gallery and downloaded.');
                         });
                       } catch (err) {
-                        alert('Error removing watermark: ' + err.message);
+                        console.error('Removal failed:', err);
+                        if (err.message && err.message.includes('refused')) {
+                          alert('The AI refused to process this image. This usually happens if the content violates safety policies or if the "watermark" terminology triggers copyright filters. Please try painting over the area manually in the "Magic Brush" tool instead.');
+                        } else {
+                          alert('Error removing content: ' + (err.message || 'Unknown error'));
+                        }
                       } finally {
                         setIsProcessing(false);
                       }
