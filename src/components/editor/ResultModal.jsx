@@ -169,7 +169,7 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
               </Button>
               <Button
                 onClick={onApply}
-                className="btn-gradient border-0 text-white min-w-[160px] font-semibold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 hover:scale-105 transition-all"
+                className="bg-[#FF6B35] hover:bg-[#F72C25] text-white border-0 min-w-[160px] font-bold shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-105 transition-all z-10"
               >
                 <Check className="w-5 h-5 mr-2" />
                 Apply & Close
