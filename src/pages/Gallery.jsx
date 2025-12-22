@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Download, Trash2, Eye, Image as ImageIcon, Video, Filter, Search, X } from "lucide-react";
+import { Sparkles, Download, Trash2, Image as ImageIcon, Video, Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +19,8 @@ export default function Gallery() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [filterType, setFilterType] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [dateFilter, setDateFilter] = useState("all");
   const queryClient = useQueryClient();
 
   const { data: creations = [], isLoading } = useQuery({
@@ -38,7 +41,24 @@ export default function Gallery() {
       item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.prompt?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === 'all' || item.type === filterType;
-    return matchesSearch && matchesType;
+    
+    let matchesDate = true;
+    if (dateFilter !== 'all' && item.created_date) {
+      const itemDate = new Date(item.created_date);
+      const now = new Date();
+      const daysDiff = (now - itemDate) / (1000 * 60 * 60 * 24);
+      
+      if (dateFilter === 'today') matchesDate = daysDiff < 1;
+      else if (dateFilter === 'week') matchesDate = daysDiff < 7;
+      else if (dateFilter === 'month') matchesDate = daysDiff < 30;
+    }
+    
+    return matchesSearch && matchesType && matchesDate;
+  }).sort((a, b) => {
+    if (sortBy === 'newest') return new Date(b.created_date) - new Date(a.created_date);
+    if (sortBy === 'oldest') return new Date(a.created_date) - new Date(b.created_date);
+    if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
+    return 0;
   });
 
   const handleDownload = async (url, title) => {
@@ -104,23 +124,50 @@ export default function Gallery() {
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-              <Input
-                placeholder="Search your creations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-              />
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Input
+                  placeholder="Search your creations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+              </div>
+              <Tabs value={filterType} onValueChange={setFilterType}>
+                <TabsList className="bg-white/5">
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="image">Images</TabsTrigger>
+                  <TabsTrigger value="video">Videos</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
-            <Tabs value={filterType} onValueChange={setFilterType}>
-              <TabsList className="bg-white/5">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="image">Images</TabsTrigger>
-                <TabsTrigger value="video">Videos</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            
+            <div className="flex gap-3">
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="title">By Title</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </motion.div>
 

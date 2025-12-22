@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { 
   Upload, Play, Pause, SkipBack, SkipForward, Scissors, 
   Download, Volume2, ZoomIn, ZoomOut, Plus, Trash2,
-  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2, X, Sliders
+  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2, X, Sliders, Zap
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,31 @@ export default function VideoEditor() {
     const file = e.target.files[0];
     if (file && file.type.startsWith('video/')) {
       const url = URL.createObjectURL(file);
-      setVideoFile({ url, file, name: file.name });
+      const video = document.createElement('video');
+      video.src = url;
+      video.onloadedmetadata = () => {
+        const newClip = {
+          id: Date.now(),
+          type: 'video',
+          url: url,
+          name: file.name,
+          start: duration,
+          duration: video.duration,
+          transition: null,
+        };
+        
+        const newTracks = [...tracks];
+        const videoTrack = newTracks.find(t => t.type === 'video');
+        if (videoTrack) {
+          videoTrack.clips.push(newClip);
+          setTracks(newTracks);
+          setDuration(duration + video.duration);
+        }
+        
+        if (!videoFile) {
+          setVideoFile({ url, file, name: file.name });
+        }
+      };
     }
   };
 
@@ -555,10 +579,11 @@ export default function VideoEditor() {
           className="w-80 border-r border-white/5 glass-card overflow-y-auto"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-5 bg-white/5 m-4">
+            <TabsList className="w-full grid grid-cols-6 bg-white/5 m-4">
               <TabsTrigger value="media"><Layers className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="text"><Type className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="remove"><Wand2 className="w-4 h-4" /></TabsTrigger>
+              <TabsTrigger value="transitions"><Zap className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="effects"><Sparkles className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="speed"><Sliders className="w-4 h-4" /></TabsTrigger>
             </TabsList>
@@ -583,10 +608,26 @@ export default function VideoEditor() {
                 </label>
 
                 {videoFile && (
-                  <div className="mt-4 p-3 rounded-lg bg-white/5">
-                    <p className="text-xs text-white/60 mb-2">Current Video</p>
-                    <p className="text-sm text-white truncate">{videoFile.name}</p>
-                    <p className="text-xs text-white/40 mt-1">{formatTime(duration)}</p>
+                  <div className="mt-4 space-y-2">
+                    <div className="p-3 rounded-lg bg-white/5">
+                      <p className="text-xs text-white/60 mb-2">Project</p>
+                      <p className="text-sm text-white truncate">{videoFile.name}</p>
+                      <p className="text-xs text-white/40 mt-1">{formatTime(duration)}</p>
+                    </div>
+                    
+                    <label className="block cursor-pointer">
+                      <div className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <Plus className="w-4 h-4 text-[#FF6B35]" />
+                          <p className="text-sm text-white">Add More Videos</p>
+                        </div>
+                      </div>
+                      <input type="file" accept="video/*" onChange={handleFileUpload} className="hidden" multiple />
+                    </label>
+                    
+                    <p className="text-xs text-white/40 mt-2">
+                      {tracks.find(t => t.type === 'video')?.clips.length || 0} video clip(s)
+                    </p>
                   </div>
                 )}
               </TabsContent>
@@ -755,6 +796,81 @@ export default function VideoEditor() {
                       )}
                     </Button>
                   </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="transitions" className="mt-0">
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Transitions</h3>
+                
+                {selectedClip && selectedClip.type === 'video' ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-white/60 mb-3">Apply transition to selected clip</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { id: 'fade', name: 'Fade', desc: 'Smooth fade' },
+                        { id: 'dissolve', name: 'Dissolve', desc: 'Cross dissolve' },
+                        { id: 'slide', name: 'Slide', desc: 'Slide in' },
+                        { id: 'wipe', name: 'Wipe', desc: 'Wipe effect' },
+                      ].map((trans) => (
+                        <button
+                          key={trans.id}
+                          onClick={() => {
+                            const track = tracks.find(t => t.clips.some(c => c.id === selectedClip.id));
+                            if (track) {
+                              const newTracks = tracks.map(t => {
+                                if (t.id === track.id) {
+                                  return {
+                                    ...t,
+                                    clips: t.clips.map(c => 
+                                      c.id === selectedClip.id ? { ...c, transition: trans.id } : c
+                                    )
+                                  };
+                                }
+                                return t;
+                              });
+                              setTracks(newTracks);
+                            }
+                          }}
+                          className={`p-4 rounded-lg transition-colors text-left ${
+                            selectedClip.transition === trans.id 
+                              ? 'bg-[#FF6B35]/20 border-2 border-[#FF6B35]' 
+                              : 'bg-white/5 hover:bg-white/10 border-2 border-transparent'
+                          }`}
+                        >
+                          <p className="text-sm text-white font-medium">{trans.name}</p>
+                          <p className="text-xs text-white/50">{trans.desc}</p>
+                        </button>
+                      ))}
+                    </div>
+                    {selectedClip.transition && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const track = tracks.find(t => t.clips.some(c => c.id === selectedClip.id));
+                          if (track) {
+                            const newTracks = tracks.map(t => {
+                              if (t.id === track.id) {
+                                return {
+                                  ...t,
+                                  clips: t.clips.map(c => 
+                                    c.id === selectedClip.id ? { ...c, transition: null } : c
+                                  )
+                                };
+                              }
+                              return t;
+                            });
+                            setTracks(newTracks);
+                          }
+                        }}
+                        className="w-full border-white/20 text-white"
+                      >
+                        Remove Transition
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-white/50">Select a video clip to add transitions</p>
                 )}
               </TabsContent>
 

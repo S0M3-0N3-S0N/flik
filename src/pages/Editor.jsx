@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
@@ -42,6 +42,8 @@ export default function Editor() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragType, setDragType] = useState(null);
+  const [batchImages, setBatchImages] = useState([]);
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
@@ -66,6 +68,51 @@ export default function Editor() {
       setIsCropping(false);
       setCropArea({ x: 10, y: 10, width: 80, height: 80 });
     }
+  };
+
+  const handleBatchUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    const images = imageFiles.map(file => ({
+      id: Date.now() + Math.random(),
+      file,
+      preview: URL.createObjectURL(file),
+      name: file.name,
+    }));
+    setBatchImages(images);
+  };
+
+  const handleBatchProcess = async (tool) => {
+    if (batchImages.length === 0) return;
+    
+    setIsBatchProcessing(true);
+    const results = [];
+    
+    for (const image of batchImages) {
+      try {
+        const uploadResult = await base44.integrations.Core.UploadFile({ file: image.file });
+        const result = await base44.integrations.Core.GenerateImage({
+          prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition.`,
+          existing_image_urls: [uploadResult.file_url]
+        });
+        results.push({ original: image, result: result.url });
+      } catch (err) {
+        console.error('Batch error:', err);
+      }
+    }
+    
+    alert(`Processed ${results.length} images! Check your downloads.`);
+    results.forEach((r, i) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = r.result;
+        link.download = `batch_${i}_${r.original.name}`;
+        link.click();
+      }, i * 500);
+    });
+    
+    setIsBatchProcessing(false);
+    setBatchImages([]);
   };
 
   const handleToolSelect = async (tool) => {
@@ -469,9 +516,12 @@ export default function Editor() {
         className="w-80 border-r border-white/5 glass-card hidden lg:block overflow-y-auto"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-6 bg-white/5 m-4">
+          <TabsList className="w-full grid grid-cols-7 bg-white/5 m-4">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="batch" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Layers className="w-4 h-4" />
             </TabsTrigger>
             <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Settings2 className="w-4 h-4" />
@@ -498,6 +548,52 @@ export default function Editor() {
                 isProcessing={isProcessing}
                 hasImage={!!currentImage}
               />
+            </TabsContent>
+
+            <TabsContent value="batch" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Batch Processing</h3>
+
+              <label className="block cursor-pointer mb-4">
+                <div className="border-2 border-dashed border-white/20 rounded-xl p-6 hover:border-white/40 transition-colors">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <Layers className="w-8 h-8 text-[#FF6B35]" />
+                    <div>
+                      <p className="text-sm font-medium text-white">Upload Multiple Images</p>
+                      <p className="text-xs text-white/50 mt-1">Process many images at once</p>
+                    </div>
+                  </div>
+                </div>
+                <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
+              </label>
+
+              {batchImages.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-sm text-white/70">{batchImages.length} images selected</p>
+                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                    {batchImages.map(img => (
+                      <img key={img.id} src={img.preview} className="w-full h-20 object-cover rounded" />
+                    ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs text-white/60">Apply to all:</p>
+                    {[
+                      { label: "AI Enhance", prompt: "Enhance this image with better colors, improved clarity, professional quality" },
+                      { label: "Upscale 4x", prompt: "Upscale to higher resolution, enhance details" },
+                      { label: "Fix Lighting", prompt: "Fix lighting and exposure, balance highlights and shadows" },
+                    ].map(tool => (
+                      <Button
+                        key={tool.label}
+                        onClick={() => handleBatchProcess(tool)}
+                        disabled={isBatchProcessing}
+                        className="w-full btn-gradient text-white"
+                      >
+                        {isBatchProcessing ? 'Processing...' : tool.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="adjust" className="mt-0">
