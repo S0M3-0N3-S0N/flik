@@ -83,50 +83,13 @@ export default function Editor() {
   const handleBatchUpload = (e) => {
     const files = Array.from(e.target.files);
     const imageFiles = files.filter(f => f.type.startsWith('image/'));
-    const newImages = imageFiles.map(file => ({
+    const images = imageFiles.map(file => ({
       id: Date.now() + Math.random(),
       file,
       preview: URL.createObjectURL(file),
       name: file.name,
     }));
-    
-    const updatedBatch = [...batchImages, ...newImages];
-    setBatchImages(updatedBatch);
-    
-    if (!currentImage && newImages.length > 0) {
-      handleImageSelect(newImages[0]);
-    }
-  };
-
-  const handleSwitchImage = (image) => {
-    if (currentImage?.id === image.id) return;
-    // Reset editor state for new image
-    setAdjustments({
-      brightness: 0,
-      contrast: 0,
-      saturation: 0,
-      blur: 0,
-      hue: 0,
-      sepia: 0,
-      grayscale: 0,
-    });
-    setSelectedFilter(null);
-    setTransform({ rotate: 0, flipH: false, flipV: false });
-    setBrushStrokes([]);
-    setIsCropping(false);
-    setCropArea({ x: 10, y: 10, width: 80, height: 80 });
-    setUndoHistory([]);
-    setRedoHistory([]);
-    setCurrentImage(image);
-  };
-
-  const removeBatchImage = (e, id) => {
-    e.stopPropagation();
-    const newBatch = batchImages.filter(img => img.id !== id);
-    setBatchImages(newBatch);
-    if (currentImage?.id === id) {
-      setCurrentImage(newBatch.length > 0 ? newBatch[0] : null);
-    }
+    setBatchImages(images);
   };
 
   const [batchProgress, setBatchProgress] = useState(0);
@@ -214,22 +177,10 @@ export default function Editor() {
   const handleApplyResult = () => {
     if (resultImage) {
       setUndoHistory([...undoHistory, currentImage]);
-      const newImageState = { 
-        ...currentImage,
+      setCurrentImage({ 
         url: resultImage, 
         preview: resultImage, 
-        name: "enhanced_" + (currentImage.name || "image.png")
-      };
-      
-      setCurrentImage(newImageState);
-      
-      // Update in batch list if exists
-      setBatchImages(prev => {
-        const exists = prev.some(img => img.id === currentImage.id);
-        if (exists) {
-          return prev.map(img => img.id === currentImage.id ? { ...img, ...newImageState } : img);
-        }
-        return prev;
+        name: "enhanced_image.png" 
       });
       
       setAdjustments({
@@ -687,97 +638,56 @@ export default function Editor() {
               />
             </TabsContent>
 
-            <TabsContent value="batch" className="mt-0 flex flex-col h-[calc(100vh-140px)]">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Project Files</h3>
-                <label className="cursor-pointer">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
-                    <Plus className="w-3.5 h-3.5 text-[#FF6B35]" />
-                    <span className="text-xs font-medium text-white">Add Files</span>
-                  </div>
-                  <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
-                </label>
-              </div>
+            <TabsContent value="batch" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Batch Processing</h3>
 
-              {batchImages.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-6 text-center">
-                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
-                    <Layers className="w-6 h-6 text-white/20" />
+              <label className="block cursor-pointer mb-4">
+                <div className="border-2 border-dashed border-white/20 rounded-xl p-6 hover:border-white/40 transition-colors">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <Layers className="w-8 h-8 text-[#FF6B35]" />
+                    <div>
+                      <p className="text-sm font-medium text-white">Upload Multiple Images</p>
+                      <p className="text-xs text-white/50 mt-1">Process many images at once</p>
+                    </div>
                   </div>
-                  <p className="text-sm font-medium text-white/60">No files yet</p>
-                  <p className="text-xs text-white/40 mt-1 mb-4">Upload images to start your project</p>
-                  <label className="cursor-pointer btn-gradient text-white text-xs px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity">
-                    Upload Images
-                    <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
-                  </label>
                 </div>
-              ) : (
-                <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {batchImages.map((img) => (
-                      <div 
-                        key={img.id}
-                        onClick={() => handleSwitchImage(img)}
-                        className={`
-                          group relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200
-                          ${currentImage?.id === img.id 
-                            ? 'border-[#FF6B35] shadow-[0_0_15px_rgba(255,107,53,0.3)]' 
-                            : 'border-transparent hover:border-white/20 bg-white/5'
-                          }
-                        `}
-                      >
-                        <img 
-                          src={img.preview} 
-                          alt={img.name} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                        />
-                        <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 ${currentImage?.id === img.id ? 'opacity-100' : ''} transition-opacity flex flex-col justify-end p-2`}>
-                          <p className="text-[10px] text-white font-medium truncate w-full">{img.name}</p>
-                        </div>
-                        <button
-                          onClick={(e) => removeBatchImage(e, img.id)}
-                          className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center hover:bg-red-500/80 transition-all"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                        {currentImage?.id === img.id && (
-                          <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-[#FF6B35] shadow-lg shadow-[#FF6B35]" />
-                        )}
-                      </div>
+                <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
+              </label>
+
+              {batchImages.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-sm text-white/70">{batchImages.length} images selected</p>
+                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                    {batchImages.map(img => (
+                      <img key={img.id} src={img.preview} className="w-full h-20 object-cover rounded" />
                     ))}
                   </div>
 
-                  <div className="pt-4 border-t border-white/10">
-                    <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Batch Actions</h4>
-                    <p className="text-xs text-white/50 mb-3">Apply to all {batchImages.length} images:</p>
-                    <div className="space-y-2">
-                      {[
-                        { label: "AI Enhance", prompt: "Enhance this image with better colors, improved clarity, professional quality" },
-                        { label: "Upscale 4x", prompt: "Upscale to higher resolution, enhance details" },
-                        { label: "Fix Lighting", prompt: "Fix lighting and exposure, balance highlights and shadows" },
-                      ].map(tool => (
-                        <Button
-                          key={tool.label}
-                          onClick={() => handleBatchProcess(tool)}
-                          disabled={isBatchProcessing}
-                          variant="outline"
-                          className="w-full justify-between bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white hover:border-[#FF6B35]/50 group"
-                        >
-                          {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
-                          <Sparkles className="w-3.5 h-3.5 text-white/20 group-hover:text-[#FF6B35] transition-colors" />
-                        </Button>
-                      ))}
-                      {isBatchProcessing && (
-                        <Button
-                          onClick={() => setBatchCancelled(true)}
-                          variant="destructive"
-                          size="sm"
-                          className="w-full mt-2"
-                        >
-                          Stop Processing
-                        </Button>
-                      )}
-                    </div>
+                  <div className="space-y-2">
+                    <p className="text-xs text-white/60">Apply to all:</p>
+                    {[
+                      { label: "AI Enhance", prompt: "Enhance this image with better colors, improved clarity, professional quality" },
+                      { label: "Upscale 4x", prompt: "Upscale to higher resolution, enhance details" },
+                      { label: "Fix Lighting", prompt: "Fix lighting and exposure, balance highlights and shadows" },
+                    ].map(tool => (
+                      <Button
+                        key={tool.label}
+                        onClick={() => handleBatchProcess(tool)}
+                        disabled={isBatchProcessing}
+                        className="w-full btn-gradient text-white"
+                      >
+                        {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
+                      </Button>
+                    ))}
+                    {isBatchProcessing && (
+                      <Button
+                        onClick={() => setBatchCancelled(true)}
+                        variant="outline"
+                        className="w-full border-white/20 text-white hover:bg-white/10"
+                      >
+                        Cancel Processing
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
