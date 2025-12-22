@@ -651,7 +651,7 @@ export default function VideoEditor() {
           className="w-80 border-r border-white/5 glass-card overflow-y-auto"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-6 bg-white/5 m-4">
+            <TabsList className="grid grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto">
               <TabsTrigger value="media"><Layers className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="text"><Type className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="remove"><Wand2 className="w-4 h-4" /></TabsTrigger>
