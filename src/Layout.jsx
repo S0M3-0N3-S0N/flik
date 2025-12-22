@@ -44,13 +44,25 @@ export default function Layout({ children, currentPageName }) {
         }
         
         .btn-gradient {
-          background: var(--gradient-primary);
+          background: var(--gradient-primary) !important;
+          color: white !important;
+          border: none !important;
           transition: all 0.3s ease;
         }
-        
+
         .btn-gradient:hover {
           transform: translateY(-2px);
           box-shadow: 0 10px 40px rgba(255, 107, 53, 0.4);
+          opacity: 0.9;
+        }
+
+        button, .button {
+          color: white;
+        }
+
+        button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
         
         .glass-card {

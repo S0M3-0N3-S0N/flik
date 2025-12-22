@@ -1074,12 +1074,12 @@ export default function VideoEditor() {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">Timeline</h3>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}>
-                  <ZoomOut className="w-4 h-4" />
+                <Button variant="ghost" size="icon" onClick={() => setZoom(Math.max(0.5, zoom - 0.25))} className="text-white hover:bg-white/10">
+                <ZoomOut className="w-4 h-4" />
                 </Button>
                 <span className="text-xs text-white/60 w-12 text-center">{Math.round(zoom * 100)}%</span>
-                <Button variant="ghost" size="icon" onClick={() => setZoom(Math.min(3, zoom + 0.25))}>
-                  <ZoomIn className="w-4 h-4" />
+                <Button variant="ghost" size="icon" onClick={() => setZoom(Math.min(3, zoom + 0.25))} className="text-white hover:bg-white/10">
+                <ZoomIn className="w-4 h-4" />
                 </Button>
               </div>
             </div>

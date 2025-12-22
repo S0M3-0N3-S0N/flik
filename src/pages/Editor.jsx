@@ -704,7 +704,7 @@ export default function Editor() {
             <Button
               disabled={!currentImage}
               onClick={handleDownload}
-              className="btn-gradient border-0 text-white text-sm disabled:opacity-30"
+              className="btn-gradient text-white text-sm disabled:opacity-30"
             >
               <Download className="w-4 h-4 mr-2" />
               Export
