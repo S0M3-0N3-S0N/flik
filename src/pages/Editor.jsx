@@ -1091,6 +1091,7 @@ export default function Editor() {
         resultImage={resultImage}
         onApply={handleApplyResult}
         onDownload={handleDownload}
+        transform={transform}
       />
     </div>
   );

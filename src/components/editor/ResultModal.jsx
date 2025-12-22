@@ -3,13 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function ResultModal({ isOpen, onClose, originalImage, resultImage, onApply, onDownload }) {
+export default function ResultModal({ isOpen, onClose, originalImage, resultImage, onApply, onDownload, transform }) {
   const [mode, setMode] = useState("compare"); // 'compare' (slider) or 'side' (side-by-side)
   const [sliderPos, setSliderPos] = useState(50);
 
   if (!isOpen) return null;
 
   const originalSrc = originalImage?.preview || originalImage?.url || originalImage;
+  
+  const transformStyle = transform ? {
+    transform: `rotate(${transform.rotate}deg) scaleX(${transform.flipH ? -1 : 1}) scaleY(${transform.flipV ? -1 : 1})`
+  } : {};
 
   return (
     <AnimatePresence>
@@ -81,9 +85,10 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                 <img
                   src={resultImage}
                   alt="Enhanced"
-                  className="max-w-full max-h-full object-contain pointer-events-none"
+                  className="w-full h-full object-contain pointer-events-none"
+                  style={transformStyle}
                 />
-                
+
                 {/* Original Image (Foreground - Clipped) */}
                 <div 
                   className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -94,7 +99,8 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                   <img
                     src={originalSrc}
                     alt="Original"
-                    className="max-w-full max-h-full object-contain"
+                    className="w-full h-full object-contain"
+                    style={transformStyle}
                   />
                   {/* Labels inside image */}
                   <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-medium text-white/80 border border-white/10">
@@ -127,19 +133,21 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                     <img
                       src={originalSrc}
                       alt="Original"
-                      className="max-w-full max-h-full object-contain"
+                      className="w-full h-full object-contain"
+                      style={transformStyle}
                     />
-                  </div>
-                </div>
-                <div className="relative flex flex-col h-full bg-white/5 rounded-2xl border border-[#FF6B35]/30 overflow-hidden">
-                  <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-[#FF6B35]/80 backdrop-blur-md rounded-full text-xs font-medium text-white border border-white/10">
+                    </div>
+                    </div>
+                    <div className="relative flex flex-col h-full bg-white/5 rounded-2xl border border-[#FF6B35]/30 overflow-hidden">
+                    <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-[#FF6B35]/80 backdrop-blur-md rounded-full text-xs font-medium text-white border border-white/10">
                     Enhanced
-                  </div>
-                  <div className="flex-1 p-4 flex items-center justify-center">
+                    </div>
+                    <div className="flex-1 p-4 flex items-center justify-center">
                     <img
                       src={resultImage}
                       alt="Result"
-                      className="max-w-full max-h-full object-contain"
+                      className="w-full h-full object-contain"
+                      style={transformStyle}
                     />
                   </div>
                 </div>
