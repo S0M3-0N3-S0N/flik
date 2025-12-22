@@ -644,7 +644,7 @@ export default function VideoEditor() {
                   <div className="space-y-3 p-4 rounded-lg bg-white/5">
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-white text-sm">Edit Text</Label>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingText(null)} className="h-6 w-6 p-0">
+                      <Button size="sm" variant="ghost" onClick={() => setEditingText(null)} className="h-6 w-6 p-0 text-white hover:bg-white/20">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -863,7 +863,7 @@ export default function VideoEditor() {
                             setTracks(newTracks);
                           }
                         }}
-                        className="w-full border-white/20 text-white"
+                        className="w-full border-white/20 text-white hover:bg-white/10"
                       >
                         Remove Transition
                       </Button>
@@ -890,7 +890,7 @@ export default function VideoEditor() {
                       key={effect.name}
                       onClick={() => handleApplyEffect(effect.name)}
                       disabled={!videoFile}
-                      className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-center disabled:opacity-30"
+                      className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-center disabled:opacity-30 text-white"
                     >
                       <effect.icon className="w-5 h-5 mx-auto mb-2 text-[#FF6B35]" />
                       <p className="text-xs text-white/80">{effect.name}</p>
@@ -928,7 +928,7 @@ export default function VideoEditor() {
                           size="sm"
                           onClick={() => handleSpeedChange(speed)}
                           disabled={!videoFile}
-                          className={playbackSpeed === speed ? "btn-gradient text-white" : "border-white/20 text-white/70"}
+                          className={playbackSpeed === speed ? "btn-gradient text-white" : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
                         >
                           {speed}x
                         </Button>
@@ -956,7 +956,7 @@ export default function VideoEditor() {
                         {tracks.find(t => t.type === 'audio').clips.map(clip => (
                           <div key={clip.id} className="flex items-center justify-between p-2 rounded bg-white/5 mb-2">
                             <span className="text-xs text-white truncate">{clip.name}</span>
-                            <Button size="icon" variant="ghost" onClick={() => handleDeleteClip('audio', clip.id)} className="h-6 w-6">
+                            <Button size="icon" variant="ghost" onClick={() => handleDeleteClip('audio', clip.id)} className="h-6 w-6 text-white hover:bg-white/20">
                               <Trash2 className="w-3 h-3" />
                             </Button>
                           </div>
@@ -1127,7 +1127,7 @@ export default function VideoEditor() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-white hover:bg-white/20"
                               onClick={(e) => { e.stopPropagation(); setEditingText(clip); setActiveTab('text'); }}
                             >
                               <Edit2 className="w-3 h-3" />
@@ -1136,7 +1136,7 @@ export default function VideoEditor() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 text-white hover:bg-white/20"
                             onClick={(e) => { e.stopPropagation(); handleDeleteClip(track.id, clip.id); }}
                           >
                             <Trash2 className="w-3 h-3" />
