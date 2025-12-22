@@ -1,15 +1,15 @@
-import Editor from './pages/Editor';
 import Gallery from './pages/Gallery';
-import VideoEditor from './pages/VideoEditor';
 import Generate from './pages/Generate';
+import Editor from './pages/Editor';
+import VideoEditor from './pages/VideoEditor';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Editor": Editor,
     "Gallery": Gallery,
-    "VideoEditor": VideoEditor,
     "Generate": Generate,
+    "Editor": Editor,
+    "VideoEditor": VideoEditor,
 }
 
 export const pagesConfig = {

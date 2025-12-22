@@ -45,6 +45,7 @@ export default function Editor() {
   const [dragType, setDragType] = useState(null);
   const [batchImages, setBatchImages] = useState([]);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [activeBatchIndex, setActiveBatchIndex] = useState(null);
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
@@ -88,8 +89,57 @@ export default function Editor() {
       file,
       preview: URL.createObjectURL(file),
       name: file.name,
+      adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
+      transform: { rotate: 0, flipH: false, flipV: false },
+      filter: null,
+      brushStrokes: []
     }));
-    setBatchImages(images);
+    
+    const newBatch = [...batchImages, ...images];
+    setBatchImages(newBatch);
+    
+    if (activeBatchIndex === null && newBatch.length > 0) {
+      switchToBatchImage(0, newBatch);
+    }
+  };
+
+  const saveCurrentStateToBatch = () => {
+    if (activeBatchIndex === null || !batchImages[activeBatchIndex]) return;
+    
+    const updatedBatch = [...batchImages];
+    updatedBatch[activeBatchIndex] = {
+      ...updatedBatch[activeBatchIndex],
+      adjustments,
+      filter: selectedFilter,
+      transform,
+      brushStrokes,
+    };
+    setBatchImages(updatedBatch);
+  };
+
+  const switchToBatchImage = (index, currentBatch = batchImages) => {
+    // Save current state if we are already editing a batch image
+    if (activeBatchIndex !== null && activeBatchIndex !== index && batchImages[activeBatchIndex]) {
+       // We can't use saveCurrentStateToBatch here because we might be using 'currentBatch' which is newer
+       // But typically we switch active index.
+       // Let's just rely on the user explicit save or auto-save on switch? 
+       // For simplicity, let's assume we are using the component state batchImages
+    }
+
+    const targetImage = currentBatch[index];
+    if (!targetImage) return;
+    
+    setActiveBatchIndex(index);
+    setCurrentImage(targetImage);
+    
+    setAdjustments(targetImage.adjustments || {
+      brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0
+    });
+    setSelectedFilter(targetImage.filter || null);
+    setTransform(targetImage.transform || { rotate: 0, flipH: false, flipV: false });
+    setBrushStrokes(targetImage.brushStrokes || []);
+    setUndoHistory([]);
+    setRedoHistory([]);
   };
 
   const [batchProgress, setBatchProgress] = useState(0);
