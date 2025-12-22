@@ -256,77 +256,7 @@ export default function Editor() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [undoHistory, redoHistory, currentImage]);
 
-  const handleSaveToGallery = async () => {
-    if (!currentImage) return;
-    setIsProcessing(true);
-    
-    try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = currentImage.preview || currentImage.url;
-      
-      await new Promise(resolve => img.onload = resolve);
-      
-      // Calculate dimensions
-      const isRotated = transform.rotate === 90 || transform.rotate === 270;
-      canvas.width = isRotated ? img.height : img.width;
-      canvas.height = isRotated ? img.width : img.height;
-
-      // Apply context transforms
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((transform.rotate * Math.PI) / 180);
-      ctx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
-
-      // Apply Filters
-      const filters = [];
-      if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
-      if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
-      if (adjustments.saturation !== 0) filters.push(`saturate(${100 + adjustments.saturation}%)`);
-      if (adjustments.blur > 0) filters.push(`blur(${adjustments.blur}px)`);
-      if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
-      if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
-      if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
-      
-      if (selectedFilter && selectedFilter.id !== "none") filters.push(selectedFilter.filter);
-      ctx.filter = filters.join(" ") || "none";
-
-      // Draw
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
-      ctx.restore();
-
-      // Upload
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], `edited_${Date.now()}.png`, { type: 'image/png' });
-        const upload = await base44.integrations.Core.UploadFile({ file });
-        
-        await base44.entities.Creation.create({
-          title: 'Edited Image',
-          type: 'image',
-          url: upload.file_url,
-          thumbnail_url: upload.file_url,
-          metadata: { 
-             source: 'Editor',
-             adjustments,
-             filter: selectedFilter?.id 
-          }
-        });
-        
-        setIsProcessing(false);
-        alert("Saved to Gallery!");
-      }, 'image/png');
-      
-    } catch (e) {
-      console.error(e);
-      setIsProcessing(false);
-      alert("Failed to save");
-    }
-  };
-
   const handleDownload = async () => {
-    // Re-use save logic but download instead
     if (!currentImage) return;
     
     const canvas = document.createElement('canvas');
@@ -336,9 +266,13 @@ export default function Editor() {
     img.src = currentImage.preview || currentImage.url;
     
     img.onload = () => {
-      const isRotated = transform.rotate === 90 || transform.rotate === 270;
-      canvas.width = isRotated ? img.height : img.width;
-      canvas.height = isRotated ? img.width : img.height;
+      if (transform.rotate === 90 || transform.rotate === 270) {
+        canvas.width = img.height;
+        canvas.height = img.width;
+      } else {
+        canvas.width = img.width;
+        canvas.height = img.height;
+      }
 
       ctx.save();
       ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -353,17 +287,26 @@ export default function Editor() {
       if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
       if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
       if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
-      if (selectedFilter && selectedFilter.id !== "none") filters.push(selectedFilter.filter);
+      
+      if (selectedFilter && selectedFilter.id !== "none") {
+        filters.push(selectedFilter.filter);
+      }
       
       ctx.filter = filters.join(" ") || "none";
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+      if (transform.rotate === 90 || transform.rotate === 270) {
+        ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+      } else {
+        ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+      }
+      
       ctx.restore();
 
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = "flik_pro_edit.png";
+        link.download = "flik_edited_image.png";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -896,13 +839,42 @@ export default function Editor() {
             )}
             {currentImage && (
               <Button
-                onClick={handleSaveToGallery}
-                disabled={isProcessing}
+                onClick={async () => {
+                  try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.src = currentImage.preview || currentImage.url;
+                    
+                    img.onload = async () => {
+                      canvas.width = img.width;
+                      canvas.height = img.height;
+                      ctx.drawImage(img, 0, 0);
+                      
+                      canvas.toBlob(async (blob) => {
+                        const file = new File([blob], 'image.png', { type: 'image/png' });
+                        const uploadResult = await base44.integrations.Core.UploadFile({ file });
+                        
+                        await base44.entities.Creation.create({
+                          title: 'Edited Image',
+                          type: 'image',
+                          url: uploadResult.file_url,
+                          thumbnail_url: uploadResult.file_url
+                        });
+                        
+                        alert('Saved to Gallery!');
+                      });
+                    };
+                  } catch (err) {
+                    alert('Error saving: ' + err.message);
+                  }
+                }}
                 className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20"
                 title="Save to Gallery"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isProcessing ? 'Saving...' : 'Save'}
+                Save
               </Button>
             )}
             <Button
