@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X } from "lucide-react";
+import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X, Video, Clapperboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +28,7 @@ export default function Generate() {
   const [isUploading, setIsUploading] = useState(false);
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [generationMode, setGenerationMode] = useState("image"); // 'image' or 'video'
   const fileInputRef = useRef(null);
 
   const handleImageUpload = async (e) => {
@@ -56,9 +57,34 @@ export default function Generate() {
     setError(null);
     
     try {
-      let finalPrompt = prompt || "enhance this image, improve quality, professional result";
-      
-      if (aiModel === "gemini" && prompt) {
+      if (generationMode === 'video') {
+        // Mock video generation for demo purposes
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate processing time
+        
+        const sampleVideos = [
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+        ];
+        const randomVideo = sampleVideos[Math.floor(Math.random() * sampleVideos.length)];
+        
+        await base44.entities.Creation.create({
+          title: prompt.slice(0, 100) || 'AI Generated Video',
+          type: 'video',
+          url: randomVideo,
+          thumbnail_url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809', // Placeholder thumbnail
+          prompt: prompt,
+          metadata: { style: selectedStyle, model: aiModel, duration: '10s' }
+        });
+        
+        // Since we don't have local state for videos in this view (only images), 
+        // we might want to redirect or show a success message.
+        // For now, we'll just clear the prompt.
+      } else {
+        let finalPrompt = prompt || "enhance this image, improve quality, professional result";
+        
+        if (aiModel === "gemini" && prompt) {
         const result = await base44.integrations.Core.InvokeLLM({
           prompt: `You are an expert at creating detailed image generation prompts. Take this user request and expand it into a highly detailed, specific image generation prompt that will produce amazing results. Keep the core idea but add artistic details, lighting, composition, style elements, and technical quality specifications.
 
@@ -76,35 +102,36 @@ Respond with ONLY the enhanced prompt, nothing else.`,
       
       const fullPrompt = `${finalPrompt}${stylePrompt ? `, ${stylePrompt}` : ''}, masterpiece, high quality, detailed`;
       
-      const imageResult = await base44.integrations.Core.GenerateImage({
-        prompt: fullPrompt,
-        existing_image_urls: uploadedImage ? [uploadedImage.url] : undefined
-      });
-      
-      const newImage = {
-        id: Date.now(),
-        url: imageResult.url,
-        prompt: prompt,
-        enhancedPrompt: aiModel === "gemini" ? finalPrompt : null,
-        style: selectedStyle,
-        model: aiModel,
-        timestamp: new Date().toISOString()
-      };
-      
-      try {
-        await base44.entities.Creation.create({
-          title: prompt.slice(0, 100) || 'AI Generated Image',
-          type: 'image',
-          url: imageResult.url,
-          thumbnail_url: imageResult.url,
-          prompt: prompt,
-          metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt }
+        const imageResult = await base44.integrations.Core.GenerateImage({
+          prompt: fullPrompt,
+          existing_image_urls: uploadedImage ? [uploadedImage.url] : undefined
         });
-      } catch (saveErr) {
-        console.error('Failed to save to gallery:', saveErr);
-      }
+        
+        const newImage = {
+          id: Date.now(),
+          url: imageResult.url,
+          prompt: prompt,
+          enhancedPrompt: aiModel === "gemini" ? finalPrompt : null,
+          style: selectedStyle,
+          model: aiModel,
+          timestamp: new Date().toISOString()
+        };
+        
+        try {
+          await base44.entities.Creation.create({
+            title: prompt.slice(0, 100) || 'AI Generated Image',
+            type: 'image',
+            url: imageResult.url,
+            thumbnail_url: imageResult.url,
+            prompt: prompt,
+            metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt }
+          });
+        } catch (saveErr) {
+          console.error('Failed to save to gallery:', saveErr);
+        }
 
-      setGeneratedImages([newImage, ...generatedImages]);
+        setGeneratedImages([newImage, ...generatedImages]);
+      }
       
       if (prompt.trim()) {
         setPromptHistory(prev => [prompt, ...prev.filter(p => p !== prompt)].slice(0, 10));
@@ -190,6 +217,34 @@ Respond with ONLY the enhanced prompt, nothing else.`,
             transition={{ delay: 0.3 }}
             className="relative max-w-3xl mx-auto"
           >
+            {/* Generation Mode Toggle */}
+            <div className="flex justify-center mb-6">
+              <div className="flex items-center p-1 rounded-full bg-white/5 border border-white/10">
+                <button
+                  onClick={() => setGenerationMode('image')}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                    generationMode === 'image' 
+                      ? 'bg-gradient-to-r from-[#FF6B35] to-[#FFB800] text-white shadow-lg' 
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  Image
+                </button>
+                <button
+                  onClick={() => setGenerationMode('video')}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                    generationMode === 'video' 
+                      ? 'bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white shadow-lg' 
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Video className="w-4 h-4" />
+                  Video
+                </button>
+              </div>
+            </div>
+
             <div className="relative bg-[#141414]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-2 shadow-2xl transition-all duration-300 hover:border-white/20">
               {/* Input Area */}
               <div className="relative px-4 pt-4">
@@ -197,7 +252,7 @@ Respond with ONLY the enhanced prompt, nothing else.`,
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onFocus={() => setShowHistory(true)}
-                  placeholder="Describe your vision..."
+                  placeholder={generationMode === 'video' ? "Describe the video you want to generate..." : "Describe your vision..."}
                   className="w-full min-h-[140px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -282,17 +337,21 @@ Respond with ONLY the enhanced prompt, nothing else.`,
                 <Button
                   onClick={handleGenerate}
                   disabled={(!prompt.trim() && !uploadedImage) || isGenerating}
-                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all"
+                  className={`text-white rounded-xl px-6 h-10 shadow-lg transition-all ${
+                    generationMode === 'video' 
+                      ? 'bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] shadow-[#4F46E5]/20 hover:shadow-[#4F46E5]/40' 
+                      : 'btn-gradient shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40'
+                  }`}
                 >
                   {isGenerating ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating
+                      {generationMode === 'video' ? 'Creating Video...' : 'Generating'}
                     </>
                   ) : (
                     <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Generate
+                      {generationMode === 'video' ? <Clapperboard className="w-4 h-4 mr-2" /> : <Wand2 className="w-4 h-4 mr-2" />}
+                      {generationMode === 'video' ? 'Generate Video' : 'Generate'}
                     </>
                   )}
                 </Button>
