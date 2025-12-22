@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload } from "lucide-react";
+import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -188,154 +188,144 @@ Respond with ONLY the enhanced prompt, nothing else.`,
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative p-6 max-w-3xl mx-auto bg-[#141414] rounded-2xl border border-white/10"
+            className="relative max-w-3xl mx-auto"
           >
-            <div className="mb-4 flex gap-4">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs text-white/40">AI Model</label>
-                  <Select value={aiModel} onValueChange={setAiModel}>
-                    <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Standard</SelectItem>
-                      <SelectItem value="gemini">
-                        <div className="flex items-center gap-2">
-                          <Zap className="w-3 h-3" />
-                          Gemini Enhanced
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {aiModel === "gemini" && (
-                  <p className="text-xs text-[#FF6B35]">✨ AI will enhance your prompt for better results</p>
+            <div className="relative bg-[#141414]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-2 shadow-2xl transition-all duration-300 hover:border-white/20">
+              {/* Input Area */}
+              <div className="relative px-4 pt-4">
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onFocus={() => setShowHistory(true)}
+                  placeholder="Describe your vision..."
+                  className="w-full min-h-[140px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      handleGenerate();
+                    }
+                  }}
+                />
+                
+                {/* Uploaded Image Preview Badge */}
+                {uploadedImage && (
+                  <div className="absolute top-0 right-4 w-20 h-20 rounded-xl overflow-hidden border border-white/20 group hover:border-white/40 transition-colors bg-black/50">
+                    <img src={uploadedImage.url} className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => setUploadedImage(null)} 
+                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                    {isUploading && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* History Dropdown */}
+                {showHistory && promptHistory.length > 0 && (
+                  <div className="absolute left-4 right-4 top-full z-20 bg-[#1F1F1F] border border-white/10 rounded-xl shadow-2xl mt-2 overflow-hidden max-h-48 overflow-y-auto">
+                    {promptHistory.map((p, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setPrompt(p);
+                          setShowHistory(false);
+                        }}
+                        className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              <div className="flex-shrink-0">
-                <label className="text-xs text-white/40 block mb-2">Upload Image</label>
-                <div title="Upload reference image">
+              {/* Toolbar */}
+              <div className="flex items-center justify-between p-2 mt-2 bg-white/5 rounded-2xl">
+                <div className="flex items-center gap-2 px-2">
+                  <Select value={aiModel} onValueChange={setAiModel}>
+                    <SelectTrigger className="h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-xs rounded-full gap-2 px-3 focus:ring-0">
+                      <Zap className={`w-3.5 h-3.5 ${aiModel === 'gemini' ? 'text-[#FF6B35]' : 'text-white/50'}`} />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Standard Model</SelectItem>
+                      <SelectItem value="gemini">Gemini Enhanced</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="w-px h-4 bg-white/10 mx-1" />
+
                   <button 
-                    type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-24 h-24 rounded-lg border-2 border-dashed border-white/20 hover:border-white/40 hover:bg-white/5 transition-all flex items-center justify-center bg-transparent p-0 cursor-pointer"
+                    className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
+                      uploadedImage 
+                        ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
+                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                    }`}
                   >
-                    {uploadedImage ? (
-                      <div className="relative w-full h-full">
-                        <img src={uploadedImage.url} className="w-full h-full object-cover rounded-lg" />
-                        {isUploading && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          </div>
-                        )}
-                      </div>
-                    ) : isUploading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <Upload className="w-6 h-6 text-white/40" />
-                    )}
+                    <Upload className="w-3.5 h-3.5" />
+                    {uploadedImage ? 'Image Added' : 'Add Image'}
                   </button>
                   <input 
-                    ref={fileInputRef}
+                    ref={fileInputRef} 
                     type="file" 
                     accept="image/*" 
                     onChange={handleImageUpload} 
                     className="hidden" 
                   />
                 </div>
-                {uploadedImage && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setUploadedImage(null)}
-                    className="w-full mt-1 text-xs text-white/60 hover:text-white"
-                  >
-                    Remove
-                  </Button>
-                )}
+
+                <Button
+                  onClick={handleGenerate}
+                  disabled={(!prompt.trim() && !uploadedImage) || isGenerating}
+                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Generate
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
-            <div className="relative">
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onFocus={() => setShowHistory(true)}
-                placeholder="Describe what you want to create or edit..."
-                className="w-full min-h-[120px] bg-[#1a1a1a] border border-white/10 rounded-lg text-white placeholder:text-white/40 text-lg resize-none focus:ring-2 focus:ring-[#FF6B35] focus:outline-none p-4 mb-4"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    handleGenerate();
-                  }
-                }}
-              />
-              {showHistory && promptHistory.length > 0 && (
-                <div className="absolute z-10 w-full bg-[#1a1a1a] border border-white/10 rounded-lg mt-1 max-h-40 overflow-y-auto">
-                  {promptHistory.map((p, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setPrompt(p);
-                        setShowHistory(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition-colors"
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <div className="mb-4">
-              <p className="text-xs text-white/40 mb-3 text-left">Style Presets (Optional)</p>
-              <div className="flex flex-wrap gap-2">
+            {/* Style Presets */}
+            <div className="mt-6 flex flex-col items-center">
+              <p className="text-xs text-white/30 mb-3 uppercase tracking-wider font-medium">Style Presets</p>
+              <div className="flex flex-wrap justify-center gap-2">
                 {stylePresets.map((style) => (
                   <button
                     key={style.id}
                     onClick={() => setSelectedStyle(selectedStyle === style.id ? null : style.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                      selectedStyle === style.id 
-                        ? "bg-gradient-to-r from-[#FF6B35] to-[#FFB800] text-white" 
-                        : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-                    }`}
+                    className={`
+                      px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 border
+                      ${selectedStyle === style.id 
+                        ? "bg-white text-black border-white shadow-lg shadow-white/10 scale-105" 
+                        : "bg-white/5 text-white/60 border-transparent hover:bg-white/10 hover:text-white hover:border-white/10"
+                      }
+                    `}
                   >
                     {style.label}
                   </button>
                 ))}
               </div>
             </div>
-            
+
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                 {error}
               </div>
             )}
-            
-            <div className="flex justify-between items-center">
-              <div className="text-xs text-white/40">
-                {uploadedImage ? "Image uploaded - AI will enhance it" : "Tip: Press Cmd/Ctrl+Enter"}
-              </div>
-              <Button
-                onClick={handleGenerate}
-                disabled={(!prompt.trim() && !uploadedImage) || isGenerating}
-                className="btn-gradient text-white px-8 py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    {aiModel === "gemini" ? "Enhancing & Generating..." : "Generating..."}
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-5 h-5 mr-2" />
-                    {uploadedImage ? "Enhance Image" : "Generate Image"}
-                  </>
-                )}
-              </Button>
-            </div>
           </motion.div>
         </div>
       </section>
