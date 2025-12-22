@@ -796,7 +796,6 @@ export default function Editor() {
 
           <div className="px-4 pb-4">
             <TabsContent value="ai" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">AI Tools</h3>
               <ToolPanel 
                 onToolSelect={handleToolSelect} 
                 isProcessing={isProcessing}
