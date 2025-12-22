@@ -3,11 +3,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Upload, Play, Pause, SkipBack, SkipForward, Scissors, 
   Download, Volume2, ZoomIn, ZoomOut, Plus, Trash2,
-  Image, Music, Type, Sparkles, Wand2, Layers, Video
+  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2,
+  Check, X, Sliders
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function VideoEditor() {
   const [videoFile, setVideoFile] = useState(null);
@@ -23,6 +27,16 @@ export default function VideoEditor() {
   ]);
   const [selectedClip, setSelectedClip] = useState(null);
   const [activeTab, setActiveTab] = useState("media");
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [editingText, setEditingText] = useState(null);
+  const [videoEffects, setVideoEffects] = useState({
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    blur: 0,
+    sepia: 0,
+  });
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
@@ -32,24 +46,55 @@ export default function VideoEditor() {
     if (file && file.type.startsWith('video/')) {
       const url = URL.createObjectURL(file);
       setVideoFile({ url, file, name: file.name });
-      
-      // Add clip to video track
+    }
+  };
+
+  const handleAudioUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('audio/')) {
+      const url = URL.createObjectURL(file);
       const newClip = {
         id: Date.now(),
-        type: 'video',
+        type: 'audio',
         url: url,
         name: file.name,
-        start: 0,
-        duration: 10, // Will be updated when video loads
-        trimStart: 0,
-        trimEnd: 10,
+        start: currentTime,
+        duration: 30,
+        volume: 100,
       };
       
       const newTracks = [...tracks];
-      newTracks[0].clips.push(newClip);
-      setTracks(newTracks);
+      const audioTrack = newTracks.find(t => t.type === 'audio');
+      if (audioTrack) {
+        audioTrack.clips.push(newClip);
+        setTracks(newTracks);
+      }
     }
   };
+
+  useEffect(() => {
+    if (videoFile && videoRef.current) {
+      const video = videoRef.current;
+      video.onloadedmetadata = () => {
+        setDuration(video.duration);
+        
+        const newClip = {
+          id: Date.now(),
+          type: 'video',
+          url: videoFile.url,
+          name: videoFile.name,
+          start: 0,
+          duration: video.duration,
+          trimStart: 0,
+          trimEnd: video.duration,
+        };
+        
+        const newTracks = [...tracks];
+        newTracks[0].clips = [newClip];
+        setTracks(newTracks);
+      };
+    }
+  }, [videoFile]);
 
   const handlePlayPause = () => {
     if (videoRef.current) {
@@ -65,12 +110,6 @@ export default function VideoEditor() {
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
     }
   };
 
@@ -90,8 +129,16 @@ export default function VideoEditor() {
     }
   };
 
-  const handleZoomChange = (value) => {
-    setZoom(value[0]);
+  const handleSkipBack = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, currentTime - 5);
+    }
+  };
+
+  const handleSkipForward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.min(duration, currentTime + 5);
+    }
   };
 
   const handleAddTextClip = () => {
@@ -105,6 +152,8 @@ export default function VideoEditor() {
         fontSize: 48,
         color: '#ffffff',
         fontWeight: 'bold',
+        position: 'center',
+        backgroundColor: 'transparent',
       }
     };
     
@@ -113,7 +162,24 @@ export default function VideoEditor() {
     if (textTrack) {
       textTrack.clips.push(newClip);
       setTracks(newTracks);
+      setEditingText(newClip);
     }
+  };
+
+  const handleUpdateTextClip = (updates) => {
+    const newTracks = tracks.map(track => {
+      if (track.type === 'text') {
+        return {
+          ...track,
+          clips: track.clips.map(clip => 
+            clip.id === editingText.id ? { ...clip, ...updates } : clip
+          )
+        };
+      }
+      return track;
+    });
+    setTracks(newTracks);
+    setEditingText({ ...editingText, ...updates });
   };
 
   const handleDeleteClip = (trackId, clipId) => {
@@ -130,18 +196,178 @@ export default function VideoEditor() {
     setSelectedClip(null);
   };
 
+  const handleSplitClip = () => {
+    if (!selectedClip) return;
+    
+    const track = tracks.find(t => t.clips.some(c => c.id === selectedClip.id));
+    if (!track) return;
+
+    const clip = track.clips.find(c => c.id === selectedClip.id);
+    const splitPoint = currentTime - clip.start;
+
+    if (splitPoint <= 0 || splitPoint >= clip.duration) return;
+
+    const clip1 = {
+      ...clip,
+      id: Date.now(),
+      duration: splitPoint,
+      trimEnd: clip.trimStart + splitPoint,
+    };
+
+    const clip2 = {
+      ...clip,
+      id: Date.now() + 1,
+      start: clip.start + splitPoint,
+      duration: clip.duration - splitPoint,
+      trimStart: clip.trimStart + splitPoint,
+    };
+
+    const newTracks = tracks.map(t => {
+      if (t.id === track.id) {
+        return {
+          ...t,
+          clips: t.clips.flatMap(c => 
+            c.id === clip.id ? [clip1, clip2] : [c]
+          )
+        };
+      }
+      return t;
+    });
+
+    setTracks(newTracks);
+    setSelectedClip(null);
+  };
+
+  const handleClipDragStart = (e, clip) => {
+    setIsDragging(true);
+    setSelectedClip(clip);
+    setDragStartX(e.clientX);
+  };
+
+  const handleClipDrag = (e) => {
+    if (!isDragging || !selectedClip) return;
+
+    const deltaX = e.clientX - dragStartX;
+    const timelineWidth = timelineRef.current?.offsetWidth || 1000;
+    const deltaTime = (deltaX / timelineWidth) * duration * zoom;
+
+    const track = tracks.find(t => t.clips.some(c => c.id === selectedClip.id));
+    if (!track) return;
+
+    const newStart = Math.max(0, Math.min(duration - selectedClip.duration, selectedClip.start + deltaTime));
+
+    const newTracks = tracks.map(t => {
+      if (t.id === track.id) {
+        return {
+          ...t,
+          clips: t.clips.map(c => 
+            c.id === selectedClip.id ? { ...c, start: newStart } : c
+          )
+        };
+      }
+      return t;
+    });
+
+    setTracks(newTracks);
+    setDragStartX(e.clientX);
+  };
+
+  const handleClipDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleApplyEffect = (effectName) => {
+    let newEffects = { ...videoEffects };
+    
+    switch(effectName) {
+      case 'Blur':
+        newEffects.blur = newEffects.blur === 0 ? 5 : 0;
+        break;
+      case 'B&W':
+        newEffects.saturation = newEffects.saturation === 100 ? 0 : 100;
+        break;
+      case 'Sepia':
+        newEffects.sepia = newEffects.sepia === 0 ? 100 : 0;
+        break;
+      case 'Vintage':
+        newEffects = { brightness: 90, contrast: 110, saturation: 80, sepia: 30, blur: 0 };
+        break;
+      case 'Glow':
+        newEffects = { brightness: 110, contrast: 105, saturation: 110, sepia: 0, blur: 0 };
+        break;
+      case 'Sharpen':
+        newEffects = { brightness: 105, contrast: 120, saturation: 105, sepia: 0, blur: 0 };
+        break;
+    }
+    
+    setVideoEffects(newEffects);
+  };
+
+  const handleExport = () => {
+    if (!videoFile) return;
+
+    const canvas = document.createElement('canvas');
+    const video = videoRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    
+    video.currentTime = 0;
+    video.onseeked = () => {
+      const filters = [];
+      if (videoEffects.brightness !== 100) filters.push(`brightness(${videoEffects.brightness}%)`);
+      if (videoEffects.contrast !== 100) filters.push(`contrast(${videoEffects.contrast}%)`);
+      if (videoEffects.saturation !== 100) filters.push(`saturate(${videoEffects.saturation}%)`);
+      if (videoEffects.blur > 0) filters.push(`blur(${videoEffects.blur}px)`);
+      if (videoEffects.sepia > 0) filters.push(`sepia(${videoEffects.sepia}%)`);
+      
+      ctx.filter = filters.join(' ');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'flik_video_frame.png';
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+    };
+  };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleExport = () => {
-    alert('Export functionality would render the timeline and download the video. This requires additional video processing libraries.');
+  const getVideoFilterStyle = () => {
+    const filters = [];
+    if (videoEffects.brightness !== 100) filters.push(`brightness(${videoEffects.brightness}%)`);
+    if (videoEffects.contrast !== 100) filters.push(`contrast(${videoEffects.contrast}%)`);
+    if (videoEffects.saturation !== 100) filters.push(`saturate(${videoEffects.saturation}%)`);
+    if (videoEffects.blur > 0) filters.push(`blur(${videoEffects.blur}px)`);
+    if (videoEffects.sepia > 0) filters.push(`sepia(${videoEffects.sepia}%)`);
+    return filters.join(' ');
+  };
+
+  const getTextPosition = (position) => {
+    switch(position) {
+      case 'top': return 'top-8 left-1/2 -translate-x-1/2';
+      case 'center': return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
+      case 'bottom': return 'bottom-8 left-1/2 -translate-x-1/2';
+      default: return 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
+    <div 
+      className="min-h-screen flex flex-col bg-[#0A0A0A]"
+      onMouseMove={handleClipDrag}
+      onMouseUp={handleClipDragEnd}
+    >
       {/* Top Toolbar */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
@@ -162,13 +388,23 @@ export default function VideoEditor() {
         </div>
         
         <div className="flex items-center gap-3">
+          {selectedClip && (
+            <Button
+              onClick={handleSplitClip}
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10"
+            >
+              <Scissors className="w-4 h-4 mr-2" />
+              Split Clip
+            </Button>
+          )}
           <Button
             onClick={handleExport}
             disabled={!videoFile}
             className="btn-gradient border-0 text-white disabled:opacity-30"
           >
             <Download className="w-4 h-4 mr-2" />
-            Export Video
+            Export Frame
           </Button>
         </div>
       </motion.div>
@@ -224,39 +460,104 @@ export default function VideoEditor() {
                   <div className="mt-4 p-3 rounded-lg bg-white/5">
                     <p className="text-xs text-white/60 mb-2">Current Video</p>
                     <p className="text-sm text-white truncate">{videoFile.name}</p>
+                    <p className="text-xs text-white/40 mt-1">{formatTime(duration)}</p>
                   </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="text" className="mt-0">
-                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Text</h3>
+              <TabsContent value="text" className="mt-0 space-y-4">
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Text</h3>
                 
                 <Button
                   onClick={handleAddTextClip}
-                  className="w-full btn-gradient text-white mb-4"
+                  disabled={!videoFile}
+                  className="w-full btn-gradient text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Text
                 </Button>
 
-                <div className="space-y-2">
-                  <p className="text-xs text-white/40">Text Presets</p>
-                  {['Title', 'Subtitle', 'Lower Third', 'End Credits'].map((preset) => (
-                    <Button
-                      key={preset}
-                      variant="outline"
-                      className="w-full justify-start text-white/70 hover:text-white border-white/10"
-                    >
-                      {preset}
-                    </Button>
-                  ))}
-                </div>
+                {editingText && (
+                  <div className="space-y-3 p-4 rounded-lg bg-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-white text-sm">Edit Text</Label>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingText(null)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-white/60 text-xs">Content</Label>
+                      <Input
+                        value={editingText.text}
+                        onChange={(e) => handleUpdateTextClip({ text: e.target.value })}
+                        className="bg-white/5 border-white/10 text-white mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-white/60 text-xs">Position</Label>
+                      <Select
+                        value={editingText.style.position}
+                        onValueChange={(value) => handleUpdateTextClip({ style: { ...editingText.style, position: value } })}
+                      >
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="top">Top</SelectItem>
+                          <SelectItem value="center">Center</SelectItem>
+                          <SelectItem value="bottom">Bottom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-white/60 text-xs">Font Size: {editingText.style.fontSize}px</Label>
+                      <Slider
+                        value={[editingText.style.fontSize]}
+                        onValueChange={(value) => handleUpdateTextClip({ style: { ...editingText.style, fontSize: value[0] } })}
+                        min={20}
+                        max={120}
+                        step={4}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-white/60 text-xs">Duration: {editingText.duration}s</Label>
+                      <Slider
+                        value={[editingText.duration]}
+                        onValueChange={(value) => handleUpdateTextClip({ duration: value[0] })}
+                        min={1}
+                        max={30}
+                        step={0.5}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-white/60 text-xs">Text Color</Label>
+                      <input
+                        type="color"
+                        value={editingText.style.color}
+                        onChange={(e) => handleUpdateTextClip({ style: { ...editingText.style, color: e.target.value } })}
+                        className="w-full h-10 rounded bg-white/5 border border-white/10 mt-1"
+                      />
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="effects" className="mt-0">
                 <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Effects</h3>
                 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 mb-6">
                   {[
                     { name: 'Blur', icon: Wand2 },
                     { name: 'B&W', icon: Image },
@@ -267,12 +568,50 @@ export default function VideoEditor() {
                   ].map((effect) => (
                     <button
                       key={effect.name}
-                      className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-center"
+                      onClick={() => handleApplyEffect(effect.name)}
+                      disabled={!videoFile}
+                      className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-center disabled:opacity-30"
                     >
                       <effect.icon className="w-5 h-5 mx-auto mb-2 text-[#FF6B35]" />
                       <p className="text-xs text-white/80">{effect.name}</p>
                     </button>
                   ))}
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-white/10">
+                  <div>
+                    <Label className="text-white/60 text-xs">Brightness: {videoEffects.brightness}%</Label>
+                    <Slider
+                      value={[videoEffects.brightness]}
+                      onValueChange={(value) => setVideoEffects({ ...videoEffects, brightness: value[0] })}
+                      min={0}
+                      max={200}
+                      step={5}
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-white/60 text-xs">Contrast: {videoEffects.contrast}%</Label>
+                    <Slider
+                      value={[videoEffects.contrast]}
+                      onValueChange={(value) => setVideoEffects({ ...videoEffects, contrast: value[0] })}
+                      min={0}
+                      max={200}
+                      step={5}
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-white/60 text-xs">Saturation: {videoEffects.saturation}%</Label>
+                    <Slider
+                      value={[videoEffects.saturation]}
+                      onValueChange={(value) => setVideoEffects({ ...videoEffects, saturation: value[0] })}
+                      min={0}
+                      max={200}
+                      step={5}
+                      className="mt-2"
+                    />
+                  </div>
                 </div>
               </TabsContent>
 
@@ -289,7 +628,12 @@ export default function VideoEditor() {
                       </div>
                     </div>
                   </div>
-                  <input type="file" accept="audio/*" className="hidden" />
+                  <input 
+                    type="file" 
+                    accept="audio/*" 
+                    onChange={handleAudioUpload}
+                    className="hidden" 
+                  />
                 </label>
 
                 <div className="space-y-3">
@@ -305,6 +649,25 @@ export default function VideoEditor() {
                       step={1}
                     />
                   </div>
+
+                  {tracks.find(t => t.type === 'audio')?.clips.length > 0 && (
+                    <div className="pt-3 border-t border-white/10">
+                      <p className="text-xs text-white/40 mb-2">Audio Clips</p>
+                      {tracks.find(t => t.type === 'audio').clips.map(clip => (
+                        <div key={clip.id} className="flex items-center justify-between p-2 rounded bg-white/5 mb-2">
+                          <span className="text-xs text-white truncate">{clip.name}</span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleDeleteClip('audio', clip.id)}
+                            className="h-6 w-6"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </div>
@@ -324,22 +687,24 @@ export default function VideoEditor() {
                   ref={videoRef}
                   src={videoFile.url}
                   className="w-full h-full object-contain"
+                  style={{ filter: getVideoFilterStyle() }}
                   onTimeUpdate={handleTimeUpdate}
-                  onLoadedMetadata={handleLoadedMetadata}
                   onEnded={() => setIsPlaying(false)}
                 />
                 
-                {/* Text overlays would render here */}
+                {/* Text overlays */}
                 {tracks.find(t => t.type === 'text')?.clips.map(clip => {
                   if (currentTime >= clip.start && currentTime < clip.start + clip.duration) {
                     return (
                       <div
                         key={clip.id}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                        className={`absolute pointer-events-none px-4 py-2 ${getTextPosition(clip.style.position)}`}
                         style={{
                           fontSize: clip.style.fontSize,
                           color: clip.style.color,
                           fontWeight: clip.style.fontWeight,
+                          backgroundColor: clip.style.backgroundColor,
+                          textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                         }}
                       >
                         {clip.text}
@@ -381,6 +746,7 @@ export default function VideoEditor() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={handleSkipBack}
                     className="text-white hover:bg-white/10"
                   >
                     <SkipBack className="w-5 h-5" />
@@ -400,6 +766,7 @@ export default function VideoEditor() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={handleSkipForward}
                     className="text-white hover:bg-white/10"
                   >
                     <SkipForward className="w-5 h-5" />
@@ -435,7 +802,7 @@ export default function VideoEditor() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleZoomChange([Math.max(0.5, zoom - 0.25)])}
+                  onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
                 >
                   <ZoomOut className="w-4 h-4" />
                 </Button>
@@ -443,21 +810,21 @@ export default function VideoEditor() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleZoomChange([Math.min(3, zoom + 0.25)])}
+                  onClick={() => setZoom(Math.min(3, zoom + 0.25))}
                 >
                   <ZoomIn className="w-4 h-4" />
                 </Button>
               </div>
             </div>
 
-            <div ref={timelineRef} className="space-y-2" style={{ transform: `scaleX(${zoom})`, transformOrigin: 'left' }}>
+            <div ref={timelineRef} className="space-y-2">
               {tracks.map((track) => (
                 <div key={track.id} className="flex items-center gap-2 group">
                   <div className="w-24 flex-shrink-0">
                     <p className="text-xs text-white/60">{track.name}</p>
                   </div>
                   
-                  <div className="flex-1 h-12 bg-white/5 rounded-lg relative">
+                  <div className="flex-1 h-12 bg-white/5 rounded-lg relative" style={{ width: `${zoom * 100}%` }}>
                     {/* Timeline ruler */}
                     <div className="absolute inset-0 flex">
                       {[...Array(Math.ceil(duration || 10))].map((_, i) => (
@@ -482,26 +849,43 @@ export default function VideoEditor() {
                             : 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)'
                         }}
                         onClick={() => setSelectedClip(clip)}
+                        onMouseDown={(e) => handleClipDragStart(e, clip)}
                       >
                         <span className="text-xs text-white truncate">{clip.name || clip.text}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClip(track.id, clip.id);
-                          }}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {track.type === 'text' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingText(clip);
+                                setActiveTab('text');
+                              }}
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClip(track.id, clip.id);
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
 
                     {/* Playhead */}
                     {duration > 0 && (
                       <div
-                        className="absolute top-0 bottom-0 w-0.5 bg-[#FF6B35] pointer-events-none"
+                        className="absolute top-0 bottom-0 w-0.5 bg-[#FF6B35] pointer-events-none z-10"
                         style={{ left: `${(currentTime / duration) * 100}%` }}
                       >
                         <div className="w-3 h-3 bg-[#FF6B35] rounded-full -translate-x-1/2 -translate-y-1" />
