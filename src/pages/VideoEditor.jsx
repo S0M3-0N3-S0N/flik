@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { 
   Upload, Play, Pause, SkipBack, SkipForward, Scissors, 
   Download, Volume2, ZoomIn, ZoomOut, Plus, Trash2,
-  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2, X, Sliders, Zap, RotateCw
+  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2, X, Sliders, Zap
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -562,32 +562,28 @@ export default function VideoEditor() {
         animate={{ y: 0, opacity: 1 }}
         className="h-14 border-b border-white/5 flex items-center justify-between px-6 glass-card"
       >
-        <div className="flex items-center gap-2">
-          {activeTab === "remove" && videoFile && (
-            <div className="text-sm text-white/60 bg-white/5 px-3 py-1 rounded-lg flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-              Drag to paint areas to remove
-            </div>
-          )}
-          {videoFile && activeTab !== "remove" && (
+        <div className="flex items-center gap-4">
+
+          
+          {videoFile && (
             <span className="text-sm text-white/40">{videoFile.name}</span>
           )}
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
+          {undoHistory.length > 0 && (
             <Button
               onClick={handleUndo}
               variant="ghost"
-              disabled={undoHistory.length === 0}
-              className="text-white hover:bg-white/10 disabled:opacity-30"
+              className="text-white hover:bg-white/10"
               title="Undo"
             >
-              <RotateCw className="w-4 h-4 mr-2" />
+              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
               Undo
             </Button>
-          </div>
-
+          )}
           {selectedClip && selectedClip.type === 'video' && (
             <Button
               onClick={handleSplitClip}
@@ -598,7 +594,6 @@ export default function VideoEditor() {
               Split
             </Button>
           )}
-          
           {videoFile && (
             <Button
               onClick={async () => {
@@ -627,8 +622,7 @@ export default function VideoEditor() {
                   alert('Error saving: ' + err.message);
                 }
               }}
-              className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20"
-              title="Save Frame"
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Save Frame
@@ -637,8 +631,7 @@ export default function VideoEditor() {
           <Button
             onClick={handleExport}
             disabled={!videoFile}
-            className="btn-gradient text-white text-sm disabled:opacity-30"
-            title="Export Frame"
+            className="btn-gradient text-white disabled:opacity-30"
           >
             <Download className="w-4 h-4 mr-2" />
             Export Frame
