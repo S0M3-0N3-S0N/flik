@@ -46,8 +46,7 @@ export default function CropPanel({ onStartCrop, onApplyCrop, onCancelCrop, isCr
           </Button>
           <Button
             onClick={onCancelCrop}
-            variant="outline"
-            className="w-full border-white/20 text-white hover:bg-white/10 h-10"
+            className="w-full bg-white/5 border border-white/20 text-white hover:bg-white/10 h-10"
           >
             <X className="w-4 h-4 mr-2" />
             Cancel
