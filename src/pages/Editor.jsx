@@ -36,6 +36,7 @@ export default function Editor() {
   const [brushStrokes, setBrushStrokes] = useState([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(30);
+  const [brushOpacity, setBrushOpacity] = useState(0.8);
   
   const [isCropping, setIsCropping] = useState(false);
   const [cropArea, setCropArea] = useState({ x: 10, y: 10, width: 80, height: 80 });
@@ -93,14 +94,19 @@ export default function Editor() {
 
   const [batchProgress, setBatchProgress] = useState(0);
 
+  const [batchCancelled, setBatchCancelled] = useState(false);
+
   const handleBatchProcess = async (tool) => {
     if (batchImages.length === 0) return;
     
     setIsBatchProcessing(true);
     setBatchProgress(0);
+    setBatchCancelled(false);
     const results = [];
     
     for (let i = 0; i < batchImages.length; i++) {
+      if (batchCancelled) break;
+      
       const image = batchImages[i];
       try {
         const uploadResult = await base44.integrations.Core.UploadFile({ file: image.file });
@@ -108,6 +114,16 @@ export default function Editor() {
           prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition.`,
           existing_image_urls: [uploadResult.file_url]
         });
+        
+        await base44.entities.Creation.create({
+          title: `Batch ${tool.label} - ${image.name}`,
+          type: 'image',
+          url: result.url,
+          thumbnail_url: result.url,
+          prompt: tool.prompt,
+          metadata: { batch: true, original: image.name }
+        });
+        
         results.push({ original: image, result: result.url });
         setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
       } catch (err) {
@@ -115,15 +131,11 @@ export default function Editor() {
       }
     }
     
-    alert(`Successfully processed ${results.length} of ${batchImages.length} images!`);
-    results.forEach((r, i) => {
-      setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = r.result;
-        link.download = `batch_${i}_${r.original.name}`;
-        link.click();
-      }, i * 500);
-    });
+    if (batchCancelled) {
+      alert(`Batch processing cancelled. Processed ${results.length} of ${batchImages.length} images.`);
+    } else {
+      alert(`Successfully processed ${results.length} of ${batchImages.length} images! Saved to Gallery.`);
+    }
     
     setIsBatchProcessing(false);
     setBatchImages([]);
@@ -188,17 +200,50 @@ export default function Editor() {
     setResultImage(null);
   };
 
+  const [redoHistory, setRedoHistory] = useState([]);
+
   const handleUndo = () => {
     if (undoHistory.length > 0) {
       const previous = undoHistory[undoHistory.length - 1];
-      setCurrentImage(previous);
+      setRedoHistory([...redoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+      
+      if (previous.image) {
+        setCurrentImage(previous.image);
+        if (previous.adjustments) setAdjustments(previous.adjustments);
+        if (previous.filter !== undefined) setSelectedFilter(previous.filter);
+        if (previous.transform) setTransform(previous.transform);
+      } else {
+        setCurrentImage(previous);
+      }
+      
       setUndoHistory(undoHistory.slice(0, -1));
+    }
+  };
+
+  const handleRedo = () => {
+    if (redoHistory.length > 0) {
+      const next = redoHistory[redoHistory.length - 1];
+      setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+      
+      if (next.image) {
+        setCurrentImage(next.image);
+        if (next.adjustments) setAdjustments(next.adjustments);
+        if (next.filter !== undefined) setSelectedFilter(next.filter);
+        if (next.transform) setTransform(next.transform);
+      } else {
+        setCurrentImage(next);
+      }
+      
+      setRedoHistory(redoHistory.slice(0, -1));
     }
   };
 
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        handleRedo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
         handleUndo();
       }
@@ -209,7 +254,7 @@ export default function Editor() {
     };
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [undoHistory, currentImage]);
+  }, [undoHistory, redoHistory, currentImage]);
 
   const handleDownload = async () => {
     if (!currentImage) return;
@@ -271,14 +316,17 @@ export default function Editor() {
   };
 
   const handleAdjustmentChange = (newAdjustments) => {
+    setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     setAdjustments(newAdjustments);
   };
 
   const handleFilterSelect = (filter) => {
+    setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     setSelectedFilter(filter);
   };
 
   const handleTransform = (type) => {
+    setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     const newTransform = { ...transform };
     switch (type) {
       case "rotate-right":
@@ -440,6 +488,7 @@ export default function Editor() {
     if (!currentImage) return;
     
     setIsProcessing(true);
+    setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     
     try {
       const canvas = document.createElement('canvas');
@@ -452,10 +501,10 @@ export default function Editor() {
         img.onload = resolve;
       });
 
-      const cropX = (cropArea.x / 100) * img.width;
-      const cropY = (cropArea.y / 100) * img.height;
-      const cropWidth = (cropArea.width / 100) * img.width;
-      const cropHeight = (cropArea.height / 100) * img.height;
+      const cropX = Math.max(0, Math.min((cropArea.x / 100) * img.width, img.width - 10));
+      const cropY = Math.max(0, Math.min((cropArea.y / 100) * img.height, img.height - 10));
+      const cropWidth = Math.min((cropArea.width / 100) * img.width, img.width - cropX);
+      const cropHeight = Math.min((cropArea.height / 100) * img.height, img.height - cropY);
 
       canvas.width = cropWidth;
       canvas.height = cropHeight;
@@ -471,7 +520,7 @@ export default function Editor() {
         });
         setIsCropping(false);
         setIsProcessing(false);
-      });
+      }, 'image/png', 1.0);
     } catch (error) {
       console.error("Error cropping:", error);
       setIsProcessing(false);
@@ -493,8 +542,8 @@ export default function Editor() {
     
     if (brushStrokes.length === 0) return;
     
-    ctx.strokeStyle = 'rgba(255, 107, 53, 0.8)';
-    ctx.fillStyle = 'rgba(255, 107, 53, 0.8)';
+    ctx.strokeStyle = `rgba(255, 107, 53, ${brushOpacity})`;
+    ctx.fillStyle = `rgba(255, 107, 53, ${brushOpacity})`;
     ctx.lineWidth = brushSize / 5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -630,6 +679,15 @@ export default function Editor() {
                         {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
                       </Button>
                     ))}
+                    {isBatchProcessing && (
+                      <Button
+                        onClick={() => setBatchCancelled(true)}
+                        variant="outline"
+                        className="w-full border-white/20 text-white hover:bg-white/10"
+                      >
+                        Cancel Processing
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -678,20 +736,37 @@ export default function Editor() {
                     isProcessing={isProcessing}
                     brushSize={brushSize}
                     onBrushSizeChange={setBrushSize}
+                    brushOpacity={brushOpacity}
+                    onBrushOpacityChange={setBrushOpacity}
                   />
                   {brushStrokes.length > 0 && (
                     <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-white/80">{brushStrokes.length} stroke(s)</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setBrushStrokes([])}
-                          className="text-white/60 hover:text-white h-7 px-2"
-                        >
-                          <X className="w-3 h-3 mr-1" />
-                          Clear
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              if (brushStrokes.length > 0) {
+                                setBrushStrokes(brushStrokes.slice(0, -1));
+                              }
+                            }}
+                            className="text-white/60 hover:text-white h-7 px-2"
+                            title="Undo last stroke"
+                          >
+                            <RotateCw className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setBrushStrokes([])}
+                            className="text-white/60 hover:text-white h-7 px-2"
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Clear
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -749,6 +824,17 @@ export default function Editor() {
               >
                 <RotateCw className="w-4 h-4 mr-2" />
                 Undo
+              </Button>
+            )}
+            {redoHistory.length > 0 && (
+              <Button
+                onClick={handleRedo}
+                variant="ghost"
+                className="text-white hover:bg-white/10"
+                title="Redo (Ctrl+Shift+Z)"
+              >
+                <RotateCw className="w-4 h-4 mr-2 scale-x-[-1]" />
+                Redo
               </Button>
             )}
             {currentImage && (
