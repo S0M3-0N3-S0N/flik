@@ -652,12 +652,12 @@ export default function VideoEditor() {
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto">
-              <TabsTrigger value="media"><Layers className="w-4 h-4" /></TabsTrigger>
-              <TabsTrigger value="text"><Type className="w-4 h-4" /></TabsTrigger>
-              <TabsTrigger value="remove"><Wand2 className="w-4 h-4" /></TabsTrigger>
-              <TabsTrigger value="transitions"><Zap className="w-4 h-4" /></TabsTrigger>
-              <TabsTrigger value="effects"><Sparkles className="w-4 h-4" /></TabsTrigger>
-              <TabsTrigger value="speed"><Sliders className="w-4 h-4" /></TabsTrigger>
+              <TabsTrigger value="media" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Layers className="w-4 h-4" /></TabsTrigger>
+              <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Type className="w-4 h-4" /></TabsTrigger>
+              <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Wand2 className="w-4 h-4" /></TabsTrigger>
+              <TabsTrigger value="transitions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Zap className="w-4 h-4" /></TabsTrigger>
+              <TabsTrigger value="effects" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Sparkles className="w-4 h-4" /></TabsTrigger>
+              <TabsTrigger value="speed" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Sliders className="w-4 h-4" /></TabsTrigger>
             </TabsList>
 
             <div className="px-4 pb-4">
