@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { 
   Upload, Play, Pause, SkipBack, SkipForward, Scissors, 
   Download, Volume2, ZoomIn, ZoomOut, Plus, Trash2,
-  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2, X, Sliders, Zap
+  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2, X, Sliders, Zap, RotateCw
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
