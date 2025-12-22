@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, AlertCircle, Trash2, Loader2 } from "lucide-react";
+import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { base44 } from "@/api/base44Client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const stylePresets = [
   { id: "photo", label: "Photorealistic", prompt: "ultra realistic photograph, 8k, highly detailed, professional photography" },
@@ -24,10 +23,12 @@ export default function Generate() {
   const [generatedImages, setGeneratedImages] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
   const [error, setError] = useState(null);
+  const [aiModel, setAiModel] = useState("default");
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError("Please enter a prompt to generate an image");
+      setTimeout(() => setError(null), 3000);
       return;
     }
     
@@ -35,30 +36,46 @@ export default function Generate() {
     setError(null);
     
     try {
+      let finalPrompt = prompt;
+      
+      if (aiModel === "gemini") {
+        const result = await base44.integrations.Core.InvokeLLM({
+          prompt: `You are an expert at creating detailed image generation prompts. Take this user request and expand it into a highly detailed, specific image generation prompt that will produce amazing results. Keep the core idea but add artistic details, lighting, composition, style elements, and technical quality specifications.
+
+User request: "${prompt}"
+
+Respond with ONLY the enhanced prompt, nothing else.`,
+          response_json_schema: null
+        });
+        finalPrompt = result;
+      }
+      
       const stylePrompt = selectedStyle 
         ? stylePresets.find(s => s.id === selectedStyle)?.prompt 
         : "";
       
-      const fullPrompt = `${prompt}${stylePrompt ? `, ${stylePrompt}` : ''}, masterpiece, high quality, detailed`;
+      const fullPrompt = `${finalPrompt}${stylePrompt ? `, ${stylePrompt}` : ''}, masterpiece, high quality, detailed`;
       
-      const result = await base44.integrations.Core.GenerateImage({
+      const imageResult = await base44.integrations.Core.GenerateImage({
         prompt: fullPrompt
       });
       
       const newImage = {
         id: Date.now(),
-        url: result.url,
+        url: imageResult.url,
         prompt: prompt,
+        enhancedPrompt: aiModel === "gemini" ? finalPrompt : null,
         style: selectedStyle,
+        model: aiModel,
         timestamp: new Date().toISOString()
       };
       
       await base44.entities.Creation.create({
-        title: prompt,
+        title: prompt.slice(0, 100),
         type: 'image',
-        url: result.url,
+        url: imageResult.url,
         prompt: prompt,
-        metadata: { style: selectedStyle }
+        metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt }
       });
       
       setGeneratedImages([newImage, ...generatedImages]);
@@ -66,7 +83,7 @@ export default function Generate() {
       setSelectedStyle(null);
     } catch (err) {
       console.error("Error generating image:", err);
-      setError("Failed to generate image. Please try again or modify your prompt.");
+      setError("Failed to generate image. " + (err.message || "Please try again."));
     } finally {
       setIsGenerating(false);
     }
@@ -85,7 +102,6 @@ export default function Generate() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Download error:", err);
       window.open(imageUrl, '_blank');
     }
   };
@@ -103,7 +119,7 @@ export default function Generate() {
   return (
     <div className="min-h-screen">
       <section className="relative py-20 px-6 overflow-hidden">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/20 to-transparent blur-[100px]" />
         </div>
         
@@ -140,13 +156,36 @@ export default function Generate() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="gradient-border p-6 max-w-3xl mx-auto"
+            className="relative p-6 max-w-3xl mx-auto bg-[#141414] rounded-2xl border border-white/10"
           >
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs text-white/40">AI Model</label>
+                <Select value={aiModel} onValueChange={setAiModel}>
+                  <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Standard</SelectItem>
+                    <SelectItem value="gemini">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-3 h-3" />
+                        Gemini Enhanced
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {aiModel === "gemini" && (
+                <p className="text-xs text-[#FF6B35]">✨ AI will enhance your prompt for better results</p>
+              )}
+            </div>
+
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="A majestic lion on a cliff at sunset, golden hour lighting..."
-              className="w-full min-h-[120px] bg-[#1a1a1a] border border-white/10 rounded-lg text-white placeholder:text-white/40 text-lg resize-none focus:ring-2 focus:ring-[#FF6B35] focus:outline-none p-4"
+              className="w-full min-h-[120px] bg-[#1a1a1a] border border-white/10 rounded-lg text-white placeholder:text-white/40 text-lg resize-none focus:ring-2 focus:ring-[#FF6B35] focus:outline-none p-4 mb-4"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   handleGenerate();
@@ -154,20 +193,18 @@ export default function Generate() {
               }}
             />
             
-            <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="mb-4">
               <p className="text-xs text-white/40 mb-3 text-left">Style Presets (Optional)</p>
               <div className="flex flex-wrap gap-2">
                 {stylePresets.map((style) => (
                   <button
                     key={style.id}
                     onClick={() => setSelectedStyle(selectedStyle === style.id ? null : style.id)}
-                    className={`
-                      px-4 py-2 rounded-full text-sm font-medium transition-all duration-300
-                      ${selectedStyle === style.id 
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                      selectedStyle === style.id 
                         ? "bg-gradient-to-r from-[#FF6B35] to-[#FFB800] text-white" 
                         : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-                      }
-                    `}
+                    }`}
                   >
                     {style.label}
                   </button>
@@ -176,13 +213,12 @@ export default function Generate() {
             </div>
             
             {error && (
-              <Alert className="mt-4 bg-red-500/10 border-red-500/20 text-red-400">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                {error}
+              </div>
             )}
             
-            <div className="mt-6 flex justify-between items-center">
+            <div className="flex justify-between items-center">
               <div className="text-xs text-white/40">
                 Tip: Press {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter
               </div>
@@ -194,7 +230,7 @@ export default function Generate() {
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Generating...
+                    {aiModel === "gemini" ? "Enhancing & Generating..." : "Generating..."}
                   </>
                 ) : (
                   <>
@@ -240,7 +276,7 @@ export default function Generate() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.05 }}
-                  className="group relative aspect-square rounded-2xl overflow-hidden gradient-border"
+                  className="group relative aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] border border-white/10"
                 >
                   <img
                     src={image.url}
@@ -262,12 +298,25 @@ export default function Generate() {
                     </div>
                     
                     <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="text-sm text-white/80 line-clamp-2 mb-4">
+                      {image.model === "gemini" && (
+                        <div className="mb-2">
+                          <span className="text-xs px-2 py-1 rounded-full bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30 flex items-center gap-1 w-fit">
+                            <Zap className="w-3 h-3" />
+                            Gemini Enhanced
+                          </span>
+                        </div>
+                      )}
+                      <p className="text-sm text-white/80 line-clamp-2 mb-2">
                         {image.prompt}
                       </p>
+                      {image.enhancedPrompt && (
+                        <p className="text-xs text-white/50 line-clamp-1 mb-3">
+                          Enhanced: {image.enhancedPrompt}
+                        </p>
+                      )}
                       {image.style && (
                         <div className="mb-3">
-                          <span className="text-xs px-2 py-1 rounded-full bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30">
+                          <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
                             {stylePresets.find(s => s.id === image.style)?.label}
                           </span>
                         </div>
