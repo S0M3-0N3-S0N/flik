@@ -25,6 +25,7 @@ export default function Gallery() {
   const [selectedItems, setSelectedItems] = useState([]);
   const itemsPerPage = 20;
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: creations = [], isLoading } = useQuery({
     queryKey: ['creations'],
@@ -262,23 +263,60 @@ export default function Gallery() {
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <AnimatePresence mode="popLayout">
                 {paginatedCreations.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.02 }}
-                  className={`group relative aspect-square rounded-xl overflow-hidden bg-white/5 border-2 cursor-pointer ${
-                    selectedItems.includes(item.id) ? 'border-[#FF6B35]' : 'border-white/10'
-                  }`}
-                  onClick={(e) => {
-                    if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                      toggleSelectItem(item.id);
-                    } else {
-                      setSelectedItem(item);
-                    }
-                  }}
-                >
+                  <ContextMenu
+                    key={item.id}
+                    items={[
+                      {
+                        label: 'Open',
+                        icon: Eye,
+                        onClick: () => setSelectedItem(item),
+                        shortcut: 'Enter'
+                      },
+                      {
+                        label: 'Edit in Editor',
+                        icon: Edit,
+                        onClick: () => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url)),
+                      },
+                      { separator: true },
+                      {
+                        label: 'Download',
+                        icon: Download,
+                        onClick: () => handleDownload(item.url, item.title),
+                        shortcut: '⌘D'
+                      },
+                      {
+                        label: 'Copy URL',
+                        icon: Copy,
+                        onClick: () => {
+                          navigator.clipboard.writeText(item.url);
+                        }
+                      },
+                      { separator: true },
+                      {
+                        label: 'Delete',
+                        icon: Trash2,
+                        onClick: () => handleDelete(item.id),
+                        danger: true,
+                        shortcut: '⌫'
+                      }
+                    ]}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ delay: index * 0.02 }}
+                      className={`group relative aspect-square rounded-xl overflow-hidden bg-white/5 border-2 cursor-pointer ${
+                        selectedItems.includes(item.id) ? 'border-[#FF6B35]' : 'border-white/10'
+                      }`}
+                      onClick={(e) => {
+                        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                          toggleSelectItem(item.id);
+                        } else {
+                          setSelectedItem(item);
+                        }
+                      }}
+                    >
                   {item.thumbnail_url || item.url ? (
                     <img
                       src={item.thumbnail_url || item.url}
@@ -351,10 +389,11 @@ export default function Gallery() {
                      </div>
                    </div>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                  </motion.div>
+                  </ContextMenu>
+                  ))}
+                  </AnimatePresence>
+                  </div>
           
           {totalPages > 1 && (
             <div className="mt-8 flex items-center justify-center gap-2">

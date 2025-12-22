@@ -123,18 +123,20 @@ export default function VideoEditor() {
       video.onloadedmetadata = () => {
         setDuration(video.duration);
         
-        const newClip = {
-          id: Date.now(),
-          type: 'video',
-          url: videoFile.url,
-          name: videoFile.name,
-          start: 0,
-          duration: video.duration,
-        };
-        
-        const newTracks = [...tracks];
-        newTracks[0].clips = [newClip];
-        setTracks(newTracks);
+        if (tracks[0].clips.length === 0) {
+          const newClip = {
+            id: Date.now(),
+            type: 'video',
+            url: videoFile.url,
+            name: videoFile.name,
+            start: 0,
+            duration: video.duration,
+          };
+          
+          const newTracks = [...tracks];
+          newTracks[0].clips = [newClip];
+          setTracks(newTracks);
+        }
       };
     }
   }, [videoFile]);
