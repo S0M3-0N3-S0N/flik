@@ -85,8 +85,7 @@ export default function Layout({ children, currentPageName }) {
       <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to={createPageUrl("Editor")} className="flex items-center gap-3">
-
-
+            <span className="text-2xl font-bold gradient-text">FLIK</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-8">
