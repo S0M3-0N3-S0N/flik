@@ -333,11 +333,20 @@ export default function VideoEditor() {
           )}
           <Button
             className="btn-gradient text-white disabled:opacity-30"
-            disabled={!videoFile}
-            onClick={() => alert("Exporting from the new Canvas Engine... This would trigger a backend render in a full app.")}
+            disabled={!videoFile || isExporting}
+            onClick={handleExport}
           >
-            <Download className="w-4 h-4 mr-2" />
-            Export
+            {isExporting ? (
+                 <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                    Rendering...
+                 </>
+            ) : (
+                <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Video
+                </>
+            )}
           </Button>
         </div>
       </motion.div>
