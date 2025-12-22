@@ -145,15 +145,7 @@ export default function Gallery() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl btn-gradient flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold gradient-text">My Creations</h1>
-              <p className="text-white/50 text-sm">All your AI-generated masterpieces</p>
-            </div>
-          </div>
+
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="p-4 rounded-xl bg-white/5 border border-white/10">
