@@ -141,7 +141,7 @@ export default function Generate() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe the image you want to create... (e.g., 'A majestic lion standing on a cliff at sunset, golden hour lighting')"
-              className="min-h-[120px] bg-transparent border-0 text-white placeholder:text-white/30 text-lg resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="min-h-[120px] bg-[#1a1a1a] border-0 text-white placeholder:text-white/40 text-lg resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   handleGenerate();

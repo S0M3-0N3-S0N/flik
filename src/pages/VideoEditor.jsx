@@ -37,6 +37,8 @@ export default function VideoEditor() {
     blur: 0,
     sepia: 0,
   });
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [audioElements, setAudioElements] = useState([]);
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
@@ -53,22 +55,28 @@ export default function VideoEditor() {
     const file = e.target.files[0];
     if (file && file.type.startsWith('audio/')) {
       const url = URL.createObjectURL(file);
-      const newClip = {
-        id: Date.now(),
-        type: 'audio',
-        url: url,
-        name: file.name,
-        start: currentTime,
-        duration: 30,
-        volume: 100,
-      };
       
-      const newTracks = [...tracks];
-      const audioTrack = newTracks.find(t => t.type === 'audio');
-      if (audioTrack) {
-        audioTrack.clips.push(newClip);
-        setTracks(newTracks);
-      }
+      const audio = new Audio(url);
+      audio.onloadedmetadata = () => {
+        const newClip = {
+          id: Date.now(),
+          type: 'audio',
+          url: url,
+          name: file.name,
+          start: currentTime,
+          duration: audio.duration,
+          volume: 100,
+        };
+        
+        const newTracks = [...tracks];
+        const audioTrack = newTracks.find(t => t.type === 'audio');
+        if (audioTrack) {
+          audioTrack.clips.push(newClip);
+          setTracks(newTracks);
+        }
+        
+        setAudioElements(prev => [...prev, { id: newClip.id, element: audio }]);
+      };
     }
   };
 
@@ -100,6 +108,7 @@ export default function VideoEditor() {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
+        audioElements.forEach(({ element }) => element.pause());
       } else {
         videoRef.current.play();
       }
@@ -107,9 +116,37 @@ export default function VideoEditor() {
     }
   };
 
+  const handleSpeedChange = (speed) => {
+    setPlaybackSpeed(speed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
+    audioElements.forEach(({ element }) => {
+      element.playbackRate = speed;
+    });
+  };
+
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+      const time = videoRef.current.currentTime;
+      setCurrentTime(time);
+      
+      audioElements.forEach(({ id, element }) => {
+        const clip = tracks.find(t => t.type === 'audio')?.clips.find(c => c.id === id);
+        if (clip) {
+          if (time >= clip.start && time < clip.start + clip.duration) {
+            if (element.paused) {
+              element.currentTime = time - clip.start;
+              element.volume = clip.volume / 100;
+              element.play().catch(e => console.log('Audio play failed:', e));
+            }
+          } else {
+            if (!element.paused) {
+              element.pause();
+            }
+          }
+        }
+      });
     }
   };
 
@@ -427,8 +464,8 @@ export default function VideoEditor() {
               <TabsTrigger value="effects">
                 <Sparkles className="w-4 h-4" />
               </TabsTrigger>
-              <TabsTrigger value="audio">
-                <Music className="w-4 h-4" />
+              <TabsTrigger value="speed">
+                <Sliders className="w-4 h-4" />
               </TabsTrigger>
             </TabsList>
 
@@ -615,59 +652,94 @@ export default function VideoEditor() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="audio" className="mt-0">
-                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Audio</h3>
+              <TabsContent value="speed" className="mt-0">
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Speed & Timing</h3>
                 
-                <label className="block cursor-pointer mb-4">
-                  <div className="border-2 border-dashed border-white/20 rounded-xl p-4 hover:border-white/40 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Music className="w-5 h-5 text-[#FF6B35]" />
-                      <div>
-                        <p className="text-sm text-white">Add Music</p>
-                        <p className="text-xs text-white/50">MP3, WAV</p>
-                      </div>
-                    </div>
-                  </div>
-                  <input 
-                    type="file" 
-                    accept="audio/*" 
-                    onChange={handleAudioUpload}
-                    className="hidden" 
-                  />
-                </label>
-
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-white/60">Volume</span>
-                      <span className="text-xs text-white/40">{volume}%</span>
-                    </div>
-                    <Slider
-                      value={[volume]}
-                      onValueChange={handleVolumeChange}
-                      max={100}
-                      step={1}
-                    />
-                  </div>
-
-                  {tracks.find(t => t.type === 'audio')?.clips.length > 0 && (
-                    <div className="pt-3 border-t border-white/10">
-                      <p className="text-xs text-white/40 mb-2">Audio Clips</p>
-                      {tracks.find(t => t.type === 'audio').clips.map(clip => (
-                        <div key={clip.id} className="flex items-center justify-between p-2 rounded bg-white/5 mb-2">
-                          <span className="text-xs text-white truncate">{clip.name}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDeleteClip('audio', clip.id)}
-                            className="h-6 w-6"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
+                    <Label className="text-white/60 text-xs mb-3 block">Playback Speed</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: '0.25x', value: 0.25 },
+                        { label: '0.5x', value: 0.5 },
+                        { label: '0.75x', value: 0.75 },
+                        { label: '1x', value: 1 },
+                        { label: '1.25x', value: 1.25 },
+                        { label: '1.5x', value: 1.5 },
+                        { label: '2x', value: 2 },
+                        { label: '3x', value: 3 },
+                        { label: '4x', value: 4 },
+                      ].map((speed) => (
+                        <Button
+                          key={speed.value}
+                          variant={playbackSpeed === speed.value ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleSpeedChange(speed.value)}
+                          disabled={!videoFile}
+                          className={`${
+                            playbackSpeed === speed.value 
+                              ? "btn-gradient text-white" 
+                              : "border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+                          }`}
+                        >
+                          {speed.label}
+                        </Button>
                       ))}
                     </div>
-                  )}
+                  </div>
+
+                  <div className="pt-4 border-t border-white/10">
+                    <Label className="text-white/60 text-xs mb-3 block">Audio Tracks</Label>
+                    <label className="block cursor-pointer mb-4">
+                      <div className="border-2 border-dashed border-white/20 rounded-xl p-4 hover:border-white/40 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <Music className="w-5 h-5 text-[#FF6B35]" />
+                          <div>
+                            <p className="text-sm text-white">Add Music</p>
+                            <p className="text-xs text-white/50">MP3, WAV</p>
+                          </div>
+                        </div>
+                      </div>
+                      <input 
+                        type="file" 
+                        accept="audio/*" 
+                        onChange={handleAudioUpload}
+                        className="hidden" 
+                      />
+                    </label>
+
+                    {tracks.find(t => t.type === 'audio')?.clips.length > 0 && (
+                      <div>
+                        <p className="text-xs text-white/40 mb-2">Audio Clips</p>
+                        {tracks.find(t => t.type === 'audio').clips.map(clip => (
+                          <div key={clip.id} className="flex items-center justify-between p-2 rounded bg-white/5 mb-2">
+                            <span className="text-xs text-white truncate">{clip.name}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDeleteClip('audio', clip.id)}
+                              className="h-6 w-6"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-white/60">Master Volume</span>
+                        <span className="text-xs text-white/40">{volume}%</span>
+                      </div>
+                      <Slider
+                        value={[volume]}
+                        onValueChange={handleVolumeChange}
+                        max={100}
+                        step={1}
+                      />
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             </div>
