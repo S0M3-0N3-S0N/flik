@@ -215,9 +215,10 @@ export default function Editor() {
   // Brush drawing for spot removal
   const handleMouseDown = (e) => {
     if (activeTab === "remove" && currentImage) {
-      setIsDrawing(true);
+      e.preventDefault();
       const point = getMousePos(e);
       if (point) {
+        setIsDrawing(true);
         setBrushStrokes([...brushStrokes, [point]]);
       }
     } else if (activeTab === "crop" && isCropping) {
@@ -230,11 +231,14 @@ export default function Editor() {
 
   const handleMouseMove = (e) => {
     if (activeTab === "remove" && isDrawing && currentImage) {
+      e.preventDefault();
       const point = getMousePos(e);
       if (point) {
         const newStrokes = [...brushStrokes];
-        newStrokes[newStrokes.length - 1].push(point);
-        setBrushStrokes(newStrokes);
+        if (newStrokes.length > 0) {
+          newStrokes[newStrokes.length - 1].push(point);
+          setBrushStrokes(newStrokes);
+        }
       }
     } else if (activeTab === "crop" && isDragging) {
       const point = getMousePos(e);
