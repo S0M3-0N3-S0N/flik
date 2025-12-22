@@ -109,6 +109,15 @@ export default function Layout({ children, currentPageName }) {
               <Wand2 className="w-4 h-4" />
               Generate
             </Link>
+            <Link 
+              to={createPageUrl("Gallery")} 
+              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                currentPageName === "Gallery" ? "text-white" : "text-white/60 hover:text-white"
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              Gallery
+            </Link>
           </nav>
           
           <div className="flex items-center gap-4">

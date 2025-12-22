@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, RefreshCw, Copy, Check, Wand2, Image as ImageIcon, AlertCircle, Trash2, Loader2 } from "lucide-react";
+import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, AlertCircle, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { base44 } from "@/api/base44Client";
@@ -52,6 +52,14 @@ export default function Generate() {
         style: selectedStyle,
         timestamp: new Date().toISOString()
       };
+      
+      await base44.entities.Creation.create({
+        title: prompt,
+        type: 'image',
+        url: result.url,
+        prompt: prompt,
+        metadata: { style: selectedStyle }
+      });
       
       setGeneratedImages([newImage, ...generatedImages]);
       setPrompt("");
@@ -134,11 +142,11 @@ export default function Generate() {
             transition={{ delay: 0.3 }}
             className="gradient-border p-6 max-w-3xl mx-auto"
           >
-            <Textarea
+            <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="A majestic lion on a cliff at sunset, golden hour lighting..."
-              className="min-h-[120px] bg-[#141414] border border-white/10 text-white placeholder:text-white/40 text-lg resize-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-0"
+              className="w-full min-h-[120px] bg-[#1a1a1a] border border-white/10 rounded-lg text-white placeholder:text-white/40 text-lg resize-none focus:ring-2 focus:ring-[#FF6B35] focus:outline-none p-4"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   handleGenerate();
