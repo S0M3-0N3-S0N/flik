@@ -785,90 +785,74 @@ export default function VideoEditor() {
                   <div className="flex items-start gap-3 mb-4">
                     <Wand2 className="w-5 h-5 text-[#FF6B35] mt-1" />
                     <div>
-                      <h4 className="text-white font-medium text-sm mb-2">Remove Watermarks</h4>
-                      <ol className="text-xs text-white/60 space-y-1">
-                        <li>1. Pause at frame with watermark</li>
-                        <li>2. Paint over watermark/unwanted object</li>
-                        <li>3. Click "Remove" to process</li>
-                      </ol>
+                      <h4 className="text-white font-medium text-sm mb-2">AI Auto-Remove</h4>
+                      <p className="text-xs text-white/60">
+                        Automatically detect and remove watermarks, logos, and text overlays from the current frame using AI.
+                      </p>
                     </div>
                   </div>
 
                   <Button
-                    onClick={() => setIsRemoving(!isRemoving)}
-                    variant={isRemoving ? "default" : "outline"}
-                    className={isRemoving ? "w-full btn-gradient text-white" : "w-full border-white/20 text-white"}
+                    onClick={async () => {
+                      if (!videoFile) return;
+                      setIsProcessing(true);
+                      try {
+                        const canvas = document.createElement('canvas');
+                        const video = videoRef.current;
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0);
+                        
+                        canvas.toBlob(async (blob) => {
+                          const file = new File([blob], 'frame.png', { type: 'image/png' });
+                          const uploadResult = await base44.integrations.Core.UploadFile({ file });
+                          
+                          const result = await base44.integrations.Core.GenerateImage({
+                            prompt: 'Identify and remove all watermarks, logos, and text overlays from this image. Fill the areas naturally to match the background. Do not change anything else.',
+                            existing_image_urls: [uploadResult.file_url]
+                          });
+                          
+                          // Save result to gallery
+                          await base44.entities.Creation.create({
+                            title: `Cleaned Frame - ${videoFile.name}`,
+                            type: 'image',
+                            url: result.url,
+                            thumbnail_url: result.url,
+                            prompt: 'Auto-remove watermark',
+                            metadata: { source: 'video_editor', type: 'cleanup' }
+                          });
+
+                          // Download logic or show result
+                          const link = document.createElement('a');
+                          link.href = result.url;
+                          link.download = `cleaned_frame_${Date.now()}.png`;
+                          link.click();
+                          
+                          alert('Watermark removed! The cleaned frame has been saved to Gallery and downloaded.');
+                        });
+                      } catch (err) {
+                        alert('Error removing watermark: ' + err.message);
+                      } finally {
+                        setIsProcessing(false);
+                      }
+                    }}
+                    disabled={isProcessing || !videoFile}
+                    className="w-full btn-gradient text-white"
                   >
-                    {isRemoving ? 'Painting Mode Active' : 'Start Painting'}
+                    {isProcessing ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Auto Remove Watermark
+                      </>
+                    )}
                   </Button>
                 </div>
-
-                {removeStrokes.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/60">{removeStrokes.length} stroke(s)</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setRemoveStrokes([])}
-                        className="text-white/60 hover:text-white h-7"
-                      >
-                        <X className="w-3 h-3 mr-1" />
-                        Clear
-                      </Button>
-                    </div>
-                    <Button
-                      onClick={async () => {
-                        if (!videoFile || removeStrokes.length === 0) return;
-                        setIsProcessing(true);
-                        try {
-                          const canvas = document.createElement('canvas');
-                          const video = videoRef.current;
-                          canvas.width = video.videoWidth;
-                          canvas.height = video.videoHeight;
-                          const ctx = canvas.getContext('2d');
-                          ctx.drawImage(video, 0, 0);
-                          
-                          canvas.toBlob(async (blob) => {
-                            const file = new File([blob], 'frame.png', { type: 'image/png' });
-                            const uploadResult = await base44.integrations.Core.UploadFile({ file });
-                            
-                            const result = await base44.integrations.Core.GenerateImage({
-                              prompt: 'Remove the painted areas (watermarks, logos, unwanted objects) from this image. Fill the removed areas naturally to match surrounding content. Keep everything else exactly the same.',
-                              existing_image_urls: [uploadResult.file_url]
-                            });
-                            
-                            const newImage = new Image();
-                            newImage.src = result.url;
-                            newImage.onload = () => {
-                              alert('Watermark removed! The cleaned frame has been generated. You can download it from the export.');
-                              setRemoveStrokes([]);
-                              setIsRemoving(false);
-                            };
-                          });
-                        } catch (err) {
-                          alert('Error removing watermark: ' + err.message);
-                        } finally {
-                          setIsProcessing(false);
-                        }
-                      }}
-                      disabled={isProcessing}
-                      className="w-full btn-gradient text-white"
-                    >
-                      {isProcessing ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="w-4 h-4 mr-2" />
-                          Remove Watermark
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
               </TabsContent>
 
               <TabsContent value="transitions" className="mt-0">

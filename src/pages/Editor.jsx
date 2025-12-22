@@ -752,7 +752,7 @@ export default function Editor() {
                                 setBrushStrokes(brushStrokes.slice(0, -1));
                               }
                             }}
-                            className="text-white/60 hover:text-white h-7 px-2"
+                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
                             title="Undo last stroke"
                           >
                             <RotateCw className="w-3 h-3" />
@@ -761,7 +761,7 @@ export default function Editor() {
                             size="sm"
                             variant="ghost"
                             onClick={() => setBrushStrokes([])}
-                            className="text-white/60 hover:text-white h-7 px-2"
+                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
                           >
                             <X className="w-3 h-3 mr-1" />
                             Clear
@@ -815,28 +815,28 @@ export default function Editor() {
           </div>
           
           <div className="flex items-center gap-3">
-            {undoHistory.length > 0 && (
+            <div className="flex items-center gap-1">
               <Button
                 onClick={handleUndo}
                 variant="ghost"
-                className="text-white hover:bg-white/10"
+                disabled={undoHistory.length === 0}
+                className="text-white hover:bg-white/10 disabled:opacity-30"
                 title="Undo (Ctrl+Z)"
               >
                 <RotateCw className="w-4 h-4 mr-2" />
                 Undo
               </Button>
-            )}
-            {redoHistory.length > 0 && (
               <Button
                 onClick={handleRedo}
                 variant="ghost"
-                className="text-white hover:bg-white/10"
+                disabled={redoHistory.length === 0}
+                className="text-white hover:bg-white/10 disabled:opacity-30"
                 title="Redo (Ctrl+Shift+Z)"
               >
                 <RotateCw className="w-4 h-4 mr-2 scale-x-[-1]" />
                 Redo
               </Button>
-            )}
+            </div>
             {currentImage && (
               <Button
                 onClick={async () => {

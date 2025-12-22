@@ -336,7 +336,7 @@ export default function Gallery() {
                          onClick={(e) => {
                            e.stopPropagation();
                            const url = item.type === 'image' ? '/Editor' : '/VideoEditor';
-                           window.location.href = url;
+                           window.location.href = url + '?load=' + encodeURIComponent(item.url);
                          }}
                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs h-8"
                        >
