@@ -3,9 +3,8 @@ import { motion } from "framer-motion";
 import { 
   Upload, Play, Pause, SkipBack, SkipForward, Scissors, 
   Download, Volume2, ZoomIn, ZoomOut, Plus, Trash2,
-  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2, X, Sliders, Zap, Film, Waves
+  Image, Music, Type, Sparkles, Wand2, Layers, Video, Edit2, X, Sliders, Zap
 } from "lucide-react";
-import ResultModal from "@/components/editor/ResultModal";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -43,7 +42,6 @@ export default function VideoEditor() {
   const [isRemoving, setIsRemoving] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [undoHistory, setUndoHistory] = useState([]);
-  const [resultModal, setResultModal] = useState({ isOpen: false, original: null, result: null });
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
@@ -787,14 +785,15 @@ export default function VideoEditor() {
                             metadata: { source: 'video_editor', type: 'cleanup' }
                           });
 
-                          // Show result in modal
-                          setResultModal({
-                            isOpen: true,
-                            original: uploadResult.file_url,
-                            result: result.url
-                          });
-                          });
-                          } catch (err) {
+                          // Download logic or show result
+                          const link = document.createElement('a');
+                          link.href = result.url;
+                          link.download = `cleaned_frame_${Date.now()}.png`;
+                          link.click();
+                          
+                          alert('Watermark removed! The cleaned frame has been saved to Gallery and downloaded.');
+                        });
+                      } catch (err) {
                         console.error('Removal failed:', err);
                         if (err.message && err.message.includes('refused')) {
                           alert('The AI refused to process this image. This usually happens if the content violates safety policies or if the "watermark" terminology triggers copyright filters. Please try painting over the area manually in the "Magic Brush" tool instead.');
@@ -1009,7 +1008,7 @@ export default function VideoEditor() {
             
             {videoFile ? (
               <div 
-                className="relative max-w-4xl w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10"
+                className="relative max-w-4xl w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl"
                 onMouseDown={handleCanvasMouseDown}
                 onMouseMove={handleCanvasMouseMove}
                 onMouseUp={() => {}}
@@ -1052,29 +1051,10 @@ export default function VideoEditor() {
               </div>
             ) : (
               <div className="text-center">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                  <Video className="w-10 h-10 text-white/20" />
+                <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-6">
+                  <Video className="w-8 h-8 text-white/30" />
                 </div>
-                <h3 className="text-xl font-medium text-white mb-2">Start Creating</h3>
-                <p className="text-white/40 mb-8 max-w-xs mx-auto">Upload your footage or try our sample project to explore the editor.</p>
-                
-                <div className="flex items-center justify-center gap-4">
-                  <label className="cursor-pointer btn-gradient px-6 py-2.5 rounded-full text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    Upload Video
-                    <input type="file" accept="video/*" onChange={handleFileUpload} className="hidden" />
-                  </label>
-                  <Button 
-                    variant="outline" 
-                    className="rounded-full border-white/20 text-white hover:bg-white/10"
-                    onClick={() => setVideoFile({ 
-                      url: "https://videos.pexels.com/video-files/855018/855018-hd_1920_1080_30fps.mp4", 
-                      name: "sample_ink_flow.mp4" 
-                    })}
-                  >
-                    Try Sample
-                  </Button>
-                </div>
+                <p className="text-white/40">Upload a video to start editing</p>
               </div>
             )}
           </div>
@@ -1150,55 +1130,22 @@ export default function VideoEditor() {
                         style={{
                           left: `${(clip.start / (duration || 100)) * 100}%`,
                           width: `${(clip.duration / (duration || 100)) * 100}%`,
+                          background: track.type === 'video' 
+                            ? 'linear-gradient(135deg, #FF6B35 0%, #F72C25 100%)'
+                            : track.type === 'audio'
+                            ? 'linear-gradient(135deg, #FFB800 0%, #FF6B35 100%)'
+                            : 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
                           cursor: 'move'
                         }}
-                        className={`absolute top-1 bottom-1 rounded-md px-2 flex items-center justify-between select-none overflow-hidden group/clip transition-all ${
-                          selectedClip?.id === clip.id ? 'ring-2 ring-white z-10 shadow-lg scale-[1.02]' : 'hover:brightness-110'
-                        } ${
-                          track.type === 'video' 
-                            ? 'bg-gradient-to-r from-[#FF6B35] to-[#F72C25]' 
-                            : track.type === 'audio'
-                            ? 'bg-gradient-to-r from-[#FFB800] to-[#FF6B35]'
-                            : 'bg-gradient-to-r from-[#4F46E5] to-[#7C3AED]'
-                        }`}
                         onClick={() => setSelectedClip(clip)}
                         onMouseDown={(e) => handleClipMouseDown(e, clip)}
                       >
                         <div
-                          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/40 z-20"
+                          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/20"
                           onMouseDown={(e) => handleClipMouseDown(e, clip, 'left')}
                         />
-                        
-                        {/* Filmstrip / Waveform Pattern Overlay */}
-                        <div className="absolute inset-0 opacity-20 pointer-events-none flex items-center overflow-hidden">
-                          {track.type === 'video' ? (
-                            <div className="flex w-full gap-0.5">
-                              {Array.from({ length: 20 }).map((_, i) => (
-                                <div key={i} className="h-full aspect-video border-x border-black/20 bg-black/10" />
-                              ))}
-                            </div>
-                          ) : track.type === 'audio' ? (
-                            <div className="flex items-center w-full justify-around px-1">
-                              {Array.from({ length: 40 }).map((_, i) => (
-                                <div 
-                                  key={i} 
-                                  className="w-0.5 bg-black/40 rounded-full" 
-                                  style={{ height: `${Math.random() * 60 + 20}%` }} 
-                                />
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <div className="relative z-10 flex items-center gap-2 overflow-hidden">
-                          {track.type === 'video' && <Film className="w-3 h-3 text-white/70" />}
-                          {track.type === 'audio' && <Waves className="w-3 h-3 text-white/70" />}
-                          <span className="text-xs text-white font-medium truncate shadow-black drop-shadow-md">
-                            {clip.name || clip.text}
-                          </span>
-                        </div>
-
-                        <div className="relative z-10 flex items-center gap-1 opacity-0 group-hover/clip:opacity-100 transition-opacity">
+                        <span className="text-xs text-white truncate pointer-events-none">{clip.name || clip.text}</span>
+                        <div className="flex items-center gap-1">
                           {track.type === 'text' && (
                             <Button
                               variant="ghost"
@@ -1239,24 +1186,7 @@ export default function VideoEditor() {
             </div>
           </div>
         </main>
-        </div>
-
-        <ResultModal
-        isOpen={resultModal.isOpen}
-        onClose={() => setResultModal({ ...resultModal, isOpen: false })}
-        originalImage={resultModal.original}
-        resultImage={resultModal.result}
-        onApply={() => {
-        setResultModal({ ...resultModal, isOpen: false });
-        // In a real app, this would replace the frame in the video or add as new clip
-        }}
-        onDownload={async () => {
-        const link = document.createElement('a');
-        link.href = resultModal.result;
-        link.download = `cleaned_frame_${Date.now()}.png`;
-        link.click();
-        }}
-        />
-        </div>
-        );
-        }
+      </div>
+    </div>
+  );
+}
