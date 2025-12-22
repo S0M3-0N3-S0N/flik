@@ -131,9 +131,7 @@ export default function Layout({ children, currentPageName }) {
           </nav>
           
           <div className="flex items-center gap-4">
-            <span className="hidden sm:block text-xs text-white/40 px-3 py-1 rounded-full border border-white/10">
-              AI-Powered
-            </span>
+
           </div>
         </div>
       </header>
