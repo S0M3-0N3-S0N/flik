@@ -41,6 +41,7 @@ export default function VideoEditor() {
   const [removeStrokes, setRemoveStrokes] = useState([]);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [undoHistory, setUndoHistory] = useState([]);
 
   const audioRefs = useRef({});
@@ -282,6 +283,63 @@ export default function VideoEditor() {
     }
     
     setVideoEffects(newEffects);
+  };
+
+  const handleExport = async () => {
+    if (!videoFile) return;
+    
+    const confirmExport = window.confirm("Start rendering? The video will play from start to finish to capture the output.");
+    if (!confirmExport) return;
+
+    setIsExporting(true);
+    setIsPlaying(false);
+    
+    // 1. Reset to start
+    handleSeek(0);
+    
+    // 2. Wait for seek
+    await new Promise(r => setTimeout(r, 500));
+
+    // 3. Get Canvas Stream
+    const canvas = document.querySelector('canvas');
+    if (!canvas) {
+        alert("Canvas not found");
+        setIsExporting(false);
+        return;
+    }
+
+    const stream = canvas.captureStream(30); // 30 FPS
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    const chunks = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `flik_export_${Date.now()}.webm`;
+        a.click();
+        setIsExporting(false);
+        setIsPlaying(false);
+        alert("Export complete!");
+    };
+
+    // 4. Start Recording and Playing
+    mediaRecorder.start();
+    setIsPlaying(true);
+    
+    // 5. Stop when finished
+    const checkEnded = setInterval(() => {
+        const video = document.querySelector('video');
+        if (video && video.ended) {
+            mediaRecorder.stop();
+            clearInterval(checkEnded);
+        }
+    }, 100);
   };
 
   const formatTime = (seconds) => {
