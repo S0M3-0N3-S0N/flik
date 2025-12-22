@@ -594,40 +594,7 @@ export default function VideoEditor() {
               Split
             </Button>
           )}
-          {videoFile && (
-            <Button
-              onClick={async () => {
-                try {
-                  const canvas = document.createElement('canvas');
-                  const video = videoRef.current;
-                  canvas.width = video.videoWidth;
-                  canvas.height = video.videoHeight;
-                  const ctx = canvas.getContext('2d');
-                  ctx.drawImage(video, 0, 0);
-                  
-                  canvas.toBlob(async (blob) => {
-                    const file = new File([blob], 'frame.png', { type: 'image/png' });
-                    const uploadResult = await base44.integrations.Core.UploadFile({ file });
-                    
-                    await base44.entities.Creation.create({
-                      title: 'Video Frame',
-                      type: 'image',
-                      url: uploadResult.file_url,
-                      thumbnail_url: uploadResult.file_url
-                    });
-                    
-                    alert('Frame saved to Gallery!');
-                  });
-                } catch (err) {
-                  alert('Error saving: ' + err.message);
-                }
-              }}
-              className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Save Frame
-            </Button>
-          )}
+
           <Button
             onClick={handleExport}
             disabled={!videoFile}
