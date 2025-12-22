@@ -556,18 +556,77 @@ export default function Editor() {
     setActiveTool({ label: "Spot Removal" });
     
     try {
-      let imageUrl = currentImage.url || currentImage.preview;
+      // Bake the current image state (transforms, adjustments)
+      const blob = await getProcessedImageBlob();
+      const file = new File([blob], "processed_cleanup.png", { type: "image/png" });
       
-      if (currentImage.file) {
-        const uploadResult = await base44.integrations.Core.UploadFile({
-          file: currentImage.file
+      const uploadResult = await base44.integrations.Core.UploadFile({
+        file: file
+      });
+      const imageUrl = uploadResult.file_url;
+      
+      // We also need to potentially mask the brush strokes if the backend required it,
+      // but GenerateImage generic prompt might just look at the image.
+      // However, usually for inpainting we need to send the mask.
+      // The current prompt says "at the marked painted areas". 
+      // If we just send the clean image, the AI won't know WHERE to paint unless we draw the strokes ON the image?
+      // Wait, the previous code sent `currentImage` and `prompt`. It didn't send a mask.
+      // The previous code relied on the AI "figuring it out"? Or maybe the `ProcessingOverlay` drew on it? No.
+      // Actually, if we look at `handleRemoveSpots` in the original code, it didn't seem to draw the red strokes onto the image sent to AI.
+      // It just sent the original image and said "marked painted areas". 
+      // This suggests the previous implementation might not have worked well for spot removal unless the "existing_image_urls" implies a state where the client draws on it?
+      // No, `GenerateImage` takes a URL.
+      // To make this work properly, I should probably DRAW the red strokes onto the baked image so the AI sees them!
+      // OR send a separate mask. But `GenerateImage` schema doesn't show a mask input.
+      // It assumes the prompt handles it or the image has the markings?
+      // Let's assume for "Spot Removal" with a generic LLM/Image gen, drawing the mask on the image (e.g. in bright green/red) and telling it "remove the red areas" is a common strategy if no explicit mask input exists.
+      // So, let's modify `getProcessedImageBlob` to optionally accept `drawStrokes`.
+      // Or just draw them here manually.
+      
+      // Let's create a specific blob for spot removal that INCLUDES the brush strokes burned in
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = URL.createObjectURL(blob); // Load the baked image
+      
+      await new Promise(r => img.onload = r);
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      
+      // Draw strokes
+      if (brushStrokes.length > 0) {
+        ctx.strokeStyle = `rgba(255, 0, 0, 1)`; // Bright red for AI to see
+        ctx.fillStyle = `rgba(255, 0, 0, 1)`;
+        ctx.lineWidth = (brushSize / 100) * canvas.width; // Scale brush size relative to canvas
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        brushStrokes.forEach(stroke => {
+          if (stroke.length === 0) return;
+          if (stroke.length === 1) {
+             ctx.beginPath();
+             ctx.arc((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
+             ctx.fill();
+          } else {
+             ctx.beginPath();
+             ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
+             for (let i = 1; i < stroke.length; i++) {
+               ctx.lineTo((stroke[i].x / 100) * canvas.width, (stroke[i].y / 100) * canvas.height);
+             }
+             ctx.stroke();
+          }
         });
-        imageUrl = uploadResult.file_url;
       }
       
+      const maskedBlob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      const maskedFile = new File([maskedBlob], "masked_input.png", { type: "image/png" });
+      const maskedUpload = await base44.integrations.Core.UploadFile({ file: maskedFile });
+      
       const result = await base44.integrations.Core.GenerateImage({
-        prompt: `Remove unwanted spots, blemishes, and objects from this image at the marked painted areas. Clean up the image by intelligently filling in the removed areas to match the surrounding context. Maintain the original composition, colors, and quality. Make it look natural and seamless with no visible artifacts.`,
-        existing_image_urls: [imageUrl]
+        prompt: `Inpainting task: The user has marked areas to remove with bright RED color. Remove the red painted areas and fill them in to match the surrounding background seamlessly. Output the clean image without the red marks. High quality, realistic.`,
+        existing_image_urls: [maskedUpload.file_url]
       });
       
       setResultImage(result.url);

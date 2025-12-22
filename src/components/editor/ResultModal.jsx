@@ -81,15 +81,14 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                    setSliderPos((x / rect.width) * 100);
                 }}
               >
-                {/* Result Image (Background) */}
+                {/* Result Image (Background) - No transform as it is baked */}
                 <img
                   src={resultImage}
                   alt="Enhanced"
                   className="w-full h-full object-contain pointer-events-none"
-                  style={transformStyle}
                 />
 
-                {/* Original Image (Foreground - Clipped) */}
+                {/* Original Image (Foreground - Clipped) - Transform needed to match visual */}
                 <div 
                   className="absolute inset-0 flex items-center justify-center pointer-events-none"
                   style={{ 
@@ -143,13 +142,12 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                     Enhanced
                     </div>
                     <div className="flex-1 p-4 flex items-center justify-center">
-                    <img
-                      src={resultImage}
-                      alt="Result"
-                      className="w-full h-full object-contain"
-                      style={transformStyle}
-                    />
-                  </div>
+                      <img
+                        src={resultImage}
+                        alt="Result"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                 </div>
               </div>
             )}
