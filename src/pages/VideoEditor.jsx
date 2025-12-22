@@ -787,15 +787,14 @@ export default function VideoEditor() {
                             metadata: { source: 'video_editor', type: 'cleanup' }
                           });
 
-                          // Download logic or show result
-                          const link = document.createElement('a');
-                          link.href = result.url;
-                          link.download = `cleaned_frame_${Date.now()}.png`;
-                          link.click();
-                          
-                          alert('Watermark removed! The cleaned frame has been saved to Gallery and downloaded.');
-                        });
-                      } catch (err) {
+                          // Show result in modal
+                          setResultModal({
+                            isOpen: true,
+                            original: uploadResult.file_url,
+                            result: result.url
+                          });
+                          });
+                          } catch (err) {
                         console.error('Removal failed:', err);
                         if (err.message && err.message.includes('refused')) {
                           alert('The AI refused to process this image. This usually happens if the content violates safety policies or if the "watermark" terminology triggers copyright filters. Please try painting over the area manually in the "Magic Brush" tool instead.');
