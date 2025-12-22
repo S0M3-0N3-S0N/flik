@@ -214,10 +214,22 @@ export default function Editor() {
   const handleApplyResult = () => {
     if (resultImage) {
       setUndoHistory([...undoHistory, currentImage]);
-      setCurrentImage({ 
+      const newImageState = { 
+        ...currentImage,
         url: resultImage, 
         preview: resultImage, 
-        name: "enhanced_image.png" 
+        name: "enhanced_" + (currentImage.name || "image.png")
+      };
+      
+      setCurrentImage(newImageState);
+      
+      // Update in batch list if exists
+      setBatchImages(prev => {
+        const exists = prev.some(img => img.id === currentImage.id);
+        if (exists) {
+          return prev.map(img => img.id === currentImage.id ? { ...img, ...newImageState } : img);
+        }
+        return prev;
       });
       
       setAdjustments({
