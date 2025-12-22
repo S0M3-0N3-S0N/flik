@@ -192,6 +192,63 @@ export default function Editor() {
     setBatchProgress(0);
   };
 
+  const getProcessedImageBlob = async () => {
+    if (!currentImage) return null;
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = currentImage.preview || currentImage.url;
+    
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+
+    if (transform.rotate === 90 || transform.rotate === 270) {
+      canvas.width = img.height;
+      canvas.height = img.width;
+    } else {
+      canvas.width = img.width;
+      canvas.height = img.height;
+    }
+
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((transform.rotate * Math.PI) / 180);
+    ctx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
+
+    const filters = [];
+    if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
+    if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
+    if (adjustments.saturation !== 0) filters.push(`saturate(${100 + adjustments.saturation}%)`);
+    if (adjustments.blur > 0) filters.push(`blur(${adjustments.blur}px)`);
+    if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
+    if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
+    if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
+    
+    if (selectedFilter && selectedFilter.id !== "none") {
+      filters.push(selectedFilter.filter);
+    }
+    
+    ctx.filter = filters.join(" ") || "none";
+
+    if (transform.rotate === 90 || transform.rotate === 270) {
+      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+    } else {
+      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+    }
+    
+    ctx.restore();
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/png');
+    });
+  };
+
   const handleToolSelect = async (tool) => {
     if (!currentImage) return;
     
@@ -199,14 +256,14 @@ export default function Editor() {
     setIsProcessing(true);
     
     try {
-      let imageUrl = currentImage.url || currentImage.preview;
+      // Bake current edits into a new image for the AI
+      const blob = await getProcessedImageBlob();
+      const file = new File([blob], "processed_input.png", { type: "image/png" });
       
-      if (currentImage.file) {
-        const uploadResult = await base44.integrations.Core.UploadFile({
-          file: currentImage.file
-        });
-        imageUrl = uploadResult.file_url;
-      }
+      const uploadResult = await base44.integrations.Core.UploadFile({
+        file: file
+      });
+      const imageUrl = uploadResult.file_url;
       
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
