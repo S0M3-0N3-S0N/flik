@@ -432,98 +432,108 @@ export default function Gallery() {
       </Dialog>
 
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-4xl bg-[#1a1a1a] border-white/10 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl gradient-text">
-              {selectedItem?.title || selectedItem?.prompt || 'Creation'}
-            </DialogTitle>
-            <DialogDescription className="text-white/50">
-              Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="mt-4">
+        <DialogContent className="max-w-[95vw] md:max-w-6xl w-full h-[90vh] md:h-[85vh] bg-[#1a1a1a] border-white/10 text-white p-0 overflow-hidden flex flex-col md:flex-row gap-0">
+          <div className="flex-1 bg-black/50 relative flex items-center justify-center p-4 overflow-hidden">
             {selectedItem?.url && (
-              <div className="rounded-lg overflow-hidden bg-black mb-4">
-                {selectedItem.type === 'video' ? (
-                  <video src={selectedItem.url} controls className="w-full" />
-                ) : (
-                  <img src={selectedItem.url} alt="Creation" className="w-full" />
-                )}
-              </div>
-            )}
-            
-            <div className="p-4 rounded-lg bg-white/5 border border-white/10 mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-white/40">Title</p>
-                {editingTitle === selectedItem?.id ? (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } });
-                    }}
-                    className="btn-gradient text-white h-6 text-xs"
-                  >
-                    Save
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setEditingTitle(selectedItem?.id);
-                      setNewTitle(selectedItem?.title || '');
-                    }}
-                    className="text-white/60 hover:text-white h-6"
-                  >
-                    <Edit className="w-3 h-3" />
-                  </Button>
-                )}
-              </div>
-              {editingTitle === selectedItem?.id ? (
-                <Input
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="bg-white/10 border-white/10 text-white"
-                  placeholder="Enter title..."
-                />
+              selectedItem.type === 'video' ? (
+                <video src={selectedItem.url} controls className="max-w-full max-h-full object-contain shadow-2xl" />
               ) : (
-                <p className="text-sm text-white/80">{selectedItem?.title || 'Untitled'}</p>
+                <img src={selectedItem.url} alt="Creation" className="max-w-full max-h-full object-contain shadow-2xl" />
+              )
+            )}
+          </div>
+
+          <div className="w-full md:w-[400px] flex flex-col border-l border-white/10 bg-[#1a1a1a]">
+            <div className="p-6 border-b border-white/10">
+              <DialogHeader className="p-0 space-y-2 pr-8">
+                <DialogTitle className="text-xl gradient-text line-clamp-2 text-left">
+                  {selectedItem?.title || selectedItem?.prompt || 'Creation'}
+                </DialogTitle>
+                <DialogDescription className="text-white/50 text-left">
+                  Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Title</label>
+                  {editingTitle === selectedItem?.id ? (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } });
+                      }}
+                      className="h-6 text-xs px-2 btn-gradient text-white"
+                    >
+                      Save
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingTitle(selectedItem?.id);
+                        setNewTitle(selectedItem?.title || '');
+                      }}
+                      className="h-6 w-6 p-0 text-white/40 hover:text-white"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+                {editingTitle === selectedItem?.id ? (
+                  <Input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="bg-white/5 border-white/10 text-white"
+                    placeholder="Enter title..."
+                    autoFocus
+                  />
+                ) : (
+                  <p className="text-sm text-white/90 font-medium">{selectedItem?.title || 'Untitled'}</p>
+                )}
+              </div>
+
+              {selectedItem?.prompt && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Prompt</label>
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/5">
+                    <p className="text-sm text-white/70 leading-relaxed">{selectedItem.prompt}</p>
+                  </div>
+                </div>
               )}
             </div>
 
-            {selectedItem?.prompt && (
-              <div className="p-4 rounded-lg bg-white/5 border border-white/10 mb-4">
-                <p className="text-xs text-white/40 mb-1">Prompt</p>
-                <p className="text-sm text-white/80">{selectedItem.prompt}</p>
-              </div>
-            )}
-
-            <div className="flex gap-2">
+            <div className="p-6 border-t border-white/10 bg-[#1a1a1a] space-y-3">
               <Button
                 onClick={() => {
                   const pageName = selectedItem.type === 'image' ? 'Editor' : 'VideoEditor';
                   navigate(createPageUrl(pageName) + '?load=' + encodeURIComponent(selectedItem.url));
                 }}
-                className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10"
               >
                 <Edit className="w-4 h-4 mr-2" />
-                Edit
+                Edit in {selectedItem?.type === 'image' ? 'Image' : 'Video'} Editor
               </Button>
-              <Button
-                onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt)}
-                className="flex-1 btn-gradient text-white"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-              <Button
-                onClick={() => handleDelete(selectedItem.id)}
-                variant="outline"
-                className="border-white/20 text-white hover:bg-red-500/20"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt)}
+                  className="flex-1 btn-gradient text-white"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  onClick={() => handleDelete(selectedItem.id)}
+                  variant="outline"
+                  className="px-3 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/30"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
