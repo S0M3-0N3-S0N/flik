@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Download, Trash2, Image as ImageIcon, Video, Search, Edit } from "lucide-react";
+import { Sparkles, Download, Trash2, Image as ImageIcon, Video, Search, Edit, Eye, Copy } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import ContextMenu from "@/components/ContextMenu";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "../utils";
 
 export default function Gallery() {
   const [searchQuery, setSearchQuery] = useState("");
