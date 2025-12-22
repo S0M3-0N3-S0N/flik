@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ArrowRight, RotateCcw, Check } from "lucide-react";
+import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ResultModal({ isOpen, onClose, originalImage, resultImage, onApply, onDownload }) {
+  const [mode, setMode] = useState("compare"); // 'compare' (slider) or 'side' (side-by-side)
+  const [sliderPos, setSliderPos] = useState(50);
+
   if (!isOpen) return null;
+
+  const originalSrc = originalImage?.preview || originalImage?.url || originalImage;
 
   return (
     <AnimatePresence>
@@ -12,79 +17,145 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/90 backdrop-blur-xl z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-6xl glass-card rounded-3xl overflow-hidden"
+          className="w-full max-w-7xl h-[90vh] glass-card rounded-3xl overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/10">
-            <h2 className="text-xl font-semibold text-white">AI Enhancement Result</h2>
+          <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold text-white">Result</h2>
+              <div className="flex bg-white/5 rounded-lg p-1">
+                <button
+                  onClick={() => setMode("compare")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                    mode === "compare" ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
+                  }`}
+                >
+                  <ScanEye className="w-3.5 h-3.5" />
+                  Slider
+                </button>
+                <button
+                  onClick={() => setMode("side")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                    mode === "side" ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
+                  }`}
+                >
+                  <Columns className="w-3.5 h-3.5" />
+                  Side-by-Side
+                </button>
+              </div>
+            </div>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-colors"
             >
               <X className="w-5 h-5 text-white" />
             </button>
           </div>
           
-          {/* Comparison */}
-          <div className="p-6">
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Original */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-medium text-white/60">
-                    Original
-                  </span>
-                </div>
-                <div className="aspect-video rounded-2xl overflow-hidden bg-white/5 flex items-center justify-center">
+          {/* Content */}
+          <div className="flex-1 overflow-hidden relative bg-black/50 flex items-center justify-center p-4">
+            {mode === "compare" ? (
+              <div 
+                className="relative w-full h-full max-w-5xl mx-auto flex items-center justify-center select-none cursor-col-resize group"
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                  setSliderPos((x / rect.width) * 100);
+                }}
+                onTouchMove={(e) => {
+                   const rect = e.currentTarget.getBoundingClientRect();
+                   const touch = e.touches[0];
+                   const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
+                   setSliderPos((x / rect.width) * 100);
+                }}
+              >
+                {/* Result Image (Background) */}
+                <img
+                  src={resultImage}
+                  alt="Enhanced"
+                  className="max-w-full max-h-full object-contain pointer-events-none"
+                />
+                
+                {/* Original Image (Foreground - Clipped) */}
+                <div 
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  style={{ 
+                    clipPath: `inset(0 ${100 - sliderPos}% 0 0)` 
+                  }}
+                >
                   <img
-                    src={originalImage?.preview || originalImage?.url}
+                    src={originalSrc}
                     alt="Original"
                     className="max-w-full max-h-full object-contain"
                   />
+                  {/* Labels inside image */}
+                  <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-medium text-white/80 border border-white/10">
+                    Original
+                  </div>
                 </div>
-              </div>
-              
-              {/* Result */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FFB800] text-xs font-medium text-white">
+
+                {/* Slider Handle */}
+                <div 
+                  className="absolute top-0 bottom-0 w-0.5 bg-white cursor-col-resize shadow-[0_0_10px_rgba(0,0,0,0.5)] pointer-events-none"
+                  style={{ left: `${sliderPos}%` }}
+                >
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-black/80">
+                    <ScanEye className="w-4 h-4" />
+                  </div>
+                </div>
+
+                 {/* Label for Enhanced */}
+                 <div className="absolute top-4 right-4 px-3 py-1 bg-[#FF6B35]/80 backdrop-blur-md rounded-full text-xs font-medium text-white border border-white/10 pointer-events-none">
                     Enhanced
-                  </span>
+                 </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 w-full h-full max-w-7xl mx-auto">
+                <div className="relative flex flex-col h-full bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                  <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-medium text-white/80 border border-white/10">
+                    Original
+                  </div>
+                  <div className="flex-1 p-4 flex items-center justify-center">
+                    <img
+                      src={originalSrc}
+                      alt="Original"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 </div>
-                <div className="aspect-video rounded-2xl overflow-hidden bg-white/5 flex items-center justify-center relative">
-                  <img
-                    src={resultImage}
-                    alt="Result"
-                    className="max-w-full max-h-full object-contain"
-                  />
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 pointer-events-none rounded-2xl"
-                    style={{
-                      boxShadow: "inset 0 0 60px rgba(255, 107, 53, 0.1)"
-                    }}
-                  />
+                <div className="relative flex flex-col h-full bg-white/5 rounded-2xl border border-[#FF6B35]/30 overflow-hidden">
+                  <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-[#FF6B35]/80 backdrop-blur-md rounded-full text-xs font-medium text-white border border-white/10">
+                    Enhanced
+                  </div>
+                  <div className="flex-1 p-4 flex items-center justify-center">
+                    <img
+                      src={resultImage}
+                      alt="Result"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
           
           {/* Actions */}
-          <div className="flex items-center justify-between p-6 border-t border-white/10 bg-white/[0.02]">
+          <div className="flex items-center justify-between p-6 border-t border-white/10 bg-[#141414] shrink-0">
             <Button
               variant="ghost"
               onClick={onClose}
               className="text-white/60 hover:text-white hover:bg-white/10"
             >
               <RotateCcw className="w-4 h-4 mr-2" />
-              Try Another
+              Discard
             </Button>
             
             <div className="flex items-center gap-3">
@@ -98,10 +169,10 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
               </Button>
               <Button
                 onClick={onApply}
-                className="btn-gradient border-0 text-white"
+                className="btn-gradient border-0 text-white min-w-[160px]"
               >
                 <Check className="w-4 h-4 mr-2" />
-                Apply & Continue
+                Apply & Close
               </Button>
             </div>
           </div>
