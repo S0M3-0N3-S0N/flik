@@ -332,14 +332,14 @@ export default function Gallery() {
                      <p className="text-sm text-white line-clamp-1 mb-2">
                        {item.title || item.prompt || 'Untitled'}
                      </p>
-                     <div className="flex gap-2">
+                     <div className="flex gap-1">
                        <Button
                          onClick={(e) => {
                            e.stopPropagation();
                            const pageName = item.type === 'image' ? 'Editor' : 'VideoEditor';
                            navigate(createPageUrl(pageName) + '?load=' + encodeURIComponent(item.url));
                          }}
-                         className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs h-8"
+                         className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-[10px] h-7 px-1"
                        >
                          Edit
                        </Button>
@@ -349,7 +349,7 @@ export default function Gallery() {
                              e.stopPropagation();
                              navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
                            }}
-                           className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-xs h-8"
+                           className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-[10px] h-7 px-1"
                          >
                            <Wand2 className="w-3 h-3 mr-1" />
                            Remix
@@ -360,7 +360,7 @@ export default function Gallery() {
                            e.stopPropagation();
                            setSelectedItem(item);
                          }}
-                         className="flex-1 btn-gradient text-white text-xs h-8"
+                         className="flex-1 btn-gradient text-white text-[10px] h-7 px-1"
                        >
                          View
                        </Button>
