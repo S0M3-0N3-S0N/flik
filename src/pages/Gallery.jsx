@@ -43,11 +43,10 @@ export default function Gallery() {
   });
 
   const filteredCreations = creations.filter(item => {
-    const searchLower = searchQuery.toLowerCase();
     const matchesSearch = !searchQuery || 
-      (item.title || '').toLowerCase().includes(searchLower) ||
-      (item.prompt || '').toLowerCase().includes(searchLower) ||
-      (item.metadata ? JSON.stringify(item.metadata) : '').toLowerCase().includes(searchLower);
+      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.prompt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.metadata?.toString().toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === 'all' || item.type === filterType;
     
     let matchesDate = true;
