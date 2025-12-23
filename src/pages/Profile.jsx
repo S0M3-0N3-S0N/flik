@@ -1,18 +1,37 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { User, Mail, Calendar, Image as ImageIcon, Video, LogOut } from "lucide-react";
+import { User, Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
 
 export default function Profile() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
   
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me(),
   });
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.auth.updateMe({ profile_picture: file_url });
+      await queryClient.invalidateQueries({ queryKey: ['user'] });
+    } catch (error) {
+      console.error("Failed to upload profile picture:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const { data: creations = [] } = useQuery({
     queryKey: ['my-creations-count', user?.email],
@@ -33,9 +52,35 @@ export default function Profile() {
         
         <div className="bg-[#141414] border border-white/10 rounded-2xl p-8 mb-8 glass-card">
           <div className="flex items-center gap-6 mb-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-[#FF6B35]/20">
-              {user.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-[#FF6B35]/20 overflow-hidden border-2 border-white/10">
+                {user.profile_picture ? (
+                  <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{user.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}</span>
+                )}
+              </div>
+              
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer disabled:cursor-not-allowed"
+              >
+                {isUploading ? (
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="w-6 h-6 text-white" />
+                )}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+              />
             </div>
+            
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-white mb-1">{user.full_name || 'User'}</h2>
               <p className="text-white/50">{user.email}</p>
