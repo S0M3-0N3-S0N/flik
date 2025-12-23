@@ -57,24 +57,27 @@ export default function Generate() {
     
     try {
       let finalPrompt = prompt || "enhance this image, improve quality, professional result";
-      
+      const selectedStyleObj = selectedStyle ? stylePresets.find(s => s.id === selectedStyle) : null;
+      const styleInstruction = selectedStyleObj ? selectedStyleObj.prompt : "";
+
       if (aiModel === "gemini" && prompt) {
         const result = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are an expert at creating detailed image generation prompts. Take this user request and expand it into a highly detailed, specific image generation prompt that will produce amazing results. Keep the core idea but add artistic details, lighting, composition, style elements, and technical quality specifications.
+          prompt: `You are an expert at creating detailed image generation prompts. Take this user request and expand it into a highly detailed, specific image generation prompt that will produce amazing results.
 
-User request: "${prompt}"
+      User request: "${prompt}"
+      ${selectedStyleObj ? `Target Style: ${selectedStyleObj.label} (${selectedStyleObj.prompt}). IMPORTANT: You MUST ensure the generated prompt strongly reflects this specific art style.` : ''}
 
-Respond with ONLY the enhanced prompt, nothing else.`,
+      Keep the core idea but add artistic details, lighting, composition, style elements, and technical quality specifications.
+      Respond with ONLY the enhanced prompt, nothing else.`,
           response_json_schema: null
         });
         finalPrompt = result;
       }
-      
-      const stylePrompt = selectedStyle 
-        ? stylePresets.find(s => s.id === selectedStyle)?.prompt 
-        : "";
-      
-      const fullPrompt = `${finalPrompt}${stylePrompt ? `, ${stylePrompt}` : ''}, masterpiece, high quality, detailed`;
+
+      // Prioritize style by putting it first for better adherence, especially for image-to-image
+      const fullPrompt = selectedStyleObj 
+        ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
+        : `${finalPrompt}, masterpiece, high quality, detailed`;
       
         const imageResult = await base44.integrations.Core.GenerateImage({
           prompt: fullPrompt,
