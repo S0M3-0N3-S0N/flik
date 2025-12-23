@@ -13,7 +13,10 @@ export default function Timeline({
   handleClipMouseDown,
   handleDeleteClip,
   setEditingText,
-  setActiveTab
+  setActiveTab,
+  onSplitClip,
+  onUndo,
+  onRedo
 }) {
   const timelineRef = useRef(null);
 
@@ -46,6 +49,29 @@ export default function Timeline({
             <ZoomIn className="w-4 h-4" />
           </Button>
         </div>
+      </div>
+      
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 mb-2 px-2">
+         <div className="flex items-center bg-white/5 rounded-lg p-1">
+             <Button variant="ghost" size="icon" onClick={onUndo} className="h-8 w-8 text-white hover:bg-white/10" title="Undo">
+                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+             </Button>
+             <Button variant="ghost" size="icon" onClick={onRedo} className="h-8 w-8 text-white hover:bg-white/10" title="Redo">
+                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" /></svg>
+             </Button>
+         </div>
+         <div className="w-px h-6 bg-white/10 mx-2" />
+         <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onSplitClip} 
+            disabled={!selectedClip}
+            className="text-white hover:bg-white/10 gap-2 h-8"
+         >
+             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m-4-8h8" /></svg>
+             Split
+         </Button>
       </div>
 
       <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">

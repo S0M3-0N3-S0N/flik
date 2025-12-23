@@ -19,11 +19,57 @@ export default function VideoEditor() {
   const [duration, setDuration] = useState(60); // Default duration
   const [volume, setVolume] = useState(100);
   const [zoom, setZoom] = useState(1);
-  const [tracks, setTracks] = useState([
+  // History for Undo/Redo
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  const [tracks, setTracksInternal] = useState([
     { id: 'video', type: 'video', clips: [], name: 'Video Track' },
     { id: 'audio', type: 'audio', clips: [], name: 'Audio Track' },
     { id: 'text', type: 'text', clips: [], name: 'Text Track' },
   ]);
+
+  // Wrapper to save history
+  const setTracks = (newTracksOrFn) => {
+      setTracksInternal(prev => {
+          const newTracks = typeof newTracksOrFn === 'function' ? newTracksOrFn(prev) : newTracksOrFn;
+          
+          // Add to history
+          const newHistory = history.slice(0, historyIndex + 1);
+          newHistory.push(newTracks);
+          // Limit history size
+          if (newHistory.length > 20) newHistory.shift();
+          
+          setHistory(newHistory);
+          setHistoryIndex(newHistory.length - 1);
+          
+          return newTracks;
+      });
+  };
+
+  const handleUndo = () => {
+      if (historyIndex > 0) {
+          const newIndex = historyIndex - 1;
+          setHistoryIndex(newIndex);
+          setTracksInternal(history[newIndex]);
+      }
+  };
+
+  const handleRedo = () => {
+      if (historyIndex < history.length - 1) {
+          const newIndex = historyIndex + 1;
+          setHistoryIndex(newIndex);
+          setTracksInternal(history[newIndex]);
+      }
+  };
+
+  // Initialize history
+  useEffect(() => {
+      if (history.length === 0) {
+          setHistory([tracks]);
+          setHistoryIndex(0);
+      }
+  }, []);
   const [selectedClip, setSelectedClip] = useState(null);
   const [activeTab, setActiveTab] = useState("media");
   const [editingText, setEditingText] = useState(null);
@@ -94,10 +140,12 @@ export default function VideoEditor() {
           type: 'video',
           url: url,
           name: file.name,
-          start: 0, // Will calculate placement
-          duration: 5, // Default
-          transition: null,
-        };
+          start: 0, 
+          duration: 5, 
+          offset: 0,
+          volume: 100,
+          transition: 'fade',
+          };
 
         if (isVideo) {
             const video = document.createElement('video');
@@ -281,6 +329,53 @@ export default function VideoEditor() {
       })));
   };
 
+  const handleSplitClip = () => {
+      if (!selectedClip) return;
+
+      // Check if playhead is within clip
+      if (currentTime <= selectedClip.start || currentTime >= selectedClip.start + selectedClip.duration) {
+          alert("Move playhead inside the selected clip to split.");
+          return;
+      }
+
+      const splitPoint = currentTime;
+      const firstPartDuration = splitPoint - selectedClip.start;
+      const remainingDuration = selectedClip.duration - firstPartDuration;
+
+      setTracks(prev => {
+          return prev.map(track => {
+              // Only process the track containing the selected clip
+              if (!track.clips.find(c => c.id === selectedClip.id)) return track;
+
+              const newClips = [];
+              track.clips.forEach(clip => {
+                  if (clip.id === selectedClip.id) {
+                      // 1. Modify Original Clip (First Part)
+                      newClips.push({
+                          ...clip,
+                          duration: firstPartDuration
+                      });
+
+                      // 2. Create New Clip (Second Part)
+                      newClips.push({
+                          ...clip,
+                          id: Date.now(), // New ID
+                          start: splitPoint,
+                          duration: remainingDuration,
+                          offset: (clip.offset || 0) + firstPartDuration, // Shift offset
+                          name: `${clip.name} (Part 2)`
+                      });
+                  } else {
+                      newClips.push(clip);
+                  }
+              });
+
+              return { ...track, clips: newClips };
+          });
+      });
+      setSelectedClip(null);
+  };
+
   const handleExport = async () => {
      if (!playerRef.current) return;
      setIsExporting(true);
@@ -454,16 +549,15 @@ export default function VideoEditor() {
             videoEffects={videoEffects}
             setVideoEffects={setVideoEffects}
             handleApplyEffect={(name) => {
-                // Simplified effect presets
                 if (name === 'B&W') setVideoEffects({ ...videoEffects, saturation: 0 });
                 if (name === 'Sepia') setVideoEffects({ ...videoEffects, sepia: 100 });
-                // ... others
             }}
             playbackSpeed={playbackSpeed}
             handleSpeedChange={setPlaybackSpeed}
             volume={volume}
             handleVolumeChange={setVolume}
-          />
+            handleUpdateClip={updateClipInTracks}
+            />
         </motion.aside>
 
         <main className="flex-1 flex flex-col min-w-0">
@@ -525,6 +619,9 @@ export default function VideoEditor() {
              handleDeleteClip={handleDeleteClip}
              setEditingText={setEditingText}
              setActiveTab={setActiveTab}
+             onSplitClip={handleSplitClip}
+             onUndo={handleUndo}
+             onRedo={handleRedo}
           />
         </main>
       </div>

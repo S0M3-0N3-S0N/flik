@@ -26,7 +26,8 @@ export default function PropertiesPanel({
   playbackSpeed,
   handleSpeedChange,
   volume,
-  handleVolumeChange
+  handleVolumeChange,
+  handleUpdateClip
 }) {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -40,6 +41,41 @@ export default function PropertiesPanel({
 
       <div className="px-4 pb-4">
         <TabsContent value="media" className="mt-0">
+          {selectedClip && (selectedClip.type === 'video' || selectedClip.type === 'audio') && (
+              <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10">
+                  <h4 className="text-xs font-semibold text-white/80 mb-3">Clip Settings</h4>
+                  <div className="space-y-4">
+                      <div>
+                          <div className="flex justify-between mb-1">
+                              <Label className="text-xs text-white/60">Clip Volume</Label>
+                              <span className="text-xs text-white/40">{selectedClip.volume || 100}%</span>
+                          </div>
+                          <Slider 
+                              value={[selectedClip.volume ?? 100]} 
+                              onValueChange={(val) => handleUpdateClip(selectedClip.id, { volume: val[0] })} 
+                              min={0} max={100} step={1} 
+                          />
+                      </div>
+                      <div>
+                           <Label className="text-xs text-white/60 mb-2 block">Transition</Label>
+                           <Select 
+                              value={selectedClip.transition || 'none'} 
+                              onValueChange={(val) => handleUpdateClip(selectedClip.id, { transition: val })}
+                           >
+                              <SelectTrigger className="bg-white/5 border-white/10 text-white h-8 text-xs">
+                                 <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="none">None</SelectItem>
+                                  <SelectItem value="fade">Fade In</SelectItem>
+                                  <SelectItem value="wipe">Wipe Right</SelectItem>
+                                  <SelectItem value="slide">Slide In</SelectItem>
+                              </SelectContent>
+                           </Select>
+                      </div>
+                  </div>
+              </div>
+          )}
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Media Library</h3>
           
           <label className="block cursor-pointer mb-4">

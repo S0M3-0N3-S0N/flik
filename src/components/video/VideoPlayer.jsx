@@ -22,18 +22,33 @@ const VideoPlayer = forwardRef(({
     startRecording: () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const stream = canvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      
+      // 1. Get Video Stream
+      const videoStream = canvas.captureStream(30);
+      
+      // 2. Get Audio Stream
+      const audioStream = audioDestRef.current ? audioDestRef.current.stream : null;
+      
+      // 3. Combine Tracks
+      const combinedTracks = [
+          ...videoStream.getVideoTracks(),
+          ...(audioStream ? audioStream.getAudioTracks() : [])
+      ];
+      const combinedStream = new MediaStream(combinedTracks);
+
+      const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
       const chunks = [];
       recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
       
-      // We return a promise that resolves when stopRecording is called
       recorder.start();
       
-      // Store recorder instance on the ref/component scope? 
-      // Better to return the recorder or a "stop" function
       containerRef.current.recorder = recorder;
       containerRef.current.chunks = chunks;
+      
+      // Resume audio context if suspended
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+      }
     },
     stopRecording: async () => {
        const recorder = containerRef.current?.recorder;
@@ -50,6 +65,19 @@ const VideoPlayer = forwardRef(({
     }
   }));
 
+  const audioCtxRef = useRef(null);
+  const audioDestRef = useRef(null);
+  const sourceNodesRef = useRef({});
+
+  // Initialize Audio Context
+  useEffect(() => {
+    if (!audioCtxRef.current) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtxRef.current = new AudioContext();
+        audioDestRef.current = audioCtxRef.current.createMediaStreamDestination();
+    }
+  }, []);
+
   // Manage video elements for each clip
   useEffect(() => {
     const videoTrack = tracks.find(t => t.type === 'video');
@@ -65,20 +93,57 @@ const VideoPlayer = forwardRef(({
         video.src = clip.url;
         video.crossOrigin = "anonymous";
         video.preload = "auto";
-        video.muted = false;
         
+        // Critical for audio capture: muted must be false for the element, 
+        // but we don't want to hear it twice (element + context). 
+        // We mute the element but capture the stream? 
+        // No, createMediaElementSource requires the element to play audio. 
+        // We typically connect source -> destination (speakers) AND source -> streamDest (recorder).
+        // If we want to control volume, we use gain nodes.
+        
+        video.volume = (clip.volume || 100) / 100;
+
         video.onloadedmetadata = () => {
           setLoadedClips(prev => new Set([...prev, clip.id]));
         };
+
+        // Audio Graph Setup
+        if (audioCtxRef.current && !sourceNodesRef.current[clip.id]) {
+             try {
+                const source = audioCtxRef.current.createMediaElementSource(video);
+                const gainNode = audioCtxRef.current.createGain();
+                
+                source.connect(gainNode);
+                gainNode.connect(audioCtxRef.current.destination); // For playback hearing
+                gainNode.connect(audioDestRef.current); // For recording
+                
+                sourceNodesRef.current[clip.id] = { source, gainNode };
+             } catch (e) {
+                console.warn("Audio setup failed for clip", clip.id, e);
+             }
+        }
         
         newVideoElements[clip.id] = video;
         hasChanges = true;
+      } else {
+         // Update volume if changed
+         const nodes = sourceNodesRef.current[clip.id];
+         if (nodes && nodes.gainNode) {
+             nodes.gainNode.gain.value = (clip.volume ?? 100) / 100;
+         }
       }
     });
 
     // Cleanup removed clips
     Object.keys(newVideoElements).forEach(clipId => {
       if (!videoTrack.clips.find(c => c.id.toString() === clipId.toString())) {
+        // Cleanup audio nodes? They are bound to the element, enabling garbage collection usually works if element is gone.
+        // We should disconnect if possible.
+        if (sourceNodesRef.current[clipId]) {
+            // sourceNodesRef.current[clipId].gainNode.disconnect();
+            // sourceNodesRef.current[clipId].source.disconnect();
+            delete sourceNodesRef.current[clipId];
+        }
         delete newVideoElements[clipId];
         hasChanges = true;
       }
@@ -122,38 +187,61 @@ const VideoPlayer = forwardRef(({
       activeClips.forEach(clip => {
         const video = videoElements[clip.id];
         if (video && video.readyState >= 2) {
-          // Sync video time
-          const clipTime = currentTime - clip.start;
-          // Only seek if significantly off (to prevent jitter during playback)
+          // Sync video time with OFFSET
+          const clipTime = (currentTime - clip.start) + (clip.offset || 0);
+          
+          // Only seek if significantly off
           if (Math.abs(video.currentTime - clipTime) > 0.3) {
              video.currentTime = clipTime;
           }
 
-          // Handle Transitions (Simple Cross Dissolve for now)
-          let opacity = 1;
-          if (clip.transition) {
-            const transitionDuration = 1; // 1 second transition
+          // Draw image logic wrapped in transition handler
+          const drawClip = (alpha = 1, transform = {}) => {
+              ctx.save();
+              ctx.globalAlpha = alpha;
+              
+              const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+              let x = (canvas.width / 2) - (video.videoWidth / 2) * scale;
+              let y = (canvas.height / 2) - (video.videoHeight / 2) * scale;
+
+              if (transform.translateX) x += transform.translateX;
+              
+              if (transform.clipRect) {
+                 const { cx, cy, cw, ch } = transform.clipRect;
+                 ctx.beginPath();
+                 ctx.rect(cx, cy, cw, ch);
+                 ctx.clip();
+              }
+
+              ctx.drawImage(video, x, y, video.videoWidth * scale, video.videoHeight * scale);
+              ctx.restore();
+          };
+
+          // Transitions
+          if (clip.transition && clip.transition !== 'none') {
+            const transitionDuration = 1;
             const timeInClip = currentTime - clip.start;
-            const timeLeft = (clip.start + clip.duration) - currentTime;
-            
+            const progress = timeInClip / transitionDuration; // 0 to 1
+
             if (timeInClip < transitionDuration) {
-               // Fade in
-               opacity = timeInClip / transitionDuration;
-            } else if (timeLeft < transitionDuration) {
-               // Fade out
-               opacity = timeLeft / transitionDuration;
+                // Intro Transition
+                if (clip.transition === 'fade') {
+                    drawClip(progress);
+                } else if (clip.transition === 'wipe') {
+                    // Wipe from left
+                    drawClip(1, { clipRect: { cx: 0, cy: 0, cw: canvas.width * progress, ch: canvas.height } });
+                } else if (clip.transition === 'slide') {
+                    // Slide in from right
+                    drawClip(1, { translateX: canvas.width * (1 - progress) }); 
+                } else {
+                    drawClip(1);
+                }
+            } else {
+               drawClip(1);
             }
+          } else {
+            drawClip(1);
           }
-          
-          ctx.globalAlpha = opacity;
-          
-          // Draw image centered and contained
-          const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
-          const x = (canvas.width / 2) - (video.videoWidth / 2) * scale;
-          const y = (canvas.height / 2) - (video.videoHeight / 2) * scale;
-          
-          ctx.drawImage(video, x, y, video.videoWidth * scale, video.videoHeight * scale);
-          ctx.globalAlpha = 1;
         }
       });
       ctx.filter = 'none';
