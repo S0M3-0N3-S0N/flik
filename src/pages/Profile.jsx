@@ -1,8 +1,9 @@
 import React, { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { User, Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2 } from "lucide-react";
+import { User, Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
 
@@ -10,6 +11,8 @@ export default function Profile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
   const fileInputRef = useRef(null);
   
   const { data: user } = useQuery({
@@ -31,6 +34,22 @@ export default function Profile() {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleEmailUpdate = async () => {
+    if (!emailInput || !emailInput.includes('@')) return;
+    try {
+      await base44.auth.updateMe({ contact_email: emailInput });
+      await queryClient.invalidateQueries({ queryKey: ['user'] });
+      setIsEditingEmail(false);
+    } catch (error) {
+      console.error("Failed to update email:", error);
+    }
+  };
+
+  const startEditingEmail = () => {
+    setEmailInput(user?.contact_email || user?.email || "");
+    setIsEditingEmail(true);
   };
 
   const { data: creations = [] } = useQuery({
@@ -96,9 +115,37 @@ export default function Profile() {
           </div>
 
           <div className="grid gap-4">
-            <div className="flex items-center gap-3 text-white/70 p-4 bg-white/5 rounded-xl border border-white/5">
-              <Mail className="w-5 h-5 text-[#FF6B35]" />
-              <span>{user.email}</span>
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center gap-3 text-white/70 flex-1">
+                <Mail className="w-5 h-5 text-[#FF6B35]" />
+                {isEditingEmail ? (
+                  <Input
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="h-8 bg-black/20 border-white/10 text-white"
+                    placeholder="Enter email address"
+                  />
+                ) : (
+                  <span>{user.contact_email || user.email}</span>
+                )}
+              </div>
+              
+              <div className="ml-4">
+                {isEditingEmail ? (
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleEmailUpdate} className="p-1.5 rounded-lg bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors">
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setIsEditingEmail(false)} className="p-1.5 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={startEditingEmail} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-3 text-white/70 p-4 bg-white/5 rounded-xl border border-white/5">
               <Calendar className="w-5 h-5 text-[#FF6B35]" />
