@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Loader2, Check, AlertCircle, FileDown } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
@@ -94,9 +94,7 @@ export default function Editor() {
       adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
       transform: { rotate: 0, flipH: false, flipV: false },
       filter: null,
-      brushStrokes: [],
-      status: 'idle', // idle, processing, success, error
-      resultUrl: null
+      brushStrokes: []
     }));
     
     const newBatch = [...batchImages, ...images];
@@ -147,64 +145,8 @@ export default function Editor() {
   };
 
   const [batchProgress, setBatchProgress] = useState(0);
+
   const [batchCancelled, setBatchCancelled] = useState(false);
-
-  const processBatchImage = async (image) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = image.preview || image.url;
-    
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-    });
-
-    const { transform, adjustments, filter } = image;
-
-    if (transform.rotate === 90 || transform.rotate === 270) {
-      canvas.width = img.height;
-      canvas.height = img.width;
-    } else {
-      canvas.width = img.width;
-      canvas.height = img.height;
-    }
-
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((transform.rotate * Math.PI) / 180);
-    ctx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
-
-    const filters = [];
-    if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
-    if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
-    if (adjustments.saturation !== 0) filters.push(`saturate(${100 + adjustments.saturation}%)`);
-    if (adjustments.blur > 0) filters.push(`blur(${adjustments.blur}px)`);
-    if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
-    if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
-    if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
-    
-    if (filter && filter.id !== "none") {
-      filters.push(filter.filter);
-    }
-    
-    ctx.filter = filters.join(" ") || "none";
-
-    if (transform.rotate === 90 || transform.rotate === 270) {
-      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
-    } else {
-      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
-    }
-    
-    ctx.restore();
-
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        resolve(blob);
-      }, 'image/png');
-    });
-  };
 
   const handleBatchProcess = async (tool) => {
     if (batchImages.length === 0) return;
@@ -212,24 +154,14 @@ export default function Editor() {
     setIsBatchProcessing(true);
     setBatchProgress(0);
     setBatchCancelled(false);
-    
-    // Update all pending to processing or pending? Actually lets do one by one
+    const results = [];
     
     for (let i = 0; i < batchImages.length; i++) {
       if (batchCancelled) break;
       
       const image = batchImages[i];
-      if (image.status === 'success') continue; // Skip already done
-
-      // Update status to processing
-      setBatchImages(prev => prev.map((img, idx) => idx === i ? { ...img, status: 'processing' } : img));
-      
       try {
-        // Use processed blob if adjustments exist, otherwise use file
-        const blob = await processBatchImage(image);
-        const fileToUpload = new File([blob], "batch_input.png", { type: "image/png" });
-        
-        const uploadResult = await base44.integrations.Core.UploadFile({ file: fileToUpload });
+        const uploadResult = await base44.integrations.Core.UploadFile({ file: image.file });
         const result = await base44.integrations.Core.GenerateImage({
           prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition.`,
           existing_image_urls: [uploadResult.file_url]
@@ -244,32 +176,22 @@ export default function Editor() {
           metadata: { batch: true, original: image.name }
         });
         
-        setBatchImages(prev => prev.map((img, idx) => idx === i ? { ...img, status: 'success', resultUrl: result.url } : img));
+        results.push({ original: image, result: result.url });
         setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
       } catch (err) {
         console.error('Batch error:', err);
-        setBatchImages(prev => prev.map((img, idx) => idx === i ? { ...img, status: 'error' } : img));
       }
     }
     
-    setIsBatchProcessing(false);
-    setBatchProgress(0);
-  };
-
-  const downloadAllBatchResults = async () => {
-    const completed = batchImages.filter(img => img.status === 'success' && img.resultUrl);
-    if (completed.length === 0) return;
-    
-    // Simple download loop
-    for (const img of completed) {
-       const link = document.createElement("a");
-       link.href = img.resultUrl;
-       link.download = `batch_result_${img.name}`;
-       document.body.appendChild(link);
-       link.click();
-       document.body.removeChild(link);
-       await new Promise(r => setTimeout(r, 500)); // Delay to prevent browser blocking
+    if (batchCancelled) {
+      alert(`Batch processing cancelled. Processed ${results.length} of ${batchImages.length} images.`);
+    } else {
+      alert(`Successfully processed ${results.length} of ${batchImages.length} images! Saved to Gallery.`);
     }
+    
+    setIsBatchProcessing(false);
+    setBatchImages([]);
+    setBatchProgress(0);
   };
 
   const getProcessedImageBlob = async () => {
@@ -939,69 +861,38 @@ export default function Editor() {
               </label>
 
               {batchImages.length > 0 && (
-                <div className="space-y-4">
-                  
-                  <div className="bg-white/5 rounded-lg border border-white/10 max-h-40 overflow-y-auto">
-                     {batchImages.map((img, idx) => (
-                        <div key={img.id} className="flex items-center gap-2 p-2 border-b border-white/5 last:border-0 hover:bg-white/5 cursor-pointer" onClick={() => switchToBatchImage(idx)}>
-                           <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0">
-                              <img src={img.preview} className="w-full h-full object-cover" />
-                              {img.status === 'success' && <div className="absolute inset-0 bg-green-500/50 flex items-center justify-center"><Check className="w-4 h-4 text-white" /></div>}
-                              {img.status === 'processing' && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><Loader2 className="w-4 h-4 text-white animate-spin" /></div>}
-                              {img.status === 'error' && <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center"><AlertCircle className="w-4 h-4 text-white" /></div>}
-                           </div>
-                           <div className="flex-1 min-w-0">
-                              <p className="text-xs text-white/80 truncate">{img.name}</p>
-                              <p className="text-[10px] text-white/50">{img.status === 'idle' ? 'Pending' : img.status}</p>
-                           </div>
-                           {img.resultUrl && (
-                             <a href={img.resultUrl} download onClick={(e) => e.stopPropagation()} className="text-white/40 hover:text-white">
-                               <Download className="w-3 h-3" />
-                             </a>
-                           )}
-                           <button onClick={(e) => {
-                             e.stopPropagation();
-                             const newBatch = batchImages.filter((_, i) => i !== idx);
-                             setBatchImages(newBatch);
-                             if (activeBatchIndex === idx) setActiveBatchIndex(null);
-                           }} className="text-white/40 hover:text-red-400">
-                              <X className="w-3 h-3" />
-                           </button>
-                        </div>
-                     ))}
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-xs text-white/60 font-medium uppercase">Actions</p>
-                    <div className="grid grid-cols-2 gap-2">
-                       <Button 
-                        onClick={() => {
-                          const updatedBatch = batchImages.map(img => ({
-                            ...img,
-                            adjustments: { ...adjustments },
-                            filter: selectedFilter,
-                            transform: { ...transform }
-                          }));
-                          setBatchImages(updatedBatch);
-                          alert('Synced current edits to all images!');
-                        }}
-                        variant="outline"
-                        className="text-xs h-8 bg-white/5 border-white/10 text-white"
-                      >
-                        Sync Edits
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          setBatchImages([]);
-                          setCurrentImage(null);
-                          setActiveBatchIndex(null);
-                        }}
-                        variant="ghost"
-                        className="text-xs h-8 text-red-400 hover:bg-red-500/10"
-                      >
-                        Clear All
-                      </Button>
-                    </div>
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                    <p className="text-xs text-white/60 font-medium uppercase">Workspace Actions</p>
+                    <Button 
+                      onClick={() => {
+                        const updatedBatch = batchImages.map(img => ({
+                          ...img,
+                          adjustments: { ...adjustments },
+                          filter: selectedFilter,
+                          transform: { ...transform }
+                        }));
+                        setBatchImages(updatedBatch);
+                        alert('Synced current edits to all images!');
+                      }}
+                      variant="outline"
+                      className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white justify-start"
+                    >
+                      <Layers className="w-4 h-4 mr-2" />
+                      Sync Current Edits to All
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setBatchImages([]);
+                        setCurrentImage(null);
+                        setActiveBatchIndex(null);
+                      }}
+                      variant="ghost"
+                      className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 justify-start"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Clear Workspace
+                    </Button>
                   </div>
 
                   <div className="space-y-2">
@@ -1015,32 +906,18 @@ export default function Editor() {
                         key={tool.label}
                         onClick={() => handleBatchProcess(tool)}
                         disabled={isBatchProcessing}
-                        className="w-full btn-gradient text-white h-9 text-xs"
+                        className="w-full btn-gradient text-white"
                       >
-                        {isBatchProcessing && batchImages.some(img => img.status === 'processing') ? (
-                           <Loader2 className="w-3 h-3 animate-spin mr-2" />
-                        ) : null}
-                        {tool.label}
+                        {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
                       </Button>
                     ))}
-                    
                     {isBatchProcessing && (
                       <Button
                         onClick={() => setBatchCancelled(true)}
                         variant="outline"
-                        className="w-full h-8 text-xs border-white/20 text-white hover:bg-white/10"
+                        className="w-full border-white/20 text-white hover:bg-white/10"
                       >
-                        Cancel
-                      </Button>
-                    )}
-                    
-                    {batchImages.some(img => img.status === 'success') && (
-                       <Button
-                        onClick={downloadAllBatchResults}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white h-9 text-xs mt-2"
-                      >
-                        <FileDown className="w-3 h-3 mr-2" />
-                        Download All Results
+                        Cancel Processing
                       </Button>
                     )}
                   </div>
@@ -1348,23 +1225,6 @@ export default function Editor() {
                   }`}
                 >
                   <img src={img.preview} className="w-full h-full object-cover" />
-                  
-                  {img.status === 'processing' && (
-                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 text-[#FF6B35] animate-spin" />
-                     </div>
-                  )}
-                  {img.status === 'success' && (
-                     <div className="absolute top-1 right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center border border-white">
-                        <Check className="w-2.5 h-2.5 text-white" />
-                     </div>
-                  )}
-                  {img.status === 'error' && (
-                     <div className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center border border-white">
-                        <AlertCircle className="w-2.5 h-2.5 text-white" />
-                     </div>
-                  )}
-
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
