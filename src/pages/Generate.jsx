@@ -1,23 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X, Edit, MessageSquare, Layers } from "lucide-react";
+import { Wand2, Loader2, Zap, Upload, X, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "../utils";
 import ChatPanel from "@/components/generate/ChatPanel";
-
-const stylePresets = [
-  { id: "photo", label: "Photorealistic", prompt: "ultra realistic photograph, 8k, highly detailed, professional photography" },
-  { id: "cinematic", label: "Cinematic", prompt: "cinematic shot, movie still, dramatic lighting, film grain" },
-  { id: "anime", label: "Anime", prompt: "anime style, studio ghibli inspired, vibrant colors, detailed" },
-  { id: "oil", label: "Oil Painting", prompt: "oil painting, classic art style, visible brush strokes, artistic" },
-  { id: "3d", label: "3D Render", prompt: "3d render, octane render, volumetric lighting, high quality" },
-  { id: "watercolor", label: "Watercolor", prompt: "watercolor painting, soft edges, artistic, flowing colors" },
-  { id: "pixel", label: "Pixel Art", prompt: "pixel art, 16-bit style, retro game aesthetic" },
-  { id: "minimalist", label: "Minimalist", prompt: "minimalist design, clean lines, simple, modern" },
-];
+import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
+import ImageGrid from "@/components/generate/ImageGrid";
 
 export default function Generate() {
   const [prompt, setPrompt] = useState("");
@@ -103,38 +93,52 @@ export default function Generate() {
       if (promptsToGenerate.length > 5) promptsToGenerate = promptsToGenerate.slice(0, 5);
 
       // Step 2: Generate all images
-      const results = await Promise.all(promptsToGenerate.map(async (finalPrompt) => {
-        const fullPrompt = selectedStyleObj 
-          ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
-          : `${finalPrompt}, masterpiece, high quality, detailed`;
+      const promises = promptsToGenerate.map(async (finalPrompt) => {
+        try {
+          const fullPrompt = selectedStyleObj 
+            ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
+            : `${finalPrompt}, masterpiece, high quality, detailed`;
 
-        const imageResult = await base44.integrations.Core.GenerateImage({
-          prompt: fullPrompt,
-          existing_image_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined
-        });
+          const imageResult = await base44.integrations.Core.GenerateImage({
+            prompt: fullPrompt,
+            existing_image_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined
+          });
 
-        // Save to DB
-        await base44.entities.Creation.create({
-          title: prompt.slice(0, 100) || 'AI Generated Image',
-          type: 'image',
-          url: imageResult.url,
-          thumbnail_url: imageResult.url,
-          prompt: prompt,
-          metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt, batchSize: promptsToGenerate.length }
-        });
+          // Save to DB
+          await base44.entities.Creation.create({
+            title: prompt.slice(0, 100) || 'AI Generated Image',
+            type: 'image',
+            url: imageResult.url,
+            thumbnail_url: imageResult.url,
+            prompt: prompt,
+            metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt, batchSize: promptsToGenerate.length }
+          });
 
-        return {
-          id: Date.now() + Math.random(),
-          url: imageResult.url,
-          prompt: prompt,
-          enhancedPrompt: finalPrompt,
-          style: selectedStyle,
-          model: aiModel,
-          timestamp: new Date().toISOString()
-        };
-      }));
+          return {
+            id: Date.now() + Math.random(),
+            url: imageResult.url,
+            prompt: prompt,
+            enhancedPrompt: finalPrompt,
+            style: selectedStyle,
+            model: aiModel,
+            timestamp: new Date().toISOString()
+          };
+        } catch (e) {
+          console.error("Single generation failed:", e);
+          return null;
+        }
+      });
 
-      setGeneratedImages([...results, ...generatedImages]);
+      const results = await Promise.allSettled(promises);
+      const successfulImages = results
+        .filter(r => r.status === 'fulfilled' && r.value !== null)
+        .map(r => r.value);
+
+      if (successfulImages.length === 0 && promptsToGenerate.length > 0) {
+        throw new Error("Failed to generate any images.");
+      }
+
+      setGeneratedImages([...successfulImages, ...generatedImages]);
       
       if (prompt.trim()) {
         setPromptHistory(prev => [prompt, ...prev.filter(p => p !== prompt)].slice(0, 10));
@@ -152,29 +156,6 @@ export default function Generate() {
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const handleDownload = async (imageUrl, imagePrompt) => {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `flik_${imagePrompt.slice(0, 30).replace(/\s+/g, '_')}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      window.open(imageUrl, '_blank');
-    }
-  };
-
-  const handleCopyPrompt = (imagePrompt, id) => {
-    navigator.clipboard.writeText(imagePrompt);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleDeleteImage = (id) => {
@@ -338,46 +319,11 @@ export default function Generate() {
 
             <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
-            {/* Style Presets */}
-            <div className="mt-8">
-              <div className="flex items-center justify-between mb-4 px-2">
-                <p className="text-xs text-white/40 uppercase tracking-wider font-semibold">Style Presets</p>
-                {selectedStyle && (
-                  <button 
-                    onClick={() => setSelectedStyle(null)}
-                    className="text-xs text-[#FF6B35] hover:text-[#FF8B55] transition-colors"
-                  >
-                    Clear selection
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {stylePresets.map((style) => (
-                  <button
-                    key={style.id}
-                    onClick={() => setSelectedStyle(selectedStyle === style.id ? null : style.id)}
-                    className={`
-                      relative group overflow-hidden rounded-xl p-3 text-left transition-all duration-300 border
-                      ${selectedStyle === style.id 
-                        ? "bg-[#FF6B35]/10 border-[#FF6B35] shadow-[0_0_20px_rgba(255,107,53,0.15)]" 
-                        : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
-                      }
-                    `}
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-br from-[#FF6B35]/20 to-transparent opacity-0 transition-opacity duration-300 ${selectedStyle === style.id ? 'opacity-100' : 'group-hover:opacity-50'}`} />
-                    
-                    <div className="relative z-10 flex flex-col gap-1">
-                      <span className={`text-sm font-medium transition-colors ${selectedStyle === style.id ? 'text-[#FF6B35]' : 'text-white/80'}`}>
-                        {style.label}
-                      </span>
-                      <span className="text-[10px] text-white/40 line-clamp-1">
-                        {style.prompt.split(',')[0]}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <StyleSelector 
+              selectedStyle={selectedStyle} 
+              onSelect={setSelectedStyle} 
+              onClear={() => setSelectedStyle(null)} 
+            />
 
             {error && (
               <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
@@ -390,130 +336,13 @@ export default function Generate() {
       
       <section className="px-6 pb-20">
         <div className="max-w-7xl mx-auto">
-          {generatedImages.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mb-8 flex items-center justify-between"
-            >
-              <h2 className="text-xl font-semibold text-white">
-                Your Creations ({generatedImages.length})
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setGeneratedImages([])}
-                className="text-white/60 hover:text-white hover:bg-white/10"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Clear All
-              </Button>
-            </motion.div>
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence mode="popLayout">
-              {generatedImages.map((image, index) => (
-                <motion.div
-                  key={image.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="group relative aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] border border-white/10"
-                >
-                  <img
-                    src={image.url}
-                    alt={image.prompt}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <div className="absolute top-4 right-4">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDeleteImage(image.id)}
-                        className="bg-black/50 hover:bg-black/70 text-white"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      {image.model === "gemini" && (
-                        <div className="mb-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30 flex items-center gap-1 w-fit">
-                            <Zap className="w-3 h-3" />
-                            Gemini Enhanced
-                          </span>
-                        </div>
-                      )}
-                      <p className="text-sm text-white/80 line-clamp-2 mb-2">
-                        {image.prompt}
-                      </p>
-                      {image.enhancedPrompt && (
-                        <p className="text-xs text-white/50 line-clamp-1 mb-3">
-                          Enhanced: {image.enhancedPrompt}
-                        </p>
-                      )}
-                      {image.style && (
-                        <div className="mb-3">
-                          <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
-                            {stylePresets.find(s => s.id === image.style)?.label}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => navigate(createPageUrl("Editor") + "?load=" + encodeURIComponent(image.url))}
-                          className="flex-1 bg-[#FF6B35] hover:bg-[#FF8B55] text-white border-0"
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleDownload(image.url, image.prompt)}
-                          className="bg-white/10 hover:bg-white/20 text-white border-0"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleCopyPrompt(image.prompt, image.id)}
-                          className="text-white hover:bg-white/10"
-                        >
-                          {copiedId === image.id ? (
-                            <Check className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-          
-          {generatedImages.length === 0 && !isGenerating && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-20"
-            >
-              <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-6">
-                <ImageIcon className="w-8 h-8 text-white/30" />
-              </div>
-              <p className="text-white/40 text-lg mb-2">Your generated images will appear here</p>
-              <p className="text-white/30 text-sm">Enter a prompt above to create your first AI image</p>
-            </motion.div>
-          )}
+          <ImageGrid 
+            images={generatedImages} 
+            onDelete={handleDeleteImage} 
+            onClearAll={() => setGeneratedImages([])}
+            isGenerating={isGenerating}
+            stylePresets={stylePresets}
+          />
         </div>
       </section>
     </div>
