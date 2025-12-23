@@ -29,6 +29,9 @@ export default function Generate() {
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageStrength, setImageStrength] = useState(0.5);
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'assistant', content: "Hi! I'm your creative assistant. I can help you refine your prompts or brainstorm ideas. What would you like to create today?" }
+  ]);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -343,7 +346,16 @@ export default function Generate() {
               </div>
               </div>
 
-              <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+              <ChatPanel 
+                isOpen={isChatOpen} 
+                onClose={() => setIsChatOpen(false)} 
+                messages={chatMessages}
+                setMessages={setChatMessages}
+                onApplyPrompt={(text) => {
+                  setPrompt(text);
+                  // Optionally close chat or give feedback
+                }}
+              />
 
             <StyleSelector 
               selectedStyle={selectedStyle} 

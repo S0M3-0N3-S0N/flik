@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { base44 } from "@/api/base44Client";
 
-export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: "Hi! I'm your creative assistant. I can help you refine your prompts or brainstorm ideas. What would you like to create today?" }
-  ]);
+import { Copy, ArrowLeftCircle, Check } from "lucide-react";
+
+export default function ChatPanel({ isOpen, onClose, messages, setMessages, onApplyPrompt }) {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [chatImages, setChatImages] = useState([]);
@@ -118,28 +117,42 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
                     <Bot className="w-4 h-4 text-[#FF6B35]" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[80%] p-3 rounded-2xl text-sm space-y-2 ${
-                    msg.role === 'user'
-                      ? 'bg-[#FF6B35] text-white rounded-tr-none'
-                      : 'bg-white/10 text-white/90 rounded-tl-none'
-                  }`}
-                >
-                  {msg.images && msg.images.length > 0 && (
-                    <div className={`grid gap-2 mb-2 ${msg.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                      {msg.images.map((imgUrl, idx) => (
-                        <div key={idx} className="rounded-lg overflow-hidden border border-white/20 aspect-square">
-                          <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
-                        </div>
-                      ))}
+                <div className="flex flex-col gap-1 max-w-[80%]">
+                  <div
+                    className={`p-3 rounded-2xl text-sm space-y-2 ${
+                      msg.role === 'user'
+                        ? 'bg-[#FF6B35] text-white rounded-tr-none'
+                        : 'bg-white/10 text-white/90 rounded-tl-none'
+                    }`}
+                  >
+                    {msg.images && msg.images.length > 0 && (
+                      <div className={`grid gap-2 mb-2 ${msg.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {msg.images.map((imgUrl, idx) => (
+                          <div key={idx} className="rounded-lg overflow-hidden border border-white/20 aspect-square">
+                            <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {msg.image && !msg.images && (
+                      <div className="rounded-lg overflow-hidden mb-2 border border-white/20">
+                        <img src={msg.image} alt="Uploaded" className="max-w-full h-auto" />
+                      </div>
+                    )}
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  </div>
+
+                  {msg.role === 'assistant' && (
+                    <div className="flex gap-2 px-1">
+                      <button
+                        onClick={() => onApplyPrompt(msg.content)}
+                        className="text-[10px] flex items-center gap-1 text-[#FF6B35] hover:text-[#FF8B55] transition-colors bg-[#FF6B35]/10 px-2 py-1 rounded-full border border-[#FF6B35]/20"
+                      >
+                        <ArrowLeftCircle className="w-3 h-3" />
+                        Apply to Prompt
+                      </button>
                     </div>
                   )}
-                  {msg.image && !msg.images && (
-                    <div className="rounded-lg overflow-hidden mb-2 border border-white/20">
-                      <img src={msg.image} alt="Uploaded" className="max-w-full h-auto" />
-                    </div>
-                  )}
-                  <p>{msg.content}</p>
                 </div>
                 {msg.role === 'user' && (
                   <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
