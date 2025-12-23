@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Download, Trash2, Image as ImageIcon, Video, Search, Edit } from "lucide-react";
+import { Sparkles, Download, Trash2, Image as ImageIcon, Video, Search, Edit, Wand2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -343,6 +343,18 @@ export default function Gallery() {
                        >
                          Edit
                        </Button>
+                       {item.type === 'image' && (
+                         <Button
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
+                           }}
+                           className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-xs h-8"
+                         >
+                           <Wand2 className="w-3 h-3 mr-1" />
+                           Remix
+                         </Button>
+                       )}
                        <Button
                          onClick={(e) => {
                            e.stopPropagation();

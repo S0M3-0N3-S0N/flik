@@ -33,6 +33,14 @@ export default function Generate() {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const loadUrl = params.get('load');
+    if (loadUrl) {
+      setUploadedImage({ url: loadUrl });
+    }
+  }, []);
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !file.type.startsWith('image/')) return;
