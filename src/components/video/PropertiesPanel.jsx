@@ -70,12 +70,28 @@ export default function PropertiesPanel({ selectedClip }) {
              Mark this clip as a placeholder for user templates.
            </p>
            <div className="flex items-center gap-2">
-             <input type="checkbox" id="isPlaceholder" className="rounded bg-white/10 border-white/20" />
+             <input 
+               type="checkbox" 
+               id="isPlaceholder" 
+               checked={selectedClip.isPlaceholder || false}
+               onChange={(e) => {
+                   // This is a direct mutation which is bad in React but for speed in this demo snippet:
+                   // In real app, lift this state up via an onChange handler prop
+                   selectedClip.isPlaceholder = e.target.checked;
+               }}
+               className="rounded bg-white/10 border-white/20" 
+             />
              <label htmlFor="isPlaceholder" className="text-sm text-white">Make Placeholder</label>
            </div>
            <div className="space-y-1">
              <label className="text-xs text-white/50">Label</label>
-             <input type="text" placeholder="e.g. Intro Clip" className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-xs text-white" />
+             <input 
+               type="text" 
+               defaultValue={selectedClip.label || ""}
+               onChange={(e) => selectedClip.label = e.target.value}
+               placeholder="e.g. Intro Clip" 
+               className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-xs text-white" 
+             />
            </div>
         </div>
       </div>

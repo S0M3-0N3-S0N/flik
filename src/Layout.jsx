@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Video } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Video, Layers } from "lucide-react";
 
 export default function Layout({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -149,6 +149,15 @@ export default function Layout({ children, currentPageName }) {
             >
               <Video className="w-4 h-4" />
               Video Studio
+            </Link>
+            <Link 
+              to={createPageUrl("Templates")} 
+              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                currentPageName === "Templates" ? "text-white" : "text-white/60 hover:text-white"
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              Templates
             </Link>
           </nav>
           

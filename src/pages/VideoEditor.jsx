@@ -5,18 +5,27 @@ import { base44 } from "@/api/base44Client";
 import { 
   Play, Pause, SkipBack, SkipForward, Plus, Layers, 
   Scissors, Type, Music, Settings, Download, Save, 
-  ChevronLeft, ChevronRight, Upload, Image as ImageIcon, Video 
+  ChevronLeft, ChevronRight, Upload, Image as ImageIcon, Video, Loader2 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import Timeline from "@/components/video/Timeline";
 import MediaLibrary from "@/components/video/MediaLibrary";
 import VideoPreview from "@/components/video/VideoPreview";
 import PropertiesPanel from "@/components/video/PropertiesPanel";
 
 export default function VideoEditor() {
+  const { toast } = useToast();
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [templateMetadata, setTemplateMetadata] = useState({ title: "", description: "" });
+  const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("media");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -43,8 +52,102 @@ export default function VideoEditor() {
     }));
   };
 
+  const handleSaveTemplate = async () => {
+    if (!templateMetadata.title) {
+        toast({ title: "Error", description: "Title is required", variant: "destructive" });
+        return;
+    }
+    
+    setIsSaving(true);
+    try {
+        // Extract slots (placeholders)
+        const slots = [];
+        tracks.forEach(track => {
+            track.clips.forEach(clip => {
+                if (clip.isPlaceholder) {
+                    slots.push({
+                        id: clip.id,
+                        type: clip.type,
+                        duration: clip.duration || 5, // Default duration if not set
+                        label: clip.label || "Media Slot"
+                    });
+                }
+            });
+        });
+
+        // Calculate total duration (max end time of any clip)
+        let maxDuration = 0;
+        tracks.forEach(track => {
+             track.clips.forEach(clip => {
+                 const end = (clip.startTime || 0) + (clip.duration || 5);
+                 if (end > maxDuration) maxDuration = end;
+             });
+        });
+
+        await base44.entities.VideoTemplate.create({
+            title: templateMetadata.title,
+            description: templateMetadata.description,
+            duration: maxDuration,
+            slots: slots,
+            project_data: { tracks },
+            // In a real app we'd render a thumbnail/preview here and upload it
+            thumbnail_url: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80", 
+            preview_video_url: ""
+        });
+
+        toast({ title: "Success", description: "Template created successfully!" });
+        setShowSaveDialog(false);
+    } catch (error) {
+        console.error("Failed to save template:", error);
+        toast({ title: "Error", description: "Failed to save template", variant: "destructive" });
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
   return (
     <div className="h-screen pt-16 flex flex-col bg-[#0A0A0A] overflow-hidden">
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white">
+            <DialogHeader>
+                <DialogTitle>Save as Template</DialogTitle>
+                <DialogDescription className="text-white/50">
+                    Share your edit as a template for others to use. Mark clips as placeholders in the properties panel first.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                    <Label>Template Title</Label>
+                    <Input 
+                        value={templateMetadata.title}
+                        onChange={(e) => setTemplateMetadata({...templateMetadata, title: e.target.value})}
+                        className="bg-white/5 border-white/10 text-white"
+                        placeholder="e.g. Summer Vlog Intro"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea 
+                        value={templateMetadata.description}
+                        onChange={(e) => setTemplateMetadata({...templateMetadata, description: e.target.value})}
+                        className="bg-white/5 border-white/10 text-white"
+                        placeholder="Describe your template..."
+                    />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => setShowSaveDialog(false)} className="text-white hover:bg-white/10">Cancel</Button>
+                <Button 
+                    onClick={handleSaveTemplate} 
+                    disabled={isSaving}
+                    className="bg-[#FF6B35] hover:bg-[#FF8B55] text-white"
+                >
+                    {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Save Template
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Header / Toolbar */}
       <div className="h-14 border-b border-white/5 flex items-center justify-between px-4 bg-[#141414]">
         <div className="flex items-center gap-4">
@@ -63,7 +166,12 @@ export default function VideoEditor() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" className="border-white/20 text-white bg-transparent hover:bg-white/10">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => setShowSaveDialog(true)}
+            className="border-white/20 text-white bg-transparent hover:bg-white/10"
+          >
             <Save className="w-4 h-4 mr-2" />
             Save Template
           </Button>
