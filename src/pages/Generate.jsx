@@ -244,23 +244,23 @@ export default function Generate() {
                   }}
                 />
 
-                {/* Uploaded Images Preview List */}
-                {uploadedImages.length > 0 && (
-                  <div className="absolute top-4 right-4 flex flex-col gap-2 max-h-[140px] overflow-y-auto no-scrollbar">
+                {/* Minimal Uploaded Images Preview */}
+                {(uploadedImages.length > 0 || isUploading) && (
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
                     {uploadedImages.map((img) => (
-                      <div key={img.id} className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/20 group hover:border-white/40 transition-colors bg-black/50 shrink-0">
-                        <img src={img.url} className="w-full h-full object-cover" />
+                      <div key={img.id} className="relative w-8 h-8 rounded-md overflow-hidden border border-white/10 group cursor-pointer shadow-lg">
+                        <img src={img.url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                         <button 
                           onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
                           className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                         >
-                          <X className="w-4 h-4 text-white" />
+                          <X className="w-3 h-3 text-white" />
                         </button>
                       </div>
                     ))}
                     {isUploading && (
-                      <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 animate-pulse">
-                        <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
+                      <div className="w-8 h-8 rounded-md bg-white/5 flex items-center justify-center border border-white/10 animate-pulse">
+                        <Loader2 className="w-3 h-3 text-white/50 animate-spin" />
                       </div>
                     )}
                   </div>
