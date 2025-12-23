@@ -467,7 +467,7 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsDrawing(true);
-        setBrushStrokes([...brushStrokes, [pos]]);
+        setBrushStrokes([...brushStrokes, { points: [pos], type: brushMode, size: brushSize }]);
       }
     } else if (activeTab === "crop" && isCropping) {
       const pos = getRelativePosition(e);
