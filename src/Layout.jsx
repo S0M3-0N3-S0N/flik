@@ -130,8 +130,8 @@ export default function Layout({ children, currentPageName }) {
               }`}
             >
               <Wand2 className="w-4 h-4" />
-              AI Imagine
-            </Link>
+              Imagine AI
+              </Link>
             <Link 
               to={createPageUrl("Gallery")} 
               className={`flex items-center gap-2 text-sm font-medium transition-colors ${
