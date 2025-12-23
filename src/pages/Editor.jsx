@@ -708,31 +708,37 @@ export default function Editor() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     if (brushStrokes.length === 0) return;
-    
-    ctx.strokeStyle = `rgba(255, 107, 53, ${brushOpacity})`;
-    ctx.fillStyle = `rgba(255, 107, 53, ${brushOpacity})`;
-    ctx.lineWidth = brushSize / 5;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
 
     brushStrokes.forEach(stroke => {
-      if (stroke.length === 0) return;
+      const points = stroke.points || stroke; // Handle legacy format just in case
+      if (!points || points.length === 0) return;
       
-      if (stroke.length === 1) {
+      const isErase = stroke.type === 'erase';
+      const size = stroke.size || brushSize;
+      
+      ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
+      ctx.strokeStyle = `rgba(255, 107, 53, ${brushOpacity})`;
+      ctx.fillStyle = `rgba(255, 107, 53, ${brushOpacity})`;
+      ctx.lineWidth = size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (points.length === 1) {
         ctx.beginPath();
-        ctx.arc((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
+        ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
         ctx.fill();
       } else {
         ctx.beginPath();
-        ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
+        ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
         
-        for (let i = 1; i < stroke.length; i++) {
-          ctx.lineTo((stroke[i].x / 100) * canvas.width, (stroke[i].y / 100) * canvas.height);
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
         }
         
         ctx.stroke();
       }
     });
+    ctx.globalCompositeOperation = 'source-over';
   }, [brushStrokes, brushSize, activeTab]);
 
   const getFilterStyle = () => {
