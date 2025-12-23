@@ -29,7 +29,7 @@ export default function FiltersPanel({ selectedFilter, onFilterSelect, previewIm
             transition={{ delay: index * 0.03 }}
             onClick={() => onFilterSelect(filter)}
             className={`
-              relative group rounded-xl overflow-hidden aspect-square
+              relative group rounded-xl overflow-hidden aspect-square no-invert
               ${selectedFilter?.id === filter.id ? "ring-2 ring-[#FF6B35]" : ""}
             `}
           >
@@ -37,7 +37,7 @@ export default function FiltersPanel({ selectedFilter, onFilterSelect, previewIm
             <div 
               className="w-full h-full bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20"
               style={{
-                filter: filter.filter,
+                filter: filter.filter || 'none',
                 backgroundImage: previewImage ? `url(${previewImage})` : undefined,
                 backgroundSize: "cover",
                 backgroundPosition: "center"
