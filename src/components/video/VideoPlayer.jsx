@@ -18,7 +18,35 @@ const VideoPlayer = forwardRef(({
   
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
-    exportVideo: handleExportVideo
+    startRecording: () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      
+      // We return a promise that resolves when stopRecording is called
+      recorder.start();
+      
+      // Store recorder instance on the ref/component scope? 
+      // Better to return the recorder or a "stop" function
+      containerRef.current.recorder = recorder;
+      containerRef.current.chunks = chunks;
+    },
+    stopRecording: async () => {
+       const recorder = containerRef.current?.recorder;
+       const chunks = containerRef.current?.chunks;
+       if (!recorder) return null;
+       
+       return new Promise(resolve => {
+          recorder.onstop = () => {
+             const blob = new Blob(chunks, { type: 'video/webm' });
+             resolve(blob);
+          };
+          recorder.stop();
+       });
+    }
   }));
 
   // Manage video elements for each clip
@@ -196,42 +224,7 @@ const VideoPlayer = forwardRef(({
   }, [isPlaying, currentTime, tracks, videoEffects, videoElements]);
 
 
-  // Handle Export
-  const handleExportVideo = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
 
-    // 1. Setup MediaRecorder
-    const stream = canvas.captureStream(30); // 30 FPS
-    
-    // Add audio tracks if available
-    // (For V1 we focus on visual render, audio would need WebAudioContext mixing)
-    
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-    const chunks = [];
-    
-    recorder.ondataavailable = e => {
-      if (e.data.size > 0) chunks.push(e.data);
-    };
-    
-    return new Promise((resolve) => {
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        resolve(blob);
-      };
-
-      // 2. Start Recording
-      recorder.start();
-      
-      // 3. Play through timeline specifically for rendering
-      // We need to detach the main loop or handle this separately.
-      // For simplicity in V1, we'll do a "Realtime Render" where we just play.
-      // But user interaction should be blocked.
-      
-      // Let's assume the parent handles the "Playing" state for export
-      // This function just sets up the recorder.
-    });
-  };
 
   return (
     <div ref={containerRef} className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-lg shadow-2xl">

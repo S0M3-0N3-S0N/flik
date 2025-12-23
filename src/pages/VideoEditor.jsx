@@ -5,7 +5,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { createPageUrl } from "../utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -309,65 +309,67 @@ export default function VideoEditor() {
   // or just records the live playback.
   
   const handleSmartExport = async () => {
-     // 1. Reset to 0
-     setCurrentTime(0);
-     setIsPlaying(true);
-     setIsExporting(true);
-     
-     const canvas = document.querySelector('canvas');
-     const stream = canvas.captureStream(30);
-     const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-     const chunks = [];
-     
-     recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-     recorder.onstop = async () => {
-         const blob = new Blob(chunks, { type: 'video/webm' });
-         const file = new File([blob], 'my_movie.webm', { type: 'video/webm' });
-         
-         // Save to gallery
-         try {
-             const { file_url } = await base44.integrations.Core.UploadFile({ file });
-             await base44.entities.Creation.create({
-                 title: 'My Video Project',
-                 type: 'video',
-                 url: file_url,
-                 thumbnail_url: file_url // Todo: generate thumb
-             });
-             
-             const a = document.createElement('a');
-             a.href = file_url;
-             a.download = 'movie.webm';
-             a.click();
-             alert("Export Complete!");
-         } catch (e) {
-             console.error(e);
-             alert("Saved locally (Upload failed)");
-             const u = URL.createObjectURL(blob);
-             const a = document.createElement('a');
-             a.href = u;
-             a.download = 'movie.webm';
-             a.click();
-         }
-         setIsExporting(false);
-     };
-     
-     recorder.start();
-     
-     // Determine end time
-     const endTime = Math.max(...tracks.map(t => t.clips.reduce((max, c) => Math.max(max, c.start + c.duration), 0)));
-     
-     // Watcher
-     const checkEnd = setInterval(() => {
-         setCurrentTime(curr => {
-             if (curr >= endTime) {
-                 clearInterval(checkEnd);
-                 recorder.stop();
-                 setIsPlaying(false);
-                 return curr;
-             }
-             return curr;
-         });
-     }, 1000);
+    if (!playerRef.current) return;
+    
+    // 1. Reset to 0
+    setCurrentTime(0);
+    // Short delay to ensure seek completes
+    await new Promise(r => setTimeout(r, 200));
+    
+    setIsPlaying(true);
+    setIsExporting(true);
+    
+    // Start Recording
+    playerRef.current.startRecording();
+    
+    // Determine end time
+    const endTime = Math.max(...tracks.map(t => t.clips.reduce((max, c) => Math.max(max, c.start + c.duration), 0)));
+    
+    // Watcher
+    const checkEnd = setInterval(async () => {
+        setCurrentTime(curr => {
+            if (curr >= endTime) {
+                clearInterval(checkEnd);
+                finishExport();
+                return curr;
+            }
+            return curr;
+        });
+    }, 1000); // Check every second
+    
+    const finishExport = async () => {
+        setIsPlaying(false);
+        const blob = await playerRef.current.stopRecording();
+        if (!blob) return;
+
+        const file = new File([blob], 'my_movie.webm', { type: 'video/webm' });
+        
+        // Save to gallery
+        try {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            await base44.entities.Creation.create({
+                title: 'My Video Project',
+                type: 'video',
+                url: file_url,
+                thumbnail_url: file_url 
+            });
+            
+            const a = document.createElement('a');
+            a.href = file_url;
+            a.download = 'movie.webm';
+            a.click();
+            alert("Export Complete! Video saved to gallery.");
+        } catch (e) {
+            console.error(e);
+            alert("Export complete (Local save only - Upload failed)");
+            const u = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = u;
+            a.download = 'movie.webm';
+            a.click();
+        }
+        setIsExporting(false);
+    };
   };
 
   return (
