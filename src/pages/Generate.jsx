@@ -1,9 +1,11 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X } from "lucide-react";
+import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "../utils";
 
 const stylePresets = [
   { id: "photo", label: "Photorealistic", prompt: "ultra realistic photograph, 8k, highly detailed, professional photography" },
@@ -29,6 +31,7 @@ export default function Generate() {
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -421,11 +424,18 @@ export default function Generate() {
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
-                          onClick={() => handleDownload(image.url, image.prompt)}
-                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border-0"
+                          onClick={() => navigate(createPageUrl("Editor") + "?load=" + encodeURIComponent(image.url))}
+                          className="flex-1 bg-[#FF6B35] hover:bg-[#FF8B55] text-white border-0"
                         >
-                          <Download className="w-4 h-4 mr-2" />
-                          Download
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleDownload(image.url, image.prompt)}
+                          className="bg-white/10 hover:bg-white/20 text-white border-0"
+                        >
+                          <Download className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
