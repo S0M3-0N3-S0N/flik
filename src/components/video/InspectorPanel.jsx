@@ -253,6 +253,7 @@ export default function InspectorPanel({
             </TabsContent>
 
         </ScrollArea>
+      </Tabs>
     </div>
   );
 }
