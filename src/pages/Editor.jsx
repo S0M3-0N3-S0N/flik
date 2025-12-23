@@ -51,6 +51,7 @@ export default function Editor() {
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
+  const cursorRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
 
