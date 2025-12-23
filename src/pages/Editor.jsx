@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Layout } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
@@ -13,7 +13,6 @@ import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
-import CollageEditor from "@/components/editor/collage/CollageEditor";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
@@ -48,7 +47,6 @@ export default function Editor() {
   const [batchImages, setBatchImages] = useState([]);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [activeBatchIndex, setActiveBatchIndex] = useState(null);
-  const [showCollageEditor, setShowCollageEditor] = useState(false);
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
@@ -847,78 +845,84 @@ export default function Editor() {
             </TabsContent>
 
             <TabsContent value="batch" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Batch & Collage</h3>
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Batch Processing</h3>
 
-              <div className="space-y-4">
-                <Button 
-                  onClick={() => setShowCollageEditor(true)}
-                  className="w-full h-16 btn-gradient text-white text-lg font-bold shadow-xl relative overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
-                  <Layout className="w-6 h-6 mr-2" />
-                  Create Dynamic Collage
-                </Button>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-white/10" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-[#0A0A0A] px-2 text-white/50">Or Batch Process</span>
+              <label className="block cursor-pointer mb-4">
+                <div className="border-2 border-dashed border-white/20 rounded-xl p-6 hover:border-white/40 transition-colors">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <Layers className="w-8 h-8 text-[#FF6B35]" />
+                    <div>
+                      <p className="text-sm font-medium text-white">Upload Multiple Images</p>
+                      <p className="text-xs text-white/50 mt-1">Process many images at once</p>
+                    </div>
                   </div>
                 </div>
+                <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
+              </label>
 
-                <label className="block cursor-pointer">
-                  <div className="border-2 border-dashed border-white/20 rounded-xl p-6 hover:border-white/40 transition-colors">
-                    <div className="flex flex-col items-center gap-3 text-center">
-                      <Layers className="w-8 h-8 text-[#FF6B35]" />
-                      <div>
-                        <p className="text-sm font-medium text-white">Upload Multiple Images</p>
-                        <p className="text-xs text-white/50 mt-1">For Batch AI or Collage</p>
-                      </div>
-                    </div>
+              {batchImages.length > 0 && (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                    <p className="text-xs text-white/60 font-medium uppercase">Workspace Actions</p>
+                    <Button 
+                      onClick={() => {
+                        const updatedBatch = batchImages.map(img => ({
+                          ...img,
+                          adjustments: { ...adjustments },
+                          filter: selectedFilter,
+                          transform: { ...transform }
+                        }));
+                        setBatchImages(updatedBatch);
+                        alert('Synced current edits to all images!');
+                      }}
+                      variant="outline"
+                      className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white justify-start"
+                    >
+                      <Layers className="w-4 h-4 mr-2" />
+                      Sync Current Edits to All
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setBatchImages([]);
+                        setCurrentImage(null);
+                        setActiveBatchIndex(null);
+                      }}
+                      variant="ghost"
+                      className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 justify-start"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Clear Workspace
+                    </Button>
                   </div>
-                  <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
-                </label>
 
-                {batchImages.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
-                      <p className="text-xs text-white/60 font-medium uppercase">Batch Actions</p>
-                      
-                      <div className="space-y-2">
-                        {[
-                          { label: "AI Enhance", prompt: "Enhance this image with better colors, improved clarity, professional quality" },
-                          { label: "Upscale 4x", prompt: "Upscale to higher resolution, enhance details" },
-                          { label: "Fix Lighting", prompt: "Fix lighting and exposure, balance highlights and shadows" },
-                        ].map(tool => (
-                          <Button
-                            key={tool.label}
-                            onClick={() => handleBatchProcess(tool)}
-                            disabled={isBatchProcessing}
-                            className="w-full bg-white/10 hover:bg-white/20 text-white"
-                          >
-                            {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
-                          </Button>
-                        ))}
-                      </div>
-                      
-                      <Button 
-                        onClick={() => {
-                          setBatchImages([]);
-                          setCurrentImage(null);
-                          setActiveBatchIndex(null);
-                        }}
-                        variant="ghost"
-                        className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 justify-start"
+                  <div className="space-y-2">
+                    <p className="text-xs text-white/60">AI Batch Actions:</p>
+                    {[
+                      { label: "AI Enhance", prompt: "Enhance this image with better colors, improved clarity, professional quality" },
+                      { label: "Upscale 4x", prompt: "Upscale to higher resolution, enhance details" },
+                      { label: "Fix Lighting", prompt: "Fix lighting and exposure, balance highlights and shadows" },
+                    ].map(tool => (
+                      <Button
+                        key={tool.label}
+                        onClick={() => handleBatchProcess(tool)}
+                        disabled={isBatchProcessing}
+                        className="w-full btn-gradient text-white"
                       >
-                        <X className="w-4 h-4 mr-2" />
-                        Clear Workspace
+                        {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
                       </Button>
-                    </div>
+                    ))}
+                    {isBatchProcessing && (
+                      <Button
+                        onClick={() => setBatchCancelled(true)}
+                        variant="outline"
+                        className="w-full border-white/20 text-white hover:bg-white/10"
+                      >
+                        Cancel Processing
+                      </Button>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="adjust" className="mt-0">
@@ -1024,14 +1028,6 @@ export default function Editor() {
       </motion.aside>
       
       <main className="flex-1 flex flex-col order-1 lg:order-2 h-[55vh] lg:h-auto relative">
-        {showCollageEditor ? (
-          <div className="absolute inset-0 z-50 p-4 bg-[#0A0A0A]/95 backdrop-blur-sm">
-            <CollageEditor 
-              batchImages={batchImages} 
-              onClose={() => setShowCollageEditor(false)} 
-            />
-          </div>
-        ) : null}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
