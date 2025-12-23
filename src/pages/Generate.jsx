@@ -79,15 +79,20 @@ export default function Generate() {
       const styleInstruction = selectedStyleObj ? selectedStyleObj.prompt : "";
       
       const llmAnalysis = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this image generation request: "${prompt}".
-        
-        Tasks:
-        1. Determine if the user is asking for multiple variations (e.g., "5 different angles", "3 variations", "a storyboard").
-        2. If multiple, create a specific prompt for each variation.
-        3. If single, create one optimized prompt.
-        4. Enhance the prompts with artistic details${selectedStyleObj ? ` matching style: ${selectedStyleObj.label} (${selectedStyleObj.prompt})` : ''}.
-        
-        Return JSON format: { "prompts": ["prompt 1", "prompt 2", ...] }`,
+        prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
+
+        CRITICAL RULES:
+        1. DEFAULT to generating EXACTLY ONE prompt. 
+        2. ONLY generate multiple prompts if the user EXPLICITLY specifies a quantity (e.g., "3 images", "5 variations") or explicitly asks for "variations" or "different angles".
+        3. If no quantity/variation is requested, return an array with ONLY ONE prompt.
+
+        Enhancement Tasks:
+        1. Greatly improve the prompt quality. Add professional details: lighting (e.g., volumetric, cinematic, studio), camera parameters (e.g., 85mm, f/1.8, 4k, 8k), composition, and textures.
+        2. Make it a masterpiece.
+        3. Maintain the user's original core subject and intent perfectly.
+        ${selectedStyleObj ? `4. Apply the requested style strictly: ${selectedStyleObj.label} (${selectedStyleObj.prompt}).` : ''}
+
+        Return JSON format: { "prompts": ["enhanced prompt 1", ...] }`,
         response_json_schema: {
           type: "object",
           properties: {
