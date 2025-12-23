@@ -196,7 +196,6 @@ Respond with ONLY the enhanced prompt, nothing else.`,
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  onFocus={() => setShowHistory(true)}
                   placeholder="Describe your vision..."
                   className="w-full min-h-[140px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
                   onKeyDown={(e) => {
@@ -224,23 +223,7 @@ Respond with ONLY the enhanced prompt, nothing else.`,
                   </div>
                 )}
 
-                {/* History Dropdown */}
-                {showHistory && promptHistory.length > 0 && (
-                  <div className="absolute left-4 right-4 top-full z-20 bg-[#1F1F1F] border border-white/10 rounded-xl shadow-2xl mt-2 overflow-hidden max-h-48 overflow-y-auto">
-                    {promptHistory.map((p, i) => (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          setPrompt(p);
-                          setShowHistory(false);
-                        }}
-                        className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                )}
+
               </div>
 
               {/* Toolbar */}

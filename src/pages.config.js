@@ -1,12 +1,12 @@
-import Editor from './pages/Editor';
 import Gallery from './pages/Gallery';
+import Editor from './pages/Editor';
 import Generate from './pages/Generate';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Editor": Editor,
     "Gallery": Gallery,
+    "Editor": Editor,
     "Generate": Generate,
 }
 
