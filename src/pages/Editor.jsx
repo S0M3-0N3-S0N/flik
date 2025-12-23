@@ -37,6 +37,7 @@ export default function Editor() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(30);
   const [brushOpacity, setBrushOpacity] = useState(0.8);
+  const [brushMode, setBrushMode] = useState('draw'); // 'draw' or 'erase'
   
   const [isCropping, setIsCropping] = useState(false);
   const [cropArea, setCropArea] = useState({ x: 10, y: 10, width: 80, height: 80 });

@@ -1,11 +1,19 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Wand2, Paintbrush } from "lucide-react";
+import { Wand2, Paintbrush, Eraser } from "lucide-react";
 import { motion } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-export default function SpotRemoval({ onRemoveSpot, isProcessing, brushSize, onBrushSizeChange }) {
+export default function SpotRemoval({ 
+  onRemoveSpot, 
+  isProcessing, 
+  brushSize, 
+  onBrushSizeChange,
+  brushMode,
+  onBrushModeChange
+}) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -42,6 +50,34 @@ export default function SpotRemoval({ onRemoveSpot, isProcessing, brushSize, onB
             step={5}
             className="w-full"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-white/80 text-sm">Tool Mode</Label>
+          <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
+            <button
+              onClick={() => onBrushModeChange('draw')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                brushMode === 'draw' 
+                  ? 'bg-[#FF6B35] text-white shadow-lg' 
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Paintbrush className="w-4 h-4" />
+              Draw
+            </button>
+            <button
+              onClick={() => onBrushModeChange('erase')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                brushMode === 'erase' 
+                  ? 'bg-[#FF6B35] text-white shadow-lg' 
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Eraser className="w-4 h-4" />
+              Eraser
+            </button>
+          </div>
         </div>
 
         <Button
