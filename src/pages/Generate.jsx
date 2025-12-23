@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X } from "lucide-react";
+import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X, History, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -226,7 +226,10 @@ Respond with ONLY the enhanced prompt, nothing else.`,
 
                 {/* History Dropdown */}
                 {showHistory && promptHistory.length > 0 && (
-                  <div className="absolute left-4 right-4 top-full z-20 bg-[#1F1F1F] border border-white/10 rounded-xl shadow-2xl mt-2 overflow-hidden max-h-48 overflow-y-auto">
+                  <div className="absolute left-4 right-4 top-full z-20 bg-[#141414]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl mt-2 overflow-hidden max-h-60 overflow-y-auto">
+                    <div className="px-4 py-2 text-[10px] uppercase tracking-wider font-semibold text-white/30 bg-white/5 border-b border-white/5">
+                      Recent Prompts
+                    </div>
                     {promptHistory.map((p, i) => (
                       <button
                         key={i}
@@ -234,9 +237,11 @@ Respond with ONLY the enhanced prompt, nothing else.`,
                           setPrompt(p);
                           setShowHistory(false);
                         }}
-                        className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all border-b border-white/5 last:border-0 group"
                       >
-                        {p}
+                        <History className="w-3.5 h-3.5 text-white/30 group-hover:text-[#FF6B35] transition-colors flex-shrink-0" />
+                        <span className="truncate flex-1 text-left">{p}</span>
+                        <ArrowUpRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-white/50" />
                       </button>
                     ))}
                   </div>
