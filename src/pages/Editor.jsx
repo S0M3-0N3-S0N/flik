@@ -498,6 +498,15 @@ export default function Editor() {
   };
 
   const handleMouseMove = (e) => {
+    if (activeTab === "remove" && cursorRef.current && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      cursorRef.current.style.left = `${x}px`;
+      cursorRef.current.style.top = `${y}px`;
+      cursorRef.current.style.display = 'block';
+    }
+
     if (activeTab === "remove" && isDrawing && currentImage) {
       const pos = getRelativePosition(e);
       if (pos && brushStrokes.length > 0) {
