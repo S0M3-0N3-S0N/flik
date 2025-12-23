@@ -119,7 +119,32 @@ export default function Profile() {
             </div>
             
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white mb-1">{user.full_name || 'User'}</h2>
+              <div className="flex items-center gap-2 mb-1">
+                {isEditingName ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      className="h-9 bg-black/20 border-white/10 text-white text-xl font-bold w-64"
+                      placeholder="Enter name"
+                      autoFocus
+                    />
+                    <button onClick={handleNameUpdate} className="p-1.5 rounded-lg bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors">
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setIsEditingName(false)} className="p-1.5 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-bold text-white">{user.full_name || 'User'}</h2>
+                    <button onClick={startEditingName} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </div>
               <p className="text-white/50">{user.email}</p>
             </div>
             <Button 
