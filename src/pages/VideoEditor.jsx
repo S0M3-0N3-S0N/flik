@@ -634,7 +634,7 @@ export default function VideoEditor() {
         className="h-14 border-b border-white/5 flex items-center justify-between px-6 glass-card z-50"
       >
         <div className="flex items-center gap-4">
-          <Link to={createPageUrl("Dashboard")} className="text-white/60 hover:text-white">
+          <Link to={createPageUrl("Editor")} className="text-white/60 hover:text-white">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <span className="font-bold gradient-text">Video Studio</span>
