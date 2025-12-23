@@ -29,9 +29,15 @@ export default function Gallery() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const { data: creations = [], isLoading } = useQuery({
-    queryKey: ['creations'],
-    queryFn: () => base44.entities.Creation.list('-created_date', 100),
+    queryKey: ['creations', user?.email],
+    queryFn: () => user ? base44.entities.Creation.filter({ created_by: user.email }, '-created_date', 100) : [],
+    enabled: !!user,
     initialData: [],
   });
 

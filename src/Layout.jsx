@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User } from "lucide-react";
 
 export default function Layout({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -144,6 +144,16 @@ export default function Layout({ children, currentPageName }) {
           </nav>
           
           <div className="flex items-center gap-4">
+            <Link 
+              to={createPageUrl("Profile")}
+              className={`p-2 rounded-full transition-colors border border-white/5 ${
+                currentPageName === "Profile" ? "bg-white/20 text-white" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+              }`}
+              title="My Profile"
+            >
+              <User className="w-5 h-5" />
+            </Link>
+
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
