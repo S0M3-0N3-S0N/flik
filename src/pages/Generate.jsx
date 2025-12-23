@@ -74,7 +74,7 @@ Respond with ONLY the enhanced prompt, nothing else.`,
         ? stylePresets.find(s => s.id === selectedStyle)?.prompt 
         : "";
       
-      const fullPrompt = `${finalPrompt}${stylePrompt ? `, ${stylePrompt}` : ''}, masterpiece, high quality, detailed`;
+      const fullPrompt = `${finalPrompt}${stylePrompt ? `, ${stylePrompt}` : ''}`;
       
         const imageResult = await base44.integrations.Core.GenerateImage({
           prompt: fullPrompt,
