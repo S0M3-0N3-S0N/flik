@@ -391,7 +391,7 @@ export default function VideoEditor() {
   };
 
   const handleCanvasMouseDown = (e) => {
-    if (!isRemoving || !videoRef.current) return;
+    if (activeTab !== 'remove' || !videoRef.current) return;
     const rect = videoRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -399,7 +399,7 @@ export default function VideoEditor() {
   };
 
   const handleCanvasMouseMove = (e) => {
-    if (!isRemoving || removeStrokes.length === 0 || !videoRef.current) return;
+    if (activeTab !== 'remove' || removeStrokes.length === 0 || !videoRef.current) return;
     const rect = videoRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -523,6 +523,134 @@ export default function VideoEditor() {
         if (isPlaying) video.play();
       });
     };
+  };
+
+  const handleRemoveWatermarkFromVideo = async () => {
+    if (!videoFile || removeStrokes.length === 0) return;
+    setIsProcessing(true);
+
+    try {
+      const video = document.createElement('video');
+      video.src = videoFile.url;
+      video.crossOrigin = "anonymous";
+      video.muted = false; 
+      
+      await new Promise(resolve => {
+        video.onloadedmetadata = () => resolve();
+      });
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      
+      // Attempt to capture audio
+      const stream = canvas.captureStream(30);
+      try {
+        // Try to get audio from video if possible (works in some browsers)
+        if (video.captureStream) {
+            const vidStream = video.captureStream();
+            const audioTracks = vidStream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                stream.addTrack(audioTracks[0]);
+            }
+        } else if (video.mozCaptureStream) {
+            const vidStream = video.mozCaptureStream();
+             const audioTracks = vidStream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                stream.addTrack(audioTracks[0]);
+            }
+        }
+      } catch (e) {
+        console.warn("Could not capture audio", e);
+      }
+
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+      
+      recorder.ondataavailable = e => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        
+        // Save to Gallery
+        const file = new File([blob], `cleaned_${videoFile.name.split('.')[0]}.webm`, { type: 'video/webm' });
+        
+        // Upload and create creation
+        try {
+            const uploadResult = await base44.integrations.Core.UploadFile({ file });
+            await base44.entities.Creation.create({
+              title: `Cleaned Video - ${videoFile.name}`,
+              type: 'video',
+              url: uploadResult.file_url,
+              thumbnail_url: uploadResult.file_url,
+              prompt: 'Video Watermark Removal',
+              metadata: { source: 'video_editor', type: 'cleanup_video' }
+            });
+    
+            // Download
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `cleaned_${videoFile.name.split('.')[0]}.webm`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('Video processed successfully! Saved to Gallery.');
+        } catch (uploadError) {
+             console.error("Upload failed", uploadError);
+             alert("Video processed but failed to upload. Downloading local copy.");
+             const url = URL.createObjectURL(blob);
+             const link = document.createElement('a');
+             link.href = url;
+             link.download = `cleaned_${videoFile.name.split('.')[0]}.webm`;
+             link.click();
+        }
+
+        setIsProcessing(false);
+      };
+
+      recorder.start();
+      await video.play();
+      
+      const draw = () => {
+        if (video.paused || video.ended) return;
+        
+        ctx.drawImage(video, 0, 0);
+        
+        // Apply blur mask
+        if (removeStrokes.length > 0) {
+            ctx.save();
+            ctx.beginPath();
+            removeStrokes.forEach(stroke => {
+              if (stroke.length < 2) return;
+              ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
+              stroke.forEach(point => {
+                ctx.lineTo((point.x / 100) * canvas.width, (point.y / 100) * canvas.height);
+              });
+            });
+            ctx.clip();
+            ctx.filter = 'blur(20px)';
+            ctx.drawImage(video, 0, 0); 
+            ctx.restore();
+        }
+        
+        requestAnimationFrame(draw);
+      };
+      
+      draw();
+      
+      video.onended = () => {
+        recorder.stop();
+      };
+      
+    } catch (err) {
+      console.error(err);
+      alert('Error processing video: ' + err.message);
+      setIsProcessing(false);
+    }
   };
 
   const formatTime = (seconds) => {
