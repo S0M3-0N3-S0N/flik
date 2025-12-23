@@ -147,6 +147,10 @@ export default function VideoEditor() {
   const handleRippleDelete = () => {
       if (!selectedClip) return;
       const trackId = tracks.find(t => t.clips.find(c => c.id === selectedClip.id))?.id;
+      if (!trackId) {
+          console.error("Track not found for selected clip");
+          return;
+      }
       const deletedDuration = selectedClip.duration;
       const deletedStart = selectedClip.start;
       
@@ -165,10 +169,6 @@ export default function VideoEditor() {
           return t;
       }));
       setSelectedClip(null);
-  };
-
-  const handleRippleDeleteAction = () => {
-      handleRippleDelete();
   };
 
   const [activeTab, setActiveTab] = useState("media");
@@ -751,12 +751,13 @@ export default function VideoEditor() {
              setEditingText={setEditingText}
              setActiveTab={setActiveTab}
              onSplitClip={handleSplitClip}
+             onRippleDelete={handleRippleDelete}
              onUndo={handleUndo}
              onRedo={handleRedo}
-          snappingLine={snappingLine}
-          onSeek={setCurrentTime}
-          onToggleTrackMute={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, muted: !t.muted } : t))}
-          onToggleTrackLock={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, locked: !t.locked } : t))}
+             snappingLine={snappingLine}
+             onSeek={setCurrentTime}
+             onToggleTrackMute={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, muted: !t.muted } : t))}
+             onToggleTrackLock={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, locked: !t.locked } : t))}
           />
           </main>
           </div>
