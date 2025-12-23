@@ -501,7 +501,7 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos && brushStrokes.length > 0) {
         const newStrokes = [...brushStrokes];
-        newStrokes[newStrokes.length - 1].push(pos);
+        newStrokes[newStrokes.length - 1].points.push(pos);
         setBrushStrokes(newStrokes);
       }
     } else if (activeTab === "crop" && isDragging && dragStart && dragType) {
