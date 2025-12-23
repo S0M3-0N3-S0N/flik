@@ -338,7 +338,10 @@ export default function Gallery() {
                          Edit
                        </Button>
                        <Button
-                         onClick={(e) => e.stopPropagation()}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setSelectedItem(item);
+                         }}
                          className="flex-1 btn-gradient text-white text-xs h-8"
                        >
                          View
