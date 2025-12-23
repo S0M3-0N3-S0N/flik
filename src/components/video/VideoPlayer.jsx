@@ -82,14 +82,16 @@ const VideoPlayer = forwardRef(({
 
   // Manage video elements for each clip
   useEffect(() => {
-    const videoTrack = tracks.find(t => t.type === 'video');
-    if (!videoTrack) return;
-
     const newVideoElements = { ...videoElements };
     let hasChanges = false;
+    
+    // Scan all video tracks
+    const allVideoClips = tracks
+        .filter(t => t.type === 'video')
+        .flatMap(t => t.clips);
 
     // Create new video elements for new clips
-    videoTrack.clips.forEach(clip => {
+    allVideoClips.forEach(clip => {
       if (!newVideoElements[clip.id]) {
         const video = document.createElement('video');
         video.src = clip.url;
@@ -138,7 +140,7 @@ const VideoPlayer = forwardRef(({
 
     // Cleanup removed clips
     Object.keys(newVideoElements).forEach(clipId => {
-      if (!videoTrack.clips.find(c => c.id.toString() === clipId.toString())) {
+      if (!allVideoClips.find(c => c.id.toString() === clipId.toString())) {
         // Cleanup audio nodes? They are bound to the element, enabling garbage collection usually works if element is gone.
         // We should disconnect if possible.
         if (sourceNodesRef.current[clipId]) {
@@ -284,10 +286,12 @@ const VideoPlayer = forwardRef(({
         // Update time in parent
         onTimeUpdate(prev => prev + deltaTime);
         
-        // Sync videos
-        const videoTrack = tracks.find(t => t.type === 'video');
-        if (videoTrack) {
-            videoTrack.clips.forEach(clip => {
+        // Sync videos (All Tracks)
+        tracks.filter(t => t.type === 'video').forEach(track => {
+            if (track.muted) return; // Muted tracks shouldn't play? Or should play but volume 0?
+            // Actually play() is needed for rendering frames even if muted.
+            
+            track.clips.forEach(clip => {
                 const video = videoElements[clip.id];
                 if (video) {
                      // Check if this clip SHOULD be playing
@@ -298,7 +302,7 @@ const VideoPlayer = forwardRef(({
                      }
                 }
             });
-        }
+        });
       } else {
          // Pause all videos if global playback is stopped
          Object.values(videoElements).forEach(v => {
