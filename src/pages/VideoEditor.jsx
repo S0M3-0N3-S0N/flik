@@ -2,27 +2,29 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Play, Pause, SkipBack, SkipForward, Download, Video as VideoIcon, 
-  ArrowLeft, X
+  ArrowLeft, X, Undo, Redo, LayoutTemplate
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+
 import VideoPlayer from "@/components/video/VideoPlayer";
 import Timeline from "@/components/video/Timeline";
-import PropertiesPanel from "@/components/video/PropertiesPanel";
+import LibraryPanel from "@/components/video/LibraryPanel";
+import InspectorPanel from "@/components/video/InspectorPanel";
 
 export default function VideoEditor() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(60); // Default duration
+  const [duration, setDuration] = useState(60); 
   const [volume, setVolume] = useState(100);
   const [zoom, setZoom] = useState(1);
-  const [aspectRatio, setAspectRatio] = useState("16:9"); // 16:9, 9:16, 1:1
+  const [aspectRatio, setAspectRatio] = useState("16:9"); 
   const [clipboard, setClipboard] = useState(null);
-  const [snappingLine, setSnappingLine] = useState(null); // time or null
-  const [selectedClip, setSelectedClip] = useState(null);
+  const [snappingLine, setSnappingLine] = useState(null); 
 
   // History for Undo/Redo
   const [history, setHistory] = useState([]);
@@ -51,7 +53,6 @@ export default function VideoEditor() {
           // Add to history
           const newHistory = history.slice(0, historyIndex + 1);
           newHistory.push(newTracks);
-          // Limit history size
           if (newHistory.length > 20) newHistory.shift();
           
           setHistory(newHistory);
@@ -139,8 +140,6 @@ export default function VideoEditor() {
           start: currentTime,
           name: `${clipboard.name} (Copy)`
       };
-      
-      // Check collision/overlap? For now just append or place
       addClipToTrack(targetTrack.id, newClip);
   };
 
@@ -167,11 +166,7 @@ export default function VideoEditor() {
       setSelectedClip(null);
   };
 
-  const handleRippleDeleteAction = () => {
-      handleRippleDelete();
-  };
-
-  const [activeTab, setActiveTab] = useState("media");
+  const [selectedClip, setSelectedClip] = useState(null);
   const [editingText, setEditingText] = useState(null);
   const [videoEffects, setVideoEffects] = useState({
     brightness: 100, contrast: 100, saturation: 100, blur: 0, sepia: 0,
@@ -188,21 +183,19 @@ export default function VideoEditor() {
     const urlParams = new URLSearchParams(window.location.search);
     const loadUrl = urlParams.get('load');
     if (loadUrl) {
-       // Auto-add the video
        const newClip = {
           id: Date.now(),
           type: 'video',
           url: loadUrl,
           name: 'Imported Video',
           start: 0,
-          duration: 10, // Default, will update when meta loads
+          duration: 10,
           transition: null
        };
        const newTracks = [...tracks];
        newTracks[0].clips.push(newClip);
        setTracks(newTracks);
        
-       // Detect duration
        const tempVideo = document.createElement('video');
        tempVideo.src = loadUrl;
        tempVideo.onloadedmetadata = () => {
@@ -226,13 +219,10 @@ export default function VideoEditor() {
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
-    const newVideoClips = [];
     
     files.forEach((file, index) => {
       if (file.type.startsWith('video/') || file.type.startsWith('image/')) {
         const url = URL.createObjectURL(file);
-        // For image, default duration 5s
-        // For video, we need to load meta
         const isVideo = file.type.startsWith('video/');
         
         const newClip = {
@@ -252,7 +242,6 @@ export default function VideoEditor() {
             video.src = url;
             video.onloadedmetadata = () => {
                 newClip.duration = video.duration;
-                // Add to track
                 addClipToTrack('video', newClip);
             };
         } else {
@@ -267,7 +256,6 @@ export default function VideoEditor() {
         const newTracks = [...prev];
         const track = newTracks.find(t => t.id === trackId);
         
-        // If clip has a start time (e.g. paste), try to use it, otherwise append
         if (clip.start === undefined || clip.start === null) {
             let startTime = 0;
             if (track.clips.length > 0) {
@@ -318,13 +306,14 @@ export default function VideoEditor() {
       };
       addClipToTrack('text', newClip);
       setEditingText(newClip);
-      setActiveTab('text');
+      setSelectedClip(newClip);
   };
 
   const handleUpdateTextClip = (updates) => {
       if (!editingText) return;
       const updatedClip = { ...editingText, ...updates };
       setEditingText(updatedClip);
+      setSelectedClip(updatedClip); // Update selected clip as well
       
       setTracks(prev => prev.map(t => {
           if (t.type === 'text') {
@@ -348,7 +337,6 @@ export default function VideoEditor() {
       if (editingText?.id === clipId) setEditingText(null);
   };
 
-  // Timeline Interaction Logic
   const handleClipMouseDown = (e, clip, edge = null) => {
       e.stopPropagation();
       if (edge) {
@@ -357,20 +345,12 @@ export default function VideoEditor() {
           setClipDragging({ clip, startX: e.clientX, startStart: clip.start });
       }
       setSelectedClip(clip);
+      if (clip.type === 'text') setEditingText(clip);
+      else setEditingText(null);
   };
 
   const handleMouseMove = (e) => {
       if (!clipDragging && !clipResizing) return;
-      
-      // Assume timeline width based on screen width approx for now (simplified)
-      const pixelsPerSecond = 100 * zoom / 20; // very rough approx, ideally pass timeline metrics
-      // Actually let's use a standard multiplier
-      // If 100% width = duration, then deltaX / width = deltaTime / duration
-      
-      // Let's rely on visual feedback loop or assume 10px = 1s * zoom?
-      // Re-using the logic from the old file which was based on timelineRef.current.offsetWidth
-      // Since we split components, we need to move this logic or pass refs. 
-      // For V1, let's just use a fixed sensitivity.
       
       const sensitivity = 0.1 / zoom; 
       const deltaX = (e.clientX - (clipDragging?.startX || clipResizing?.startX));
@@ -379,22 +359,19 @@ export default function VideoEditor() {
       if (clipDragging) {
           let newStart = Math.max(0, clipDragging.startStart + deltaTime);
           
-          // Snapping Logic
-          const snapThreshold = 0.5; // Snap if within 0.5s
+          const snapThreshold = 0.5;
           let snapped = false;
           
           tracks.forEach(track => {
              track.clips.forEach(clip => {
-                if (clip.id === clipDragging.clip.id) return; // Don't snap to self
+                if (clip.id === clipDragging.clip.id) return;
                 
-                // Snap to clip end
                 const end = clip.start + clip.duration;
                 if (Math.abs(newStart - end) < snapThreshold) {
                     newStart = end;
                     snapped = true;
                 }
                 
-                // Snap to clip start
                 if (Math.abs(newStart - clip.start) < snapThreshold) {
                   newStart = clip.start;
                   snapped = true;
@@ -402,7 +379,6 @@ export default function VideoEditor() {
                 });
                 });
 
-                // Also snap to timeline start (0)
                 if (Math.abs(newStart) < snapThreshold) {
                 newStart = 0;
                 snapped = true;
@@ -417,7 +393,6 @@ export default function VideoEditor() {
               const newDuration = Math.max(0.5, clipResizing.startDuration + deltaTime);
               updateClipInTracks(clipResizing.clip.id, { duration: newDuration });
           } else {
-             // Left resize logic is harder (changes start and duration)
              const newStart = Math.max(0, Math.min(clipResizing.startStart + clipResizing.startDuration - 0.5, clipResizing.startStart + deltaTime));
              const newDuration = clipResizing.startDuration - (newStart - clipResizing.startStart);
              updateClipInTracks(clipResizing.clip.id, { start: newStart, duration: newDuration });
@@ -436,12 +411,11 @@ export default function VideoEditor() {
           ...t,
           clips: t.clips.map(c => c.id === clipId ? { ...c, ...updates } : c)
       })));
+      if (selectedClip?.id === clipId) setSelectedClip(prev => ({...prev, ...updates}));
   };
 
   const handleSplitClip = () => {
       if (!selectedClip) return;
-
-      // Check if playhead is within clip
       if (currentTime <= selectedClip.start || currentTime >= selectedClip.start + selectedClip.duration) {
           alert("Move playhead inside the selected clip to split.");
           return;
@@ -453,25 +427,21 @@ export default function VideoEditor() {
 
       setTracks(prev => {
           return prev.map(track => {
-              // Only process the track containing the selected clip
               if (!track.clips.find(c => c.id === selectedClip.id)) return track;
 
               const newClips = [];
               track.clips.forEach(clip => {
                   if (clip.id === selectedClip.id) {
-                      // 1. Modify Original Clip (First Part)
                       newClips.push({
                           ...clip,
                           duration: firstPartDuration
                       });
-
-                      // 2. Create New Clip (Second Part)
                       newClips.push({
                           ...clip,
-                          id: Date.now(), // New ID
+                          id: Date.now(),
                           start: splitPoint,
                           duration: remainingDuration,
-                          offset: (clip.offset || 0) + firstPartDuration, // Shift offset
+                          offset: (clip.offset || 0) + firstPartDuration,
                           name: `${clip.name} (Part 2)`
                       });
                   } else {
@@ -485,85 +455,20 @@ export default function VideoEditor() {
       setSelectedClip(null);
   };
 
-  const handleExport = async () => {
-     if (!playerRef.current) return;
-     setIsExporting(true);
-     setIsPlaying(false);
-     
-     // Jump to start
-     setCurrentTime(0);
-     // Wait a sec
-     await new Promise(r => setTimeout(r, 500));
-     
-     setIsPlaying(true);
-     
-     // Ideally we want to record "while" playing
-     // The playerRef exportVideo handles the recorder setup
-     // We just need to manage the playback
-     
-     try {
-         const blobPromise = playerRef.current.exportVideo();
-         
-         // Stop recording automatically when we reach the end
-         // We'll monitor currentTime in the useEffect below or just wait duration * 1000
-         
-         const exportDuration = Math.max(...tracks.map(t => t.clips.reduce((max, c) => Math.max(max, c.start + c.duration), 0))) * 1000;
-         
-         await new Promise(r => setTimeout(r, exportDuration + 1000));
-         setIsPlaying(false);
-         
-         // Manually stop the recorder? 
-         // The MediaRecorder API needs .stop() called.
-         // My VideoPlayer.jsx implementation stops on "onstop" event but needs a trigger.
-         // Actually, my VideoPlayer implementation didn't expose a "stopRecording" method.
-         // Let's refine VideoPlayer export next time.
-         // For now, let's assume the user presses "Stop Export" or we just alert them.
-         
-         // Workaround: We will just wait and hope the blob resolves? 
-         // No, the blob resolves ON STOP.
-         // We need to trigger stop.
-         
-         alert("Export functionality requires the recorder to be stopped manually in V1. Please wait for the video to finish playing then click Export again to save... (Implementing auto-stop in V2)");
-         
-         setIsExporting(false);
-     } catch (err) {
-         console.error(err);
-         setIsExporting(false);
-     }
-  };
-  
-  // Correction: Better Export Flow
-  // We can't easily auto-stop from here without exposing "stop" from player.
-  // Let's stick to the Frame Export for this exact iteration, or implemented a limited version.
-  // Actually, I promised Video Export.
-  // Let's implement a simple "Render & Download" that doesn't rely on live playback if possible,
-  // or just records the live playback.
-  
   const handleSmartExport = async () => {
     if (!playerRef.current) return;
-    
-    // 1. Reset to 0
     setCurrentTime(0);
-    // Short delay to ensure seek completes
     await new Promise(r => setTimeout(r, 200));
-    
     setIsPlaying(true);
     setIsExporting(true);
-    
     abortExport.current = false;
-    // Start Recording
     playerRef.current.startRecording();
-    
-    // Determine end time
     const endTime = Math.max(...tracks.map(t => t.clips.reduce((max, c) => Math.max(max, c.start + c.duration), 0)));
-    
-    // Watcher
     const checkEnd = setInterval(async () => {
         if (abortExport.current) {
              clearInterval(checkEnd);
              return;
         }
-        
         setCurrentTime(curr => {
             if (curr >= endTime) {
                 clearInterval(checkEnd);
@@ -572,9 +477,9 @@ export default function VideoEditor() {
             }
             return curr;
         });
-    }, 1000); // Check every second
+    }, 1000); 
     
-    const abortExport = useRef(false);
+    const abortExport = { current: false };
 
     const cancelExport = () => {
         abortExport.current = true;
@@ -586,13 +491,9 @@ export default function VideoEditor() {
     const finishExport = async () => {
         setIsPlaying(false);
         if (abortExport.current) return;
-
         const blob = await playerRef.current.stopRecording();
         if (!blob) return;
-
         const file = new File([blob], 'my_movie.webm', { type: 'video/webm' });
-        
-        // Save to gallery
         try {
             const { file_url } = await base44.integrations.Core.UploadFile({ file });
             await base44.entities.Creation.create({
@@ -601,7 +502,6 @@ export default function VideoEditor() {
                 url: file_url,
                 thumbnail_url: file_url 
             });
-            
             const a = document.createElement('a');
             a.href = file_url;
             a.download = 'movie.webm';
@@ -620,9 +520,18 @@ export default function VideoEditor() {
     };
   };
 
+  const abortExport = useRef(false);
+  const cancelExport = () => {
+        abortExport.current = true;
+        setIsExporting(false);
+        setIsPlaying(false);
+        if (playerRef.current) playerRef.current.stopRecording();
+  };
+
+
   return (
     <div 
-      className="min-h-screen flex flex-col bg-[#0A0A0A]"
+      className="h-screen flex flex-col bg-[#0A0A0A] overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -631,141 +540,159 @@ export default function VideoEditor() {
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="h-14 border-b border-white/5 flex items-center justify-between px-6 glass-card z-50"
+        className="h-14 border-b border-white/5 flex items-center justify-between px-4 bg-[#0A0A0A] shrink-0 z-50"
       >
         <div className="flex items-center gap-4">
           <Link to={createPageUrl("Dashboard")} className="text-white/60 hover:text-white">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <span className="font-bold gradient-text">Video Studio</span>
+          <div className="flex items-center gap-2">
+              <span className="font-bold text-white">Video Studio</span>
+              <span className="text-xs text-white/40 px-2 py-0.5 rounded bg-white/5 border border-white/5">PRO</span>
+          </div>
           {isExporting && <span className="text-xs text-[#FF6B35] animate-pulse">● Recording...</span>}
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1 mr-4">
+               <Button variant="ghost" size="icon" onClick={handleUndo} className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10">
+                   <Undo className="w-4 h-4" />
+               </Button>
+               <Button variant="ghost" size="icon" onClick={handleRedo} className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10">
+                   <Redo className="w-4 h-4" />
+               </Button>
+          </div>
+
           <Button
-            onClick={handleSmartExport}
-            disabled={isExporting && !abortExport.current} // disable only if normal state? No, we want cancel button.
-            className={isExporting ? "bg-red-500 hover:bg-red-600 text-white" : "btn-gradient text-white"}
             onClick={isExporting ? cancelExport : handleSmartExport}
+            className={isExporting ? "bg-red-500 hover:bg-red-600 text-white h-8 text-xs" : "bg-[#FF6B35] hover:bg-[#E65A2C] text-white h-8 text-xs"}
           >
-            {isExporting ? <><X className="w-4 h-4 mr-2" /> Cancel Export</> : <><Download className="w-4 h-4 mr-2" /> Export Video</>}
+            {isExporting ? <><X className="w-3 h-3 mr-2" /> Cancel</> : <><Download className="w-3 h-3 mr-2" /> Export</>}
           </Button>
         </div>
       </motion.div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <motion.aside
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          className="w-80 border-r border-white/5 glass-card overflow-y-auto z-40"
-        >
-          <PropertiesPanel
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            tracks={tracks}
-            handleFileUpload={handleFileUpload}
-            handleAudioUpload={handleAudioUpload}
-            handleAddTextClip={handleAddTextClip}
-            selectedClip={selectedClip}
-            handleDeleteClip={handleDeleteClip}
-            editingText={editingText}
-            setEditingText={setEditingText}
-            handleUpdateTextClip={handleUpdateTextClip}
-            videoEffects={videoEffects}
-            setVideoEffects={setVideoEffects}
-            handleApplyEffect={(name) => {
-                if (name === 'B&W') setVideoEffects({ ...videoEffects, saturation: 0 });
-                if (name === 'Sepia') setVideoEffects({ ...videoEffects, sepia: 100 });
-            }}
-            playbackSpeed={playbackSpeed}
-            handleSpeedChange={setPlaybackSpeed}
-            volume={volume}
-            handleVolumeChange={setVolume}
-            handleUpdateClip={updateClipInTracks}
-            aspectRatio={aspectRatio}
-            onAspectRatioChange={setAspectRatio}
-            />
-        </motion.aside>
+      <div className="flex-1 overflow-hidden relative">
+          <ResizablePanelGroup direction="horizontal">
+              {/* Left Panel: Library */}
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="z-10">
+                  <LibraryPanel 
+                    tracks={tracks}
+                    handleFileUpload={handleFileUpload}
+                    handleAudioUpload={handleAudioUpload}
+                    handleAddTextClip={handleAddTextClip}
+                    handleDeleteClip={handleDeleteClip}
+                  />
+              </ResizablePanel>
+              
+              <ResizableHandle className="bg-white/5 hover:bg-[#FF6B35] transition-colors w-1" />
+              
+              {/* Center Panel: Preview & Timeline */}
+              <ResizablePanel defaultSize={60} minSize={40}>
+                  <ResizablePanelGroup direction="vertical">
+                      {/* Top: Video Player */}
+                      <ResizablePanel defaultSize={60} minSize={30} className="bg-[#141414] relative flex flex-col">
+                            <div className="flex-1 relative flex items-center justify-center p-4 bg-dots-pattern">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,107,53,0.05),transparent_70%)]" />
+                                <div className="relative w-full h-full flex items-center justify-center">
+                                    <VideoPlayer
+                                        ref={playerRef}
+                                        tracks={tracks}
+                                        currentTime={currentTime}
+                                        isPlaying={isPlaying}
+                                        onTimeUpdate={setCurrentTime}
+                                        videoEffects={videoEffects}
+                                        zoom={zoom}
+                                        volume={volume}
+                                        aspectRatio={aspectRatio}
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Player Controls Bar */}
+                            <div className="h-12 border-t border-white/5 bg-[#0A0A0A] flex items-center justify-between px-4 shrink-0">
+                                <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
+                                    <span>{currentTime.toFixed(2)}s</span>
+                                    <span>/</span>
+                                    <span>{duration.toFixed(2)}s</span>
+                                </div>
+                                
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" onClick={() => setCurrentTime(t => Math.max(0, t - 1))} className="text-white hover:bg-white/10 w-8 h-8 rounded-full">
+                                        <SkipBack className="w-4 h-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)} className="text-white bg-white/10 hover:bg-white/20 w-8 h-8 rounded-full">
+                                        {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current pl-0.5" />}
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => setCurrentTime(t => Math.min(duration, t + 1))} className="text-white hover:bg-white/10 w-8 h-8 rounded-full">
+                                        <SkipForward className="w-4 h-4" />
+                                    </Button>
+                                </div>
 
-        <main className="flex-1 flex flex-col min-w-0">
-          {/* Player Area */}
-          <div className="flex-1 bg-[#0A0A0A] p-8 relative flex items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-800 via-black to-black" />
-            
-            <div className="w-full max-w-5xl aspect-video bg-black rounded-xl shadow-2xl relative z-10 border border-white/10">
-               {tracks[0].clips.length === 0 && (
-                   <div className="absolute inset-0 flex flex-col items-center justify-center text-white/30 pointer-events-none">
-                       <VideoIcon className="w-16 h-16 mb-4 opacity-50" />
-                       <p>Drag & Drop or Upload Videos</p>
-                   </div>
-               )}
-               <VideoPlayer
-               ref={playerRef}
-               tracks={tracks}
-               currentTime={currentTime}
-               isPlaying={isPlaying}
-               onTimeUpdate={setCurrentTime}
-               videoEffects={videoEffects}
-               zoom={zoom}
-               volume={volume}
-               aspectRatio={aspectRatio}
-               />
-            </div>
-          </div>
+                                <div className="w-24">
+                                     {/* Volume or Empty Space */}
+                                </div>
+                            </div>
+                      </ResizablePanel>
+                      
+                      <ResizableHandle className="bg-white/5 hover:bg-[#FF6B35] transition-colors h-1" />
+                      
+                      {/* Bottom: Timeline */}
+                      <ResizablePanel defaultSize={40} minSize={20} className="bg-[#0A0A0A]">
+                          <Timeline 
+                             tracks={tracks}
+                             duration={duration}
+                             currentTime={currentTime}
+                             zoom={zoom}
+                             setZoom={setZoom}
+                             selectedClip={selectedClip}
+                             setSelectedClip={(clip) => {
+                                 setSelectedClip(clip);
+                                 if (clip?.type === 'text') setEditingText(clip);
+                                 else setEditingText(null);
+                             }}
+                             handleClipMouseDown={handleClipMouseDown}
+                             handleDeleteClip={handleDeleteClip}
+                             setEditingText={setEditingText}
+                             setActiveTab={() => {}} // Legacy
+                             onSplitClip={handleSplitClip}
+                             onUndo={handleUndo}
+                             onRedo={handleRedo}
+                             snappingLine={snappingLine}
+                             onSeek={setCurrentTime}
+                             onToggleTrackMute={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, muted: !t.muted } : t))}
+                             onToggleTrackLock={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, locked: !t.locked } : t))}
+                             onRippleDelete={handleRippleDelete}
+                          />
+                      </ResizablePanel>
+                  </ResizablePanelGroup>
+              </ResizablePanel>
 
-          {/* Controls Bar */}
-          <div className="border-t border-white/5 glass-card p-2 px-6 z-30">
-             <div className="max-w-4xl mx-auto flex items-center gap-4">
-                 <span className="text-xs text-white/50 w-12 text-right">{currentTime.toFixed(1)}s</span>
-                 <div className="flex items-center">
-                     <Button variant="ghost" size="icon" onClick={() => setCurrentTime(t => Math.max(0, t - 1/30))} className="hover:bg-white/10 text-white h-8 w-8">
-                         <SkipBack className="w-3 h-3" />
-                     </Button>
-                     <Button variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)} className="hover:bg-white/10 text-white">
-                         {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                     </Button>
-                     <Button variant="ghost" size="icon" onClick={() => setCurrentTime(t => Math.min(duration, t + 1/30))} className="hover:bg-white/10 text-white h-8 w-8">
-                         <SkipForward className="w-3 h-3" />
-                     </Button>
-                 </div>
-                 <Slider 
-                    value={[currentTime]} 
-                    max={duration} 
-                    step={0.1} 
-                    onValueChange={(val) => {
-                        setCurrentTime(val[0]);
-                        setIsPlaying(false);
+              <ResizableHandle className="bg-white/5 hover:bg-[#FF6B35] transition-colors w-1" />
+
+              {/* Right Panel: Inspector */}
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                  <InspectorPanel 
+                    selectedClip={selectedClip}
+                    handleUpdateClip={updateClipInTracks}
+                    editingText={editingText}
+                    setEditingText={setEditingText}
+                    handleUpdateTextClip={handleUpdateTextClip}
+                    videoEffects={videoEffects}
+                    setVideoEffects={setVideoEffects}
+                    handleApplyEffect={(name) => {
+                        if (name === 'B&W') setVideoEffects({ ...videoEffects, saturation: 0 });
+                        if (name === 'Sepia') setVideoEffects({ ...videoEffects, sepia: 100 });
+                        if (name === 'Glow') setVideoEffects({ ...videoEffects, brightness: 120, blur: 1 });
                     }}
-                    className="flex-1"
-                 />
-                 <span className="text-xs text-white/50 w-12">{duration.toFixed(1)}s</span>
-             </div>
-          </div>
-
-          {/* Timeline */}
-          <Timeline 
-             tracks={tracks}
-             duration={duration}
-             currentTime={currentTime}
-             zoom={zoom}
-             setZoom={setZoom}
-             selectedClip={selectedClip}
-             setSelectedClip={setSelectedClip}
-             handleClipMouseDown={handleClipMouseDown}
-             handleDeleteClip={handleDeleteClip}
-             setEditingText={setEditingText}
-             setActiveTab={setActiveTab}
-             onSplitClip={handleSplitClip}
-             onUndo={handleUndo}
-             onRedo={handleRedo}
-          snappingLine={snappingLine}
-          onSeek={setCurrentTime}
-          onToggleTrackMute={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, muted: !t.muted } : t))}
-          onToggleTrackLock={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, locked: !t.locked } : t))}
-          />
-          </main>
-          </div>
-          </div>
-          );
-          }
+                    playbackSpeed={playbackSpeed}
+                    handleSpeedChange={setPlaybackSpeed}
+                    aspectRatio={aspectRatio}
+                    onAspectRatioChange={setAspectRatio}
+                  />
+              </ResizablePanel>
+          </ResizablePanelGroup>
+      </div>
+    </div>
+  );
+}
