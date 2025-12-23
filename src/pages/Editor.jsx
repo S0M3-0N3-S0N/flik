@@ -147,8 +147,64 @@ export default function Editor() {
   };
 
   const [batchProgress, setBatchProgress] = useState(0);
-
   const [batchCancelled, setBatchCancelled] = useState(false);
+
+  const processBatchImage = async (image) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = image.preview || image.url;
+    
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+
+    const { transform, adjustments, filter } = image;
+
+    if (transform.rotate === 90 || transform.rotate === 270) {
+      canvas.width = img.height;
+      canvas.height = img.width;
+    } else {
+      canvas.width = img.width;
+      canvas.height = img.height;
+    }
+
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((transform.rotate * Math.PI) / 180);
+    ctx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
+
+    const filters = [];
+    if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
+    if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
+    if (adjustments.saturation !== 0) filters.push(`saturate(${100 + adjustments.saturation}%)`);
+    if (adjustments.blur > 0) filters.push(`blur(${adjustments.blur}px)`);
+    if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
+    if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
+    if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
+    
+    if (filter && filter.id !== "none") {
+      filters.push(filter.filter);
+    }
+    
+    ctx.filter = filters.join(" ") || "none";
+
+    if (transform.rotate === 90 || transform.rotate === 270) {
+      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+    } else {
+      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+    }
+    
+    ctx.restore();
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/png');
+    });
+  };
 
   const handleBatchProcess = async (tool) => {
     if (batchImages.length === 0) return;
@@ -156,14 +212,24 @@ export default function Editor() {
     setIsBatchProcessing(true);
     setBatchProgress(0);
     setBatchCancelled(false);
-    const results = [];
+    
+    // Update all pending to processing or pending? Actually lets do one by one
     
     for (let i = 0; i < batchImages.length; i++) {
       if (batchCancelled) break;
       
       const image = batchImages[i];
+      if (image.status === 'success') continue; // Skip already done
+
+      // Update status to processing
+      setBatchImages(prev => prev.map((img, idx) => idx === i ? { ...img, status: 'processing' } : img));
+      
       try {
-        const uploadResult = await base44.integrations.Core.UploadFile({ file: image.file });
+        // Use processed blob if adjustments exist, otherwise use file
+        const blob = await processBatchImage(image);
+        const fileToUpload = new File([blob], "batch_input.png", { type: "image/png" });
+        
+        const uploadResult = await base44.integrations.Core.UploadFile({ file: fileToUpload });
         const result = await base44.integrations.Core.GenerateImage({
           prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition.`,
           existing_image_urls: [uploadResult.file_url]
@@ -178,22 +244,32 @@ export default function Editor() {
           metadata: { batch: true, original: image.name }
         });
         
-        results.push({ original: image, result: result.url });
+        setBatchImages(prev => prev.map((img, idx) => idx === i ? { ...img, status: 'success', resultUrl: result.url } : img));
         setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
       } catch (err) {
         console.error('Batch error:', err);
+        setBatchImages(prev => prev.map((img, idx) => idx === i ? { ...img, status: 'error' } : img));
       }
     }
     
-    if (batchCancelled) {
-      alert(`Batch processing cancelled. Processed ${results.length} of ${batchImages.length} images.`);
-    } else {
-      alert(`Successfully processed ${results.length} of ${batchImages.length} images! Saved to Gallery.`);
-    }
-    
     setIsBatchProcessing(false);
-    setBatchImages([]);
     setBatchProgress(0);
+  };
+
+  const downloadAllBatchResults = async () => {
+    const completed = batchImages.filter(img => img.status === 'success' && img.resultUrl);
+    if (completed.length === 0) return;
+    
+    // Simple download loop
+    for (const img of completed) {
+       const link = document.createElement("a");
+       link.href = img.resultUrl;
+       link.download = `batch_result_${img.name}`;
+       document.body.appendChild(link);
+       link.click();
+       document.body.removeChild(link);
+       await new Promise(r => setTimeout(r, 500)); // Delay to prevent browser blocking
+    }
   };
 
   const getProcessedImageBlob = async () => {
