@@ -22,6 +22,7 @@ export default function VideoEditor() {
   const [aspectRatio, setAspectRatio] = useState("16:9"); // 16:9, 9:16, 1:1
   const [clipboard, setClipboard] = useState(null);
   const [snappingLine, setSnappingLine] = useState(null); // time or null
+  const [selectedClip, setSelectedClip] = useState(null);
 
   // History for Undo/Redo
   const [history, setHistory] = useState([]);
@@ -169,10 +170,7 @@ export default function VideoEditor() {
   const handleRippleDeleteAction = () => {
       handleRippleDelete();
   };
-      setSelectedClip(null);
-  };
 
-  const [selectedClip, setSelectedClip] = useState(null);
   const [activeTab, setActiveTab] = useState("media");
   const [editingText, setEditingText] = useState(null);
   const [videoEffects, setVideoEffects] = useState({
