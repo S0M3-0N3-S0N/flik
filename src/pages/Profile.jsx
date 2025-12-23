@@ -1,9 +1,16 @@
 import React, { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { User, Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, Pencil, Check, X } from "lucide-react";
+import { User, Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, Pencil, Check, X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
 
@@ -15,6 +22,7 @@ export default function Profile() {
   const [emailInput, setEmailInput] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const fileInputRef = useRef(null);
   
   const { data: user } = useQuery({
@@ -190,6 +198,22 @@ export default function Profile() {
                 )}
               </div>
             </div>
+            
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center gap-3 text-white/70">
+                <Lock className="w-5 h-5 text-[#FF6B35]" />
+                <span>Password</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowPasswordDialog(true)}
+                className="text-white/40 hover:text-white hover:bg-white/10 h-8"
+              >
+                Change
+              </Button>
+            </div>
+
             <div className="flex items-center gap-3 text-white/70 p-4 bg-white/5 rounded-xl border border-white/5">
               <Calendar className="w-5 h-5 text-[#FF6B35]" />
               <span>Joined {new Date(user.created_date).toLocaleDateString()}</span>
@@ -219,6 +243,21 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription className="text-white/50">
+              To change your password, you need to sign out and use the "Forgot Password" link on the login page.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="ghost" onClick={() => setShowPasswordDialog(false)} className="hover:bg-white/10 text-white">Cancel</Button>
+            <Button onClick={handleLogout} className="bg-[#FF6B35] hover:bg-[#FF8B55] text-white">Sign Out & Reset</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
