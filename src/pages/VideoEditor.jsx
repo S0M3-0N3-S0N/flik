@@ -1144,7 +1144,7 @@ export default function VideoEditor() {
                 <video
                   ref={videoRef}
                   src={videoFile.url}
-                  className={`w-full h-full object-contain ${isRemoving ? 'cursor-crosshair' : ''}`}
+                  className={`w-full h-full object-contain ${activeTab === 'remove' ? 'cursor-crosshair' : ''}`}
                   style={{ filter: getVideoFilterStyle() }}
                   onTimeUpdate={handleTimeUpdate}
                   onEnded={() => setIsPlaying(false)}
