@@ -5,7 +5,7 @@ import {
   ArrowLeft, X, Undo, Redo, LayoutTemplate
 } from "lucide-react";
 // import { Link } from "react-router-dom";
-import { createPageUrl } from "../utils";
+import { createPageUrl } from "@/components/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
