@@ -559,6 +559,13 @@ export default function Editor() {
     setIsDragging(false);
     setDragType(null);
   };
+  
+  const handleMouseLeave = () => {
+    handleMouseUp();
+    if (cursorRef.current) {
+      cursorRef.current.style.display = 'none';
+    }
+  };
 
   const handleRemoveSpots = async () => {
     if (brushStrokes.length === 0 || !currentImage) return;
