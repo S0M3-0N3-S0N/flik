@@ -155,16 +155,16 @@ Respond with ONLY the enhanced prompt, nothing else.`,
           <motion.div 
             initial={{ x: "-50%" }}
             animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.8, 0.5],
+              scale: [1, 1.15, 1],
+              opacity: [0.6, 1, 0.6],
               x: "-50%"
             }}
             transition={{ 
-              duration: 4, 
+              duration: 3, 
               repeat: Infinity,
               ease: "easeInOut" 
             }}
-            className="absolute top-0 left-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/20 to-transparent blur-[100px]" 
+            className="absolute top-0 left-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/80 to-transparent blur-[100px]" 
           />
         </div>
         
