@@ -939,38 +939,69 @@ export default function Editor() {
               </label>
 
               {batchImages.length > 0 && (
-                <div className="space-y-3">
-                  <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
-                    <p className="text-xs text-white/60 font-medium uppercase">Workspace Actions</p>
-                    <Button 
-                      onClick={() => {
-                        const updatedBatch = batchImages.map(img => ({
-                          ...img,
-                          adjustments: { ...adjustments },
-                          filter: selectedFilter,
-                          transform: { ...transform }
-                        }));
-                        setBatchImages(updatedBatch);
-                        alert('Synced current edits to all images!');
-                      }}
-                      variant="outline"
-                      className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white justify-start"
-                    >
-                      <Layers className="w-4 h-4 mr-2" />
-                      Sync Current Edits to All
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        setBatchImages([]);
-                        setCurrentImage(null);
-                        setActiveBatchIndex(null);
-                      }}
-                      variant="ghost"
-                      className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 justify-start"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Clear Workspace
-                    </Button>
+                <div className="space-y-4">
+                  
+                  <div className="bg-white/5 rounded-lg border border-white/10 max-h-40 overflow-y-auto">
+                     {batchImages.map((img, idx) => (
+                        <div key={img.id} className="flex items-center gap-2 p-2 border-b border-white/5 last:border-0 hover:bg-white/5 cursor-pointer" onClick={() => switchToBatchImage(idx)}>
+                           <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0">
+                              <img src={img.preview} className="w-full h-full object-cover" />
+                              {img.status === 'success' && <div className="absolute inset-0 bg-green-500/50 flex items-center justify-center"><Check className="w-4 h-4 text-white" /></div>}
+                              {img.status === 'processing' && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><Loader2 className="w-4 h-4 text-white animate-spin" /></div>}
+                              {img.status === 'error' && <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center"><AlertCircle className="w-4 h-4 text-white" /></div>}
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <p className="text-xs text-white/80 truncate">{img.name}</p>
+                              <p className="text-[10px] text-white/50">{img.status === 'idle' ? 'Pending' : img.status}</p>
+                           </div>
+                           {img.resultUrl && (
+                             <a href={img.resultUrl} download onClick={(e) => e.stopPropagation()} className="text-white/40 hover:text-white">
+                               <Download className="w-3 h-3" />
+                             </a>
+                           )}
+                           <button onClick={(e) => {
+                             e.stopPropagation();
+                             const newBatch = batchImages.filter((_, i) => i !== idx);
+                             setBatchImages(newBatch);
+                             if (activeBatchIndex === idx) setActiveBatchIndex(null);
+                           }} className="text-white/40 hover:text-red-400">
+                              <X className="w-3 h-3" />
+                           </button>
+                        </div>
+                     ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs text-white/60 font-medium uppercase">Actions</p>
+                    <div className="grid grid-cols-2 gap-2">
+                       <Button 
+                        onClick={() => {
+                          const updatedBatch = batchImages.map(img => ({
+                            ...img,
+                            adjustments: { ...adjustments },
+                            filter: selectedFilter,
+                            transform: { ...transform }
+                          }));
+                          setBatchImages(updatedBatch);
+                          alert('Synced current edits to all images!');
+                        }}
+                        variant="outline"
+                        className="text-xs h-8 bg-white/5 border-white/10 text-white"
+                      >
+                        Sync Edits
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          setBatchImages([]);
+                          setCurrentImage(null);
+                          setActiveBatchIndex(null);
+                        }}
+                        variant="ghost"
+                        className="text-xs h-8 text-red-400 hover:bg-red-500/10"
+                      >
+                        Clear All
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -984,18 +1015,32 @@ export default function Editor() {
                         key={tool.label}
                         onClick={() => handleBatchProcess(tool)}
                         disabled={isBatchProcessing}
-                        className="w-full btn-gradient text-white"
+                        className="w-full btn-gradient text-white h-9 text-xs"
                       >
-                        {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
+                        {isBatchProcessing && batchImages.some(img => img.status === 'processing') ? (
+                           <Loader2 className="w-3 h-3 animate-spin mr-2" />
+                        ) : null}
+                        {tool.label}
                       </Button>
                     ))}
+                    
                     {isBatchProcessing && (
                       <Button
                         onClick={() => setBatchCancelled(true)}
                         variant="outline"
-                        className="w-full border-white/20 text-white hover:bg-white/10"
+                        className="w-full h-8 text-xs border-white/20 text-white hover:bg-white/10"
                       >
-                        Cancel Processing
+                        Cancel
+                      </Button>
+                    )}
+                    
+                    {batchImages.some(img => img.status === 'success') && (
+                       <Button
+                        onClick={downloadAllBatchResults}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white h-9 text-xs mt-2"
+                      >
+                        <FileDown className="w-3 h-3 mr-2" />
+                        Download All Results
                       </Button>
                     )}
                   </div>
