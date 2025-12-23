@@ -930,6 +930,8 @@ export default function Editor() {
                     onBrushSizeChange={setBrushSize}
                     brushOpacity={brushOpacity}
                     onBrushOpacityChange={setBrushOpacity}
+                    brushMode={brushMode}
+                    onBrushModeChange={setBrushMode}
                   />
                   {brushStrokes.length > 0 && (
                     <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
