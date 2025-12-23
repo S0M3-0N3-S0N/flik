@@ -1157,7 +1157,7 @@ export default function Editor() {
           
           {currentImage ? (
             <div className="w-full h-full flex items-center justify-center p-8">
-              <div className="relative">
+              <div className="relative no-invert">
                 <img
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
@@ -1176,6 +1176,7 @@ export default function Editor() {
                   <canvas
                     ref={canvasRef}
                     className="absolute top-0 left-0 pointer-events-none rounded-2xl"
+                    style={{ filter: 'none' }}
                   />
                 )}
 
