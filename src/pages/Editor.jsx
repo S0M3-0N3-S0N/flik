@@ -598,27 +598,44 @@ export default function Editor() {
       
       // Draw strokes
       if (brushStrokes.length > 0) {
-        ctx.strokeStyle = `rgba(255, 0, 0, 1)`; // Bright red for AI to see
-        ctx.fillStyle = `rgba(255, 0, 0, 1)`;
-        ctx.lineWidth = (brushSize / 100) * canvas.width; // Scale brush size relative to canvas
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
         brushStrokes.forEach(stroke => {
-          if (stroke.length === 0) return;
-          if (stroke.length === 1) {
+          const points = stroke.points || stroke;
+          if (!points || points.length === 0) return;
+          
+          const isErase = stroke.type === 'erase';
+          const size = stroke.size || brushSize;
+          
+          ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
+          ctx.strokeStyle = `rgba(255, 0, 0, 1)`; 
+          ctx.fillStyle = `rgba(255, 0, 0, 1)`;
+          
+          let scaledSize = size;
+          if (imageRef.current) {
+             const domWidth = imageRef.current.getBoundingClientRect().width;
+             const scale = canvas.width / domWidth;
+             scaledSize = size * scale;
+          } else {
+             scaledSize = size * (canvas.width / 800);
+          }
+
+          ctx.lineWidth = scaledSize;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          if (points.length === 1) {
              ctx.beginPath();
-             ctx.arc((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
+             ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
              ctx.fill();
           } else {
              ctx.beginPath();
-             ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
-             for (let i = 1; i < stroke.length; i++) {
-               ctx.lineTo((stroke[i].x / 100) * canvas.width, (stroke[i].y / 100) * canvas.height);
+             ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
+             for (let i = 1; i < points.length; i++) {
+               ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
              }
              ctx.stroke();
           }
         });
+        ctx.globalCompositeOperation = 'source-over';
       }
       
       const maskedBlob = await new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -626,7 +643,7 @@ export default function Editor() {
       const maskedUpload = await base44.integrations.Core.UploadFile({ file: maskedFile });
       
       const result = await base44.integrations.Core.GenerateImage({
-        prompt: `Inpainting task: The user has marked areas to remove with bright RED color. Remove the red painted areas and fill them in to match the surrounding background seamlessly. Output the clean image without the red marks. High quality, realistic.`,
+        prompt: `Inpainting task: The user has marked areas to remove with bright RED color. Remove the red painted areas and fill them in to match the surrounding background seamlessly. Do not modify any other part of the image. Maintain the exact original composition, lighting, and details outside the red marked areas. Output the clean image without the red marks. High quality, realistic.`,
         existing_image_urls: [maskedUpload.file_url]
       });
       
