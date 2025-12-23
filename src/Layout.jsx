@@ -1,12 +1,36 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon } from "lucide-react";
 
 export default function Layout({ children, currentPageName }) {
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      setIsDarkMode(false);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    localStorage.setItem('theme', newMode ? 'dark' : 'light');
+  };
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div className={`min-h-screen bg-[#0A0A0A] text-white transition-all duration-300 ${!isDarkMode ? 'light-mode-theme' : ''}`}>
       <style>{`
+        .light-mode-theme {
+          filter: invert(1) hue-rotate(180deg);
+        }
+        .light-mode-theme img, 
+        .light-mode-theme video,
+        .light-mode-theme .no-invert {
+          filter: invert(1) hue-rotate(180deg);
+        }
+        
         :root {
           --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%);
           --gradient-secondary: linear-gradient(135deg, #FFB800 0%, #FF6B35 100%);
@@ -120,7 +144,17 @@ export default function Layout({ children, currentPageName }) {
           </nav>
           
           <div className="flex items-center gap-4">
-
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5 text-white" />
+              ) : (
+                <Moon className="w-5 h-5 text-white" />
+              )}
+            </button>
           </div>
         </div>
       </header>
