@@ -871,13 +871,57 @@ export default function VideoEditor() {
               <TabsContent value="remove" className="mt-0 space-y-4">
                 <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Watermark Remover</h3>
                 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                  <div className="flex items-start gap-3 mb-4">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
+                  <div className="flex items-start gap-3">
                     <Wand2 className="w-5 h-5 text-[#FF6B35] mt-1" />
                     <div>
-                      <h4 className="text-white font-medium text-sm mb-2">AI Auto-Remove</h4>
+                      <h4 className="text-white font-medium text-sm mb-2">Remove from Whole Video</h4>
+                      <p className="text-xs text-white/60 mb-2">
+                        1. Use your mouse to draw over the watermark on the video player.
+                        <br/>
+                        2. Click the button below to process the entire video.
+                      </p>
+                      {removeStrokes.length > 0 && (
+                        <p className="text-xs text-[#FF6B35] font-medium mb-2">
+                          {removeStrokes.length} area(s) selected
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                     <Button
+                        onClick={handleRemoveWatermarkFromVideo}
+                        disabled={isProcessing || !videoFile || removeStrokes.length === 0}
+                        className="flex-1 btn-gradient text-white"
+                     >
+                        {isProcessing ? 'Processing Video...' : 'Remove from Video'}
+                     </Button>
+                     {removeStrokes.length > 0 && (
+                        <Button
+                            onClick={() => setRemoveStrokes([])}
+                            variant="outline"
+                            className="border-white/20 text-white hover:bg-white/10"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                     )}
+                  </div>
+                  
+                  {removeStrokes.length === 0 && (
+                     <p className="text-xs text-center text-white/40 italic">
+                        Draw on the video to start...
+                     </p>
+                  )}
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 mt-4">
+                  <div className="flex items-start gap-3 mb-4">
+                    <Sparkles className="w-5 h-5 text-[#FFB800] mt-1" />
+                    <div>
+                      <h4 className="text-white font-medium text-sm mb-2">AI Single Frame Fix</h4>
                       <p className="text-xs text-white/60">
-                        Automatically detect and remove watermarks, logos, and text overlays from the current frame using AI.
+                        Use AI to perfectly inpaint the current frame only.
                       </p>
                     </div>
                   </div>
@@ -903,7 +947,6 @@ export default function VideoEditor() {
                             existing_image_urls: [uploadResult.file_url]
                           });
                           
-                          // Save result to gallery
                           await base44.entities.Creation.create({
                             title: `Cleaned Frame - ${videoFile.name}`,
                             type: 'image',
@@ -913,39 +956,24 @@ export default function VideoEditor() {
                             metadata: { source: 'video_editor', type: 'cleanup' }
                           });
 
-                          // Download logic or show result
                           const link = document.createElement('a');
                           link.href = result.url;
                           link.download = `cleaned_frame_${Date.now()}.png`;
                           link.click();
                           
-                          alert('Watermark removed! The cleaned frame has been saved to Gallery and downloaded.');
+                          alert('Watermark removed from frame! Saved to Gallery.');
                         });
                       } catch (err) {
                         console.error('Removal failed:', err);
-                        if (err.message && err.message.includes('refused')) {
-                          alert('The AI refused to process this image. This usually happens if the content violates safety policies or if the "watermark" terminology triggers copyright filters. Please try painting over the area manually in the "Magic Brush" tool instead.');
-                        } else {
-                          alert('Error removing content: ' + (err.message || 'Unknown error'));
-                        }
+                        alert('Error: ' + (err.message || 'Unknown error'));
                       } finally {
                         setIsProcessing(false);
                       }
                     }}
                     disabled={isProcessing || !videoFile}
-                    className="w-full btn-gradient text-white"
+                    className="w-full bg-white/10 border border-white/20 text-white hover:bg-white/20"
                   >
-                    {isProcessing ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Auto Remove Watermark
-                      </>
-                    )}
+                    AI Remove (Current Frame)
                   </Button>
                 </div>
               </TabsContent>
