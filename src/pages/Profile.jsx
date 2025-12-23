@@ -57,7 +57,7 @@ export default function Profile() {
   const handleNameUpdate = async () => {
     if (!nameInput.trim()) return;
     try {
-      await base44.auth.updateMe({ full_name: nameInput });
+      await base44.auth.updateMe({ display_name: nameInput });
       await queryClient.invalidateQueries({ queryKey: ['user'] });
       setIsEditingName(false);
     } catch (error) {
@@ -66,7 +66,7 @@ export default function Profile() {
   };
 
   const startEditingName = () => {
-    setNameInput(user?.full_name || "");
+    setNameInput(user?.display_name || user?.full_name || "");
     setIsEditingName(true);
   };
 
@@ -94,7 +94,7 @@ export default function Profile() {
                 {user.profile_picture ? (
                   <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <span>{user.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}</span>
+                  <span>{(user.display_name || user.full_name || user.email || 'U')[0].toUpperCase()}</span>
                 )}
               </div>
               
@@ -138,7 +138,7 @@ export default function Profile() {
                   </div>
                 ) : (
                   <>
-                    <h2 className="text-2xl font-bold text-white">{user.full_name || 'User'}</h2>
+                    <h2 className="text-2xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
                     <button onClick={startEditingName} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors">
                       <Pencil className="w-4 h-4" />
                     </button>
