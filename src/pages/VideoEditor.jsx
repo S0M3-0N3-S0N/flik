@@ -883,8 +883,7 @@ export default function VideoEditor() {
             {videoFile ? (
               <div 
                 className="relative max-w-4xl w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl"
-                onMouseDown={handleCanvasMouseDown}
-                onMouseMove={handleCanvasMouseMove}
+
                 onMouseUp={() => {}}
               >
                 <video
