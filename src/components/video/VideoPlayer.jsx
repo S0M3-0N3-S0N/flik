@@ -8,7 +8,8 @@ const VideoPlayer = forwardRef(({
   onDurationChange,
   videoEffects,
   zoom,
-  volume = 100
+  volume = 100,
+  aspectRatio = "16:9"
 }, ref) => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -36,7 +37,8 @@ const VideoPlayer = forwardRef(({
       ];
       const combinedStream = new MediaStream(combinedTracks);
 
-      const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+      const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+      const recorder = new MediaRecorder(combinedStream, { mimeType });
       const chunks = [];
       recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
       
@@ -168,107 +170,103 @@ const VideoPlayer = forwardRef(({
     const videoTrack = tracks.find(t => t.type === 'video');
     const textTrack = tracks.find(t => t.type === 'text');
 
-    // 1. Render Video Layer
-    if (videoTrack) {
-      // Find active clips
-      const activeClips = videoTrack.clips.filter(clip => 
-        currentTime >= clip.start && currentTime < clip.start + clip.duration
-      );
+    // Generic Render Loop based on Track Order
+    tracks.forEach(track => {
+       if (track.muted) return;
 
-      // Apply Effects
-      const filters = [];
-      if (videoEffects.brightness !== 100) filters.push(`brightness(${videoEffects.brightness}%)`);
-      if (videoEffects.contrast !== 100) filters.push(`contrast(${videoEffects.contrast}%)`);
-      if (videoEffects.saturation !== 100) filters.push(`saturate(${videoEffects.saturation}%)`);
-      if (videoEffects.blur > 0) filters.push(`blur(${videoEffects.blur}px)`);
-      if (videoEffects.sepia > 0) filters.push(`sepia(${videoEffects.sepia}%)`);
-      ctx.filter = filters.join(' ') || 'none';
+       // Filter active clips
+       const activeClips = track.clips.filter(clip => 
+          currentTime >= clip.start && currentTime < clip.start + clip.duration
+       );
 
-      activeClips.forEach(clip => {
-        const video = videoElements[clip.id];
-        if (video && video.readyState >= 2) {
-          // Sync video time with OFFSET
-          const clipTime = (currentTime - clip.start) + (clip.offset || 0);
-          
-          // Only seek if significantly off
-          if (Math.abs(video.currentTime - clipTime) > 0.3) {
-             video.currentTime = clipTime;
-          }
+       if (track.type === 'video') {
+           // Apply Effects
+           const filters = [];
+           if (videoEffects.brightness !== 100) filters.push(`brightness(${videoEffects.brightness}%)`);
+           if (videoEffects.contrast !== 100) filters.push(`contrast(${videoEffects.contrast}%)`);
+           if (videoEffects.saturation !== 100) filters.push(`saturate(${videoEffects.saturation}%)`);
+           if (videoEffects.blur > 0) filters.push(`blur(${videoEffects.blur}px)`);
+           if (videoEffects.sepia > 0) filters.push(`sepia(${videoEffects.sepia}%)`);
+           ctx.filter = filters.join(' ') || 'none';
 
-          // Draw image logic wrapped in transition handler
-          const drawClip = (alpha = 1, transform = {}) => {
-              ctx.save();
-              ctx.globalAlpha = alpha;
-              
-              const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
-              let x = (canvas.width / 2) - (video.videoWidth / 2) * scale;
-              let y = (canvas.height / 2) - (video.videoHeight / 2) * scale;
+           activeClips.forEach(clip => {
+              const video = videoElements[clip.id];
+              if (video && video.readyState >= 2) {
+                // Sync
+                const clipTime = (currentTime - clip.start) + (clip.offset || 0);
+                if (Math.abs(video.currentTime - clipTime) > 0.3) video.currentTime = clipTime;
 
-              if (transform.translateX) x += transform.translateX;
-              
-              if (transform.clipRect) {
-                 const { cx, cy, cw, ch } = transform.clipRect;
-                 ctx.beginPath();
-                 ctx.rect(cx, cy, cw, ch);
-                 ctx.clip();
-              }
+                // Draw Helper
+                const drawClip = (alpha = 1, transform = {}) => {
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    
+                    const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+                    let x = (canvas.width / 2) - (video.videoWidth / 2) * scale;
+                    let y = (canvas.height / 2) - (video.videoHeight / 2) * scale;
 
-              ctx.drawImage(video, x, y, video.videoWidth * scale, video.videoHeight * scale);
-              ctx.restore();
-          };
+                    if (transform.translateX) x += transform.translateX;
+                    
+                    if (transform.clipRect) {
+                       const { cx, cy, cw, ch } = transform.clipRect;
+                       ctx.beginPath();
+                       ctx.rect(cx, cy, cw, ch);
+                       ctx.clip();
+                    }
 
-          // Transitions
-          if (clip.transition && clip.transition !== 'none') {
-            const transitionDuration = 1;
-            const timeInClip = currentTime - clip.start;
-            const progress = timeInClip / transitionDuration; // 0 to 1
+                    ctx.drawImage(video, x, y, video.videoWidth * scale, video.videoHeight * scale);
+                    ctx.restore();
+                };
 
-            if (timeInClip < transitionDuration) {
-                // Intro Transition
-                if (clip.transition === 'fade') {
-                    drawClip(progress);
-                } else if (clip.transition === 'wipe') {
-                    // Wipe from left
-                    drawClip(1, { clipRect: { cx: 0, cy: 0, cw: canvas.width * progress, ch: canvas.height } });
-                } else if (clip.transition === 'slide') {
-                    // Slide in from right
-                    drawClip(1, { translateX: canvas.width * (1 - progress) }); 
+                // Transition Logic
+                const transitionDuration = clip.transitionDuration || 1;
+                const timeInClip = currentTime - clip.start;
+                const progress = Math.min(1, Math.max(0, timeInClip / transitionDuration));
+
+                if (clip.transition && clip.transition !== 'none' && timeInClip < transitionDuration) {
+                    if (clip.transition === 'fade') drawClip(progress);
+                    else if (clip.transition === 'wipe') drawClip(1, { clipRect: { cx: 0, cy: 0, cw: canvas.width * progress, ch: canvas.height } });
+                    else if (clip.transition === 'slide') drawClip(1, { translateX: canvas.width * (1 - progress) });
+                    else drawClip(1);
                 } else {
                     drawClip(1);
                 }
-            } else {
-               drawClip(1);
-            }
-          } else {
-            drawClip(1);
-          }
-        }
-      });
-      ctx.filter = 'none';
-    }
+              }
+           });
+           ctx.filter = 'none';
+       } else if (track.type === 'text') {
+           activeClips.forEach(clip => {
+                ctx.save();
+                
+                // Transition Logic for Text
+                const transitionDuration = clip.transitionDuration || 1;
+                const timeInClip = currentTime - clip.start;
+                const progress = Math.min(1, Math.max(0, timeInClip / transitionDuration));
+                
+                if (clip.transition && clip.transition !== 'none' && timeInClip < transitionDuration) {
+                    if (clip.transition === 'fade') ctx.globalAlpha = progress;
+                    else if (clip.transition === 'slide') ctx.translate(canvas.width * (1 - progress), 0);
+                }
 
-    // 2. Render Text Layer
-    if (textTrack) {
-      textTrack.clips.forEach(clip => {
-        if (currentTime >= clip.start && currentTime < clip.start + clip.duration) {
-            ctx.font = `${clip.style.fontWeight} ${clip.style.fontSize}px Arial`;
-            ctx.fillStyle = clip.style.color;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            let x = canvas.width / 2;
-            let y = canvas.height / 2;
-            
-            if (clip.style.position === 'top') y = 100;
-            if (clip.style.position === 'bottom') y = canvas.height - 100;
-            
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = 10;
-            ctx.fillText(clip.text, x, y);
-            ctx.shadowBlur = 0;
-        }
-      });
-    }
+                ctx.font = `${clip.style.fontWeight} ${clip.style.fontSize}px Arial`;
+                ctx.fillStyle = clip.style.color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                let x = canvas.width / 2;
+                let y = canvas.height / 2;
+                
+                if (clip.style.position === 'top') y = 100;
+                if (clip.style.position === 'bottom') y = canvas.height - 100;
+                
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 10;
+                ctx.fillText(clip.text, x, y);
+                ctx.shadowBlur = 0;
+                ctx.restore();
+           });
+       }
+    });
   };
 
   // Animation Loop
@@ -320,12 +318,17 @@ const VideoPlayer = forwardRef(({
 
 
 
+  // Determine dims
+  const [width, height] = aspectRatio.split(':').map(Number);
+  const baseHeight = 1080;
+  const baseWidth = (baseHeight * width) / height;
+
   return (
     <div ref={containerRef} className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-lg shadow-2xl">
       <canvas 
         ref={canvasRef}
-        width={1920}
-        height={1080}
+        width={baseWidth}
+        height={baseHeight}
         className="w-full h-full object-contain"
       />
       {/* Hidden container for video elements */}

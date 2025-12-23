@@ -16,9 +16,23 @@ export default function Timeline({
   setActiveTab,
   onSplitClip,
   onUndo,
-  onRedo
+  onRedo,
+  snappingLine,
+  onSeek,
+  onToggleTrackMute,
+  onToggleTrackLock,
+  onRippleDelete
 }) {
   const timelineRef = useRef(null);
+
+  const handleTimelineClick = (e) => {
+      // Seek logic
+      const rect = timelineRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = x / rect.width;
+      const time = percentage * Math.max(duration, 1);
+      if (onSeek) onSeek(Math.max(0, Math.min(time, duration)));
+  };
 
   // Time markers
   const renderTimeMarkers = () => {
@@ -72,6 +86,16 @@ export default function Timeline({
              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m-4-8h8" /></svg>
              Split
          </Button>
+         <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { if(onRippleDelete && selectedClip) onRippleDelete(); }} 
+            disabled={!selectedClip}
+            className="text-white hover:bg-white/10 gap-2 h-8 text-xs"
+         >
+             <Trash2 className="w-3 h-3" />
+             Ripple Del
+         </Button>
       </div>
 
       <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
@@ -79,20 +103,37 @@ export default function Timeline({
            ref={timelineRef} 
            className="relative h-full min-w-full" 
            style={{ width: `${Math.max(100, (duration / 20) * 100 * zoom)}%` }}
+           onClick={() => setSelectedClip(null)}
         >
           {/* Header/Ruler */}
-          <div className="h-6 border-b border-white/10 relative mb-2">
+          <div className="h-6 border-b border-white/10 relative mb-2 cursor-pointer hover:bg-white/5" onClick={handleTimelineClick}>
              {renderTimeMarkers()}
           </div>
 
-          <div className="space-y-3 pb-4">
+          {/* Snapping Line */}
+          {snappingLine !== null && (
+              <div 
+                  className="absolute top-0 bottom-0 w-px bg-[#FF6B35] z-50 pointer-events-none shadow-[0_0_10px_#FF6B35]"
+                  style={{ left: `${(snappingLine / Math.max(duration, 1)) * 100}%` }}
+              />
+          )}
+
+          <div className="space-y-3 pb-4" onClick={(e) => { if(e.target === e.currentTarget && onSeek) handleTimelineClick(e); }}>
             {tracks.map((track) => (
               <div key={track.id} className="flex gap-2 group relative">
-                <div className="w-24 flex-shrink-0 sticky left-0 z-20 bg-[#0A0A0A] border-r border-white/10 flex items-center px-2 h-16">
-                  <p className="text-xs text-white/60 font-medium">{track.name}</p>
+                <div className="w-24 flex-shrink-0 sticky left-0 z-20 bg-[#0A0A0A] border-r border-white/10 flex flex-col justify-center px-2 h-16 gap-1">
+                  <p className="text-xs text-white/60 font-medium truncate">{track.name}</p>
+                  <div className="flex items-center gap-1">
+                      <button onClick={() => onToggleTrackMute && onToggleTrackMute(track.id)} className={`p-1 rounded ${track.muted ? 'text-red-500 bg-red-500/10' : 'text-white/40 hover:text-white'}`}>
+                          {track.muted ? <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg> : <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>}
+                      </button>
+                      <button onClick={() => onToggleTrackLock && onToggleTrackLock(track.id)} className={`p-1 rounded ${track.locked ? 'text-[#FFB800] bg-[#FFB800]/10' : 'text-white/40 hover:text-white'}`}>
+                          {track.locked ? <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg> : <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>}
+                      </button>
+                  </div>
                 </div>
                 
-                <div className="flex-1 h-16 bg-white/5 rounded-lg relative overflow-hidden ring-1 ring-white/5">
+                <div className="flex-1 h-16 bg-white/5 rounded-lg relative overflow-hidden ring-1 ring-white/5" onClick={handleTimelineClick}>
                   {/* Grid lines */}
                   <div className="absolute inset-0 flex pointer-events-none opacity-10">
                     {[...Array(Math.ceil(duration / 5))].map((_, i) => (
@@ -118,6 +159,17 @@ export default function Timeline({
                       onMouseDown={(e) => handleClipMouseDown(e, clip)}
                       onClick={(e) => { e.stopPropagation(); setSelectedClip(clip); }}
                     >
+                      {track.type === 'audio' && (
+                          <div className="absolute inset-0 opacity-20 pointer-events-none flex items-center">
+                              {/* Fake Waveform */}
+                              <div className="w-full h-1/2 flex items-end gap-[2px]">
+                                  {[...Array(20)].map((_, i) => (
+                                      <div key={i} className="flex-1 bg-white" style={{ height: `${30 + Math.random() * 70}%` }} />
+                                  ))}
+                              </div>
+                          </div>
+                      )}
+                      
                       {/* Drag Handles */}
                       <div className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 z-10" onMouseDown={(e) => handleClipMouseDown(e, clip, 'left')} />
                       

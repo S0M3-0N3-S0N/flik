@@ -27,7 +27,9 @@ export default function PropertiesPanel({
   handleSpeedChange,
   volume,
   handleVolumeChange,
-  handleUpdateClip
+  handleUpdateClip,
+  aspectRatio,
+  onAspectRatioChange
 }) {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -66,16 +68,27 @@ export default function PropertiesPanel({
                                  <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                  <SelectItem value="none">None</SelectItem>
-                                  <SelectItem value="fade">Fade In</SelectItem>
-                                  <SelectItem value="wipe">Wipe Right</SelectItem>
-                                  <SelectItem value="slide">Slide In</SelectItem>
-                              </SelectContent>
-                           </Select>
-                      </div>
-                  </div>
-              </div>
-          )}
+                                   <SelectItem value="none">None</SelectItem>
+                                   <SelectItem value="fade">Fade In</SelectItem>
+                                   <SelectItem value="wipe">Wipe Right</SelectItem>
+                                   <SelectItem value="slide">Slide In</SelectItem>
+                               </SelectContent>
+                              </Select>
+                              </div>
+                              <div>
+                              <div className="flex justify-between mb-1">
+                               <Label className="text-xs text-white/60">Transition Duration</Label>
+                               <span className="text-xs text-white/40">{selectedClip.transitionDuration || 1}s</span>
+                              </div>
+                              <Slider 
+                               value={[selectedClip.transitionDuration ?? 1]} 
+                               onValueChange={(val) => handleUpdateClip(selectedClip.id, { transitionDuration: val[0] })} 
+                               min={0.1} max={5} step={0.1} 
+                              />
+                              </div>
+                              </div>
+                              </div>
+                              )}
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Media Library</h3>
           
           <label className="block cursor-pointer mb-4">
@@ -225,6 +238,23 @@ export default function PropertiesPanel({
         <TabsContent value="speed" className="mt-0">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Playback & Audio</h3>
           <div className="space-y-6">
+            <div>
+                 <Label className="text-white/60 text-xs mb-3 block">Aspect Ratio</Label>
+                 <div className="grid grid-cols-3 gap-2 mb-6">
+                    {['16:9', '9:16', '1:1'].map(ratio => (
+                        <Button
+                           key={ratio}
+                           variant={aspectRatio === ratio ? 'default' : 'outline'}
+                           size="sm"
+                           onClick={() => onAspectRatioChange && onAspectRatioChange(ratio)}
+                           className={aspectRatio === ratio ? "btn-gradient text-white" : "bg-white/10 border-white/20 text-white"}
+                        >
+                            {ratio}
+                        </Button>
+                    ))}
+                 </div>
+            </div>
+
             <div>
               <Label className="text-white/60 text-xs mb-3 block">Playback Speed</Label>
               <div className="grid grid-cols-4 gap-2">

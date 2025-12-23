@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Play, Pause, SkipBack, SkipForward, Download, Video as VideoIcon, 
-  ArrowLeft
+  ArrowLeft, X
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "../utils";
@@ -19,15 +19,28 @@ export default function VideoEditor() {
   const [duration, setDuration] = useState(60); // Default duration
   const [volume, setVolume] = useState(100);
   const [zoom, setZoom] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState("16:9"); // 16:9, 9:16, 1:1
+  const [clipboard, setClipboard] = useState(null);
+  const [snappingLine, setSnappingLine] = useState(null); // time or null
+
   // History for Undo/Redo
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
   const [tracks, setTracksInternal] = useState([
-    { id: 'video', type: 'video', clips: [], name: 'Video Track' },
-    { id: 'audio', type: 'audio', clips: [], name: 'Audio Track' },
-    { id: 'text', type: 'text', clips: [], name: 'Text Track' },
+    { id: 'video', type: 'video', clips: [], name: 'Video Track', muted: false, locked: false },
+    { id: 'audio', type: 'audio', clips: [], name: 'Audio Track', muted: false, locked: false },
+    { id: 'text', type: 'text', clips: [], name: 'Text Track', muted: false, locked: false },
   ]);
+
+  // Memory Cleanup
+  useEffect(() => {
+    return () => {
+      tracks.forEach(t => t.clips.forEach(c => {
+        if (c.url && c.url.startsWith('blob:')) URL.revokeObjectURL(c.url);
+      }));
+    };
+  }, []);
 
   // Wrapper to save history
   const setTracks = (newTracksOrFn) => {
@@ -70,6 +83,95 @@ export default function VideoEditor() {
           setHistoryIndex(0);
       }
   }, []);
+
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      switch(e.key.toLowerCase()) {
+        case ' ':
+          e.preventDefault();
+          setIsPlaying(p => !p);
+          break;
+        case 's':
+          handleSplitClip();
+          break;
+        case 'delete':
+        case 'backspace':
+          if (selectedClip) handleDeleteClip(tracks.find(t => t.clips.find(c => c.id === selectedClip.id))?.id, selectedClip.id);
+          break;
+        case 'z':
+          if (e.ctrlKey || e.metaKey) {
+             e.preventDefault();
+             e.shiftKey ? handleRedo() : handleUndo();
+          }
+          break;
+        case 'c':
+          if ((e.ctrlKey || e.metaKey) && selectedClip) {
+             setClipboard(selectedClip);
+          }
+          break;
+        case 'v':
+          if ((e.ctrlKey || e.metaKey) && clipboard) {
+             handlePaste();
+          }
+          break;
+        case 'arrowleft':
+          setCurrentTime(t => Math.max(0, t - 1/30)); // 1 frame
+          break;
+        case 'arrowright':
+          setCurrentTime(t => Math.min(duration, t + 1/30));
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedClip, clipboard, tracks, historyIndex]);
+
+  const handlePaste = () => {
+      if (!clipboard) return;
+      const targetTrack = tracks.find(t => t.type === clipboard.type) || tracks[0];
+      const newClip = {
+          ...clipboard,
+          id: Date.now(),
+          start: currentTime,
+          name: `${clipboard.name} (Copy)`
+      };
+      
+      // Check collision/overlap? For now just append or place
+      addClipToTrack(targetTrack.id, newClip);
+  };
+
+  const handleRippleDelete = () => {
+      if (!selectedClip) return;
+      const trackId = tracks.find(t => t.clips.find(c => c.id === selectedClip.id))?.id;
+      const deletedDuration = selectedClip.duration;
+      const deletedStart = selectedClip.start;
+      
+      setTracks(prev => prev.map(t => {
+          if (t.id === trackId) {
+              return {
+                  ...t,
+                  clips: t.clips
+                      .filter(c => c.id !== selectedClip.id)
+                      .map(c => ({
+                          ...c,
+                          start: c.start > deletedStart ? c.start - deletedDuration : c.start
+                      }))
+              };
+          }
+          return t;
+      }));
+      setSelectedClip(null);
+  };
+
+  const handleRippleDeleteAction = () => {
+      handleRippleDelete();
+  };
+      setSelectedClip(null);
+  };
+
   const [selectedClip, setSelectedClip] = useState(null);
   const [activeTab, setActiveTab] = useState("media");
   const [editingText, setEditingText] = useState(null);
@@ -167,14 +269,16 @@ export default function VideoEditor() {
         const newTracks = [...prev];
         const track = newTracks.find(t => t.id === trackId);
         
-        // Find end of last clip to append
-        let startTime = 0;
-        if (track.clips.length > 0) {
-            const lastClip = track.clips[track.clips.length - 1];
-            startTime = lastClip.start + lastClip.duration;
+        // If clip has a start time (e.g. paste), try to use it, otherwise append
+        if (clip.start === undefined || clip.start === null) {
+            let startTime = 0;
+            if (track.clips.length > 0) {
+                const lastClip = track.clips[track.clips.length - 1];
+                startTime = lastClip.start + lastClip.duration;
+            }
+            clip.start = startTime;
         }
         
-        clip.start = startTime;
         track.clips.push(clip);
         return newTracks;
      });
@@ -294,17 +398,23 @@ export default function VideoEditor() {
                 
                 // Snap to clip start
                 if (Math.abs(newStart - clip.start) < snapThreshold) {
-                    newStart = clip.start;
-                    snapped = true;
+                  newStart = clip.start;
+                  snapped = true;
                 }
-             });
-          });
+                });
+                });
 
-          // Also snap to timeline start (0)
-          if (Math.abs(newStart) < snapThreshold) newStart = 0;
+                // Also snap to timeline start (0)
+                if (Math.abs(newStart) < snapThreshold) {
+                newStart = 0;
+                snapped = true;
+                }
 
-          updateClipInTracks(clipDragging.clip.id, { start: newStart });
-      } else if (clipResizing) {
+                if (snapped) setSnappingLine(newStart);
+                else setSnappingLine(null);
+
+                updateClipInTracks(clipDragging.clip.id, { start: newStart });
+                } else if (clipResizing) {
           if (clipResizing.edge === 'right') {
               const newDuration = Math.max(0.5, clipResizing.startDuration + deltaTime);
               updateClipInTracks(clipResizing.clip.id, { duration: newDuration });
@@ -320,6 +430,7 @@ export default function VideoEditor() {
   const handleMouseUp = () => {
       setClipDragging(null);
       setClipResizing(null);
+      setSnappingLine(null);
   };
 
   const updateClipInTracks = (clipId, updates) => {
@@ -441,6 +552,7 @@ export default function VideoEditor() {
     setIsPlaying(true);
     setIsExporting(true);
     
+    abortExport.current = false;
     // Start Recording
     playerRef.current.startRecording();
     
@@ -449,6 +561,11 @@ export default function VideoEditor() {
     
     // Watcher
     const checkEnd = setInterval(async () => {
+        if (abortExport.current) {
+             clearInterval(checkEnd);
+             return;
+        }
+        
         setCurrentTime(curr => {
             if (curr >= endTime) {
                 clearInterval(checkEnd);
@@ -459,8 +576,19 @@ export default function VideoEditor() {
         });
     }, 1000); // Check every second
     
+    const abortExport = useRef(false);
+
+    const cancelExport = () => {
+        abortExport.current = true;
+        setIsExporting(false);
+        setIsPlaying(false);
+        if (playerRef.current) playerRef.current.stopRecording();
+    };
+
     const finishExport = async () => {
         setIsPlaying(false);
+        if (abortExport.current) return;
+
         const blob = await playerRef.current.stopRecording();
         if (!blob) return;
 
@@ -518,11 +646,11 @@ export default function VideoEditor() {
         <div className="flex items-center gap-3">
           <Button
             onClick={handleSmartExport}
-            disabled={isExporting}
-            className="btn-gradient text-white"
+            disabled={isExporting && !abortExport.current} // disable only if normal state? No, we want cancel button.
+            className={isExporting ? "bg-red-500 hover:bg-red-600 text-white" : "btn-gradient text-white"}
+            onClick={isExporting ? cancelExport : handleSmartExport}
           >
-            <Download className="w-4 h-4 mr-2" />
-            {isExporting ? 'Rendering...' : 'Export Video'}
+            {isExporting ? <><X className="w-4 h-4 mr-2" /> Cancel Export</> : <><Download className="w-4 h-4 mr-2" /> Export Video</>}
           </Button>
         </div>
       </motion.div>
@@ -557,6 +685,8 @@ export default function VideoEditor() {
             volume={volume}
             handleVolumeChange={setVolume}
             handleUpdateClip={updateClipInTracks}
+            aspectRatio={aspectRatio}
+            onAspectRatioChange={setAspectRatio}
             />
         </motion.aside>
 
@@ -573,14 +703,15 @@ export default function VideoEditor() {
                    </div>
                )}
                <VideoPlayer
-                  ref={playerRef}
-                  tracks={tracks}
-                  currentTime={currentTime}
-                  isPlaying={isPlaying}
-                  onTimeUpdate={setCurrentTime}
-                  videoEffects={videoEffects}
-                  zoom={zoom}
-                  volume={volume}
+               ref={playerRef}
+               tracks={tracks}
+               currentTime={currentTime}
+               isPlaying={isPlaying}
+               onTimeUpdate={setCurrentTime}
+               videoEffects={videoEffects}
+               zoom={zoom}
+               volume={volume}
+               aspectRatio={aspectRatio}
                />
             </div>
           </div>
@@ -589,9 +720,17 @@ export default function VideoEditor() {
           <div className="border-t border-white/5 glass-card p-2 px-6 z-30">
              <div className="max-w-4xl mx-auto flex items-center gap-4">
                  <span className="text-xs text-white/50 w-12 text-right">{currentTime.toFixed(1)}s</span>
-                 <Button variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)} className="hover:bg-white/10 text-white">
-                     {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                 </Button>
+                 <div className="flex items-center">
+                     <Button variant="ghost" size="icon" onClick={() => setCurrentTime(t => Math.max(0, t - 1/30))} className="hover:bg-white/10 text-white h-8 w-8">
+                         <SkipBack className="w-3 h-3" />
+                     </Button>
+                     <Button variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)} className="hover:bg-white/10 text-white">
+                         {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                     </Button>
+                     <Button variant="ghost" size="icon" onClick={() => setCurrentTime(t => Math.min(duration, t + 1/30))} className="hover:bg-white/10 text-white h-8 w-8">
+                         <SkipForward className="w-3 h-3" />
+                     </Button>
+                 </div>
                  <Slider 
                     value={[currentTime]} 
                     max={duration} 
@@ -622,9 +761,13 @@ export default function VideoEditor() {
              onSplitClip={handleSplitClip}
              onUndo={handleUndo}
              onRedo={handleRedo}
+          snappingLine={snappingLine}
+          onSeek={setCurrentTime}
+          onToggleTrackMute={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, muted: !t.muted } : t))}
+          onToggleTrackLock={(id) => setTracks(prev => prev.map(t => t.id === id ? { ...t, locked: !t.locked } : t))}
           />
-        </main>
-      </div>
-    </div>
-  );
-}
+          </main>
+          </div>
+          </div>
+          );
+          }
