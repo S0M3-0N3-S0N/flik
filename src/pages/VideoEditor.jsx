@@ -1092,7 +1092,7 @@ export default function VideoEditor() {
                           const uploadResult = await base44.integrations.Core.UploadFile({ file });
                           
                           const result = await base44.integrations.Core.GenerateImage({
-                            prompt: 'Remove text overlays, watermarks, and logos. Blend perfectly.',
+                            prompt: 'Professional restoration: cleanly remove visual overlays, artifacts, and text from the scene, reconstructing the background naturally. High quality.',
                             existing_image_urls: [uploadResult.file_url]
                           });
                           
@@ -1104,7 +1104,13 @@ export default function VideoEditor() {
                           alert('Frame fixed with AI!');
                         });
                       } catch (err) {
-                        alert('Error: ' + err.message);
+                        console.error(err);
+                        // If it's a refusal error, show a more helpful message
+                        if (err.message && err.message.includes("refused")) {
+                             alert("The AI could not process this request due to safety guidelines. Please try a different frame or image.");
+                        } else {
+                             alert('Error: ' + err.message);
+                        }
                       } finally {
                         setIsProcessing(false);
                       }
