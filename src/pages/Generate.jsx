@@ -153,16 +153,18 @@ Respond with ONLY the enhanced prompt, nothing else.`,
       <section className="relative py-20 px-6 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <motion.div 
+            initial={{ x: "-50%" }}
             animate={{ 
               scale: [1, 1.2, 1],
-              opacity: [0.5, 0.8, 0.5]
+              opacity: [0.5, 0.8, 0.5],
+              x: "-50%"
             }}
             transition={{ 
               duration: 4, 
               repeat: Infinity,
               ease: "easeInOut" 
             }}
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/20 to-transparent blur-[100px]" 
+            className="absolute top-0 left-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/20 to-transparent blur-[100px]" 
           />
         </div>
         
