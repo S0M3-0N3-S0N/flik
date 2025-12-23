@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wand2, Loader2, Zap, Upload, X, MessageSquare } from "lucide-react";
+import { Wand2, Loader2, Zap, Upload, X, MessageSquare, Settings2, RectangleHorizontal, RectangleVertical, Square, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +26,9 @@ export default function Generate() {
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [negativePrompt, setNegativePrompt] = useState("");
+  const [imageStrength, setImageStrength] = useState(0.5);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -95,9 +102,18 @@ export default function Generate() {
       // Step 2: Generate all images
       const promises = promptsToGenerate.map(async (finalPrompt) => {
         try {
-          const fullPrompt = selectedStyleObj 
+          let fullPrompt = selectedStyleObj 
             ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
             : `${finalPrompt}, masterpiece, high quality, detailed`;
+          
+          // Append aspect ratio instruction (handled by model or prompt engineering)
+          if (aspectRatio === "16:9") fullPrompt += ", wide cinematic shot, 16:9 aspect ratio";
+          else if (aspectRatio === "9:16") fullPrompt += ", tall portrait shot, 9:16 aspect ratio";
+          
+          // Append negative prompt if exists
+          if (negativePrompt.trim()) {
+            fullPrompt += ` --no ${negativePrompt.trim()}`;
+          }
 
           const imageResult = await base44.integrations.Core.GenerateImage({
             prompt: fullPrompt,
@@ -111,7 +127,15 @@ export default function Generate() {
             url: imageResult.url,
             thumbnail_url: imageResult.url,
             prompt: prompt,
-            metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt, batchSize: promptsToGenerate.length }
+            metadata: { 
+              style: selectedStyle, 
+              model: aiModel, 
+              enhancedPrompt: finalPrompt, 
+              batchSize: promptsToGenerate.length,
+              aspectRatio,
+              negativePrompt,
+              imageStrength: uploadedImages.length > 0 ? imageStrength : null
+            }
           });
 
           return {
@@ -249,8 +273,89 @@ export default function Generate() {
               </div>
 
               {/* Toolbar */}
-              <div className="flex items-center justify-between p-2 mt-2 bg-white/5 rounded-2xl">
-                <div className="flex items-center gap-2 px-2">
+              <div className="flex items-center justify-between p-2 mt-2 bg-white/5 rounded-2xl flex-wrap gap-2">
+                <div className="flex items-center gap-2 px-2 flex-wrap">
+                  {/* Advanced Settings Popover */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors text-white/60 hover:bg-white/5 hover:text-white">
+                        <Settings2 className="w-3.5 h-3.5" />
+                        Settings
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 bg-[#1a1a1a] border-white/10 text-white p-4">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-white/60 uppercase">Aspect Ratio</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            <button
+                              onClick={() => setAspectRatio("1:1")}
+                              className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                                aspectRatio === "1:1" ? "bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]" : "bg-white/5 border-white/5 text-white/50 hover:bg-white/10"
+                              }`}
+                            >
+                              <Square className="w-4 h-4" />
+                              <span className="text-[10px]">Square</span>
+                            </button>
+                            <button
+                              onClick={() => setAspectRatio("9:16")}
+                              className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                                aspectRatio === "9:16" ? "bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]" : "bg-white/5 border-white/5 text-white/50 hover:bg-white/10"
+                              }`}
+                            >
+                              <RectangleVertical className="w-4 h-4" />
+                              <span className="text-[10px]">Portrait</span>
+                            </button>
+                            <button
+                              onClick={() => setAspectRatio("16:9")}
+                              className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                                aspectRatio === "16:9" ? "bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]" : "bg-white/5 border-white/5 text-white/50 hover:bg-white/10"
+                              }`}
+                            >
+                              <RectangleHorizontal className="w-4 h-4" />
+                              <span className="text-[10px]">Landscape</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-white/60 uppercase flex items-center gap-2">
+                            <Ban className="w-3 h-3" />
+                            Negative Prompt
+                          </Label>
+                          <Input
+                            value={negativePrompt}
+                            onChange={(e) => setNegativePrompt(e.target.value)}
+                            placeholder="What to avoid (e.g., blur, low quality)"
+                            className="bg-black/20 border-white/10 text-xs h-8"
+                          />
+                        </div>
+
+                        {uploadedImages.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <Label className="text-xs font-medium text-white/60 uppercase">Image Strength</Label>
+                              <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
+                            </div>
+                            <Slider
+                              value={[imageStrength]}
+                              onValueChange={([val]) => setImageStrength(val)}
+                              min={0}
+                              max={1}
+                              step={0.1}
+                              className="py-1"
+                            />
+                            <p className="text-[10px] text-white/30 text-center">
+                              Creativity &larr; &mdash; &rarr; Fidelity
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <div className="w-px h-4 bg-white/10 mx-1" />
+
                   <Select value={aiModel} onValueChange={setAiModel}>
                     <SelectTrigger className="h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-xs rounded-full gap-2 px-3 focus:ring-0">
                       <Zap className={`w-3.5 h-3.5 ${aiModel === 'gemini' ? 'text-[#FF6B35]' : 'text-white/50'}`} />
@@ -300,7 +405,7 @@ export default function Generate() {
                 <Button
                   onClick={handleGenerate}
                   disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
-                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all"
+                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all ml-auto"
                 >
                   {isGenerating ? (
                     <>
@@ -315,9 +420,9 @@ export default function Generate() {
                   )}
                 </Button>
               </div>
-            </div>
+              </div>
 
-            <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+              <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
             <StyleSelector 
               selectedStyle={selectedStyle} 
