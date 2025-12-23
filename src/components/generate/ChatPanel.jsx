@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Bot, User, Sparkles, Loader2 } from "lucide-react";
+import { X, Send, Bot, User, Sparkles, Loader2, Image as ImageIcon, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,7 +12,10 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [chatImage, setChatImage] = useState(null);
+  const [isUploadingChat, setIsUploadingChat] = useState(false);
   const scrollRef = useRef(null);
+  const chatFileRef = useRef(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -20,12 +23,36 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
     }
   }, [messages, isOpen]);
 
+  const handleChatImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    setIsUploadingChat(true);
+    try {
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      setChatImage({ url: uploadResult.file_url, file });
+    } catch (err) {
+      console.error("Chat upload error:", err);
+    } finally {
+      setIsUploadingChat(false);
+    }
+  };
+
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !chatImage) return;
     
-    const userMsg = { role: 'user', content: input };
+    const userMsg = { 
+      role: 'user', 
+      content: input,
+      image: chatImage?.url
+    };
+    
     setMessages(prev => [...prev, userMsg]);
+    const currentInput = input;
+    const currentImage = chatImage;
+    
     setInput("");
+    setChatImage(null);
     setIsTyping(true);
 
     try {
@@ -33,14 +60,17 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
         prompt: `You are a creative AI art assistant. The user is talking to you about image generation.
         
         Current conversation history:
-        ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}
-        User: ${input}
-
-        If the user is explicitly asking to generate an image (e.g., "generate a cat", "create an image of...", "I want to see..."), 
-        you can suggest a prompt but also explain you can help refine it. 
+        ${messages.map(m => `${m.role}: ${m.content} ${m.image ? '[Image Attached]' : ''}`).join('\n')}
         
-        If the user asks a question, answer it.
+        User input: ${currentInput}
+        ${currentImage ? 'User also uploaded an image for analysis/reference.' : ''}
+
+        If the user uploaded an image, analyze it visually if possible, or assume the user wants suggestions based on it.
+        Provide tailored suggestions, refinements, or improvements based on their input and image.
+        
+        If the user is explicitly asking to generate an image, suggest a detailed prompt.
         Be helpful, creative, and concise.`,
+        file_urls: currentImage ? [currentImage.url] : undefined,
         response_json_schema: null
       });
 
@@ -84,13 +114,18 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                  className={`max-w-[80%] p-3 rounded-2xl text-sm space-y-2 ${
                     msg.role === 'user'
                       ? 'bg-[#FF6B35] text-white rounded-tr-none'
                       : 'bg-white/10 text-white/90 rounded-tl-none'
                   }`}
                 >
-                  {msg.content}
+                  {msg.image && (
+                    <div className="rounded-lg overflow-hidden mb-2 border border-white/20">
+                      <img src={msg.image} alt="Uploaded" className="max-w-full h-auto" />
+                    </div>
+                  )}
+                  <p>{msg.content}</p>
                 </div>
                 {msg.role === 'user' && (
                   <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
@@ -114,6 +149,17 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
           </div>
 
           <div className="p-4 border-t border-white/10 bg-[#1a1a1a]">
+            {chatImage && (
+              <div className="mb-2 flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/10 w-fit">
+                <div className="w-10 h-10 rounded overflow-hidden">
+                  <img src={chatImage.url} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-white/70 truncate max-w-[150px]">{chatImage.file?.name || 'Image'}</span>
+                  <button onClick={() => setChatImage(null)} className="text-[10px] text-red-400 hover:text-red-300 text-left">Remove</button>
+                </div>
+              </div>
+            )}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -121,6 +167,24 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
               }}
               className="flex gap-2"
             >
+              <button
+                type="button"
+                onClick={() => chatFileRef.current?.click()}
+                className={`p-2 rounded-lg transition-colors ${
+                  isUploadingChat ? 'bg-white/10 cursor-wait' : 'hover:bg-white/10 text-white/60 hover:text-white'
+                }`}
+                disabled={isUploadingChat}
+              >
+                {isUploadingChat ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+              </button>
+              <input
+                ref={chatFileRef}
+                type="file"
+                accept="image/*"
+                onChange={handleChatImageUpload}
+                className="hidden"
+              />
+              
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -130,7 +194,7 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
               <Button 
                 type="submit" 
                 size="icon"
-                disabled={!input.trim() || isTyping}
+                disabled={(!input.trim() && !chatImage) || isTyping || isUploadingChat}
                 className="bg-[#FF6B35] hover:bg-[#FF8B55] text-white"
               >
                 {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
