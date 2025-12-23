@@ -27,6 +27,8 @@ export default function Layout({ children, currentPageName }) {
         }
         .light-mode-theme img, 
         .light-mode-theme video,
+        .light-mode-theme canvas,
+        .light-mode-theme [style*="background-image"],
         .light-mode-theme .no-invert {
           filter: invert(1) hue-rotate(180deg);
         }
