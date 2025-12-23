@@ -1129,8 +1129,21 @@ export default function Editor() {
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
         >
+          {activeTab === "remove" && (
+            <div
+              ref={cursorRef}
+              className="absolute pointer-events-none rounded-full border-2 border-white/80 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
+              style={{
+                width: brushSize,
+                height: brushSize,
+                transform: 'translate(-50%, -50%)',
+                display: 'none',
+                backgroundColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)'
+              }}
+            />
+          )}
           <div 
             className="absolute inset-0 opacity-[0.03]"
             style={{
