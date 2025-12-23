@@ -13,6 +13,8 @@ export default function Profile() {
   const [isUploading, setIsUploading] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [emailInput, setEmailInput] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
   const fileInputRef = useRef(null);
   
   const { data: user } = useQuery({
@@ -50,6 +52,22 @@ export default function Profile() {
   const startEditingEmail = () => {
     setEmailInput(user?.contact_email || user?.email || "");
     setIsEditingEmail(true);
+  };
+
+  const handleNameUpdate = async () => {
+    if (!nameInput.trim()) return;
+    try {
+      await base44.auth.updateMe({ full_name: nameInput });
+      await queryClient.invalidateQueries({ queryKey: ['user'] });
+      setIsEditingName(false);
+    } catch (error) {
+      console.error("Failed to update name:", error);
+    }
+  };
+
+  const startEditingName = () => {
+    setNameInput(user?.full_name || "");
+    setIsEditingName(true);
   };
 
   const { data: creations = [] } = useQuery({
