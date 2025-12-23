@@ -8,14 +8,21 @@ export default function ProcessingOverlay({ tool }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl"
+      className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 rounded-2xl"
     >
-      <div className="text-center">
-        {/* Animated rings */}
-        <div className="relative w-32 h-32 mx-auto mb-8">
+      <div className="text-center relative">
+        <div className="relative w-24 h-24 mx-auto mb-8 flex items-center justify-center">
+          {/* Outer glow pulse */}
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#FF6B35] to-[#FFB800] blur-xl"
+          />
+          
+          {/* Rotating gradient ring */}
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             className="absolute inset-0 rounded-full border-2 border-transparent"
             style={{
               background: "linear-gradient(135deg, #FF6B35, #F72C25, #FFB800) border-box",
@@ -24,33 +31,38 @@ export default function ProcessingOverlay({ tool }) {
               maskComposite: "exclude"
             }}
           />
-          <motion.div
-            animate={{ rotate: -360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-4 rounded-full border-2 border-[#FF6B35]/30"
-          />
-
+          
+          {/* Inner icon container */}
+          <div className="w-16 h-16 rounded-full bg-[#1a1a1a] flex items-center justify-center relative z-10 border border-white/10">
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Sparkles className="w-8 h-8 text-[#FF6B35]" />
+            </motion.div>
+          </div>
         </div>
         
-        <motion.h3
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xl font-semibold text-white mb-2"
+          className="space-y-2"
         >
-          {tool?.label || "Processing"}...
-        </motion.h3>
-        <p className="text-sm text-white/50">
-          AI is working its magic
-        </p>
+          <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/70">
+            {tool?.label || "Processing"}...
+          </h3>
+          <p className="text-sm text-white/40 font-medium tracking-wide uppercase text-[10px]">
+            AI IS WORKING ITS MAGIC
+          </p>
+        </motion.div>
         
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-2 mt-6">
+        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5">
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-              className="w-2 h-2 rounded-full bg-[#FF6B35]"
+              animate={{ height: [4, 12, 4], opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
+              className="w-1 rounded-full bg-gradient-to-b from-[#FF6B35] to-[#FFB800]"
             />
           ))}
         </div>
