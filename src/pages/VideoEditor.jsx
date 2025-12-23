@@ -20,6 +20,7 @@ import Timeline from "@/components/video/Timeline";
 import MediaLibrary from "@/components/video/MediaLibrary";
 import VideoPreview from "@/components/video/VideoPreview";
 import PropertiesPanel from "@/components/video/PropertiesPanel";
+import TemplateWizard from "@/components/video/TemplateWizard";
 
 export default function VideoEditor() {
   const { toast } = useToast();
@@ -28,6 +29,53 @@ export default function VideoEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("media");
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Template State
+  const [activeTemplate, setActiveTemplate] = useState(null);
+  const [showWizard, setShowWizard] = useState(false);
+
+  // Load Template Effect
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const templateId = params.get('templateId');
+    if (templateId) {
+        // Fetch template
+        base44.entities.VideoTemplate.list().then(templates => {
+            const tmpl = templates.find(t => t.id === templateId);
+            if (tmpl) {
+                setActiveTemplate(tmpl);
+                setShowWizard(true);
+            }
+        });
+    }
+  }, []);
+
+  const handleWizardComplete = (filledSlots) => {
+      // Replace placeholders in project data with filled slots
+      const newTracks = JSON.parse(JSON.stringify(activeTemplate.project_data.tracks));
+      
+      newTracks.forEach(track => {
+          track.clips = track.clips.map(clip => {
+              if (clip.isPlaceholder && filledSlots[clip.id]) {
+                  const userMedia = filledSlots[clip.id];
+                  return {
+                      ...clip,
+                      ...userMedia,
+                      // Preserve timeline positioning from template
+                      startTime: clip.startTime,
+                      duration: clip.duration,
+                      id: clip.id, // Keep ID or gen new one
+                      isPlaceholder: false
+                  };
+              }
+              return clip;
+          });
+      });
+
+      setTracks(newTracks);
+      setShowWizard(false);
+      toast({ title: "Project Created", description: "Template applied successfully!" });
+  };
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -283,6 +331,15 @@ export default function VideoEditor() {
           />
         </div>
       </div>
+
+      {activeTemplate && (
+          <TemplateWizard 
+            template={activeTemplate}
+            isOpen={showWizard}
+            onCancel={() => setShowWizard(false)}
+            onComplete={handleWizardComplete}
+          />
+      )}
     </div>
   );
 }
