@@ -7,7 +7,8 @@ const VideoPlayer = forwardRef(({
   onTimeUpdate, 
   onDurationChange,
   videoEffects,
-  zoom 
+  zoom,
+  volume = 100
 }, ref) => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -64,7 +65,7 @@ const VideoPlayer = forwardRef(({
         video.src = clip.url;
         video.crossOrigin = "anonymous";
         video.preload = "auto";
-        video.muted = true; // We handle audio separately or rely on tracks
+        video.muted = false;
         
         video.onloadedmetadata = () => {
           setLoadedClips(prev => new Set([...prev, clip.id]));
@@ -187,6 +188,11 @@ const VideoPlayer = forwardRef(({
     let lastTime = performance.now();
     
     const animate = (time) => {
+      // Sync volume for all videos
+      Object.values(videoElements).forEach(v => {
+          v.volume = volume / 100;
+      });
+
       if (isPlaying) {
         const deltaTime = (time - lastTime) / 1000;
         // Update time in parent

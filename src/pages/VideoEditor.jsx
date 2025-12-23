@@ -227,7 +227,34 @@ export default function VideoEditor() {
       const deltaTime = deltaX * sensitivity;
 
       if (clipDragging) {
-          const newStart = Math.max(0, clipDragging.startStart + deltaTime);
+          let newStart = Math.max(0, clipDragging.startStart + deltaTime);
+          
+          // Snapping Logic
+          const snapThreshold = 0.5; // Snap if within 0.5s
+          let snapped = false;
+          
+          tracks.forEach(track => {
+             track.clips.forEach(clip => {
+                if (clip.id === clipDragging.clip.id) return; // Don't snap to self
+                
+                // Snap to clip end
+                const end = clip.start + clip.duration;
+                if (Math.abs(newStart - end) < snapThreshold) {
+                    newStart = end;
+                    snapped = true;
+                }
+                
+                // Snap to clip start
+                if (Math.abs(newStart - clip.start) < snapThreshold) {
+                    newStart = clip.start;
+                    snapped = true;
+                }
+             });
+          });
+
+          // Also snap to timeline start (0)
+          if (Math.abs(newStart) < snapThreshold) newStart = 0;
+
           updateClipInTracks(clipDragging.clip.id, { start: newStart });
       } else if (clipResizing) {
           if (clipResizing.edge === 'right') {
@@ -459,6 +486,7 @@ export default function VideoEditor() {
                   onTimeUpdate={setCurrentTime}
                   videoEffects={videoEffects}
                   zoom={zoom}
+                  volume={volume}
                />
             </div>
           </div>

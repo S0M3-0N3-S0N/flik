@@ -95,8 +95,13 @@ export default function Timeline({
                       {/* Drag Handles */}
                       <div className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 z-10" onMouseDown={(e) => handleClipMouseDown(e, clip, 'left')} />
                       
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-white/90 truncate drop-shadow-md select-none">
+                      <div className="flex-1 min-w-0 flex items-center gap-2 overflow-hidden h-full">
+                          {track.type === 'video' && (
+                             <div className="h-full w-auto aspect-video rounded-sm overflow-hidden opacity-80 mr-2 flex-shrink-0 bg-black">
+                                 <video src={clip.url} className="w-full h-full object-cover" preload="metadata" />
+                             </div>
+                          )}
+                          <span className="text-[10px] font-bold text-white/90 truncate drop-shadow-md select-none z-10">
                               {clip.name || clip.text}
                           </span>
                       </div>
