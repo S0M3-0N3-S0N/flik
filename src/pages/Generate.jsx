@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X, Edit } from "lucide-react";
+import { Sparkles, Download, Copy, Check, Wand2, Image as ImageIcon, Trash2, Loader2, Zap, Upload, X, Edit, MessageSquare, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
+import ChatPanel from "@/components/generate/ChatPanel";
 
 const stylePresets = [
   { id: "photo", label: "Photorealistic", prompt: "ultra realistic photograph, 8k, highly detailed, professional photography" },
@@ -26,10 +27,11 @@ export default function Generate() {
   const [copiedId, setCopiedId] = useState(null);
   const [error, setError] = useState(null);
   const [aiModel, setAiModel] = useState("default");
-  const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -37,27 +39,31 @@ export default function Generate() {
     const params = new URLSearchParams(window.location.search);
     const loadUrl = params.get('load');
     if (loadUrl) {
-      setUploadedImage({ url: loadUrl });
+      setUploadedImages([{ url: loadUrl, id: Date.now() }]);
     }
   }, []);
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !file.type.startsWith('image/')) return;
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter(f => f.type.startsWith('image/'));
+    if (validFiles.length === 0) return;
     
     setIsUploading(true);
     try {
-      const uploadResult = await base44.integrations.Core.UploadFile({ file });
-      setUploadedImage({ url: uploadResult.file_url, file });
+      const newUploads = await Promise.all(validFiles.map(async (file) => {
+        const uploadResult = await base44.integrations.Core.UploadFile({ file });
+        return { url: uploadResult.file_url, file, id: Date.now() + Math.random() };
+      }));
+      setUploadedImages(prev => [...prev, ...newUploads]);
       setIsUploading(false);
     } catch (err) {
-      setError("Failed to upload image");
+      setError("Failed to upload images");
       setIsUploading(false);
     }
   };
 
   const handleGenerate = async () => {
-    if (!prompt.trim() && !uploadedImage) {
+    if (!prompt.trim() && uploadedImages.length === 0) {
       setError("Please enter a prompt or upload an image");
       setTimeout(() => setError(null), 3000);
       return;
@@ -67,69 +73,82 @@ export default function Generate() {
     setError(null);
     
     try {
-      let finalPrompt = prompt || "enhance this image, improve quality, professional result";
+      // Step 1: Analyze prompt for multiplicity and enhancement
+      let promptsToGenerate = [];
       const selectedStyleObj = selectedStyle ? stylePresets.find(s => s.id === selectedStyle) : null;
       const styleInstruction = selectedStyleObj ? selectedStyleObj.prompt : "";
-
-      if (aiModel === "gemini" && prompt) {
-        const result = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are an expert at creating detailed image generation prompts. Take this user request and expand it into a highly detailed, specific image generation prompt that will produce amazing results.
-
-      User request: "${prompt}"
-      ${selectedStyleObj ? `Target Style: ${selectedStyleObj.label} (${selectedStyleObj.prompt}). IMPORTANT: You MUST ensure the generated prompt strongly reflects this specific art style.` : ''}
-
-      Keep the core idea but add artistic details, lighting, composition, style elements, and technical quality specifications.
-      Respond with ONLY the enhanced prompt, nothing else.`,
-          response_json_schema: null
-        });
-        finalPrompt = result;
-      }
-
-      // Prioritize style by putting it first for better adherence, especially for image-to-image
-      const fullPrompt = selectedStyleObj 
-        ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
-        : `${finalPrompt}, masterpiece, high quality, detailed`;
       
+      const llmAnalysis = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze this image generation request: "${prompt}".
+        
+        Tasks:
+        1. Determine if the user is asking for multiple variations (e.g., "5 different angles", "3 variations", "a storyboard").
+        2. If multiple, create a specific prompt for each variation.
+        3. If single, create one optimized prompt.
+        4. Enhance the prompts with artistic details${selectedStyleObj ? ` matching style: ${selectedStyleObj.label} (${selectedStyleObj.prompt})` : ''}.
+        
+        Return JSON format: { "prompts": ["prompt 1", "prompt 2", ...] }`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            prompts: { type: "array", items: { type: "string" } }
+          },
+          required: ["prompts"]
+        }
+      });
+      
+      promptsToGenerate = llmAnalysis.prompts || [prompt];
+      
+      // Limit to 5 max to prevent abuse/timeout
+      if (promptsToGenerate.length > 5) promptsToGenerate = promptsToGenerate.slice(0, 5);
+
+      // Step 2: Generate all images
+      const results = await Promise.all(promptsToGenerate.map(async (finalPrompt) => {
+        const fullPrompt = selectedStyleObj 
+          ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
+          : `${finalPrompt}, masterpiece, high quality, detailed`;
+
         const imageResult = await base44.integrations.Core.GenerateImage({
           prompt: fullPrompt,
-          existing_image_urls: uploadedImage ? [uploadedImage.url] : undefined
+          existing_image_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined
         });
-        
-        const newImage = {
-          id: Date.now(),
+
+        // Save to DB
+        await base44.entities.Creation.create({
+          title: prompt.slice(0, 100) || 'AI Generated Image',
+          type: 'image',
+          url: imageResult.url,
+          thumbnail_url: imageResult.url,
+          prompt: prompt,
+          metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt, batchSize: promptsToGenerate.length }
+        });
+
+        return {
+          id: Date.now() + Math.random(),
           url: imageResult.url,
           prompt: prompt,
-          enhancedPrompt: aiModel === "gemini" ? finalPrompt : null,
+          enhancedPrompt: finalPrompt,
           style: selectedStyle,
           model: aiModel,
           timestamp: new Date().toISOString()
         };
-        
-        try {
-          await base44.entities.Creation.create({
-            title: prompt.slice(0, 100) || 'AI Generated Image',
-            type: 'image',
-            url: imageResult.url,
-            thumbnail_url: imageResult.url,
-            prompt: prompt,
-            metadata: { style: selectedStyle, model: aiModel, enhancedPrompt: finalPrompt }
-          });
-        } catch (saveErr) {
-          console.error('Failed to save to gallery:', saveErr);
-        }
+      }));
 
-      setGeneratedImages([newImage, ...generatedImages]);
+      setGeneratedImages([...results, ...generatedImages]);
       
       if (prompt.trim()) {
         setPromptHistory(prev => [prompt, ...prev.filter(p => p !== prompt)].slice(0, 10));
       }
       
       setPrompt("");
+      // Don't clear uploads automatically for workflow continuity? 
+      // User might want to generate again with same images.
+      // But usually reset is cleaner. Let's keep uploads but clear style?
+      // Let's clear style but keep uploads as they take time to upload.
       setSelectedStyle(null);
-      setUploadedImage(null);
     } catch (err) {
       console.error("Error generating image:", err);
-      setError("Failed to generate image. " + (err.message || "Please try again."));
+      setError("Failed to generate. " + (err.message || "Please try again."));
     } finally {
       setIsGenerating(false);
     }
@@ -216,7 +235,7 @@ export default function Generate() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe your vision..."
+                  placeholder="Describe your vision (e.g., 'A cat in 3 different styles')..."
                   className="w-full min-h-[140px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -224,26 +243,28 @@ export default function Generate() {
                     }
                   }}
                 />
-                
-                {/* Uploaded Image Preview Badge */}
-                {uploadedImage && (
-                  <div className="absolute top-0 right-4 w-20 h-20 rounded-xl overflow-hidden border border-white/20 group hover:border-white/40 transition-colors bg-black/50">
-                    <img src={uploadedImage.url} className="w-full h-full object-cover" />
-                    <button 
-                      onClick={() => setUploadedImage(null)} 
-                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                    >
-                      <X className="w-5 h-5 text-white" />
-                    </button>
+
+                {/* Uploaded Images Preview List */}
+                {uploadedImages.length > 0 && (
+                  <div className="absolute top-4 right-4 flex flex-col gap-2 max-h-[140px] overflow-y-auto no-scrollbar">
+                    {uploadedImages.map((img) => (
+                      <div key={img.id} className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/20 group hover:border-white/40 transition-colors bg-black/50 shrink-0">
+                        <img src={img.url} className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                        >
+                          <X className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                    ))}
                     {isUploading && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 animate-pulse">
+                        <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
                       </div>
                     )}
                   </div>
                 )}
-
-
               </div>
 
               {/* Toolbar */}
@@ -255,8 +276,8 @@ export default function Generate() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">Standard Model</SelectItem>
-                      <SelectItem value="gemini">Gemini Enhanced</SelectItem>
+                      <SelectItem value="default">Standard</SelectItem>
+                      <SelectItem value="gemini">Smart Enhanced</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -265,26 +286,39 @@ export default function Generate() {
                   <button 
                     onClick={() => fileInputRef.current?.click()}
                     className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
-                      uploadedImage 
+                      uploadedImages.length > 0
                         ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                         : 'text-white/60 hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    {uploadedImage ? 'Image Added' : 'Add Image'}
+                    {uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}
                   </button>
                   <input 
                     ref={fileInputRef} 
                     type="file" 
                     accept="image/*" 
+                    multiple
                     onChange={handleImageUpload} 
                     className="hidden" 
                   />
+
+                  <button 
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
+                      isChatOpen
+                        ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
+                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Discuss
+                  </button>
                 </div>
 
                 <Button
                   onClick={handleGenerate}
-                  disabled={(!prompt.trim() && !uploadedImage) || isGenerating}
+                  disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
                   className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all"
                 >
                   {isGenerating ? (
@@ -301,6 +335,8 @@ export default function Generate() {
                 </Button>
               </div>
             </div>
+
+            <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
             {/* Style Presets */}
             <div className="mt-8">
