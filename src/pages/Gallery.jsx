@@ -260,13 +260,15 @@ export default function Gallery() {
               <AnimatePresence mode="popLayout">
                 {paginatedCreations.map((item, index) => (
                 <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.02 }}
-                  className={`group relative aspect-square rounded-xl overflow-hidden bg-white/5 border-2 cursor-pointer ${
-                    selectedItems.includes(item.id) ? 'border-[#FF6B35]' : 'border-white/10'
+                  layoutId={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`group relative aspect-square rounded-2xl overflow-hidden bg-[#141414] border transition-all duration-300 hover:shadow-2xl hover:shadow-[#FF6B35]/10 ${
+                    selectedItems.includes(item.id) 
+                      ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/20' 
+                      : 'border-white/10 hover:border-white/20'
                   }`}
                   onClick={(e) => {
                     if (e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -280,79 +282,68 @@ export default function Gallery() {
                     <img
                       src={item.thumbnail_url || item.url}
                       alt={item.title || 'Creation'}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <ImageIcon className="w-12 h-12 text-white/30" />
                     </div>
                   )}
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                   <div className="absolute top-3 right-3 flex gap-2">
-                     <Button
-                       size="icon"
-                       variant="ghost"
-                       onClick={(e) => { 
-                         e.stopPropagation(); 
-                         toggleSelectItem(item.id);
-                       }}
-                       className={`bg-black/50 hover:bg-white/20 text-white ${
-                         selectedItems.includes(item.id) ? 'bg-[#FF6B35]/50' : ''
-                       }`}
-                     >
-                       {selectedItems.includes(item.id) ? '✓' : '○'}
-                     </Button>
-                     <Button
-                       size="icon"
-                       variant="ghost"
-                       onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                       className="bg-black/50 hover:bg-red-500/80 text-white"
-                     >
-                       <Trash2 className="w-4 h-4" />
-                     </Button>
-                   </div>
-                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                     <div className="flex items-center gap-1 mb-2">
-                       <ImageIcon className="w-3 h-3 text-[#FF6B35]" />
-                       <span className="text-xs text-white/60">{item.type}</span>
-                     </div>
-                     <p className="text-sm text-white line-clamp-1 mb-2">
-                       {item.title || item.prompt || 'Untitled'}
-                     </p>
-                     <div className="flex gap-1">
-                       <Button
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
-                         }}
-                         className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-[10px] h-7 px-1"
-                       >
-                         Edit
-                       </Button>
-                       {item.type === 'image' && (
-                         <Button
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
-                           }}
-                           className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-[10px] h-7 px-1"
-                         >
-                           <Wand2 className="w-3 h-3 mr-1" />
-                           Remix
-                         </Button>
-                       )}
-                       <Button
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           setSelectedItem(item);
-                         }}
-                         className="flex-1 btn-gradient text-white text-[10px] h-7 px-1"
-                       >
-                         View
-                       </Button>
-                     </div>
-                   </div>
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-4">
+                    <div className="flex justify-end gap-2 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          toggleSelectItem(item.id);
+                        }}
+                        className={`h-8 w-8 rounded-full bg-black/50 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 ${
+                          selectedItems.includes(item.id) ? 'bg-[#FF6B35]/80 border-[#FF6B35]' : ''
+                        }`}
+                      >
+                        {selectedItems.includes(item.id) ? '✓' : '○'}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                        className="h-8 w-8 rounded-full bg-black/50 hover:bg-red-500/80 text-white backdrop-blur-md border border-white/10 hover:border-red-500/50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <div className="translate-y-[10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-100">
+                      <h3 className="font-medium text-white text-sm line-clamp-1 mb-1 drop-shadow-md">
+                        {item.title || 'Untitled'}
+                      </h3>
+                      <p className="text-xs text-white/70 line-clamp-1 mb-3 drop-shadow-md">
+                        {item.prompt}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
+                          }}
+                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-[10px] h-8 backdrop-blur-md"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
+                          }}
+                          className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-[10px] h-8 backdrop-blur-md"
+                        >
+                          <Wand2 className="w-3 h-3 mr-1" />
+                          Remix
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               ))}
