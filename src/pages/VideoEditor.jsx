@@ -41,11 +41,67 @@ export default function VideoEditor() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [undoHistory, setUndoHistory] = useState([]);
+  const [removeStrokes, setRemoveStrokes] = useState([]);
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
   const audioRefs = useRef({});
   const canvasRef = useRef(null);
+
+  const handleCanvasMouseDown = (e) => {
+    if (activeTab !== 'remove' || !videoRef.current) return;
+    const rect = videoRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setRemoveStrokes([...removeStrokes, [{ x, y }]]);
+  };
+
+  const handleCanvasMouseMove = (e) => {
+    if (activeTab !== 'remove' || removeStrokes.length === 0 || !videoRef.current) return;
+    // Check if mouse button is down (usually implied by flow, but let's be safe or just assume drag from down)
+    // Actually in the previous implementation I just tracked strokes if last one exists.
+    // Ideally we track 'isDrawing' but 'removeStrokes' length check on mouse move works if we assume push on mouse down.
+    // But wait, mouse move happens even without down. I need a flag or check buttons.
+    if (e.buttons !== 1) return; 
+
+    const rect = videoRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const newStrokes = [...removeStrokes];
+    newStrokes[newStrokes.length - 1].push({ x, y });
+    setRemoveStrokes(newStrokes);
+  };
+
+  useEffect(() => {
+    if (!canvasRef.current || !videoRef.current || activeTab !== 'remove') return;
+    
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    const rect = video.getBoundingClientRect();
+    
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (removeStrokes.length === 0) return;
+    
+    ctx.strokeStyle = 'rgba(255, 107, 53, 0.8)';
+    ctx.lineWidth = 20;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    removeStrokes.forEach(stroke => {
+      if (stroke.length < 2) return;
+      ctx.beginPath();
+      ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
+      stroke.forEach(point => {
+        ctx.lineTo((point.x / 100) * canvas.width, (point.y / 100) * canvas.height);
+      });
+      ctx.stroke();
+    });
+  }, [removeStrokes, activeTab]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -418,6 +474,109 @@ export default function VideoEditor() {
     setVideoEffects(newEffects);
   };
 
+  const handleRemoveWatermarkFromVideo = async () => {
+    if (!videoFile || removeStrokes.length === 0) return;
+    setIsProcessing(true);
+
+    try {
+      const video = document.createElement('video');
+      video.src = videoFile.url;
+      video.crossOrigin = "anonymous";
+      video.muted = false; 
+      
+      await new Promise(resolve => {
+        video.onloadedmetadata = () => resolve();
+      });
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      
+      // Capture stream
+      let stream;
+      try {
+        if (video.captureStream) stream = video.captureStream();
+        else if (video.mozCaptureStream) stream = video.mozCaptureStream();
+        else stream = canvas.captureStream(30);
+      } catch (e) {
+        stream = canvas.captureStream(30);
+      }
+
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+      
+      recorder.ondataavailable = e => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        
+        // Upload
+        try {
+            const file = new File([blob], `cleaned_${videoFile.name.split('.')[0]}.webm`, { type: 'video/webm' });
+            const uploadResult = await base44.integrations.Core.UploadFile({ file });
+            await base44.entities.Creation.create({
+              title: `Cleaned Video - ${videoFile.name}`,
+              type: 'video',
+              url: uploadResult.file_url,
+              thumbnail_url: uploadResult.file_url,
+              prompt: 'Video Watermark Removal',
+              metadata: { source: 'video_editor', type: 'cleanup_video' }
+            });
+            alert('Video processed successfully! Saved to Gallery.');
+        } catch (error) {
+            console.error(error);
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `cleaned_video.webm`;
+            link.click();
+            alert('Saved locally (Upload failed)');
+        }
+        setIsProcessing(false);
+      };
+
+      recorder.start();
+      await video.play();
+      
+      const draw = () => {
+        if (video.paused || video.ended) {
+            if (video.ended) recorder.stop();
+            return;
+        }
+        
+        ctx.drawImage(video, 0, 0);
+        
+        if (removeStrokes.length > 0) {
+            ctx.save();
+            ctx.beginPath();
+            removeStrokes.forEach(stroke => {
+              if (stroke.length < 2) return;
+              ctx.moveTo((stroke[0].x / 100) * canvas.width, (stroke[0].y / 100) * canvas.height);
+              stroke.forEach(point => {
+                ctx.lineTo((point.x / 100) * canvas.width, (point.y / 100) * canvas.height);
+              });
+            });
+            ctx.clip();
+            ctx.filter = 'blur(20px)';
+            ctx.drawImage(video, 0, 0); 
+            ctx.restore();
+        }
+        
+        requestAnimationFrame(draw);
+      };
+      
+      draw();
+      
+    } catch (err) {
+      console.error(err);
+      alert('Error processing video: ' + err.message);
+      setIsProcessing(false);
+    }
+  };
+
   const handleExport = () => {
     if (!videoFile) return;
 
@@ -574,6 +733,7 @@ export default function VideoEditor() {
               <TabsTrigger value="transitions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Zap className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="effects" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Sparkles className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="speed" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Sliders className="w-4 h-4" /></TabsTrigger>
+              <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]"><Wand2 className="w-4 h-4" /></TabsTrigger>
             </TabsList>
 
             <div className="px-4 pb-4">
@@ -871,6 +1031,91 @@ export default function VideoEditor() {
                   </div>
                 </div>
               </TabsContent>
+
+              <TabsContent value="remove" className="mt-0 space-y-4">
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Watermark Remover</h3>
+                
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Wand2 className="w-5 h-5 text-[#FF6B35] mt-1" />
+                    <div>
+                      <h4 className="text-white font-medium text-sm mb-2">Remove from Whole Video</h4>
+                      <p className="text-xs text-white/60 mb-2">
+                        1. Draw over the watermark on the video.
+                        <br/>
+                        2. Click below to process (uses blur/inpaint).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                     <Button
+                        onClick={handleRemoveWatermarkFromVideo}
+                        disabled={isProcessing || !videoFile || removeStrokes.length === 0}
+                        className="flex-1 btn-gradient text-white"
+                     >
+                        {isProcessing ? 'Processing...' : 'Remove Watermark'}
+                     </Button>
+                     {removeStrokes.length > 0 && (
+                        <Button onClick={() => setRemoveStrokes([])} variant="outline" className="text-white">
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                     )}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 mt-4">
+                  <div className="flex items-start gap-3 mb-4">
+                    <Sparkles className="w-5 h-5 text-[#FFB800] mt-1" />
+                    <div>
+                      <h4 className="text-white font-medium text-sm mb-2">AI Single Frame Fix</h4>
+                      <p className="text-xs text-white/60">
+                        Use AI to perfectly inpaint the current frame.
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={async () => {
+                      if (!videoFile) return;
+                      setIsProcessing(true);
+                      try {
+                        const canvas = document.createElement('canvas');
+                        const video = videoRef.current;
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0);
+                        
+                        canvas.toBlob(async (blob) => {
+                          const file = new File([blob], 'frame.png', { type: 'image/png' });
+                          const uploadResult = await base44.integrations.Core.UploadFile({ file });
+                          
+                          const result = await base44.integrations.Core.GenerateImage({
+                            prompt: 'Remove text overlays, watermarks, and logos. Blend perfectly.',
+                            existing_image_urls: [uploadResult.file_url]
+                          });
+                          
+                          const link = document.createElement('a');
+                          link.href = result.url;
+                          link.download = `cleaned_frame.png`;
+                          link.click();
+                          
+                          alert('Frame fixed with AI!');
+                        });
+                      } catch (err) {
+                        alert('Error: ' + err.message);
+                      } finally {
+                        setIsProcessing(false);
+                      }
+                    }}
+                    disabled={isProcessing || !videoFile}
+                    className="w-full bg-white/10 border border-white/20 text-white"
+                  >
+                    AI Fix Current Frame
+                  </Button>
+                </div>
+              </TabsContent>
             </div>
           </Tabs>
         </motion.aside>
@@ -883,17 +1128,26 @@ export default function VideoEditor() {
             {videoFile ? (
               <div 
                 className="relative max-w-4xl w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl"
-
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
                 onMouseUp={() => {}}
               >
                 <video
                   ref={videoRef}
                   src={videoFile.url}
-                  className="w-full h-full object-contain"
+                  className={`w-full h-full object-contain ${activeTab === 'remove' ? 'cursor-crosshair' : ''}`}
                   style={{ filter: getVideoFilterStyle() }}
                   onTimeUpdate={handleTimeUpdate}
                   onEnded={() => setIsPlaying(false)}
                 />
+                
+                {activeTab === 'remove' && (
+                  <canvas
+                    ref={canvasRef}
+                    className="absolute top-0 left-0 pointer-events-none"
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                )}
                 
 
                 
