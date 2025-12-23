@@ -895,12 +895,7 @@ export default function VideoEditor() {
                   onEnded={() => setIsPlaying(false)}
                 />
                 
-                {activeTab === 'remove' && (
-                  <canvas
-                    ref={canvasRef}
-                    className="absolute top-0 left-0 pointer-events-none"
-                  />
-                )}
+
                 
                 {tracks.find(t => t.type === 'text')?.clips.map(clip => {
                   if (currentTime >= clip.start && currentTime < clip.start + clip.duration) {
