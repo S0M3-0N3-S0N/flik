@@ -25,13 +25,7 @@ export default function ProcessingOverlay({ tool }) {
       />
 
       <div className="text-center relative z-10">
-        <motion.div
-          animate={{ rotate: [0, 10, -10, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="mb-6 inline-block"
-        >
-          <Sparkles className="w-12 h-12 text-[#FF6B35] drop-shadow-[0_0_15px_rgba(255,107,53,0.5)]" />
-        </motion.div>
+
         
         <motion.div
           initial={{ opacity: 0, y: 10 }}
