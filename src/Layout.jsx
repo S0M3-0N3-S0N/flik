@@ -156,14 +156,16 @@ export default function Layout({ children, currentPageName }) {
 
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+              className="group relative p-2 rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 overflow-hidden"
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {isDarkMode ? (
-                <Sun className="w-5 h-5 text-white" />
-              ) : (
-                <Moon className="w-5 h-5 text-white" />
-              )}
+              <div className="relative z-10">
+                {isDarkMode ? (
+                  <Sun className="w-5 h-5 text-white transition-transform duration-500 group-hover:rotate-90" />
+                ) : (
+                  <Moon className="w-5 h-5 text-white transition-transform duration-500 group-hover:-rotate-12" />
+                )}
+              </div>
             </button>
           </div>
         </div>
