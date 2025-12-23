@@ -283,22 +283,41 @@ Respond with ONLY the enhanced prompt, nothing else.`,
             </div>
 
             {/* Style Presets */}
-            <div className="mt-6 flex flex-col items-center">
-              <p className="text-xs text-white/30 mb-3 uppercase tracking-wider font-medium">Style Presets</p>
-              <div className="flex flex-wrap justify-center gap-2">
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-4 px-2">
+                <p className="text-xs text-white/40 uppercase tracking-wider font-semibold">Style Presets</p>
+                {selectedStyle && (
+                  <button 
+                    onClick={() => setSelectedStyle(null)}
+                    className="text-xs text-[#FF6B35] hover:text-[#FF8B55] transition-colors"
+                  >
+                    Clear selection
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {stylePresets.map((style) => (
                   <button
                     key={style.id}
                     onClick={() => setSelectedStyle(selectedStyle === style.id ? null : style.id)}
                     className={`
-                      px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 border
+                      relative group overflow-hidden rounded-xl p-3 text-left transition-all duration-300 border
                       ${selectedStyle === style.id 
-                        ? "bg-white text-black border-white shadow-lg shadow-white/10 scale-105" 
-                        : "bg-white/5 text-white/60 border-transparent hover:bg-white/10 hover:text-white hover:border-white/10"
+                        ? "bg-[#FF6B35]/10 border-[#FF6B35] shadow-[0_0_20px_rgba(255,107,53,0.15)]" 
+                        : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
                       }
                     `}
                   >
-                    {style.label}
+                    <div className={`absolute inset-0 bg-gradient-to-br from-[#FF6B35]/20 to-transparent opacity-0 transition-opacity duration-300 ${selectedStyle === style.id ? 'opacity-100' : 'group-hover:opacity-50'}`} />
+                    
+                    <div className="relative z-10 flex flex-col gap-1">
+                      <span className={`text-sm font-medium transition-colors ${selectedStyle === style.id ? 'text-[#FF6B35]' : 'text-white/80'}`}>
+                        {style.label}
+                      </span>
+                      <span className="text-[10px] text-white/40 line-clamp-1">
+                        {style.prompt.split(',')[0]}
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>
