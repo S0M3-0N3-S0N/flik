@@ -12,7 +12,7 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [chatImage, setChatImage] = useState(null);
+  const [chatImages, setChatImages] = useState([]);
   const [isUploadingChat, setIsUploadingChat] = useState(false);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
@@ -24,35 +24,40 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
   }, [messages, isOpen]);
 
   const handleChatImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !file.type.startsWith('image/')) return;
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter(f => f.type.startsWith('image/'));
+    if (validFiles.length === 0) return;
 
     setIsUploadingChat(true);
     try {
-      const uploadResult = await base44.integrations.Core.UploadFile({ file });
-      setChatImage({ url: uploadResult.file_url, file });
+      const newImages = await Promise.all(validFiles.map(async (file) => {
+        const uploadResult = await base44.integrations.Core.UploadFile({ file });
+        return { url: uploadResult.file_url, file, id: Date.now() + Math.random() };
+      }));
+      setChatImages(prev => [...prev, ...newImages]);
     } catch (err) {
       console.error("Chat upload error:", err);
     } finally {
       setIsUploadingChat(false);
+      if (chatFileRef.current) chatFileRef.current.value = '';
     }
   };
 
   const handleSend = async () => {
-    if (!input.trim() && !chatImage) return;
+    if (!input.trim() && chatImages.length === 0) return;
     
     const userMsg = { 
       role: 'user', 
       content: input,
-      image: chatImage?.url
+      images: chatImages.map(img => img.url)
     };
     
     setMessages(prev => [...prev, userMsg]);
     const currentInput = input;
-    const currentImage = chatImage;
+    const currentImages = chatImages;
     
     setInput("");
-    setChatImage(null);
+    setChatImages([]);
     setIsTyping(true);
 
     try {
@@ -60,17 +65,17 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
         prompt: `You are a creative AI art assistant. The user is talking to you about image generation.
         
         Current conversation history:
-        ${messages.map(m => `${m.role}: ${m.content} ${m.image ? '[Image Attached]' : ''}`).join('\n')}
+        ${messages.map(m => `${m.role}: ${m.content} ${m.images?.length ? `[${m.images.length} Images Attached]` : ''}`).join('\n')}
         
         User input: ${currentInput}
-        ${currentImage ? 'User also uploaded an image for analysis/reference.' : ''}
+        ${currentImages.length > 0 ? `User also uploaded ${currentImages.length} image(s) for analysis/reference.` : ''}
 
-        If the user uploaded an image, analyze it visually if possible, or assume the user wants suggestions based on it.
-        Provide tailored suggestions, refinements, or improvements based on their input and image.
+        If the user uploaded images, analyze them visually if possible, or assume the user wants suggestions based on them.
+        Provide tailored suggestions, refinements, or improvements based on their input and images.
         
         If the user is explicitly asking to generate an image, suggest a detailed prompt.
         Be helpful, creative, and concise.`,
-        file_urls: currentImage ? [currentImage.url] : undefined,
+        file_urls: currentImages.length > 0 ? currentImages.map(img => img.url) : undefined,
         response_json_schema: null
       });
 
@@ -120,7 +125,16 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
                       : 'bg-white/10 text-white/90 rounded-tl-none'
                   }`}
                 >
-                  {msg.image && (
+                  {msg.images && msg.images.length > 0 && (
+                    <div className={`grid gap-2 mb-2 ${msg.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                      {msg.images.map((imgUrl, idx) => (
+                        <div key={idx} className="rounded-lg overflow-hidden border border-white/20 aspect-square">
+                          <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {msg.image && !msg.images && (
                     <div className="rounded-lg overflow-hidden mb-2 border border-white/20">
                       <img src={msg.image} alt="Uploaded" className="max-w-full h-auto" />
                     </div>
@@ -149,15 +163,19 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
           </div>
 
           <div className="p-4 border-t border-white/10 bg-[#1a1a1a]">
-            {chatImage && (
-              <div className="mb-2 flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/10 w-fit">
-                <div className="w-10 h-10 rounded overflow-hidden">
-                  <img src={chatImage.url} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-white/70 truncate max-w-[150px]">{chatImage.file?.name || 'Image'}</span>
-                  <button onClick={() => setChatImage(null)} className="text-[10px] text-red-400 hover:text-red-300 text-left">Remove</button>
-                </div>
+            {chatImages.length > 0 && (
+              <div className="mb-2 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                {chatImages.map((img) => (
+                  <div key={img.id} className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-white/10 group">
+                    <img src={img.url} className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => setChatImages(prev => prev.filter(i => i.id !== img.id))} 
+                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
             <form
@@ -181,6 +199,7 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
                 ref={chatFileRef}
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleChatImageUpload}
                 className="hidden"
               />
@@ -194,7 +213,7 @@ export default function ChatPanel({ isOpen, onClose, onGenerateTrigger }) {
               <Button 
                 type="submit" 
                 size="icon"
-                disabled={(!input.trim() && !chatImage) || isTyping || isUploadingChat}
+                disabled={(!input.trim() && chatImages.length === 0) || isTyping || isUploadingChat}
                 className="bg-[#FF6B35] hover:bg-[#FF8B55] text-white"
               >
                 {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
