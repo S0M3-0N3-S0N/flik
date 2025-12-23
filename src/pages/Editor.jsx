@@ -1348,6 +1348,23 @@ export default function Editor() {
                   }`}
                 >
                   <img src={img.preview} className="w-full h-full object-cover" />
+                  
+                  {img.status === 'processing' && (
+                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-[#FF6B35] animate-spin" />
+                     </div>
+                  )}
+                  {img.status === 'success' && (
+                     <div className="absolute top-1 right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center border border-white">
+                        <Check className="w-2.5 h-2.5 text-white" />
+                     </div>
+                  )}
+                  {img.status === 'error' && (
+                     <div className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center border border-white">
+                        <AlertCircle className="w-2.5 h-2.5 text-white" />
+                     </div>
+                  )}
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
