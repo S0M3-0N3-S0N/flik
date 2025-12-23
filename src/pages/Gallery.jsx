@@ -143,7 +143,7 @@ export default function Gallery() {
   const stats = {
     total: creations.length,
     images: creations.filter(c => c.type === 'image').length,
-    videos: creations.filter(c => c.type === 'video').length,
+
   };
 
   return (
@@ -156,7 +156,7 @@ export default function Gallery() {
         >
 
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="p-4 rounded-xl bg-white/5 border border-white/10">
               <p className="text-white/50 text-sm mb-1">Total</p>
               <p className="text-2xl font-bold text-white">{stats.total}</p>
@@ -165,10 +165,7 @@ export default function Gallery() {
               <p className="text-white/50 text-sm mb-1">Images</p>
               <p className="text-2xl font-bold text-white">{stats.images}</p>
             </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-              <p className="text-white/50 text-sm mb-1">Videos</p>
-              <p className="text-2xl font-bold text-white">{stats.videos}</p>
-            </div>
+
           </div>
 
           <div className="space-y-4">
@@ -186,8 +183,7 @@ export default function Gallery() {
                 <TabsList className="bg-white/5">
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="image">Images</TabsTrigger>
-                  <TabsTrigger value="video">Videos</TabsTrigger>
-                </TabsList>
+                  </TabsList>
               </Tabs>
             </div>
             
@@ -288,11 +284,7 @@ export default function Gallery() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      {item.type === 'video' ? (
-                        <Video className="w-12 h-12 text-white/30" />
-                      ) : (
-                        <ImageIcon className="w-12 h-12 text-white/30" />
-                      )}
+                      <ImageIcon className="w-12 h-12 text-white/30" />
                     </div>
                   )}
                   
@@ -322,11 +314,7 @@ export default function Gallery() {
                    </div>
                    <div className="absolute bottom-0 left-0 right-0 p-3">
                      <div className="flex items-center gap-1 mb-2">
-                       {item.type === 'video' ? (
-                         <Video className="w-3 h-3 text-[#FF6B35]" />
-                       ) : (
-                         <ImageIcon className="w-3 h-3 text-[#FF6B35]" />
-                       )}
+                       <ImageIcon className="w-3 h-3 text-[#FF6B35]" />
                        <span className="text-xs text-white/60">{item.type}</span>
                      </div>
                      <p className="text-sm text-white line-clamp-1 mb-2">
@@ -336,8 +324,7 @@ export default function Gallery() {
                        <Button
                          onClick={(e) => {
                            e.stopPropagation();
-                           const pageName = item.type === 'image' ? 'Editor' : 'VideoEditor';
-                           navigate(createPageUrl(pageName) + '?load=' + encodeURIComponent(item.url));
+                           navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                          }}
                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-[10px] h-7 px-1"
                        >
@@ -456,11 +443,7 @@ export default function Gallery() {
         <DialogContent className="max-w-[95vw] md:max-w-6xl w-full h-[90vh] md:h-[85vh] bg-[#1a1a1a] border-white/10 text-white p-0 overflow-hidden flex flex-col md:flex-row gap-0">
           <div className="flex-1 bg-black/50 relative flex items-center justify-center p-4 overflow-hidden">
             {selectedItem?.url && (
-              selectedItem.type === 'video' ? (
-                <video src={selectedItem.url} controls className="max-w-full max-h-full object-contain shadow-2xl" />
-              ) : (
-                <img src={selectedItem.url} alt="Creation" className="max-w-full max-h-full object-contain shadow-2xl" />
-              )
+              <img src={selectedItem.url} alt="Creation" className="max-w-full max-h-full object-contain shadow-2xl" />
             )}
           </div>
 
@@ -530,13 +513,12 @@ export default function Gallery() {
             <div className="p-6 border-t border-white/10 bg-[#1a1a1a] space-y-3">
               <Button
                 onClick={() => {
-                  const pageName = selectedItem.type === 'image' ? 'Editor' : 'VideoEditor';
-                  navigate(createPageUrl(pageName) + '?load=' + encodeURIComponent(selectedItem.url));
+                  navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url));
                 }}
                 className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10"
               >
                 <Edit className="w-4 h-4 mr-2" />
-                Edit in {selectedItem?.type === 'image' ? 'Image' : 'Video'} Editor
+                Edit in Editor
               </Button>
 
               <div className="flex gap-3">
