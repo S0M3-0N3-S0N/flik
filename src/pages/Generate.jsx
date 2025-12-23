@@ -156,14 +156,7 @@ Respond with ONLY the enhanced prompt, nothing else.`,
         </div>
         
         <div className="relative max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8"
-          >
-            <Sparkles className="w-4 h-4 text-[#FF6B35]" />
-            <span className="text-sm text-white/70">Powered by AI</span>
-          </motion.div>
+
           
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
