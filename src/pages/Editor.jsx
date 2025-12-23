@@ -1163,7 +1163,7 @@ export default function Editor() {
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl ${
-                    activeTab === "remove" ? "cursor-crosshair" : activeTab === "crop" && isCropping ? "cursor-move" : ""
+                    activeTab === "remove" ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
