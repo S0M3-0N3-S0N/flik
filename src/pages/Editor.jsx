@@ -94,7 +94,9 @@ export default function Editor() {
       adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
       transform: { rotate: 0, flipH: false, flipV: false },
       filter: null,
-      brushStrokes: []
+      brushStrokes: [],
+      status: 'idle', // idle, processing, success, error
+      resultUrl: null
     }));
     
     const newBatch = [...batchImages, ...images];
