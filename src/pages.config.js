@@ -2,8 +2,6 @@ import Editor from './pages/Editor';
 import Gallery from './pages/Gallery';
 import Generate from './pages/Generate';
 import Profile from './pages/Profile';
-import VideoEditor from './pages/VideoEditor';
-import Templates from './pages/Templates';
 import __Layout from './Layout.jsx';
 
 
@@ -12,8 +10,6 @@ export const PAGES = {
     "Gallery": Gallery,
     "Generate": Generate,
     "Profile": Profile,
-    "VideoEditor": VideoEditor,
-    "Templates": Templates,
 }
 
 export const pagesConfig = {
