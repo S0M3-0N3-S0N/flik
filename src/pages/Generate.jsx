@@ -81,7 +81,7 @@ export default function Generate() {
       const llmAnalysis = await base44.integrations.Core.InvokeLLM({
         prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
         
-        ${uploadedImages.length > 0 ? "IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates strongly to them, while applying the user's text prompt as a modification or style." : ""}
+        ${uploadedImages.length > 0 ? `IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates ${imageStrength > 0.7 ? "EXTREMELY STRICTLY (maintain exact composition and forms)" : imageStrength < 0.4 ? "loosely (use as vague inspiration)" : "strongly"} to them, while applying the user's text prompt as a modification or style.` : ""}
         ${aiModel === 'gemini' ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
 
         CRITICAL RULES:
@@ -334,6 +334,82 @@ export default function Generate() {
                     <MessageSquare className="w-3.5 h-3.5" />
                     Discuss
                   </button>
+
+                  <div className="w-px h-4 bg-white/10 mx-1" />
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button 
+                        className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                          negativePrompt || aspectRatio !== '1:1' || (uploadedImages.length > 0 && imageStrength !== 0.5)
+                            ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
+                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        }`}
+                        title="Advanced Settings"
+                      >
+                        <Settings2 className="w-4 h-4" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 bg-[#141414] border border-white/10 text-white p-5 shadow-2xl backdrop-blur-xl" align="end" sideOffset={10}>
+                      <div className="space-y-5">
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Aspect Ratio</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[
+                              { id: "1:1", icon: Square, label: "Square" },
+                              { id: "16:9", icon: RectangleHorizontal, label: "Landscape" },
+                              { id: "9:16", icon: RectangleVertical, label: "Portrait" }
+                            ].map(ratio => (
+                              <button
+                                key={ratio.id}
+                                onClick={() => setAspectRatio(ratio.id)}
+                                className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${
+                                  aspectRatio === ratio.id 
+                                    ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                    : 'bg-white/5 border-transparent text-white/40 hover:bg-white/10 hover:text-white/60'
+                                }`}
+                              >
+                                <ratio.icon className="w-5 h-5 mb-1.5" />
+                                <span className="text-[10px] font-medium">{ratio.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Negative Prompt</Label>
+                          <div className="relative">
+                            <Ban className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+                            <Input 
+                              value={negativePrompt}
+                              onChange={(e) => setNegativePrompt(e.target.value)}
+                              placeholder="What to exclude (e.g. blur, ugly)"
+                              className="bg-black/20 border-white/10 h-9 text-xs pl-9 placeholder:text-white/20 focus-visible:ring-[#FF6B35]/50"
+                            />
+                          </div>
+                        </div>
+                        
+                        {uploadedImages.length > 0 && (
+                           <div className="space-y-3">
+                              <div className="flex justify-between items-center">
+                                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Image Influence</Label>
+                                  <span className="text-[10px] font-mono text-[#FF6B35] bg-[#FF6B35]/10 px-1.5 py-0.5 rounded">{Math.round(imageStrength * 100)}%</span>
+                              </div>
+                              <Slider
+                                  value={[imageStrength]}
+                                  onValueChange={([v]) => setImageStrength(v)}
+                                  max={1}
+                                  step={0.1}
+                                  className="py-1"
+                              />
+                              <p className="text-[10px] text-white/30 text-right">
+                                {imageStrength < 0.3 ? "Subtle" : imageStrength > 0.7 ? "Strong" : "Balanced"}
+                              </p>
+                           </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <Button
