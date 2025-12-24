@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Layout({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -148,7 +150,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center gap-4">
             <Link 
               to={createPageUrl("Profile")}
-              className={`p-2 rounded-full transition-colors border border-white/5 ${
+              className={`hidden md:flex p-2 rounded-full transition-colors border border-white/5 ${
                 currentPageName === "Profile" ? "bg-white/20 text-white" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
               }`}
               title="My Profile"
@@ -169,8 +171,77 @@ export default function Layout({ children, currentPageName }) {
                 )}
               </div>
             </button>
+
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5 text-white" />
+              ) : (
+                <Menu className="w-5 h-5 text-white" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden border-t border-white/5 bg-[#0A0A0A]/95 backdrop-blur-xl overflow-hidden"
+            >
+              <nav className="flex flex-col p-4 gap-2">
+                <Link 
+                  to={createPageUrl("Editor")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "Editor" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Image className="w-5 h-5" />
+                  Photo Studio
+                </Link>
+
+                <Link 
+                  to={createPageUrl("Generate")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "Generate" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Wand2 className="w-5 h-5" />
+                  Imagine AI
+                </Link>
+
+                <Link 
+                  to={createPageUrl("Gallery")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "Gallery" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Sparkles className="w-5 h-5" />
+                  My Creations
+                </Link>
+
+                <Link 
+                  to={createPageUrl("Profile")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  My Profile
+                </Link>
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
       
       {/* Main Content */}

@@ -95,8 +95,8 @@ export default function Profile() {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-8">My Profile</h1>
         
-        <div className="bg-[#141414] border border-white/10 rounded-2xl p-8 mb-8 glass-card">
-          <div className="flex items-center gap-6 mb-8">
+        <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 md:p-8 mb-8 glass-card">
+          <div className="flex flex-col md:flex-row items-center gap-6 mb-8 text-center md:text-left">
             <div className="relative group">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-[#FF6B35]/20 overflow-hidden border-2 border-white/10">
                 {user.profile_picture ? (

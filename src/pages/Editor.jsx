@@ -804,11 +804,11 @@ export default function Editor() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="order-2 lg:order-1 w-full lg:w-80 h-[45vh] lg:h-auto border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]"
+        className="order-2 lg:order-1 w-full lg:w-80 h-[45%] lg:h-auto border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0">
@@ -1027,7 +1027,7 @@ export default function Editor() {
         </Tabs>
       </motion.aside>
       
-      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[55vh] lg:h-auto relative">
+      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[55%] lg:h-auto relative">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
