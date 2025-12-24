@@ -265,33 +265,57 @@ export default function Gallery() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`group relative aspect-square rounded-2xl overflow-hidden bg-[#141414] border transition-all duration-300 hover:shadow-2xl hover:shadow-[#FF6B35]/10 ${
+                  className={`group relative md:aspect-square h-auto rounded-2xl overflow-hidden bg-[#141414] border transition-all duration-300 hover:shadow-2xl hover:shadow-[#FF6B35]/10 flex flex-col md:block ${
                     selectedItems.includes(item.id) 
                       ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/20' 
                       : 'border-white/10 hover:border-white/20'
                   }`}
                   onClick={(e) => {
-                    if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                      toggleSelectItem(item.id);
+                    if (window.innerWidth < 768) {
+                        // On mobile, click triggers selection toggle to avoid confusion with overlay
+                        // or we can let it open details, but maybe toggle select is safer?
+                        // Let's stick to opening details, but buttons need to stop propagation.
+                        setSelectedItem(item);
                     } else {
-                      setSelectedItem(item);
+                        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                            toggleSelectItem(item.id);
+                        } else {
+                            setSelectedItem(item);
+                        }
                     }
                   }}
                 >
-                  {item.thumbnail_url || item.url ? (
-                    <img
-                      src={item.thumbnail_url || item.url}
-                      alt={item.title || 'Creation'}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon className="w-12 h-12 text-white/30" />
+                  <div className="aspect-square w-full relative md:h-full">
+                    {item.thumbnail_url || item.url ? (
+                        <img
+                        src={item.thumbnail_url || item.url}
+                        alt={item.title || 'Creation'}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-white/5">
+                        <ImageIcon className="w-12 h-12 text-white/30" />
+                        </div>
+                    )}
+                    
+                    {/* Mobile-only visible actions overlay/badges could go here if needed, but we put them below */}
+                    <div className="absolute top-2 right-2 md:hidden flex gap-2">
+                         <button
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                toggleSelectItem(item.id);
+                            }}
+                            className={`h-8 w-8 rounded-full bg-black/50 text-white backdrop-blur-md border border-white/10 flex items-center justify-center ${
+                                selectedItems.includes(item.id) ? 'bg-[#FF6B35]/80 border-[#FF6B35]' : ''
+                            }`}
+                         >
+                            {selectedItems.includes(item.id) ? '✓' : '○'}
+                         </button>
                     </div>
-                  )}
+                  </div>
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-4">
-                    <div className="flex justify-end gap-2 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75">
+                  <div className="md:absolute md:inset-0 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-transparent md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-4 bg-[#1a1a1a] md:bg-transparent">
+                    <div className="hidden md:flex justify-end gap-2 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75">
                       <Button
                         size="icon"
                         variant="ghost"
@@ -315,7 +339,7 @@ export default function Gallery() {
                       </Button>
                     </div>
 
-                    <div className="translate-y-[10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-100">
+                    <div className="md:translate-y-[10px] md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-100">
                       <h3 className="font-medium text-white text-sm line-clamp-1 mb-1 drop-shadow-md">
                         {item.title || 'Untitled'}
                       </h3>

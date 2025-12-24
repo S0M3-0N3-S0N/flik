@@ -86,28 +86,40 @@ export default function ImageGrid({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ delay: index * 0.05 }}
-              className="group relative aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] border border-white/10"
-            >
-              <img
-                src={image.url}
-                alt={image.prompt}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <div className="absolute top-4 right-4">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => onDelete(image.id)}
-                    className="bg-black/50 hover:bg-black/70 text-white"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+              className="group relative md:aspect-square h-auto rounded-2xl overflow-hidden bg-[#1a1a1a] border border-white/10 flex flex-col md:block"
+              >
+                <div className="aspect-square w-full relative md:h-full">
+                    <img
+                    src={image.url}
+                    alt={image.prompt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    />
+                    <div className="absolute top-2 right-2 md:hidden">
+                        <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => onDelete(image.id)}
+                        className="bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8"
+                        >
+                        <Trash2 className="w-4 h-4" />
+                        </Button>
+                    </div>
                 </div>
-                
-                <div className="absolute bottom-0 left-0 right-0 p-4">
+
+                <div className="md:absolute md:inset-0 md:bg-gradient-to-t md:from-black/90 md:via-black/50 md:to-transparent md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 p-4 bg-[#1a1a1a] md:bg-transparent flex flex-col justify-end">
+                  <div className="absolute top-4 right-4 hidden md:block">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => onDelete(image.id)}
+                      className="bg-black/50 hover:bg-black/70 text-white"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <div className="w-full">
                   {image.model === "gemini" && (
                     <div className="mb-2">
                       <span className="text-xs px-2 py-1 rounded-full bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30 flex items-center gap-1 w-fit">
