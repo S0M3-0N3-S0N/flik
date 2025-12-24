@@ -127,7 +127,7 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" ref={scrollRef}>
             {messages.map((msg, i) => (
               <div
                 key={i}
