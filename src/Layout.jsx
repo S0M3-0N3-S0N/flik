@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, Home } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { base44 } from "@/api/base44Client";
 
 export default function Layout({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -247,16 +248,18 @@ export default function Layout({ children, currentPageName }) {
                   My Creations
                 </Link>
 
-                <Link 
-                  to={createPageUrl("Profile")} 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                    currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <User className="w-5 h-5" />
-                  My Profile
-                </Link>
+                    <Link 
+                      to={createPageUrl("Profile")} 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                        currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <User className="w-5 h-5" />
+                      My Profile
+                    </Link>
+                  </>
+                )}
               </nav>
             </motion.div>
           )}
