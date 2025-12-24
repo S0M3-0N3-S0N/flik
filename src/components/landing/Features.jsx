@@ -1,6 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Wand2, Layers, Zap, Image as ImageIcon, Crop, Sliders, Smartphone, Share2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "../../utils";
 
 const FeatureCard = ({ title, description, icon: Icon, className, delay }) => (
   <motion.div
@@ -44,7 +46,8 @@ export default function Features() {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="md:col-span-2 row-span-2 rounded-3xl bg-[#141414] border border-white/5 overflow-hidden relative min-h-[500px] group"
+            onClick={() => base44.auth.redirectToLogin(createPageUrl("Generate"))}
+            className="md:col-span-2 row-span-2 rounded-3xl bg-[#141414] border border-white/5 overflow-hidden relative min-h-[500px] group cursor-pointer"
           >
             <div className="absolute inset-0">
                <img 
@@ -58,7 +61,10 @@ export default function Features() {
               <div className="w-12 h-12 rounded-2xl bg-[#FF6B35] flex items-center justify-center mb-6">
                 <Wand2 className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-3xl font-bold mb-4">Imagine AI</h3>
+              <h3 className="text-3xl font-bold mb-4 flex items-center gap-3">
+                Imagine AI
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm bg-white/20 px-3 py-1 rounded-full">Try Now</span>
+              </h3>
               <p className="text-lg text-white/70">
                 Transform text into breathtaking images in seconds. Powered by the latest diffusion models, 
                 Imagine AI understands nuance, style, and composition like a human artist.
@@ -88,8 +94,9 @@ export default function Features() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
-            className="md:col-span-2 row-span-1 rounded-3xl bg-[#141414] border border-white/5 overflow-hidden relative min-h-[300px] group flex items-center"
-          >
+            onClick={() => base44.auth.redirectToLogin(createPageUrl("Editor"))}
+            className="md:col-span-2 row-span-1 rounded-3xl bg-[#141414] border border-white/5 overflow-hidden relative min-h-[300px] group flex items-center cursor-pointer"
+           >
             <div className="absolute inset-0 bg-gradient-to-r from-[#141414] to-transparent z-10" />
             <img 
                 src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2670&auto=format&fit=crop" 
@@ -100,12 +107,15 @@ export default function Features() {
                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-6 backdrop-blur-md">
                 <Sliders className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-3xl font-bold mb-4">Pro Photo Studio</h3>
+              <h3 className="text-3xl font-bold mb-4 flex items-center gap-3">
+                Pro Photo Studio
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm bg-white/20 px-3 py-1 rounded-full">Open Editor</span>
+              </h3>
               <p className="text-lg text-white/70">
                 A full-featured editor built right in. Adjust colors, remove objects, crop, and apply filters without leaving the app.
               </p>
             </div>
-          </motion.div>
+           </motion.div>
 
            {/* Small Card 3 */}
            <FeatureCard 

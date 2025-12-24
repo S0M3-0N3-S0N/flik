@@ -31,7 +31,7 @@ const faqs = [
 
 export default function FAQ() {
   return (
-    <section className="py-32 px-6 bg-[#0A0A0A]">
+    <section id="faq" className="py-32 px-6 bg-[#0A0A0A]">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-4xl font-bold text-center mb-12">
           Frequently asked <span className="gradient-text">questions</span>

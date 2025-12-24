@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../../utils";
+import { base44 } from "@/api/base44Client";
 
 export default function Hero() {
   const navigate = useNavigate();
@@ -66,10 +67,10 @@ export default function Hero() {
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Button 
-              onClick={() => navigate(createPageUrl("Generate"))}
-              className="h-14 px-8 rounded-full text-lg btn-gradient"
+              onClick={() => base44.auth.redirectToLogin(createPageUrl("Generate"))}
+              className="h-14 px-8 rounded-full text-lg btn-gradient hover:shadow-lg hover:shadow-[#FF6B35]/20 transition-all duration-300"
             >
-              Get Started
+              Start Creating
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button 

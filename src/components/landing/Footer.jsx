@@ -31,18 +31,17 @@ export default function Footer() {
             <ul className="space-y-4">
               <li><button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="text-white/40 hover:text-[#FF6B35] transition-colors">Features</button></li>
               <li><button onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="text-white/40 hover:text-[#FF6B35] transition-colors">Pricing</button></li>
-              <li><a href="#" className="text-white/40 hover:text-[#FF6B35] transition-colors">Gallery</a></li>
-              <li><a href="#" className="text-white/40 hover:text-[#FF6B35] transition-colors">API</a></li>
+              <li><button onClick={() => base44.auth.redirectToLogin(createPageUrl("Gallery"))} className="text-white/40 hover:text-[#FF6B35] transition-colors">Gallery</button></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="text-white font-semibold mb-6">Company</h4>
+            <h4 className="text-white font-semibold mb-6">Support</h4>
             <ul className="space-y-4">
-              <li><a href="#" className="text-white/40 hover:text-[#FF6B35] transition-colors">About</a></li>
-              <li><a href="#" className="text-white/40 hover:text-[#FF6B35] transition-colors">Blog</a></li>
-              <li><a href="#" className="text-white/40 hover:text-[#FF6B35] transition-colors">Careers</a></li>
-              <li><a href="#" className="text-white/40 hover:text-[#FF6B35] transition-colors">Contact</a></li>
+              <li><button onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })} className="text-white/40 hover:text-[#FF6B35] transition-colors">FAQ</button></li>
+              <li><a href="mailto:support@flik.ai" className="text-white/40 hover:text-[#FF6B35] transition-colors">Contact Support</a></li>
+              <li><a href="#" className="text-white/40 hover:text-[#FF6B35] transition-colors">Terms of Service</a></li>
+              <li><a href="#" className="text-white/40 hover:text-[#FF6B35] transition-colors">Privacy Policy</a></li>
             </ul>
           </div>
         </div>

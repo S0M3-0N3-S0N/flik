@@ -132,6 +132,7 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
       
       {/* Header */}
+      <style>{`html { scroll-behavior: smooth; }`}</style>
       <header className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 ${currentPageName === "LandingPage" ? "bg-[#0A0A0A]/80 border-white/5 backdrop-blur-xl" : "glass-card border-white/5"}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to={createPageUrl("LandingPage")} className="flex items-center gap-3">

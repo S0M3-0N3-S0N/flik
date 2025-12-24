@@ -100,7 +100,13 @@ export default function Pricing() {
               </div>
 
               <Button 
-                onClick={() => base44.auth.redirectToLogin(createPageUrl("Generate"))}
+                onClick={() => {
+                  if (plan.cta === "Contact Sales") {
+                    window.location.href = "mailto:sales@flik.ai";
+                  } else {
+                    base44.auth.redirectToLogin(createPageUrl("Generate"));
+                  }
+                }}
                 className={`w-full h-12 rounded-xl font-bold transition-all ${
                   plan.popular 
                     ? "btn-gradient text-white hover:scale-105" 
