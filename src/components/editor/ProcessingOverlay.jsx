@@ -32,7 +32,7 @@ export default function ProcessingOverlay({ tool }) {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-2"
         >
-          <h3 className="text-3xl font-bold text-white">
+          <h3 className="text-xl sm:text-3xl font-bold text-white">
             {tool?.label || "Processing"}...
           </h3>
           <p className="text-xs text-white/50 font-medium tracking-[0.3em] uppercase">
