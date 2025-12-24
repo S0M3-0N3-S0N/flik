@@ -323,7 +323,7 @@ export default function Gallery() {
                     </div>
                   </div>
 
-                  <div className="md:absolute md:inset-0 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-transparent md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-4 bg-[#1a1a1a] md:bg-transparent">
+                  <div className="md:absolute md:inset-0 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-transparent md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-3 bg-[#1a1a1a] md:bg-transparent">
                     <div className="hidden md:flex justify-end gap-2 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75">
                       <Button
                         size="icon"
@@ -348,23 +348,23 @@ export default function Gallery() {
                       </Button>
                     </div>
 
-                    <div className="md:translate-y-[10px] md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-100">
+                    <div className="md:translate-y-[10px] md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-100 w-full">
                       <h3 className="font-medium text-white text-sm line-clamp-1 mb-1 drop-shadow-md">
                         {item.title || 'Untitled'}
                       </h3>
                       <p className="text-xs text-white/70 line-clamp-1 mb-3 drop-shadow-md">
                         {item.prompt}
                       </p>
-                      <div className="flex gap-2 mt-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="grid grid-cols-2 gap-2 mt-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 w-full">
                         <Button
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                           }}
-                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 h-8 text-[10px] sm:text-xs backdrop-blur-md px-2"
+                          className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 h-8 text-[10px] sm:text-xs backdrop-blur-md px-1"
                         >
-                          <Edit className="w-3 h-3 mr-1.5" />
+                          <Edit className="w-3 h-3 mr-1 shrink-0" />
                           Edit
                         </Button>
                         <Button
@@ -373,9 +373,9 @@ export default function Gallery() {
                             e.stopPropagation();
                             navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
                           }}
-                          className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 h-8 text-[10px] sm:text-xs backdrop-blur-md px-2"
+                          className="w-full bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 h-8 text-[10px] sm:text-xs backdrop-blur-md px-1"
                         >
-                          <Wand2 className="w-3 h-3 mr-1.5" />
+                          <Wand2 className="w-3 h-3 mr-1 shrink-0" />
                           Remix
                         </Button>
                       </div>
