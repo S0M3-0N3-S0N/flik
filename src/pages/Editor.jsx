@@ -843,7 +843,7 @@ export default function Editor() {
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]"
+        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
