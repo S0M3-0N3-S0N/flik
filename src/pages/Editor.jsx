@@ -1233,10 +1233,19 @@ export default function Editor() {
                         height: `${cropArea.height}%`,
                       }}
                     >
-                      <div className="absolute -top-2 -left-2 w-4 h-4 bg-[#FF6B35] rounded-full cursor-nw-resize" />
-                      <div className="absolute -top-2 -right-2 w-4 h-4 bg-[#FF6B35] rounded-full cursor-ne-resize" />
-                      <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-[#FF6B35] rounded-full cursor-sw-resize" />
-                      <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-[#FF6B35] rounded-full cursor-se-resize" />
+                      {/* Hit areas are larger (6x6) but visible handles are 4x4 (w-4) inside to maintain visuals while improving usability */}
+                      <div className="absolute -top-3 -left-3 w-8 h-8 flex items-center justify-center cursor-nw-resize z-10 touch-none">
+                        <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
+                      </div>
+                      <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center cursor-ne-resize z-10 touch-none">
+                        <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
+                      </div>
+                      <div className="absolute -bottom-3 -left-3 w-8 h-8 flex items-center justify-center cursor-sw-resize z-10 touch-none">
+                        <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
+                      </div>
+                      <div className="absolute -bottom-3 -right-3 w-8 h-8 flex items-center justify-center cursor-se-resize z-10 touch-none">
+                        <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
+                      </div>
                     </div>
                   </>
                 )}
