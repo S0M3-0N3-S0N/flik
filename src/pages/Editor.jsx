@@ -780,23 +780,42 @@ export default function Editor() {
         img.onload = resolve;
       });
 
-      const cropX = Math.max(0, Math.min((cropArea.x / 100) * img.width, img.width - 10));
-      const cropY = Math.max(0, Math.min((cropArea.y / 100) * img.height, img.height - 10));
-      const cropWidth = Math.min((cropArea.width / 100) * img.width, img.width - cropX);
-      const cropHeight = Math.min((cropArea.height / 100) * img.height, img.height - cropY);
+      // Calculate visual dimensions based on rotation
+      const isRotated90 = Math.abs(transform.rotate) === 90 || Math.abs(transform.rotate) === 270;
+      const visualWidth = isRotated90 ? img.height : img.width;
+      const visualHeight = isRotated90 ? img.width : img.height;
+
+      // Calculate crop coordinates in visual space
+      const cropX = Math.max(0, Math.min((cropArea.x / 100) * visualWidth, visualWidth));
+      const cropY = Math.max(0, Math.min((cropArea.y / 100) * visualHeight, visualHeight));
+      const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * visualWidth, visualWidth - cropX));
+      const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * visualHeight, visualHeight - cropY));
 
       canvas.width = cropWidth;
       canvas.height = cropHeight;
 
-      ctx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+      // Move context to negative crop coordinates (shifting the image)
+      // + Add logic to center/rotate the image into place
+      ctx.translate(-cropX, -cropY);
+      
+      // Standard transform logic to place the image into the virtual visual space
+      ctx.translate(visualWidth / 2, visualHeight / 2);
+      ctx.rotate((transform.rotate * Math.PI) / 180);
+      ctx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
+      
+      // Draw image centered in the transformed coordinate system
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         setCurrentImage({
+          ...currentImage,
           url: url,
           preview: url,
           name: "cropped_image.png"
         });
+        // Reset transform since we baked it in
+        setTransform({ rotate: 0, flipH: false, flipV: false });
         setIsCropping(false);
         setIsProcessing(false);
       }, 'image/png', 1.0);
