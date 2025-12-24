@@ -827,7 +827,7 @@ export default function Editor() {
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="order-2 lg:order-1 w-full lg:w-80 h-[45%] lg:h-full flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]"
+        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
@@ -1046,11 +1046,11 @@ export default function Editor() {
         </Tabs>
       </motion.aside>
       
-      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[55%] lg:h-full relative min-h-0">
+      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="h-14 border-b border-white/5 flex items-center justify-between px-3 sm:px-4 lg:px-6 glass-card flex-shrink-0"
+          className="h-14 border-b border-white/5 flex items-center justify-between px-4 lg:px-6 glass-card flex-shrink-0"
         >
           <div className="flex items-center gap-2">
             {activeTab === "remove" && currentImage && (
@@ -1181,20 +1181,18 @@ export default function Editor() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
           {currentImage ? (
-            <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
-              <div className="relative no-invert" style={{ maxWidth: '100%', maxHeight: '100%' }}>
+            <div className="w-full h-full flex items-center justify-center p-2 md:p-8">
+              <div className="relative no-invert max-w-full max-h-full flex items-center justify-center">
                 <img
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
-                  className={`block max-w-full max-h-full w-auto h-auto object-contain rounded-lg md:rounded-2xl shadow-2xl ${
+                  className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
                     activeTab === "remove" ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
                     transform: getTransformStyle(),
-                    maxWidth: '100%',
-                    maxHeight: '100%'
                   }}
                   draggable={false}
                 />
@@ -1252,7 +1250,7 @@ export default function Editor() {
                     activeBatchIndex === idx ? 'border-[#FF6B35]' : 'border-transparent hover:border-white/20'
                   }`}
                 >
-                  <img src={img.preview} className="w-full h-full object-cover sm:object-contain bg-black/40" />
+                  <img src={img.preview} className="w-full h-full object-cover" />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

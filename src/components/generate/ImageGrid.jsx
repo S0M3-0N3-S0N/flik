@@ -88,11 +88,11 @@ export default function ImageGrid({
               transition={{ delay: index * 0.05 }}
               className="group relative md:aspect-square h-auto rounded-2xl overflow-hidden bg-[#1a1a1a] border border-white/10 flex flex-col md:block"
               >
-                <div className="aspect-square w-full relative md:h-full bg-black/20">
+                <div className="aspect-square w-full relative md:h-full">
                     <img
                     src={image.url}
                     alt={image.prompt}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                     loading="lazy"
                     />
                     <div className="absolute top-2 right-2 md:hidden">

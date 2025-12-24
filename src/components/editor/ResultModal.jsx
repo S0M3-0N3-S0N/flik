@@ -32,35 +32,35 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
           className="w-full max-w-7xl h-[90vh] glass-card rounded-3xl overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 shrink-0">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-white hidden sm:block">Result</h2>
+          <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold text-white">Result</h2>
               <div className="flex bg-white/5 rounded-lg p-1">
                 <button
                   onClick={() => setMode("compare")}
-                  className={`px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-all flex items-center gap-1.5 sm:gap-2 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
                     mode === "compare" ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
                   }`}
                 >
                   <ScanEye className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Slider</span>
+                  Slider
                 </button>
                 <button
                   onClick={() => setMode("side")}
-                  className={`px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-all flex items-center gap-1.5 sm:gap-2 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
                     mode === "side" ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
                   }`}
                 >
                   <Columns className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Side-by-Side</span>
+                  Side-by-Side
                 </button>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-colors"
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <X className="w-5 h-5 text-white" />
             </button>
           </div>
           
@@ -123,12 +123,12 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                  </div>
               </div>
             ) : (
-              <div className="grid grid-rows-2 sm:grid-rows-1 sm:grid-cols-2 gap-2 sm:gap-4 w-full h-full max-w-7xl mx-auto">
+              <div className="grid grid-cols-2 gap-4 w-full h-full max-w-7xl mx-auto">
                 <div className="relative flex flex-col h-full bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
-                  <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10 px-2 sm:px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-medium text-white/80 border border-white/10">
+                  <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-medium text-white/80 border border-white/10">
                     Original
                   </div>
-                  <div className="flex-1 p-2 sm:p-4 flex items-center justify-center">
+                  <div className="flex-1 p-4 flex items-center justify-center">
                     <img
                       src={originalSrc}
                       alt="Original"
@@ -154,32 +154,31 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
           </div>
           
           {/* Actions */}
-          <div className="flex items-center justify-between p-4 sm:p-6 border-t border-white/10 bg-[#141414] shrink-0 gap-2">
+          <div className="flex items-center justify-between p-6 border-t border-white/10 bg-[#141414] shrink-0">
             <Button
               variant="ghost"
               onClick={onClose}
-              className="text-white/60 hover:text-white hover:bg-white/10 px-2 sm:px-4"
+              className="text-white/60 hover:text-white hover:bg-white/10"
             >
-              <RotateCcw className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Discard</span>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Discard
             </Button>
             
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 onClick={onDownload}
-                className="bg-white/10 border-white/40 text-white hover:bg-white/20 hover:border-white/60 hover:text-white transition-all shadow-sm px-2 sm:px-4"
+                className="bg-white/10 border-white/40 text-white hover:bg-white/20 hover:border-white/60 hover:text-white transition-all shadow-sm"
               >
-                <Download className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Download</span>
+                <Download className="w-4 h-4 mr-2" />
+                Download
               </Button>
               <Button
                 onClick={onApply}
-                className="bg-[#FF6B35] hover:bg-[#F72C25] text-white border-0 sm:min-w-[160px] font-bold shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-105 transition-all z-10 px-3 sm:px-4"
+                className="bg-[#FF6B35] hover:bg-[#F72C25] text-white border-0 min-w-[160px] font-bold shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-105 transition-all z-10"
               >
-                <Check className="w-5 h-5 sm:mr-2" />
-                <span className="hidden sm:inline">Apply & Close</span>
-                <span className="sm:hidden">Apply</span>
+                <Check className="w-5 h-5 mr-2" />
+                Apply & Close
               </Button>
             </div>
           </div>
