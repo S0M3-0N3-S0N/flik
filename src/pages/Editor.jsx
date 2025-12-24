@@ -1181,13 +1181,13 @@ export default function Editor() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
           {currentImage ? (
-            <div className="w-full h-full flex items-center justify-center p-8">
-              <div className="relative no-invert">
+            <div className="w-full h-full flex items-center justify-center p-2 md:p-8">
+              <div className="relative no-invert max-w-full max-h-full flex items-center justify-center">
                 <img
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
-                  className={`max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl ${
+                  className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
                     activeTab === "remove" ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
                   }`}
                   style={{
