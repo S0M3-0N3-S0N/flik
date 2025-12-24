@@ -85,93 +85,41 @@ export default function Hero() {
                 <div className="absolute top-10 -right-10 w-40 h-40 bg-[#FF6B35] rounded-full blur-[80px] opacity-40 animate-pulse-glow" />
                 <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#FFB800] rounded-full blur-[80px] opacity-40 animate-pulse-glow" style={{ animationDelay: '1s' }} />
 
-                {/* Main Visual Composition */}
-                <div className="relative group perspective-1000">
-                    {/* Layer 1: Base Dark Panel */}
-                    <div className="bg-[#141414]/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-4 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] transform rotate-y-6 rotate-x-2 transition-transform duration-500 hover:rotate-y-0 hover:rotate-x-0 relative z-10 overflow-hidden h-[500px] w-full flex flex-col">
-                        
-                        {/* Top Bar */}
-                        <div className="flex items-center justify-between px-4 py-2 mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50" />
-                                <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50" />
-                                <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50" />
-                            </div>
-                            <div className="h-8 px-4 rounded-full bg-white/5 border border-white/5 flex items-center gap-2 text-xs text-white/40">
-                                <span className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-                                Generating...
-                            </div>
+                {/* Simplified Visual Component */}
+                <div className="relative perspective-1000">
+                    {/* Main Mockup */}
+                    <div className="relative z-10 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl overflow-hidden group">
+                        {/* Browser-like Header */}
+                        <div className="h-10 bg-white/5 border-b border-white/5 flex items-center px-4 gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                            <div className="ml-4 flex-1 h-5 bg-black/20 rounded-md max-w-[200px]" />
                         </div>
 
-                        {/* Central Artwork (Floating) */}
-                        <div className="flex-1 relative rounded-2xl overflow-hidden border border-white/5 group-hover:border-[#FF6B35]/30 transition-colors mx-2 mb-2">
-                             <img 
+                        {/* Content */}
+                        <div className="relative aspect-[4/3] bg-black">
+                            <img 
                                 src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=1974&auto=format&fit=crop" 
-                                className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700 ease-out opacity-60 group-hover:opacity-100"
-                                alt="AI Artwork"
+                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105"
+                                alt="AI Generation"
                             />
                             
-                            {/* Scanning Effect Overlay */}
-                            <motion.div 
-                                className="absolute inset-0 bg-gradient-to-b from-transparent via-[#FF6B35]/20 to-transparent w-full h-[20%] blur-xl"
-                                animate={{ top: ["-20%", "120%"] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                            />
-
-                            {/* Floating UI Elements on top of image */}
-                            <motion.div 
-                                className="absolute bottom-6 left-6 right-6"
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.5 }}
-                            >
-                                <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center shadow-lg shadow-orange-500/20">
-                                        <Wand2 className="w-5 h-5 text-white" />
+                            {/* Minimal Prompt Overlay */}
+                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm">
+                                <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-full p-2 pl-4 flex items-center gap-3 shadow-2xl">
+                                    <div className="w-1.5 h-4 bg-[#FF6B35] animate-pulse rounded-full" />
+                                    <span className="text-sm text-white/90 font-medium truncate">A futuristic glass city...</span>
+                                    <div className="ml-auto w-8 h-8 rounded-full bg-[#FF6B35] flex items-center justify-center">
+                                        <Wand2 className="w-4 h-4 text-white" />
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-xs text-[#FF6B35] font-medium mb-0.5">Prompt</div>
-                                        <div className="text-sm text-white truncate">"A futuristic glass city in the clouds..."</div>
-                                    </div>
-                                    <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-[#FF6B35] animate-spin" />
                                 </div>
-                            </motion.div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Floating Elements (Parallax) */}
-                    
-                    {/* Top Right Floating Badge */}
-                    <motion.div 
-                        className="absolute -top-6 -right-6 z-20 bg-[#1a1a1a] border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-xl"
-                        animate={{ y: [-10, 10, -10] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                        <div className="flex flex-col items-center gap-2">
-                            <ImageIcon className="w-6 h-6 text-[#FF6B35]" />
-                            <div className="text-xs font-bold text-white">4K Ready</div>
-                        </div>
-                    </motion.div>
-
-                    {/* Bottom Left Floating Palette */}
-                    <motion.div 
-                        className="absolute -bottom-8 -left-8 z-20 bg-[#1a1a1a]/90 border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-xl"
-                        animate={{ y: [10, -10, 10] }}
-                        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    >
-                        <div className="flex items-center gap-3 mb-2">
-                            <Sparkles className="w-4 h-4 text-yellow-400" />
-                            <span className="text-xs font-bold text-white">Styles</span>
-                        </div>
-                        <div className="flex gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 border border-white/20" />
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 border border-white/20" />
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 border border-white/20" />
-                        </div>
-                    </motion.div>
-
-                    {/* Decorative blurred blobs behind */}
-                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-[#FF6B35]/10 to-[#FFB800]/10 blur-[100px] -z-10" />
+                    {/* Subtle Glow Behind */}
+                    <div className="absolute -inset-4 bg-gradient-to-r from-[#FF6B35] to-[#FFB800] opacity-20 blur-3xl -z-10 rounded-full" />
                 </div>
             </motion.div>
           </div>
