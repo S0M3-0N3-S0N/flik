@@ -80,6 +80,8 @@ export default function Generate() {
       
       const llmAnalysis = await base44.integrations.Core.InvokeLLM({
         prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
+        
+        ${uploadedImages.length > 0 ? "IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates strongly to them, while applying the user's text prompt as a modification or style." : ""}
 
         CRITICAL RULES:
         1. DEFAULT to generating EXACTLY ONE prompt. 
@@ -93,6 +95,7 @@ export default function Generate() {
         ${selectedStyleObj ? `4. Apply the requested style strictly: ${selectedStyleObj.label} (${selectedStyleObj.prompt}).` : ''}
 
         Return JSON format: { "prompts": ["enhanced prompt 1", ...] }`,
+        file_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined,
         response_json_schema: {
           type: "object",
           properties: {
