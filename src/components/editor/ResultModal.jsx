@@ -126,8 +126,8 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                  </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full h-full max-w-7xl mx-auto overflow-y-auto">
-                <div className="relative flex flex-col h-full min-h-[300px] bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full h-full max-w-7xl mx-auto overflow-y-auto p-1">
+                <div className="relative flex flex-col h-[300px] md:h-full min-h-[300px] bg-white/5 rounded-2xl border border-white/10 overflow-hidden shrink-0">
                   <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-medium text-white/80 border border-white/10">
                     Original
                   </div>
@@ -138,19 +138,19 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                       className="w-full h-full object-contain"
                       style={transformStyle}
                     />
-                    </div>
-                    </div>
-                    <div className="relative flex flex-col h-full bg-white/5 rounded-2xl border border-[#FF6B35]/30 overflow-hidden">
-                    <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-[#FF6B35]/80 backdrop-blur-md rounded-full text-xs font-medium text-white border border-white/10">
+                  </div>
+                </div>
+                <div className="relative flex flex-col h-[300px] md:h-full min-h-[300px] bg-white/5 rounded-2xl border border-[#FF6B35]/30 overflow-hidden shrink-0">
+                  <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-[#FF6B35]/80 backdrop-blur-md rounded-full text-xs font-medium text-white border border-white/10">
                     Enhanced
-                    </div>
-                    <div className="flex-1 p-4 flex items-center justify-center">
-                      <img
-                        src={resultImage}
-                        alt="Result"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
+                  </div>
+                  <div className="flex-1 p-4 flex items-center justify-center">
+                    <img
+                      src={resultImage}
+                      alt="Result"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                 </div>
               </div>
             )}
