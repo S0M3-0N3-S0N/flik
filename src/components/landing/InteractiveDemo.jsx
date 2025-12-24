@@ -42,6 +42,16 @@ export default function InteractiveDemo() {
                 </div>
               ))}
             </div>
+            
+            <div className="mt-8">
+              <Button 
+                onClick={() => base44.auth.redirectToLogin(createPageUrl("Generate"))}
+                className="h-12 px-6 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/5 transition-all"
+              >
+                <Wand2 className="w-4 h-4 mr-2" />
+                Try ControlNet
+              </Button>
+            </div>
           </div>
 
           <div 

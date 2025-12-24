@@ -25,6 +25,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={`min-h-screen bg-[#0A0A0A] text-white transition-all duration-300 ${!isDarkMode ? 'light-mode-theme' : ''}`}>
       <style>{`
+        html { scroll-behavior: smooth; }
         .light-mode-theme {
           filter: invert(1) hue-rotate(180deg);
         }

@@ -1,5 +1,7 @@
 import React from "react";
 import { Github, Twitter, Instagram, Linkedin, ArrowUp } from "lucide-react";
+import { createPageUrl } from "../../utils";
+import { base44 } from "@/api/base44Client";
 
 export default function Footer() {
   const scrollToTop = () => {
