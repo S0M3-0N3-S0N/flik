@@ -15,7 +15,7 @@ import ImageGrid from "@/components/generate/ImageGrid";
 
 export default function Generate() {
   const [prompt, setPrompt] = useState("");
-  const [selectedStyle, setSelectedStyle] = useState(null);
+  const [selectedStyles, setSelectedStyles] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
@@ -75,8 +75,10 @@ export default function Generate() {
     try {
       // Step 1: Analyze prompt for multiplicity and enhancement
       let promptsToGenerate = [];
-      const selectedStyleObj = selectedStyle ? stylePresets.find(s => s.id === selectedStyle) : null;
-      const styleInstruction = selectedStyleObj ? selectedStyleObj.prompt : "";
+      
+      const selectedStyleObjects = selectedStyles.map(id => stylePresets.find(s => s.id === id)).filter(Boolean);
+      const styleInstruction = selectedStyleObjects.map(s => s.prompt).join(", ");
+      const styleLabels = selectedStyleObjects.map(s => s.label).join(" + ");
       
       const llmAnalysis = await base44.integrations.Core.InvokeLLM({
         prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
@@ -93,7 +95,7 @@ export default function Generate() {
         1. Greatly improve the prompt quality. Add professional details: lighting (e.g., volumetric, cinematic, studio), camera parameters (e.g., 85mm, f/1.8, 4k, 8k), composition, and textures.
         2. Make it a masterpiece.
         3. Maintain the user's original core subject and intent perfectly.
-        ${selectedStyleObj ? `4. Apply the requested style strictly: ${selectedStyleObj.label} (${selectedStyleObj.prompt}).` : ''}
+        ${selectedStyleObjects.length > 0 ? `4. Apply the requested style blend strictly: ${styleLabels} (${styleInstruction}). Blend these styles harmoniously.` : ''}
 
         Return JSON format: { "prompts": ["enhanced prompt 1", ...] }`,
         file_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined,
@@ -115,7 +117,7 @@ export default function Generate() {
       // Step 2: Generate all images
       const promises = promptsToGenerate.map(async (finalPrompt) => {
         try {
-          let fullPrompt = selectedStyleObj 
+          let fullPrompt = selectedStyleObjects.length > 0
             ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
             : `${finalPrompt}, masterpiece, high quality, detailed`;
           
@@ -141,7 +143,7 @@ export default function Generate() {
             thumbnail_url: imageResult.url,
             prompt: prompt,
             metadata: { 
-              style: selectedStyle, 
+              style: selectedStyles, 
               model: aiModel, 
               enhancedPrompt: finalPrompt, 
               batchSize: promptsToGenerate.length,
@@ -156,7 +158,7 @@ export default function Generate() {
             url: imageResult.url,
             prompt: prompt,
             enhancedPrompt: finalPrompt,
-            style: selectedStyle,
+            style: selectedStyles,
             model: aiModel,
             timestamp: new Date().toISOString()
           };
@@ -182,11 +184,9 @@ export default function Generate() {
       }
       
       setPrompt("");
-      // Don't clear uploads automatically for workflow continuity? 
-      // User might want to generate again with same images.
-      // But usually reset is cleaner. Let's keep uploads but clear style?
-      // Let's clear style but keep uploads as they take time to upload.
-      setSelectedStyle(null);
+      // Don't clear uploads automatically for workflow continuity
+      // But clearing styles is usually better for new starts
+      setSelectedStyles([]);
     } catch (err) {
       console.error("Error generating image:", err);
       setError("Failed to generate. " + (err.message || "Please try again."));
@@ -438,7 +438,7 @@ export default function Generate() {
                 messages={chatMessages}
                 setMessages={setChatMessages}
                 currentPrompt={prompt}
-                currentStyle={stylePresets.find(s => s.id === selectedStyle)?.label}
+                currentStyle={selectedStyles.map(id => stylePresets.find(s => s.id === id)?.label).join(", ")}
                 currentImages={uploadedImages}
                 onApplyPrompt={(text) => {
                   setPrompt(text);
@@ -446,9 +446,9 @@ export default function Generate() {
               />
 
             <StyleSelector 
-              selectedStyle={selectedStyle} 
-              onSelect={setSelectedStyle} 
-              onClear={() => setSelectedStyle(null)} 
+              selectedStyles={selectedStyles} 
+              onSelect={setSelectedStyles} 
+              onClear={() => setSelectedStyles([])} 
             />
 
             {error && (

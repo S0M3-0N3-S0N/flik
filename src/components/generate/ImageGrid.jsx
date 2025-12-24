@@ -125,10 +125,18 @@ export default function ImageGrid({
                     </p>
                   )}
                   {image.style && (
-                    <div className="mb-3">
-                      <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
-                        {stylePresets.find(s => s.id === image.style)?.label}
-                      </span>
+                    <div className="mb-3 flex flex-wrap gap-1">
+                      {Array.isArray(image.style) ? (
+                        image.style.map(sId => (
+                          <span key={sId} className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
+                            {stylePresets.find(s => s.id === sId)?.label}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">
+                          {stylePresets.find(s => s.id === image.style)?.label}
+                        </span>
+                      )}
                     </div>
                   )}
                   <div className="flex items-center gap-2">
