@@ -94,7 +94,8 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                 <div 
                   className="absolute inset-0 flex items-center justify-center pointer-events-none"
                   style={{ 
-                    clipPath: `inset(0 ${100 - sliderPos}% 0 0)` 
+                    clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
+                    WebkitClipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`
                   }}
                 >
                   <img
