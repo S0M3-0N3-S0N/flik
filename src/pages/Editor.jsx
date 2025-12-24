@@ -1263,7 +1263,7 @@ export default function Editor() {
           </AnimatePresence>
 
           {batchImages.length > 0 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-2xl p-2 flex items-center gap-2 max-w-[80%] overflow-x-auto shadow-2xl z-20">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-2xl p-2 flex items-center gap-2 max-w-[80%] overflow-x-auto shadow-2xl z-20 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {batchImages.map((img, idx) => (
                 <div 
                   key={img.id}
