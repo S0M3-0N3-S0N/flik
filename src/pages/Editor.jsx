@@ -19,6 +19,7 @@ export default function Editor() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
   const [resultImage, setResultImage] = useState(null);
+  const [processedImage, setProcessedImage] = useState(null);
   const [showResult, setShowResult] = useState(false);
   
   const [adjustments, setAdjustments] = useState({
@@ -260,6 +261,9 @@ export default function Editor() {
     try {
       // Bake current edits into a new image for the AI
       const blob = await getProcessedImageBlob();
+      const processedUrl = URL.createObjectURL(blob);
+      setProcessedImage(processedUrl);
+      
       const file = new File([blob], "processed_input.png", { type: "image/png" });
       
       const uploadResult = await base44.integrations.Core.UploadFile({
@@ -307,6 +311,18 @@ export default function Editor() {
     }
     setShowResult(false);
     setResultImage(null);
+    if (processedImage) {
+      URL.revokeObjectURL(processedImage);
+      setProcessedImage(null);
+    }
+  };
+
+  const handleCloseResult = () => {
+    setShowResult(false);
+    if (processedImage) {
+      URL.revokeObjectURL(processedImage);
+      setProcessedImage(null);
+    }
   };
 
   const [redoHistory, setRedoHistory] = useState([]);
@@ -1283,12 +1299,12 @@ export default function Editor() {
       
       <ResultModal
         isOpen={showResult}
-        onClose={() => setShowResult(false)}
-        originalImage={currentImage}
+        onClose={handleCloseResult}
+        originalImage={processedImage || currentImage}
         resultImage={resultImage}
         onApply={handleApplyResult}
         onDownload={handleDownload}
-        transform={transform}
+        transform={processedImage ? undefined : transform}
       />
     </div>
   );
