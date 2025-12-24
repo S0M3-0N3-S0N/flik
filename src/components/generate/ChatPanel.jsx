@@ -62,24 +62,44 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
 
     try {
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a creative AI art assistant. The user is talking to you about image generation.
+        prompt: `You are a creative AI art assistant named FLIK. The user is talking to you about image generation.
+        
+        CONTEXT:
+        - Current Prompt in Editor: "${currentPrompt || '(empty)'}"
+        - Current Style Selected: "${currentStyle || 'None'}"
+        - Context Images (Main Editor): ${currentImages?.length || 0} images attached.
         
         Current conversation history:
         ${messages.map(m => `${m.role}: ${m.content} ${m.images?.length ? `[${m.images.length} Images Attached]` : ''}`).join('\n')}
         
         User input: ${currentInput}
-        ${currentImages.length > 0 ? `User also uploaded ${currentImages.length} image(s) for analysis/reference.` : ''}
+        ${currentImages.length > 0 ? `User also uploaded ${currentImages.length} image(s) within chat for analysis/reference.` : ''}
 
-        If the user uploaded images, analyze them visually if possible, or assume the user wants suggestions based on them.
-        Provide tailored suggestions, refinements, or improvements based on their input and images.
-        
-        If the user is explicitly asking to generate an image, suggest a detailed prompt.
-        Be helpful, creative, and concise.`,
+        INSTRUCTIONS:
+        1. Analyze the user's request, the current prompt context, and any images.
+        2. Provide helpful, creative, and concise advice or answers.
+        3. If the user asks to improve the prompt, generate ideas, or create something, provide a 'suggested_prompt' field in the JSON response.
+        4. If the user asks for general info, just answer in 'message'.
+        5. Use Markdown for the 'message' field (bold, lists, etc.).
+
+        Output JSON format: { "message": "your helpful response...", "suggested_prompt": "optional optimized prompt string if relevant" }`,
         file_urls: currentImages.length > 0 ? currentImages.map(img => img.url) : undefined,
-        response_json_schema: null
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            message: { type: "string" },
+            suggested_prompt: { type: "string" }
+          },
+          required: ["message"]
+        }
       });
 
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: response.message, 
+        suggested_prompt: response.suggested_prompt 
+      }]);
     } catch (error) {
       console.error("Chat error:", error);
       setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now." }]);
