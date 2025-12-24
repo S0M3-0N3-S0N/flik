@@ -457,10 +457,21 @@ export default function Editor() {
   const getRelativePosition = (e) => {
     if (!imageRef.current) return null;
     const rect = imageRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    if (x < 0 || x > 100 || y < 0 || y > 100) return null;
-    return { x, y };
+    
+    // Handle both mouse and touch events
+    const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+    
+    if (clientX === undefined || clientY === undefined) return null;
+
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    
+    // Allow some tolerance for touch interactions near the edge
+    const tolerance = 5; 
+    if (x < -tolerance || x > 100 + tolerance || y < -tolerance || y > 100 + tolerance) return null;
+    
+    return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
   };
 
   const handleMouseDown = (e) => {
@@ -498,16 +509,24 @@ export default function Editor() {
   };
 
   const handleMouseMove = (e) => {
-    if (activeTab === "remove" && cursorRef.current && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      cursorRef.current.style.left = `${x}px`;
-      cursorRef.current.style.top = `${y}px`;
-      cursorRef.current.style.display = 'block';
-    }
+  // Prevent default touch actions (scrolling) if we are interacting
+  if (e.cancelable && (isDrawing || isDragging)) {
+  e.preventDefault();
+  }
 
-    if (activeTab === "remove" && isDrawing && currentImage) {
+  const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+
+  if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
+  const rect = containerRef.current.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  cursorRef.current.style.left = `${x}px`;
+  cursorRef.current.style.top = `${y}px`;
+  cursorRef.current.style.display = 'block';
+  }
+
+  if (activeTab === "remove" && isDrawing && currentImage) {
       const pos = getRelativePosition(e);
       if (pos && brushStrokes.length > 0) {
         const newStrokes = [...brushStrokes];
@@ -1130,6 +1149,10 @@ export default function Editor() {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handleMouseDown}
+          onTouchMove={handleMouseMove}
+          onTouchEnd={handleMouseUp}
+          style={{ touchAction: (activeTab === 'remove' || (activeTab === 'crop' && isCropping)) ? 'none' : 'auto' }}
         >
           {activeTab === "remove" && (
             <div
