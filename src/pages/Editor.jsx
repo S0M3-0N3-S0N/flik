@@ -770,8 +770,6 @@ export default function Editor() {
     setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     
     try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.src = currentImage.preview || currentImage.url;
@@ -780,33 +778,37 @@ export default function Editor() {
         img.onload = resolve;
       });
 
-      // Calculate visual dimensions based on rotation
+      // 1. Setup dimensions for the "Visual" image (baked transforms)
       const isRotated90 = Math.abs(transform.rotate) === 90 || Math.abs(transform.rotate) === 270;
       const visualWidth = isRotated90 ? img.height : img.width;
       const visualHeight = isRotated90 ? img.width : img.height;
 
-      // Calculate crop coordinates in visual space
+      // 2. Bake transforms into a temporary canvas
+      const bakeCanvas = document.createElement('canvas');
+      bakeCanvas.width = visualWidth;
+      bakeCanvas.height = visualHeight;
+      const bCtx = bakeCanvas.getContext('2d');
+      
+      bCtx.translate(visualWidth / 2, visualHeight / 2);
+      bCtx.rotate((transform.rotate * Math.PI) / 180);
+      bCtx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
+      bCtx.drawImage(img, -img.width / 2, -img.height / 2);
+
+      // 3. Calculate crop coordinates on the baked canvas
       const cropX = Math.max(0, Math.min((cropArea.x / 100) * visualWidth, visualWidth));
       const cropY = Math.max(0, Math.min((cropArea.y / 100) * visualHeight, visualHeight));
       const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * visualWidth, visualWidth - cropX));
       const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * visualHeight, visualHeight - cropY));
 
-      canvas.width = cropWidth;
-      canvas.height = cropHeight;
-
-      // Move context to negative crop coordinates (shifting the image)
-      // + Add logic to center/rotate the image into place
-      ctx.translate(-cropX, -cropY);
+      // 4. Draw the cropped region to the final canvas
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = cropWidth;
+      finalCanvas.height = cropHeight;
+      const fCtx = finalCanvas.getContext('2d');
       
-      // Standard transform logic to place the image into the virtual visual space
-      ctx.translate(visualWidth / 2, visualHeight / 2);
-      ctx.rotate((transform.rotate * Math.PI) / 180);
-      ctx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
-      
-      // Draw image centered in the transformed coordinate system
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      fCtx.drawImage(bakeCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
-      canvas.toBlob((blob) => {
+      finalCanvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         setCurrentImage({
           ...currentImage,
