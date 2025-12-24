@@ -265,16 +265,13 @@ export default function Gallery() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`group relative md:aspect-square h-auto rounded-2xl overflow-hidden bg-[#141414] border transition-all duration-300 hover:shadow-2xl hover:shadow-[#FF6B35]/10 flex flex-col md:block ${
+                  className={`group relative aspect-square rounded-2xl overflow-hidden bg-[#141414] border transition-all duration-300 hover:shadow-2xl hover:shadow-[#FF6B35]/10 ${
                     selectedItems.includes(item.id) 
                       ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/20' 
                       : 'border-white/10 hover:border-white/20'
                   }`}
                   onClick={(e) => {
                     if (window.innerWidth < 768) {
-                        // On mobile, click triggers selection toggle to avoid confusion with overlay
-                        // or we can let it open details, but maybe toggle select is safer?
-                        // Let's stick to opening details, but buttons need to stop propagation.
                         setSelectedItem(item);
                     } else {
                         if (e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -285,7 +282,7 @@ export default function Gallery() {
                     }
                   }}
                 >
-                  <div className="aspect-square w-full relative md:h-full">
+                  <div className="w-full h-full relative">
                     {item.thumbnail_url || item.url ? (
                         <img
                         src={item.thumbnail_url || item.url}
@@ -323,8 +320,8 @@ export default function Gallery() {
                     </div>
                   </div>
 
-                  <div className="md:absolute md:inset-0 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-transparent md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-4 bg-[#1a1a1a] md:bg-transparent">
-                    <div className="hidden md:flex justify-end gap-2 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent md:via-black/20 md:from-black/80 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-3 md:p-4 pointer-events-none md:pointer-events-auto">
+                    <div className="hidden md:flex justify-end gap-2 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75 pointer-events-auto">
                       <Button
                         size="icon"
                         variant="ghost"
@@ -348,20 +345,20 @@ export default function Gallery() {
                       </Button>
                     </div>
 
-                    <div className="md:translate-y-[10px] md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-100">
-                      <h3 className="font-medium text-white text-sm line-clamp-1 mb-1 drop-shadow-md">
+                    <div className="md:translate-y-[10px] md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-100 w-full pointer-events-auto">
+                      <h3 className="font-medium text-white text-sm line-clamp-1 mb-0.5 drop-shadow-md">
                         {item.title || 'Untitled'}
                       </h3>
-                      <p className="text-xs text-white/70 line-clamp-1 mb-3 drop-shadow-md">
+                      <p className="text-[10px] text-white/70 line-clamp-1 mb-2 drop-shadow-md">
                         {item.prompt}
                       </p>
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2">
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                           }}
-                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs h-9 backdrop-blur-md"
+                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs h-8 backdrop-blur-md"
                         >
                           <Edit className="w-3 h-3 mr-1.5" />
                           Edit
@@ -371,7 +368,7 @@ export default function Gallery() {
                             e.stopPropagation();
                             navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
                           }}
-                          className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-xs h-9 backdrop-blur-md"
+                          className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-xs h-8 backdrop-blur-md"
                         >
                           <Wand2 className="w-3 h-3 mr-1.5" />
                           Remix
