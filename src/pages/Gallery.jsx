@@ -355,23 +355,25 @@ export default function Gallery() {
                       <p className="text-xs text-white/70 line-clamp-1 mb-3 drop-shadow-md">
                         {item.prompt}
                       </p>
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2 mt-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                         <Button
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                           }}
-                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs h-9 backdrop-blur-md"
+                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 h-8 text-[10px] sm:text-xs backdrop-blur-md px-2"
                         >
                           <Edit className="w-3 h-3 mr-1.5" />
                           Edit
                         </Button>
                         <Button
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
                           }}
-                          className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-xs h-9 backdrop-blur-md"
+                          className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 h-8 text-[10px] sm:text-xs backdrop-blur-md px-2"
                         >
                           <Wand2 className="w-3 h-3 mr-1.5" />
                           Remix
