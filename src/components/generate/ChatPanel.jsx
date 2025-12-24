@@ -84,7 +84,7 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
 
         Output JSON format: { "message": "your helpful response...", "suggested_prompt": "optional optimized prompt string if relevant" }`,
         file_urls: currentImages.length > 0 ? currentImages.map(img => img.url) : undefined,
-        add_context_from_internet: true,
+        add_context_from_internet: false,
         response_json_schema: {
           type: "object",
           properties: {
