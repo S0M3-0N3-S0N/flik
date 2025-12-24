@@ -23,10 +23,10 @@ export default function TransformPanel({ onTransform }) {
           <Button
             onClick={() => onTransform(transform.id)}
             variant="outline"
-            className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border-white/10 text-white"
+            className="w-full h-16 sm:h-24 flex flex-col items-center justify-center gap-1 sm:gap-2 bg-white/5 hover:bg-white/10 border-white/10 text-white"
           >
-            <transform.icon className="w-6 h-6 text-[#FF6B35]" />
-            <span className="text-xs">{transform.label}</span>
+            <transform.icon className="w-4 h-4 sm:w-6 sm:h-6 text-[#FF6B35]" />
+            <span className="text-[10px] sm:text-xs">{transform.label}</span>
           </Button>
         </motion.div>
       ))}

@@ -19,8 +19,8 @@ const filters = [
 
 export default function FiltersPanel({ selectedFilter, onFilterSelect, previewImage }) {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+    <div className="space-y-4 px-1">
+      <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3">
         {filters.map((filter, index) => (
           <motion.button
             key={filter.id}
@@ -45,8 +45,8 @@ export default function FiltersPanel({ selectedFilter, onFilterSelect, previewIm
             />
             
             {/* Overlay */}
-            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-end p-2">
-              <span className="text-white text-xs font-medium">{filter.name}</span>
+            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-end p-1.5 sm:p-2">
+              <span className="text-white text-[10px] sm:text-xs font-medium truncate w-full">{filter.name}</span>
             </div>
             
             {/* Selected indicator */}

@@ -71,16 +71,16 @@ export default function ImageUploader({ onImageSelect, currentImage }) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full h-full flex items-center justify-center p-8"
+      className="w-full h-full flex items-center justify-center p-4 sm:p-8"
     >
       <label
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative w-full max-w-2xl aspect-video cursor-pointer
-          rounded-3xl border-2 border-dashed transition-all duration-300
-          flex flex-col items-center justify-center gap-6
+          relative w-full max-w-2xl aspect-square sm:aspect-video cursor-pointer
+          rounded-2xl sm:rounded-3xl border-2 border-dashed transition-all duration-300
+          flex flex-col items-center justify-center gap-4 sm:gap-6
           ${isDragging 
             ? "border-[#FF6B35] bg-[#FF6B35]/10" 
             : "border-white/20 hover:border-white/40 bg-white/5"

@@ -19,18 +19,18 @@ export default function AdjustmentsPanel({ adjustments, onChange }) {
   ];
 
   return (
-    <div className="space-y-6 py-4">
+    <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
       {controls.map((control, index) => (
         <motion.div
           key={control.key}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: index * 0.05 }}
-          className="space-y-2"
+          className="space-y-1 sm:space-y-2"
         >
           <div className="flex items-center justify-between">
-            <Label className="text-white/80 text-sm">{control.label}</Label>
-            <span className="text-xs text-white/50 w-12 text-right">
+            <Label className="text-white/80 text-xs sm:text-sm">{control.label}</Label>
+            <span className="text-[10px] sm:text-xs text-white/50 w-12 text-right">
               {adjustments[control.key] || 0}
             </span>
           </div>

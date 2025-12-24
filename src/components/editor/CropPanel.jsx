@@ -10,19 +10,22 @@ export default function CropPanel({ onStartCrop, onApplyCrop, onCancelCrop, isCr
       animate={{ opacity: 1 }}
       className="space-y-4"
     >
-      <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+      <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
-            <Crop className="w-5 h-5 text-[#FF6B35]" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
+            <Crop className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
           </div>
           <div className="flex-1">
-            <h4 className="text-white font-medium text-sm mb-2">How to Crop</h4>
-            <ol className="text-xs text-white/60 space-y-1">
-              <li>1. Click "Start Cropping" to begin</li>
-              <li>2. Drag corners to resize crop area</li>
-              <li>3. Drag center to move crop position</li>
-              <li>4. Click "Apply" to crop the image</li>
-            </ol>
+            <h4 className="text-white font-medium text-sm mb-1 sm:mb-2">How to Crop</h4>
+            <div className="text-[10px] sm:text-xs text-white/60 space-y-1 hidden sm:block">
+              <p>1. Click "Start Cropping" to begin</p>
+              <p>2. Drag corners to resize crop area</p>
+              <p>3. Drag center to move crop position</p>
+              <p>4. Click "Apply" to crop the image</p>
+            </div>
+            <p className="text-[10px] text-white/60 sm:hidden">
+              Use drag handles to resize and move crop area.
+            </p>
           </div>
         </div>
       </div>
