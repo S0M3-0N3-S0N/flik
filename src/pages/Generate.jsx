@@ -437,9 +437,11 @@ export default function Generate() {
                 onClose={() => setIsChatOpen(false)} 
                 messages={chatMessages}
                 setMessages={setChatMessages}
+                currentPrompt={prompt}
+                currentStyle={stylePresets.find(s => s.id === selectedStyle)?.label}
+                currentImages={uploadedImages}
                 onApplyPrompt={(text) => {
                   setPrompt(text);
-                  // Optionally close chat or give feedback
                 }}
               />
 
