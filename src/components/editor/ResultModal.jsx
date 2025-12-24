@@ -38,21 +38,23 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
               <div className="flex bg-white/5 rounded-lg p-1">
                 <button
                   onClick={() => setMode("compare")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
                     mode === "compare" ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
                   }`}
+                  title="Slider Comparison"
                 >
-                  <ScanEye className="w-3.5 h-3.5" />
-                  Slider
+                  <ScanEye className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">Slider</span>
                 </button>
                 <button
                   onClick={() => setMode("side")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
                     mode === "side" ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
                   }`}
+                  title="Side-by-Side Comparison"
                 >
-                  <Columns className="w-3.5 h-3.5" />
-                  Side-by-Side
+                  <Columns className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">Side-by-Side</span>
                 </button>
               </div>
             </div>
