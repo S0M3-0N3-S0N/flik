@@ -827,10 +827,10 @@ export default function Editor() {
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="order-2 lg:order-1 w-full lg:w-80 h-[45%] lg:h-auto border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]"
+        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
@@ -1046,48 +1046,50 @@ export default function Editor() {
         </Tabs>
       </motion.aside>
       
-      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[55%] lg:h-auto relative">
+      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="h-14 border-b border-white/5 flex items-center justify-between px-6 glass-card"
+          className="h-14 border-b border-white/5 flex items-center justify-between px-4 lg:px-6 glass-card flex-shrink-0"
         >
           <div className="flex items-center gap-2">
             {activeTab === "remove" && currentImage && (
-              <div className="text-sm text-white/60 bg-white/5 px-3 py-1 rounded-lg flex items-center gap-2">
+              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-                Drag to paint areas to remove
+                Drag to paint
               </div>
             )}
             {activeTab === "crop" && isCropping && (
-              <div className="text-sm text-white/60 bg-white/5 px-3 py-1 rounded-lg flex items-center gap-2">
+              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-                Drag corners to resize, center to move
+                Drag to crop
               </div>
             )}
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 lg:gap-3">
             <div className="flex items-center gap-1">
               <Button
                 onClick={handleUndo}
                 variant="ghost"
+                size="sm"
                 disabled={undoHistory.length === 0}
-                className="text-white hover:bg-white/10 disabled:opacity-30"
+                className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4"
                 title="Undo (Ctrl+Z)"
               >
-                <RotateCw className="w-4 h-4 mr-2" />
-                Undo
+                <RotateCw className="w-4 h-4 lg:mr-2" />
+                <span className="hidden lg:inline">Undo</span>
               </Button>
               <Button
                 onClick={handleRedo}
                 variant="ghost"
+                size="sm"
                 disabled={redoHistory.length === 0}
-                className="text-white hover:bg-white/10 disabled:opacity-30"
+                className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4"
                 title="Redo (Ctrl+Shift+Z)"
               >
-                <RotateCw className="w-4 h-4 mr-2 scale-x-[-1]" />
-                Redo
+                <RotateCw className="w-4 h-4 lg:mr-2 scale-x-[-1]" />
+                <span className="hidden lg:inline">Redo</span>
               </Button>
             </div>
             {currentImage && (
@@ -1126,18 +1128,18 @@ export default function Editor() {
                 className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20"
                 title="Save to Gallery"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Save
+                <Sparkles className="w-4 h-4 lg:mr-2" />
+                <span className="hidden lg:inline">Save</span>
               </Button>
             )}
             <Button
               disabled={!currentImage}
               onClick={handleDownload}
-              className="btn-gradient text-white text-sm disabled:opacity-30"
+              className="btn-gradient text-white text-sm disabled:opacity-30 px-3 lg:px-4"
               title="Download (Ctrl+S)"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Export
+              <Download className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Export</span>
             </Button>
           </div>
         </motion.div>

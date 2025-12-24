@@ -84,7 +84,7 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4 px-2">
             AI Tools
           </h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 md:grid-cols-2 gap-2 md:gap-3">
             {tools.map((tool, index) => (
               <Tooltip key={tool.id}>
                 <TooltipTrigger asChild>
@@ -95,7 +95,7 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
                     onClick={() => onToolSelect(tool)}
                     disabled={isProcessing || !hasImage}
                     className={`
-                      group relative p-4 rounded-xl text-left transition-all duration-300
+                      group relative p-2 md:p-4 rounded-xl text-left transition-all duration-300 flex flex-col items-center md:items-start
                       ${hasImage 
                         ? "bg-white/5 hover:bg-white/10 cursor-pointer" 
                         : "bg-white/[0.02] cursor-not-allowed opacity-50"
@@ -104,15 +104,15 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
                     `}
                   >
                     <div className={`
-                      w-10 h-10 rounded-lg flex items-center justify-center mb-3
+                      w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center mb-2 md:mb-3
                       ${hasImage 
                         ? "bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 group-hover:from-[#FF6B35]/30 group-hover:to-[#FFB800]/30" 
                         : "bg-white/5"
                       }
                     `}>
-                      <tool.icon className={`w-5 h-5 ${hasImage ? "text-[#FF6B35]" : "text-white/30"}`} />
+                      <tool.icon className={`w-4 h-4 md:w-5 md:h-5 ${hasImage ? "text-[#FF6B35]" : "text-white/30"}`} />
                     </div>
-                    <p className={`text-sm font-medium ${hasImage ? "text-white" : "text-white/40"}`}>
+                    <p className={`text-xs md:text-sm font-medium text-center md:text-left ${hasImage ? "text-white" : "text-white/40"}`}>
                       {tool.label}
                     </p>
                     
