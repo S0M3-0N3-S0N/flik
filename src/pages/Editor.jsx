@@ -503,6 +503,8 @@ export default function Editor() {
           preview: url,
           name: "transformed.png"
         });
+        setTransform({ rotate: 0, flipH: false, flipV: false });
+        setBrushStrokes([]);
         setIsProcessing(false);
       }, 'image/png');
     } catch (error) {
