@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { base44 } from "@/api/base44Client";
 
 export default function Layout({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -113,75 +112,51 @@ export default function Layout({ children, currentPageName }) {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to={createPageUrl("LandingPage")} className="flex items-center gap-3">
+          <Link to={createPageUrl("Editor")} className="flex items-center gap-3">
             <span className="text-2xl font-bold gradient-text">FLIK</span>
           </Link>
           
-          {currentPageName === "LandingPage" ? (
-             <nav className="hidden md:flex items-center gap-8">
-               <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-white/60 hover:text-white transition-colors">Features</button>
-               <button onClick={() => document.getElementById('cta')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-white/60 hover:text-white transition-colors">Get Started</button>
-             </nav>
-          ) : (
-            <nav className="hidden md:flex items-center gap-8">
-              <Link 
-                to={createPageUrl("Editor")} 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Editor" ? "text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Image className="w-4 h-4" />
-                Photo Studio
-              </Link>
+          <nav className="hidden md:flex items-center gap-8">
+            <Link 
+              to={createPageUrl("Editor")} 
+              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                currentPageName === "Editor" ? "text-white" : "text-white/60 hover:text-white"
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              Photo Studio
+            </Link>
 
-              <Link 
-                to={createPageUrl("Generate")} 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Generate" ? "text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Wand2 className="w-4 h-4" />
-                Imagine AI
+            <Link 
+              to={createPageUrl("Generate")} 
+              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                currentPageName === "Generate" ? "text-white" : "text-white/60 hover:text-white"
+              }`}
+            >
+              <Wand2 className="w-4 h-4" />
+              Imagine AI
               </Link>
-              <Link 
-                to={createPageUrl("Gallery")} 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Gallery" ? "text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Sparkles className="w-4 h-4" />
-                My Creations
-              </Link>
-            </nav>
-          )}
+            <Link 
+              to={createPageUrl("Gallery")} 
+              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                currentPageName === "Gallery" ? "text-white" : "text-white/60 hover:text-white"
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              My Creations
+            </Link>
+          </nav>
           
           <div className="flex items-center gap-4">
-            {currentPageName === "LandingPage" ? (
-              <div className="hidden md:flex items-center gap-4">
-                <button 
-                  onClick={() => base44.auth.redirectToLogin()}
-                  className="text-sm font-medium text-white hover:text-white/80 transition-colors"
-                >
-                  Sign In
-                </button>
-                <button 
-                  onClick={() => base44.auth.redirectToLogin(createPageUrl("Generate"))}
-                  className="btn-gradient px-4 py-2 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
-                >
-                  Sign Up
-                </button>
-              </div>
-            ) : (
-              <Link 
-                to={createPageUrl("Profile")}
-                className={`hidden md:flex p-2 rounded-full transition-colors border border-white/5 ${
-                  currentPageName === "Profile" ? "bg-white/20 text-white" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-                }`}
-                title="My Profile"
-              >
-                <User className="w-5 h-5" />
-              </Link>
-            )}
+            <Link 
+              to={createPageUrl("Profile")}
+              className={`hidden md:flex p-2 rounded-full transition-colors border border-white/5 ${
+                currentPageName === "Profile" ? "bg-white/20 text-white" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+              }`}
+              title="My Profile"
+            >
+              <User className="w-5 h-5" />
+            </Link>
 
             <button
               onClick={toggleTheme}
@@ -220,74 +195,49 @@ export default function Layout({ children, currentPageName }) {
               className="md:hidden border-t border-white/5 bg-[#0A0A0A]/95 backdrop-blur-xl overflow-hidden"
             >
               <nav className="flex flex-col p-4 gap-2">
-                {currentPageName === "LandingPage" ? (
-                  <>
-                    <button 
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        base44.auth.redirectToLogin();
-                      }}
-                      className="flex items-center gap-3 p-3 rounded-xl transition-colors text-white/60 hover:bg-white/5 hover:text-white text-left"
-                    >
-                      Sign In
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        base44.auth.redirectToLogin(createPageUrl("Generate"));
-                      }}
-                      className="flex items-center gap-3 p-3 rounded-xl transition-colors bg-white/10 text-white text-left"
-                    >
-                      Sign Up
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link 
-                      to={createPageUrl("Editor")} 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                        currentPageName === "Editor" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <Image className="w-5 h-5" />
-                      Photo Studio
-                    </Link>
+                <Link 
+                  to={createPageUrl("Editor")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "Editor" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Image className="w-5 h-5" />
+                  Photo Studio
+                </Link>
 
-                    <Link 
-                      to={createPageUrl("Generate")} 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                        currentPageName === "Generate" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <Wand2 className="w-5 h-5" />
-                      Imagine AI
-                    </Link>
+                <Link 
+                  to={createPageUrl("Generate")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "Generate" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Wand2 className="w-5 h-5" />
+                  Imagine AI
+                </Link>
 
-                    <Link 
-                      to={createPageUrl("Gallery")} 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                        currentPageName === "Gallery" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <Sparkles className="w-5 h-5" />
-                      My Creations
-                    </Link>
+                <Link 
+                  to={createPageUrl("Gallery")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "Gallery" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Sparkles className="w-5 h-5" />
+                  My Creations
+                </Link>
 
-                    <Link 
-                      to={createPageUrl("Profile")} 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                        currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <User className="w-5 h-5" />
-                      My Profile
-                    </Link>
-                  </>
-                )}
+                <Link 
+                  to={createPageUrl("Profile")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  My Profile
+                </Link>
               </nav>
             </motion.div>
           )}
