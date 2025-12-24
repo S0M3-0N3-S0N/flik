@@ -200,7 +200,7 @@ export default function Generate() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <section className="relative py-20 px-6 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <motion.div 
