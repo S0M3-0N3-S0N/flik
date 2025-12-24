@@ -85,89 +85,93 @@ export default function Hero() {
                 <div className="absolute top-10 -right-10 w-40 h-40 bg-[#FF6B35] rounded-full blur-[80px] opacity-40 animate-pulse-glow" />
                 <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#FFB800] rounded-full blur-[80px] opacity-40 animate-pulse-glow" style={{ animationDelay: '1s' }} />
 
-                {/* Main Card */}
-                <div className="bg-[#141414]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800]" />
-                    
-                    {/* Header of the mock app */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white">
-                                <Sparkles className="w-5 h-5" />
+                {/* Main Visual Composition */}
+                <div className="relative group perspective-1000">
+                    {/* Layer 1: Base Dark Panel */}
+                    <div className="bg-[#141414]/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-4 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] transform rotate-y-6 rotate-x-2 transition-transform duration-500 hover:rotate-y-0 hover:rotate-x-0 relative z-10 overflow-hidden h-[500px] w-full flex flex-col">
+                        
+                        {/* Top Bar */}
+                        <div className="flex items-center justify-between px-4 py-2 mb-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50" />
+                                <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50" />
+                                <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50" />
                             </div>
-                            <div>
-                                <div className="text-sm font-bold text-white">New Project</div>
-                                <div className="text-xs text-white/40">AI Generation</div>
-                            </div>
-                        </div>
-                        <div className="flex gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/50" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 border border-green-500/50" />
-                        </div>
-                    </div>
-
-                    {/* Content of the mock app */}
-                    <div className="space-y-4">
-                        {/* Prompt Input Mock */}
-                        <div className="bg-black/40 rounded-xl p-4 border border-white/5">
-                            <div className="flex items-center gap-3 mb-2">
-                                <Wand2 className="w-4 h-4 text-[#FF6B35]" />
-                                <span className="text-xs font-medium text-[#FF6B35]">Prompt</span>
-                            </div>
-                            <p className="text-sm text-white/80 font-mono">
-                                "A futuristic cityscape with neon lights, cyberpunk style, 8k resolution, cinematic lighting..."
-                                <span className="animate-pulse">|</span>
-                            </p>
-                        </div>
-
-                        {/* Image Grid Mock */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="aspect-square rounded-lg bg-white/5 overflow-hidden relative group/img">
-                                <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&q=80" className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-opacity" alt="AI Gen 1" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end p-2">
-                                    <span className="text-[10px] text-white font-medium">Cyber City #1</span>
-                                </div>
-                            </div>
-                            <div className="aspect-square rounded-lg bg-white/5 overflow-hidden relative group/img">
-                                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80" className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-opacity" alt="AI Gen 2" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end p-2">
-                                    <span className="text-[10px] text-white font-medium">Abstract Flow</span>
-                                </div>
+                            <div className="h-8 px-4 rounded-full bg-white/5 border border-white/5 flex items-center gap-2 text-xs text-white/40">
+                                <span className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
+                                Generating...
                             </div>
                         </div>
 
-                        {/* Progress Bar Mock */}
-                        <div className="bg-white/5 rounded-full h-1.5 w-full overflow-hidden">
-                            <motion.div 
-                                className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FFB800]" 
-                                initial={{ width: "0%" }}
-                                animate={{ width: "100%" }}
-                                transition={{ duration: 2, repeat: Infinity }}
+                        {/* Central Artwork (Floating) */}
+                        <div className="flex-1 relative rounded-2xl overflow-hidden border border-white/5 group-hover:border-[#FF6B35]/30 transition-colors mx-2 mb-2">
+                             <img 
+                                src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=1974&auto=format&fit=crop" 
+                                className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700 ease-out opacity-60 group-hover:opacity-100"
+                                alt="AI Artwork"
                             />
-                        </div>
-                        <div className="flex justify-between text-[10px] text-white/40 uppercase tracking-wider font-medium">
-                            <span>Processing</span>
-                            <span>98%</span>
+                            
+                            {/* Scanning Effect Overlay */}
+                            <motion.div 
+                                className="absolute inset-0 bg-gradient-to-b from-transparent via-[#FF6B35]/20 to-transparent w-full h-[20%] blur-xl"
+                                animate={{ top: ["-20%", "120%"] }}
+                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                            />
+
+                            {/* Floating UI Elements on top of image */}
+                            <motion.div 
+                                className="absolute bottom-6 left-6 right-6"
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.5 }}
+                            >
+                                <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center shadow-lg shadow-orange-500/20">
+                                        <Wand2 className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-xs text-[#FF6B35] font-medium mb-0.5">Prompt</div>
+                                        <div className="text-sm text-white truncate">"A futuristic glass city in the clouds..."</div>
+                                    </div>
+                                    <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-[#FF6B35] animate-spin" />
+                                </div>
+                            </motion.div>
                         </div>
                     </div>
 
-                    {/* Floating Badge */}
+                    {/* Floating Elements (Parallax) */}
+                    
+                    {/* Top Right Floating Badge */}
                     <motion.div 
-                        animate={{ y: [0, -10, 0] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute -right-4 top-1/2 -translate-y-1/2 bg-[#1a1a1a] border border-white/10 p-3 rounded-2xl shadow-xl backdrop-blur-md"
+                        className="absolute -top-6 -right-6 z-20 bg-[#1a1a1a] border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-xl"
+                        animate={{ y: [-10, 10, -10] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                     >
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                                <Zap className="w-4 h-4 text-green-500" />
-                            </div>
-                            <div>
-                                <div className="text-xs font-bold text-white">Fast Gen</div>
-                                <div className="text-[10px] text-white/50">0.8s latency</div>
-                            </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <ImageIcon className="w-6 h-6 text-[#FF6B35]" />
+                            <div className="text-xs font-bold text-white">4K Ready</div>
                         </div>
                     </motion.div>
+
+                    {/* Bottom Left Floating Palette */}
+                    <motion.div 
+                        className="absolute -bottom-8 -left-8 z-20 bg-[#1a1a1a]/90 border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-xl"
+                        animate={{ y: [10, -10, 10] }}
+                        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    >
+                        <div className="flex items-center gap-3 mb-2">
+                            <Sparkles className="w-4 h-4 text-yellow-400" />
+                            <span className="text-xs font-bold text-white">Styles</span>
+                        </div>
+                        <div className="flex gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 border border-white/20" />
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 border border-white/20" />
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 border border-white/20" />
+                        </div>
+                    </motion.div>
+
+                    {/* Decorative blurred blobs behind */}
+                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-[#FF6B35]/10 to-[#FFB800]/10 blur-[100px] -z-10" />
                 </div>
             </motion.div>
           </div>
