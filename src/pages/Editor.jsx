@@ -450,24 +450,65 @@ export default function Editor() {
     setSelectedFilter(filter);
   };
 
-  const handleTransform = (type) => {
+  const handleTransform = async (type) => {
+    if (!currentImage) return;
+
     setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-    const newTransform = { ...transform };
-    switch (type) {
-      case "rotate-right":
-        newTransform.rotate = (newTransform.rotate + 90) % 360;
-        break;
-      case "rotate-left":
-        newTransform.rotate = (newTransform.rotate - 90 + 360) % 360;
-        break;
-      case "flip-horizontal":
-        newTransform.flipH = !newTransform.flipH;
-        break;
-      case "flip-vertical":
-        newTransform.flipV = !newTransform.flipV;
-        break;
+    setIsProcessing(true);
+
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = currentImage.preview || currentImage.url;
+      
+      await new Promise(resolve => img.onload = resolve);
+
+      let rotate = 0;
+      let scaleX = 1;
+      let scaleY = 1;
+      let newWidth = img.width;
+      let newHeight = img.height;
+
+      if (type === 'rotate-right') {
+        rotate = 90;
+        newWidth = img.height;
+        newHeight = img.width;
+      } else if (type === 'rotate-left') {
+        rotate = -90;
+        newWidth = img.height;
+        newHeight = img.width;
+      } else if (type === 'flip-horizontal') {
+        scaleX = -1;
+      } else if (type === 'flip-vertical') {
+        scaleY = -1;
+      }
+
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotate * Math.PI) / 180);
+      ctx.scale(scaleX, scaleY);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      ctx.restore();
+
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        setCurrentImage({
+          ...currentImage,
+          url: url,
+          preview: url,
+          name: "transformed.png"
+        });
+        setIsProcessing(false);
+      }, 'image/png');
+    } catch (error) {
+      console.error("Transform error:", error);
+      setIsProcessing(false);
     }
-    setTransform(newTransform);
   };
 
   const getRelativePosition = (e) => {
