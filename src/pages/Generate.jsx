@@ -82,6 +82,7 @@ export default function Generate() {
         prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
         
         ${uploadedImages.length > 0 ? "IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates strongly to them, while applying the user's text prompt as a modification or style." : ""}
+        ${aiModel === 'gemini' ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
 
         CRITICAL RULES:
         1. DEFAULT to generating EXACTLY ONE prompt. 
@@ -96,6 +97,7 @@ export default function Generate() {
 
         Return JSON format: { "prompts": ["enhanced prompt 1", ...] }`,
         file_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined,
+        add_context_from_internet: aiModel === 'gemini' && uploadedImages.length === 0,
         response_json_schema: {
           type: "object",
           properties: {
