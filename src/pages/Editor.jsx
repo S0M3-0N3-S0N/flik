@@ -1250,7 +1250,7 @@ export default function Editor() {
                     activeBatchIndex === idx ? 'border-[#FF6B35]' : 'border-transparent hover:border-white/20'
                   }`}
                 >
-                  <img src={img.preview} className="w-full h-full object-cover" />
+                  <img src={img.preview} className="w-full h-full object-cover sm:object-contain bg-black/40" />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

@@ -287,11 +287,13 @@ export default function Gallery() {
                 >
                   <div className="aspect-square w-full relative md:h-full">
                     {item.thumbnail_url || item.url ? (
-                        <img
-                        src={item.thumbnail_url || item.url}
-                        alt={item.title || 'Creation'}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
+                        <div className="w-full h-full bg-black/20 flex items-center justify-center">
+                            <img
+                            src={item.thumbnail_url || item.url}
+                            alt={item.title || 'Creation'}
+                            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                            />
+                        </div>
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-white/5">
                         <ImageIcon className="w-12 h-12 text-white/30" />
