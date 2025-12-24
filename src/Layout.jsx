@@ -108,6 +108,27 @@ export default function Layout({ children, currentPageName }) {
         .animate-pulse-glow {
           animation: pulse-glow 2s ease-in-out infinite;
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+          width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #0A0A0A;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Text Selection */
+        ::selection {
+          background: rgba(255, 107, 53, 0.3);
+          color: white;
+        }
       `}</style>
       
       {/* Header */}
@@ -128,7 +149,12 @@ export default function Layout({ children, currentPageName }) {
                 >
                   Features
                 </button>
-                <a href="#" className="text-sm font-medium text-white/60 hover:text-white transition-colors">Pricing</a>
+                <button 
+                  onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="text-sm font-medium text-white/60 hover:text-white transition-colors"
+                >
+                  Pricing
+                </button>
                 <a href="#" className="text-sm font-medium text-white/60 hover:text-white transition-colors">Showcase</a>
               </nav>
 
