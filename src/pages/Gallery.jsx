@@ -169,7 +169,7 @@ export default function Gallery() {
           </div>
 
           <div className="space-y-4">
-            <div className="flex gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                 <Input
@@ -179,17 +179,17 @@ export default function Gallery() {
                   className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
                 />
               </div>
-              <Tabs value={filterType} onValueChange={setFilterType}>
-                <TabsList className="bg-white/5">
+              <Tabs value={filterType} onValueChange={setFilterType} className="w-full md:w-auto">
+                <TabsList className="bg-white/5 w-full md:w-auto grid grid-cols-2 md:inline-flex">
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="image">Images</TabsTrigger>
-                  </TabsList>
+                </TabsList>
               </Tabs>
             </div>
             
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 md:flex gap-3">
               <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="w-full md:w-40 bg-white/5 border-white/10 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -201,7 +201,7 @@ export default function Gallery() {
               </Select>
               
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="w-full md:w-40 bg-white/5 border-white/10 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
