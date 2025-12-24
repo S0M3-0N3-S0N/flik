@@ -695,7 +695,7 @@ export default function Editor() {
       const maskedUpload = await base44.integrations.Core.UploadFile({ file: maskedFile });
       
       const result = await base44.integrations.Core.GenerateImage({
-        prompt: `Inpainting task: The user has marked areas to remove with bright RED color. Remove the red painted areas and fill them in to match the surrounding background seamlessly. Do not modify any other part of the image. Maintain the exact original composition, lighting, and details outside the red marked areas. Output the clean image without the red marks. High quality, realistic.`,
+        prompt: `Edit this image: The areas marked in bright RED are the mask. Completely REMOVE the objects/spots covered by the red mask and fill the area with background that seamlessly matches the surroundings (inpainting). The red paint represents the defect to be fixed. The final output must NOT have any red marks. Keep the rest of the image exactly as is. High quality, realistic.`,
         existing_image_urls: [maskedUpload.file_url]
       });
       
@@ -1197,8 +1197,8 @@ export default function Editor() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
           {currentImage ? (
-            <div className="w-full h-full flex items-center justify-center p-2 md:p-8">
-              <div className="relative no-invert max-w-full max-h-full flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
+              <div className="relative inline-flex max-w-full max-h-full">
                 <img
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
@@ -1216,7 +1216,7 @@ export default function Editor() {
                 {activeTab === "remove" && (
                   <canvas
                     ref={canvasRef}
-                    className="absolute top-0 left-0 pointer-events-none rounded-2xl"
+                    className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full"
                     style={{ filter: 'none' }}
                   />
                 )}
