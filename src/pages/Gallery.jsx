@@ -311,6 +311,15 @@ export default function Gallery() {
                          >
                             {selectedItems.includes(item.id) ? '✓' : '○'}
                          </button>
+                         <button
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                handleDelete(item.id); 
+                            }}
+                            className="h-8 w-8 rounded-full bg-black/50 text-white backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-red-500/50 hover:border-red-500/50"
+                         >
+                            <Trash2 className="w-4 h-4" />
+                         </button>
                     </div>
                   </div>
 
