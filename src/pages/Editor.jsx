@@ -1181,18 +1181,20 @@ export default function Editor() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
           {currentImage ? (
-            <div className="w-full h-full flex items-center justify-center p-2 md:p-8">
-              <div className="relative no-invert max-w-full max-h-full flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
+              <div className="relative no-invert" style={{ maxWidth: '100%', maxHeight: '100%' }}>
                 <img
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
-                  className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
+                  className={`block max-w-full max-h-full w-auto h-auto object-contain rounded-lg md:rounded-2xl shadow-2xl ${
                     activeTab === "remove" ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
                     transform: getTransformStyle(),
+                    maxWidth: '100%',
+                    maxHeight: '100%'
                   }}
                   draggable={false}
                 />
