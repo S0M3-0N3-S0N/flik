@@ -73,13 +73,3 @@ export default function StyleSelector({ selectedStyles = [], onSelect, onClear }
     </div>
   );
 }
-              <span className="text-[10px] text-white/40 line-clamp-1">
-                {style.prompt.split(',')[0]}
-              </span>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
