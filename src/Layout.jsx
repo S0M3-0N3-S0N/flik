@@ -118,6 +118,15 @@ export default function Layout({ children, currentPageName }) {
           
           <nav className="hidden md:flex items-center gap-8">
             <Link 
+              to={createPageUrl("LandingPage")} 
+              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                currentPageName === "LandingPage" ? "text-white" : "text-white/60 hover:text-white"
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </Link>
+            <Link 
               to={createPageUrl("Editor")} 
               className={`flex items-center gap-2 text-sm font-medium transition-colors ${
                 currentPageName === "Editor" ? "text-white" : "text-white/60 hover:text-white"
@@ -195,6 +204,16 @@ export default function Layout({ children, currentPageName }) {
               className="md:hidden border-t border-white/5 bg-[#0A0A0A]/95 backdrop-blur-xl overflow-hidden"
             >
               <nav className="flex flex-col p-4 gap-2">
+                <Link 
+                  to={createPageUrl("LandingPage")} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    currentPageName === "LandingPage" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Home className="w-5 h-5" />
+                  Home
+                </Link>
                 <Link 
                   to={createPageUrl("Editor")} 
                   onClick={() => setIsMobileMenuOpen(false)}
