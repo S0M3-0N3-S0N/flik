@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, Wand2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "../../utils";
 
 export default function InteractiveDemo() {
   const [sliderPosition, setSliderPosition] = useState(50);
