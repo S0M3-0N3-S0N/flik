@@ -160,14 +160,19 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
                         <img src={msg.image} alt="Uploaded" className="max-w-full h-auto" />
                       </div>
                     )}
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <div className="prose prose-invert prose-sm max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 last:[&>*]:mb-0">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
                   </div>
 
-                  {msg.role === 'assistant' && (
-                    <div className="flex gap-2 px-1">
+                  {msg.role === 'assistant' && msg.suggested_prompt && (
+                    <div className="flex gap-2 px-1 flex-col">
+                      <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-2 text-xs text-white/60 italic border-l-2 border-l-[#FF6B35]">
+                        "{msg.suggested_prompt}"
+                      </div>
                       <button
-                        onClick={() => onApplyPrompt(msg.content)}
-                        className="text-[10px] flex items-center gap-1 text-[#FF6B35] hover:text-[#FF8B55] transition-colors bg-[#FF6B35]/10 px-2 py-1 rounded-full border border-[#FF6B35]/20"
+                        onClick={() => onApplyPrompt(msg.suggested_prompt)}
+                        className="text-[10px] flex items-center gap-1 text-[#FF6B35] hover:text-[#FF8B55] transition-colors bg-[#FF6B35]/10 px-2 py-1 rounded-full border border-[#FF6B35]/20 w-fit"
                       >
                         <ArrowLeftCircle className="w-3 h-3" />
                         Apply to Prompt
