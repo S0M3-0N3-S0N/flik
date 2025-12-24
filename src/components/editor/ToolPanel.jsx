@@ -79,7 +79,7 @@ const tools = [
 export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="h-full overflow-y-auto py-6 px-4">
+      <div className="py-6 px-4">
         <div className="mb-6">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4 px-2">
             AI Tools
