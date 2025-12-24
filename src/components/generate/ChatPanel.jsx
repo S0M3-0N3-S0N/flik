@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { base44 } from "@/api/base44Client";
+import ReactMarkdown from 'react-markdown';
 
 import { Copy, ArrowLeftCircle, Check } from "lucide-react";
 
-export default function ChatPanel({ isOpen, onClose, messages, setMessages, onApplyPrompt }) {
+export default function ChatPanel({ isOpen, onClose, messages, setMessages, onApplyPrompt, currentPrompt, currentStyle, currentImages }) {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [chatImages, setChatImages] = useState([]);
