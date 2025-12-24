@@ -91,7 +91,7 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen pt-20 px-6 pb-20">
+    <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-6 py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-8">My Profile</h1>
         

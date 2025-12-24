@@ -147,7 +147,7 @@ export default function Gallery() {
   };
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="h-[calc(100dvh-4rem)] overflow-y-auto p-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -355,14 +355,15 @@ export default function Gallery() {
                       <p className="text-xs text-white/70 line-clamp-1 mb-3 drop-shadow-md">
                         {item.prompt}
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-2">
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                           }}
-                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-[10px] h-8 backdrop-blur-md"
+                          className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs h-9 backdrop-blur-md"
                         >
+                          <Edit className="w-3 h-3 mr-1.5" />
                           Edit
                         </Button>
                         <Button
@@ -370,9 +371,9 @@ export default function Gallery() {
                             e.stopPropagation();
                             navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
                           }}
-                          className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-[10px] h-8 backdrop-blur-md"
+                          className="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 text-xs h-9 backdrop-blur-md"
                         >
-                          <Wand2 className="w-3 h-3 mr-1" />
+                          <Wand2 className="w-3 h-3 mr-1.5" />
                           Remix
                         </Button>
                       </div>
