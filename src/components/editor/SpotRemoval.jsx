@@ -14,7 +14,8 @@ export default function SpotRemoval({
   brushMode,
   onBrushModeChange,
   prompt,
-  onPromptChange
+  onPromptChange,
+  onDiscuss
 }) {
   return (
     <motion.div
