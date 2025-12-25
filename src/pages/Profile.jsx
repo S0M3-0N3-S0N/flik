@@ -97,7 +97,7 @@ export default function Profile() {
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-6 py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-8">My Profile</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">{t("profile.title")}</h1>
         
         <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 md:p-8 mb-8 glass-card">
           <div className="flex flex-col md:flex-row items-center gap-6 mb-8 text-center md:text-left">
