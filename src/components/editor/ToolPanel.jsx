@@ -21,119 +21,126 @@ const tools = [
   { 
     id: "enhance", 
     icon: Sparkles, 
-    label: "AI Enhance", 
-    description: "Auto-enhance colors, clarity & details",
+    label: "Enhance", 
+    description: "Auto-enhance colors & details",
+    category: "Enhancement",
     prompt: "Enhance this image with better colors, improved clarity, professional photo quality, and optimal lighting balance"
   },
   { 
     id: "lighting", 
     icon: Sun, 
     label: "Fix Lighting", 
-    description: "Correct exposure & lighting",
+    description: "Correct exposure & shadows",
+    category: "Enhancement",
     prompt: "Fix the lighting and exposure of this image, correct shadows, balance highlights, make it look professionally lit"
   },
   { 
     id: "upscale", 
     icon: Maximize2, 
-    label: "AI Upscale", 
+    label: "Upscale", 
     description: "Increase resolution 4x",
+    category: "Enhancement",
     prompt: "Upscale this image to higher resolution, enhance details, reduce noise, sharpen edges while maintaining natural look"
+  },
+  { 
+    id: "portrait", 
+    icon: Focus, 
+    label: "Portrait", 
+    description: "Add depth blur effect",
+    category: "Enhancement",
+    prompt: "Add portrait mode effect to this image, blur the background naturally, keep the subject sharp, create professional bokeh"
   },
   { 
     id: "recolor", 
     icon: Palette, 
     label: "Color Grade", 
-    description: "Apply cinematic color grading",
+    description: "Cinematic color grading",
+    category: "Creative",
     prompt: "Apply professional cinematic color grading to this image, enhance colors, add film-like tones, make it look like a movie still"
+  },
+  { 
+    id: "style", 
+    icon: Paintbrush, 
+    label: "Style", 
+    description: "Apply artistic styles",
+    category: "Creative",
+    prompt: "Transform this image with an artistic style, make it look like a painting, add artistic brush strokes and textures"
+  },
+  { 
+    id: "hdr", 
+    icon: Contrast, 
+    label: "HDR", 
+    description: "Enhance dynamic range",
+    category: "Creative",
+    prompt: "Apply HDR effect to this image, enhance dynamic range, bring out details in shadows and highlights, make it more vivid"
   },
   { 
     id: "background", 
     icon: Eraser, 
     label: "Remove BG", 
-    description: "Remove background instantly",
+    description: "Transparent background",
+    category: "Edit",
     prompt: "Remove the background from this image, keep only the main subject, make background transparent or pure white"
-  },
-  { 
-    id: "style", 
-    icon: Paintbrush, 
-    label: "Style Transfer", 
-    description: "Apply artistic styles",
-    prompt: "Transform this image with an artistic style, make it look like a painting, add artistic brush strokes and textures"
-  },
-  { 
-    id: "portrait", 
-    icon: Focus, 
-    label: "Portrait Mode", 
-    description: "Add depth blur effect",
-    prompt: "Add portrait mode effect to this image, blur the background naturally, keep the subject sharp, create professional bokeh"
-  },
-  { 
-    id: "hdr", 
-    icon: Contrast, 
-    label: "HDR Effect", 
-    description: "Enhance dynamic range",
-    prompt: "Apply HDR effect to this image, enhance dynamic range, bring out details in shadows and highlights, make it more vivid"
   },
 ];
 
+const categories = ["Enhancement", "Creative", "Edit"];
+
 export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
   return (
-    <TooltipProvider delayDuration={300}>
-      <div className="py-6 px-4">
-        <div className="mb-6">
-          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4 px-2">
-            AI Tools
+    <div className="py-6 px-4 space-y-8">
+      {categories.map((category, catIndex) => (
+        <div key={category}>
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
+            {category}
           </h3>
-          <div className="grid grid-cols-3 md:grid-cols-2 gap-2 md:gap-3">
-            {tools.map((tool, index) => (
-              <Tooltip key={tool.id}>
-                <TooltipTrigger asChild>
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => onToolSelect(tool)}
-                    disabled={isProcessing || !hasImage}
-                    className={`
-                      group relative p-2 md:p-4 rounded-xl text-left transition-all duration-300 flex flex-col items-center md:items-start
-                      ${hasImage 
-                        ? "bg-white/5 hover:bg-white/10 cursor-pointer" 
-                        : "bg-white/[0.02] cursor-not-allowed opacity-50"
-                      }
-                      ${isProcessing ? "pointer-events-none" : ""}
-                    `}
-                  >
-                    <div className={`
-                      w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center mb-2 md:mb-3
-                      ${hasImage 
-                        ? "bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 group-hover:from-[#FF6B35]/30 group-hover:to-[#FFB800]/30" 
-                        : "bg-white/5"
-                      }
-                    `}>
-                      <tool.icon className={`w-4 h-4 md:w-5 md:h-5 ${hasImage ? "text-[#FF6B35]" : "text-white/30"}`} />
-                    </div>
-                    <p className={`text-xs md:text-sm font-medium text-center md:text-left ${hasImage ? "text-white" : "text-white/40"}`}>
+          <div className="grid grid-cols-2 gap-3">
+            {tools.filter(t => t.category === category).map((tool, index) => (
+              <motion.button
+                key={tool.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: (catIndex * 0.1) + (index * 0.05) }}
+                onClick={() => onToolSelect(tool)}
+                disabled={isProcessing || !hasImage}
+                className={`
+                  group relative p-3 rounded-2xl text-left transition-all duration-300 border
+                  ${hasImage 
+                    ? "bg-white/[0.03] hover:bg-white/[0.08] border-white/5 hover:border-white/10 cursor-pointer shadow-sm hover:shadow-lg hover:shadow-[#FF6B35]/5" 
+                    : "bg-white/[0.02] border-transparent cursor-not-allowed opacity-40"
+                  }
+                  ${isProcessing ? "pointer-events-none opacity-50" : ""}
+                `}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`
+                    w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-300
+                    ${hasImage 
+                      ? "bg-[#FF6B35]/10 group-hover:bg-[#FF6B35]/20 text-[#FF6B35]" 
+                      : "bg-white/5 text-white/20"
+                    }
+                  `}>
+                    <tool.icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium mb-1 truncate ${hasImage ? "text-white group-hover:text-[#FF6B35] transition-colors" : "text-white/40"}`}>
                       {tool.label}
                     </p>
-                    
-                    {/* Hover gradient border */}
-                    <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                      style={{
-                        background: "linear-gradient(135deg, rgba(255,107,53,0.1) 0%, transparent 50%)"
-                      }}
-                    />
-                  </motion.button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-[#1a1a1a] border-white/10 text-white">
-                  <p className="text-sm">{tool.description}</p>
-                </TooltipContent>
-              </Tooltip>
+                    <p className="text-[10px] text-white/40 leading-tight line-clamp-2 group-hover:text-white/60 transition-colors">
+                      {tool.description}
+                    </p>
+                  </div>
+                </div>
+                
+                {hasImage && (
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/5 group-hover:ring-white/10 pointer-events-none" />
+                )}
+              </motion.button>
             ))}
           </div>
         </div>
-        
-
-      </div>
-    </TooltipProvider>
+      ))}
+    </div>
   );
 }
