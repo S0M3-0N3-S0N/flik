@@ -12,7 +12,9 @@ export default function SpotRemoval({
   brushSize, 
   onBrushSizeChange,
   brushMode,
-  onBrushModeChange
+  onBrushModeChange,
+  prompt,
+  onPromptChange
 }) {
   return (
     <motion.div
