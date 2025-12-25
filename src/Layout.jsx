@@ -7,6 +7,13 @@ import { AnimatePresence, motion } from "framer-motion";
 export default function Layout({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en');
+
+  const t = (key) => translations[language]?.[key] || translations['en'][key] || key;
+
+  useEffect(() => {
+    localStorage.setItem('app_language', language);
+  }, [language]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
