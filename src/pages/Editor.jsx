@@ -1392,6 +1392,19 @@ export default function Editor() {
         onDownload={handleDownload}
         transform={processedImage ? undefined : transform}
       />
+      
+      <ChatPanel 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+        messages={chatMessages}
+        setMessages={setChatMessages}
+        currentPrompt={magicBrushPrompt}
+        currentStyle=""
+        currentImages={currentImage ? [{ url: currentImage.url || currentImage.preview, id: 'current' }] : []}
+        onApplyPrompt={(text) => {
+          setMagicBrushPrompt(text);
+        }}
+      />
     </div>
   );
 }
