@@ -82,6 +82,16 @@ export default function SpotRemoval({
           </div>
         </div>
 
+        <div className="space-y-2">
+          <Label className="text-white/80 text-sm">Description (Optional)</Label>
+          <textarea
+            value={prompt}
+            onChange={(e) => onPromptChange(e.target.value)}
+            placeholder="Describe what to do with the painted area (e.g. 'remove it', 'replace with a red flower')..."
+            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF6B35]/50 min-h-[80px] resize-none"
+          />
+        </div>
+
         <Button
           onClick={onRemoveSpot}
           disabled={isProcessing}
