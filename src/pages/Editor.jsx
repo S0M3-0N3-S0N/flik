@@ -1083,6 +1083,7 @@ export default function Editor() {
                     onBrushModeChange={setBrushMode}
                     prompt={magicBrushPrompt}
                     onPromptChange={setMagicBrushPrompt}
+                    onDiscuss={() => setIsChatOpen(true)}
                   />
                   {brushStrokes.length > 0 && (
                     <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
