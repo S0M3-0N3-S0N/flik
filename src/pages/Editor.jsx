@@ -57,6 +57,10 @@ export default function Editor() {
   const cursorRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'assistant', content: "Hi! I can help you refine your editing instructions. What would you like to do with this image?" }
+  ]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
