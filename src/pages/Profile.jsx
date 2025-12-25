@@ -13,8 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
+import { LanguageContext } from "../Layout";
+import { Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Profile() {
+  const { t, language, setLanguage } = React.useContext(LanguageContext);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
