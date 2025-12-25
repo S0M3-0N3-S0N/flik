@@ -21,46 +21,29 @@ export default function SpotRemoval({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-4"
+      className="py-6 px-4 space-y-6"
     >
-      <div className="space-y-3">
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
-              <Paintbrush className="w-5 h-5 text-[#FF6B35]" />
-            </div>
-            <div className="flex-1">
-              <h4 className="text-white font-medium text-sm mb-2">How to use Magic Brush</h4>
-              <ol className="text-xs text-white/60 space-y-1">
-                <li>1. Drag over areas you want to remove</li>
-                <li>2. Paint all spots you'd like to erase</li>
-                <li>3. Click "Remove Painted Areas" to process</li>
-              </ol>
-            </div>
+      <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0 text-[#FF6B35]">
+            <Wand2 className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-white font-medium text-sm mb-1">Magic Brush</h4>
+            <p className="text-xs text-white/60 leading-relaxed">
+              Paint over areas to modify them. Use the AI prompt to describe what should change.
+            </p>
           </div>
         </div>
+      </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-white/80 text-sm">Brush Size</Label>
-            <span className="text-xs text-white/50 w-12 text-right">{brushSize}px</span>
-          </div>
-          <Slider
-            value={[brushSize]}
-            onValueChange={(value) => onBrushSizeChange(value[0])}
-            min={10}
-            max={100}
-            step={5}
-            className="w-full"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-white/80 text-sm">Tool Mode</Label>
-          <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
+      <div className="space-y-4">
+        <div>
+          <Label className="text-white/80 text-xs font-medium uppercase tracking-wider mb-3 block">Brush Mode</Label>
+          <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
             <button
               onClick={() => onBrushModeChange('draw')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 brushMode === 'draw' 
                   ? 'bg-[#FF6B35] text-white shadow-lg' 
                   : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -71,9 +54,9 @@ export default function SpotRemoval({
             </button>
             <button
               onClick={() => onBrushModeChange('erase')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 brushMode === 'erase' 
-                  ? 'bg-[#FF6B35] text-white shadow-lg' 
+                  ? 'bg-white/20 text-white shadow-lg' 
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -83,10 +66,25 @@ export default function SpotRemoval({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label className="text-white/80 text-sm">Description (Optional)</Label>
-            <Button variant="ghost" size="sm" onClick={onDiscuss} className="h-6 text-xs gap-1 text-[#FF6B35] hover:text-[#FF8B55] p-0 hover:bg-transparent">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-white/80 text-xs font-medium uppercase tracking-wider">Brush Size</Label>
+            <span className="text-xs font-mono text-white/50 bg-white/5 px-2 py-1 rounded">{brushSize}px</span>
+          </div>
+          <Slider
+            value={[brushSize]}
+            onValueChange={(value) => onBrushSizeChange(value[0])}
+            min={10}
+            max={100}
+            step={5}
+            className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35] [&_span]:border-none [&_span]:shadow-lg"
+          />
+        </div>
+
+        <div>
+          <div className="flex justify-between items-center mb-3">
+            <Label className="text-white/80 text-xs font-medium uppercase tracking-wider">Instructions</Label>
+            <Button variant="ghost" size="sm" onClick={onDiscuss} className="h-6 text-[10px] gap-1.5 text-[#FF6B35] bg-[#FF6B35]/10 hover:bg-[#FF6B35]/20 rounded-full px-3">
               <MessageSquare className="w-3 h-3" />
               Discuss
             </Button>
@@ -94,15 +92,15 @@ export default function SpotRemoval({
           <textarea
             value={prompt}
             onChange={(e) => onPromptChange(e.target.value)}
-            placeholder="Describe what to do with the painted area (e.g. 'remove it', 'replace with a red flower')..."
-            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF6B35]/50 min-h-[80px] resize-none"
+            placeholder="What should happen to the painted area? (e.g. 'remove it', 'change to red flower')"
+            className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6B35]/50 focus:bg-white/5 min-h-[100px] resize-none transition-all"
           />
         </div>
 
         <Button
           onClick={onRemoveSpot}
           disabled={isProcessing}
-          className="w-full btn-gradient text-white h-12 text-base"
+          className="w-full btn-gradient text-white h-12 text-sm font-medium rounded-xl mt-2 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/30 hover:translate-y-[-1px] transition-all"
         >
           {isProcessing ? (
             <>
@@ -112,14 +110,10 @@ export default function SpotRemoval({
           ) : (
             <>
               <Wand2 className="w-4 h-4 mr-2" />
-              Process Painted Areas
+              Generate Changes
             </>
           )}
         </Button>
-
-        <div className="text-xs text-white/40 text-center">
-          Drag on the image to paint areas to remove
-        </div>
       </div>
     </motion.div>
   );
