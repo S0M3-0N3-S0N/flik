@@ -165,11 +165,29 @@ export default function Profile() {
               className="border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              {t("profile.sign_out")}
             </Button>
-          </div>
+            </div>
 
-          <div className="grid gap-4">
+            <div className="grid gap-4">
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center gap-3 text-white/70">
+                <Globe className="w-5 h-5 text-[#FF6B35]" />
+                <span>{t("profile.language")}</span>
+              </div>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="w-[140px] bg-black/20 border-white/10 text-white h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">{t("language.en")}</SelectItem>
+                  <SelectItem value="es">{t("language.es")}</SelectItem>
+                  <SelectItem value="fr">{t("language.fr")}</SelectItem>
+                  <SelectItem value="zh">{t("language.zh")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
               <div className="flex items-center gap-3 text-white/70 flex-1">
                 <Mail className="w-5 h-5 text-[#FF6B35]" />
