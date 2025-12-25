@@ -1262,7 +1262,7 @@ export default function Editor() {
           
           {currentImage ? (
             <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
-              <div className="relative inline-flex max-w-full max-h-full">
+              <div className="relative inline-flex max-w-full max-h-full no-invert">
                 <img
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
