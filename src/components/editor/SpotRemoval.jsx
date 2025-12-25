@@ -105,7 +105,7 @@ export default function SpotRemoval({
           ) : (
             <>
               <Wand2 className="w-4 h-4 mr-2" />
-              Remove Painted Areas
+              Process Painted Areas
             </>
           )}
         </Button>
