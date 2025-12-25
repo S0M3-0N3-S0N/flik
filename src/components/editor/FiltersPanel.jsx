@@ -19,49 +19,42 @@ const filters = [
 
 export default function FiltersPanel({ selectedFilter, onFilterSelect, previewImage }) {
   return (
-    <div className="space-y-4 px-1">
-      <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3">
-        {filters.map((filter, index) => (
-          <motion.button
-            key={filter.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.03 }}
-            onClick={() => onFilterSelect(filter)}
-            className={`
-              relative group rounded-xl overflow-hidden aspect-square no-invert
-              ${selectedFilter?.id === filter.id ? "ring-2 ring-[#FF6B35]" : ""}
-            `}
-          >
-            {/* Preview */}
+    <div className="py-6 px-4 grid grid-cols-2 gap-3 overflow-y-auto max-h-full pb-20">
+      {filters.map((filter, index) => (
+        <motion.button
+          key={filter.id}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: index * 0.05 }}
+          onClick={() => onFilterSelect(filter)}
+          className={`
+            relative group rounded-2xl overflow-hidden border transition-all text-left bg-[#141414]
+            ${selectedFilter?.id === filter.id 
+              ? "border-[#FF6B35] shadow-[0_0_20px_rgba(255,107,53,0.2)]" 
+              : "border-white/5 hover:border-white/20"
+            }
+          `}
+        >
+          <div className="aspect-[4/3] overflow-hidden relative">
             <div 
-              className="w-full h-full bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20"
-              style={{
-                filter: filter.filter || 'none',
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+              style={{ 
                 backgroundImage: previewImage ? `url(${previewImage})` : undefined,
-                backgroundSize: "cover",
-                backgroundPosition: "center"
+                filter: filter.filter || 'none'
               }}
             />
-            
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-end p-1.5 sm:p-2">
-              <span className="text-white text-[10px] sm:text-xs font-medium truncate w-full">{filter.name}</span>
-            </div>
-            
-            {/* Selected indicator */}
             {selectedFilter?.id === filter.id && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#FF6B35] flex items-center justify-center"
-              >
-                <Check className="w-4 h-4 text-white" />
-              </motion.div>
+              <div className="absolute inset-0 bg-[#FF6B35]/20 mix-blend-overlay" />
             )}
-          </motion.button>
-        ))}
-      </div>
+          </div>
+          
+          <div className="p-3 bg-[#141414]">
+            <p className={`text-xs font-medium transition-colors ${selectedFilter?.id === filter.id ? "text-[#FF6B35]" : "text-white/80 group-hover:text-white"}`}>
+              {filter.name}
+            </p>
+          </div>
+        </motion.button>
+      ))}
     </div>
   );
 }
