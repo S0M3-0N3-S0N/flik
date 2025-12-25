@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { translations } from "@/components/translations";
+
+export const LanguageContext = React.createContext();
 
 export default function Layout({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
