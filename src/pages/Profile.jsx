@@ -257,7 +257,7 @@ export default function Profile() {
           <div className="bg-[#141414] border border-white/10 p-6 rounded-2xl glass-card">
             <div className="flex items-center gap-3 mb-2">
               <Video className="w-5 h-5 text-[#FF6B35]" />
-              <span className="text-white/60">Videos Created</span>
+              <span className="text-white/60">{t("profile.videos_created")}</span>
             </div>
             <p className="text-4xl font-bold text-white gradient-text">
               {creations.filter(c => c.type === 'video').length}
@@ -269,14 +269,14 @@ export default function Profile() {
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent className="bg-[#1a1a1a] border-white/10 text-white sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
+            <DialogTitle>{t("profile.change_password")}</DialogTitle>
             <DialogDescription className="text-white/50">
               To change your password, you need to sign out and use the "Forgot Password" link on the login page.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="ghost" onClick={() => setShowPasswordDialog(false)} className="hover:bg-white/10 text-white">Cancel</Button>
-            <Button onClick={handleLogout} className="bg-[#FF6B35] hover:bg-[#FF8B55] text-white">Sign Out & Reset</Button>
+            <Button variant="ghost" onClick={() => setShowPasswordDialog(false)} className="hover:bg-white/10 text-white">{t("profile.cancel")}</Button>
+            <Button onClick={handleLogout} className="bg-[#FF6B35] hover:bg-[#FF8B55] text-white">{t("profile.sign_out_reset")}</Button>
           </div>
         </DialogContent>
       </Dialog>
