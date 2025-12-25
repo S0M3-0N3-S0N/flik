@@ -738,8 +738,12 @@ export default function Editor() {
       const maskedFile = new File([maskedBlob], "masked_input.png", { type: "image/png" });
       const maskedUpload = await base44.integrations.Core.UploadFile({ file: maskedFile });
       
+      const instruction = magicBrushPrompt.trim() 
+        ? magicBrushPrompt 
+        : "Completely REMOVE the objects/spots covered by the red mask and fill the area with background that seamlessly matches the surroundings (inpainting).";
+
       const result = await base44.integrations.Core.GenerateImage({
-        prompt: `Edit this image: The areas marked in bright RED are the mask. Completely REMOVE the objects/spots covered by the red mask and fill the area with background that seamlessly matches the surroundings (inpainting). The red paint represents the defect to be fixed. The final output must NOT have any red marks. Keep the rest of the image exactly as is. High quality, realistic.`,
+        prompt: `Edit this image: The areas marked in bright RED are the mask. ${instruction} The red paint represents the area to change. The final output must NOT have any red marks. Keep the rest of the image exactly as is. High quality, realistic.`,
         existing_image_urls: [maskedUpload.file_url]
       });
       
