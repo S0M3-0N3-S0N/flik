@@ -214,7 +214,7 @@ export default function Layout({ children, currentPageName }) {
                   }`}
                 >
                   <Image className="w-5 h-5" />
-                  Photo Studio
+                  {t("nav.photo_studio")}
                 </Link>
 
                 <Link 
@@ -225,7 +225,7 @@ export default function Layout({ children, currentPageName }) {
                   }`}
                 >
                   <Wand2 className="w-5 h-5" />
-                  Imagine AI
+                  {t("nav.imagine_ai")}
                 </Link>
 
                 <Link 
@@ -236,7 +236,7 @@ export default function Layout({ children, currentPageName }) {
                   }`}
                 >
                   <Sparkles className="w-5 h-5" />
-                  My Creations
+                  {t("nav.my_creations")}
                 </Link>
 
                 <Link 
@@ -247,7 +247,7 @@ export default function Layout({ children, currentPageName }) {
                   }`}
                 >
                   <User className="w-5 h-5" />
-                  My Profile
+                  {t("nav.profile")}
                 </Link>
               </nav>
             </motion.div>
