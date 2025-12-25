@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Wand2, Paintbrush, Eraser } from "lucide-react";
+import { Wand2, Paintbrush, Eraser, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
