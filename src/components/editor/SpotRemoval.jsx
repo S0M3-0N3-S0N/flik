@@ -84,7 +84,13 @@ export default function SpotRemoval({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-white/80 text-sm">Description (Optional)</Label>
+          <div className="flex justify-between items-center">
+            <Label className="text-white/80 text-sm">Description (Optional)</Label>
+            <Button variant="ghost" size="sm" onClick={onDiscuss} className="h-6 text-xs gap-1 text-[#FF6B35] hover:text-[#FF8B55] p-0 hover:bg-transparent">
+              <MessageSquare className="w-3 h-3" />
+              Discuss
+            </Button>
+          </div>
           <textarea
             value={prompt}
             onChange={(e) => onPromptChange(e.target.value)}
