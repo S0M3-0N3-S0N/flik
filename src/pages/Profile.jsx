@@ -224,7 +224,7 @@ export default function Profile() {
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
               <div className="flex items-center gap-3 text-white/70">
                 <Lock className="w-5 h-5 text-[#FF6B35]" />
-                <span>Password</span>
+                <span>{t("profile.password")}</span>
               </div>
               <Button 
                 variant="ghost" 
@@ -232,23 +232,23 @@ export default function Profile() {
                 onClick={() => setShowPasswordDialog(true)}
                 className="text-white/40 hover:text-white hover:bg-white/10 h-8"
               >
-                Change
+                {t("profile.change")}
               </Button>
             </div>
 
             <div className="flex items-center gap-3 text-white/70 p-4 bg-white/5 rounded-xl border border-white/5">
               <Calendar className="w-5 h-5 text-[#FF6B35]" />
-              <span>Joined {new Date(user.created_date).toLocaleDateString()}</span>
+              <span>{t("profile.joined")} {new Date(user.created_date).toLocaleDateString()}</span>
             </div>
           </div>
         </div>
 
-        <h2 className="text-xl font-bold text-white mb-4">Stats</h2>
+        <h2 className="text-xl font-bold text-white mb-4">{t("profile.stats")}</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#141414] border border-white/10 p-6 rounded-2xl glass-card">
             <div className="flex items-center gap-3 mb-2">
               <ImageIcon className="w-5 h-5 text-[#FF6B35]" />
-              <span className="text-white/60">Images Created</span>
+              <span className="text-white/60">{t("profile.images_created")}</span>
             </div>
             <p className="text-4xl font-bold text-white gradient-text">
               {creations.filter(c => c.type === 'image').length}
