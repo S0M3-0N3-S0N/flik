@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
@@ -1328,7 +1328,8 @@ export default function Editor() {
           onTouchStart={handleMouseDown}
           onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
-          style={{ touchAction: (activeTab === 'remove' || (activeTab === 'crop' && isCropping)) ? 'none' : 'auto' }}
+          onWheel={handleWheel}
+          style={{ touchAction: 'none' }}
         >
           {activeTab === "remove" && !isSpacePressed && !isPanning && (
             <div
