@@ -115,20 +115,22 @@ export default function SpotRemoval({
           />
 
           <div className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors">
+            <div className="flex items-center gap-2">
+              <label className="flex-1 cursor-pointer inline-flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] sm:text-xs text-white/80 transition-colors h-[32px] whitespace-nowrap">
                 {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
-                <span>Add Reference Image</span>
+                <span>Add Ref</span>
                 <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
               </label>
               
-              <Button variant="ghost" size="sm" onClick={onDiscuss} className="h-[30px] text-[10px] gap-1.5 text-[#FF6B35] bg-[#FF6B35]/10 hover:bg-[#FF6B35]/20 rounded-lg px-3 border border-[#FF6B35]/20">
+              <Button variant="ghost" size="sm" onClick={onDiscuss} className="flex-1 h-[32px] text-[10px] sm:text-xs gap-1.5 text-[#FF6B35] bg-[#FF6B35]/10 hover:bg-[#FF6B35]/20 rounded-lg px-2 border border-[#FF6B35]/20 whitespace-nowrap">
                 <MessageSquare className="w-3.5 h-3.5" />
                 Discuss
               </Button>
 
               {referenceImages.length > 0 && (
-                <span className="text-[10px] text-white/40 ml-auto">{referenceImages.length} image(s) added</span>
+                <div className="flex items-center justify-center w-[32px] h-[32px] rounded-lg bg-white/5 border border-white/10" title={`${referenceImages.length} images added`}>
+                  <span className="text-[10px] text-white/60 font-medium">{referenceImages.length}</span>
+                </div>
               )}
             </div>
             
