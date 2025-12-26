@@ -335,6 +335,77 @@ export default function Generate() {
                     Discuss
                   </button>
 
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button 
+                        className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                          (aspectRatio !== "1:1" || negativePrompt) 
+                            ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
+                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        }`}
+                        title="Advanced Settings"
+                      >
+                        <Settings2 className="w-4 h-4" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[
+                              { id: "1:1", icon: Square, label: "Square" },
+                              { id: "16:9", icon: RectangleHorizontal, label: "Landscape" },
+                              { id: "9:16", icon: RectangleVertical, label: "Portrait" }
+                            ].map((ratio) => (
+                              <button
+                                key={ratio.id}
+                                onClick={() => setAspectRatio(ratio.id)}
+                                className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
+                                  aspectRatio === ratio.id 
+                                    ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                    : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                                }`}
+                              >
+                                <ratio.icon className="w-4 h-4" />
+                                <span className="text-[10px]">{ratio.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
+                          <Input 
+                            value={negativePrompt}
+                            onChange={(e) => setNegativePrompt(e.target.value)}
+                            placeholder="Things to avoid (e.g. blurry, ugly)..."
+                            className="bg-black/20 border-white/10 h-8 text-xs text-white"
+                          />
+                        </div>
+
+                        {uploadedImages.length > 0 && (
+                          <div className="space-y-3">
+                             <div className="flex justify-between">
+                                <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
+                                <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
+                             </div>
+                             <Slider 
+                               value={[imageStrength]} 
+                               min={0.1} 
+                               max={0.9} 
+                               step={0.1} 
+                               onValueChange={(v) => setImageStrength(v[0])}
+                               className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
+                             />
+                             <p className="text-[10px] text-white/40 leading-tight">
+                               Higher values make the result look more like your reference images.
+                             </p>
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
 
                 </div>
 
