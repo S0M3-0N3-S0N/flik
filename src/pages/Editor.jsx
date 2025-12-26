@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
@@ -1479,38 +1480,56 @@ export default function Editor() {
           )}
           
           {currentImage && (
-            <div className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 flex flex-col gap-2 z-30 items-end">
-              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl p-1.5 lg:p-2 flex flex-row lg:flex-col gap-1 lg:gap-2 shadow-2xl">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
-                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </Button>
+            <div className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30">
+              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl p-1.5 flex items-center gap-2 shadow-2xl">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
-                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white"
+                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white flex-shrink-0"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-4 h-4" />
                 </Button>
+
+                <div className="w-20 lg:w-32 px-2 hidden sm:block">
+                  <Slider 
+                    value={[zoom]} 
+                    min={0.1} 
+                    max={5} 
+                    step={0.1} 
+                    onValueChange={(v) => setZoom(v[0])}
+                    className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35] [&_span]:border-none [&_span]:shadow-lg"
+                  />
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
+                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white flex-shrink-0"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+
+                <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
+                
+                <span className="text-[10px] font-mono text-white/60 w-8 lg:w-10 text-center select-none">
+                  {Math.round(zoom * 100)}%
+                </span>
+                
+                <div className="w-px h-4 bg-white/10 mx-1" />
+
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }}
-                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white"
+                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white flex-shrink-0"
                   title="Reset View"
                 >
                   <Maximize2 className="w-4 h-4" />
                 </Button>
-              </div>
-              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl px-2 py-1 text-center shadow-2xl min-w-[40px]">
-                <span className="text-[10px] text-white/60 font-mono">{Math.round(zoom * 100)}%</span>
               </div>
             </div>
           )}
