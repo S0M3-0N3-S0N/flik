@@ -803,15 +803,17 @@ export default function Editor() {
       setActiveTool({ label: "Refining Instruction..." });
 
       const userInstruction = magicBrushPrompt.trim() || "remove the object completely";
+      const hasReferences = magicBrushImages.length > 0;
 
       const llmResponse = await base44.integrations.Core.InvokeLLM({
         prompt: `You are an expert image editing assistant. The user has painted red marks on an image and wants to edit those areas.
         User instruction: "${userInstruction}"
+        ${hasReferences ? "IMPORTANT: The user has provided REFERENCE IMAGES. The content of these reference images MUST be used to fill the masked area." : ""}
 
         Create a detailed prompt for an image generation model to execute this edit.
         The prompt MUST:
         1. Explicitly state that the bright RED areas are a mask to be modified.
-        2. Describe exactly what to generate in place of the red areas (matching the user's intent: removal/inpainting vs replacement/addition).
+        2. Describe exactly what to generate in place of the red areas. ${hasReferences ? "CRITICAL: Instruct the model to strictly use the visual characteristics (style, color, texture, object) from the provided additional reference images to replace the content in the masked area." : "Match the user's intent (removal/inpainting vs replacement/addition)."}
         3. EMPHASIZE that the red color must be completely gone in the result.
         4. Instruct to keep the rest of the image unchanged and blend the edits seamlessly.
 
