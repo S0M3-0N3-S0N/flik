@@ -802,10 +802,11 @@ export default function Editor() {
 
         GUIDELINES:
         - Do NOT mention "red mask" or "remove red" in the final prompt (the generator won't see red, it sees transparency).
-        - IF REMOVING: Describe the background texture/lighting that should exist in that spot (e.g., "seamless wall texture", "continuation of the forest background").
-        - IF ADDING: Describe the new object in detail, including how it interacts with the scene (shadows, reflections, lighting direction).
-        - IF REPLACING: Describe the new object in the context of the scene.
-        - Focus on visual consistency: "photorealistic, matching lighting, 8k, seamless blend".
+        - FOCUS ON LIGHTING & TEXTURE MATCHING: The generated pixels must match the noise, grain, and lighting of the surrounding "Original" image.
+        - IF REMOVING: "Fill the hole with [specific background details] that continues the surrounding pattern, matching the lighting and texture perfectly."
+        - IF ADDING: "Place [object] in the hole, ensuring it casts correct shadows based on the scene's light source, and matches the camera's focal length and grain."
+        - IF REPLACING: "Replace the object with [new object], blending edges seamlessly."
+        - KEYWORDS to always include: "seamless inpainting, matching noise, invisible edit, photorealistic, 8k, consistent lighting".
 
         OUTPUT:
         Return ONLY the raw prompt string.`,
