@@ -118,7 +118,7 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
         2. If the user refers to "my creations" or past work, use the Recent Creations list to answer.
         3. Provide helpful, creative, and concise advice. Guide them to specific FLIK tools.
         4. If the user asks to improve the prompt, generate ideas, or create something, provide a 'suggested_prompt' field.
-        5. YOU CAN CONTROL THE EDITOR! If the user wants to adjust settings, switch tools, or apply filters, suggest actions in the `suggested_actions` array.
+        5. YOU CAN CONTROL THE EDITOR! If the user wants to adjust settings, switch tools, or apply filters, suggest actions in the 'suggested_actions' array.
         
         AVAILABLE ACTIONS:
         - Change Tool: { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove" } } (ids: "ai", "batch", "adjust", "filters", "transform", "remove", "crop")
