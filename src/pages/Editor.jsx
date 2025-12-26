@@ -1479,8 +1479,8 @@ export default function Editor() {
           )}
           
           {currentImage && (
-            <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-30">
-              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl p-2 flex flex-col gap-2 shadow-2xl">
+            <div className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 flex flex-col gap-2 z-30 items-end">
+              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl p-1.5 lg:p-2 flex flex-row lg:flex-col gap-1 lg:gap-2 shadow-2xl">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -1509,7 +1509,7 @@ export default function Editor() {
                   <Maximize2 className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl px-2 py-1 text-center shadow-2xl">
+              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl px-2 py-1 text-center shadow-2xl min-w-[40px]">
                 <span className="text-[10px] text-white/60 font-mono">{Math.round(zoom * 100)}%</span>
               </div>
             </div>
