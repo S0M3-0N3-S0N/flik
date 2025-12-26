@@ -337,8 +337,7 @@ export default function Generate() {
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-80 p-0 bg-[#141414] border border-white/10" align="start">
-                      <div className="p-4">
-                        <h4 className="text-sm font-medium text-white mb-2">Reference Images</h4>
+                      <div className="p-2">
                         <div className="h-40">
                           <ImageUploader 
                             onImageSelect={handleImageUpload} 
