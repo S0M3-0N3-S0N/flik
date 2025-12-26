@@ -700,13 +700,13 @@ export default function Editor() {
       await new Promise(r => img.onload = r);
 
       // HELPER: Draw strokes function
-      const drawStrokes = (ctx, color = 'red', composite = 'source-over') => {
+      const drawStrokes = (ctx, color = 'red', composite = 'source-over', sizeMult = 1.0) => {
         if (brushStrokes.length === 0) return;
 
         brushStrokes.forEach(stroke => {
           const points = stroke.points || stroke;
           if (!points || points.length === 0) return;
-          const size = stroke.size || brushSize;
+          const size = (stroke.size || brushSize) * sizeMult;
 
           ctx.globalCompositeOperation = composite;
           ctx.strokeStyle = color;
@@ -747,15 +747,16 @@ export default function Editor() {
       redCanvas.height = img.height;
       const redCtx = redCanvas.getContext('2d');
       redCtx.drawImage(img, 0, 0);
-      drawStrokes(redCtx, `rgba(255, 0, 0, 1)`, 'source-over');
+      drawStrokes(redCtx, `rgba(255, 0, 0, 1)`, 'source-over', 1.0);
 
       // 2. Create ALPHA MASK Canvas (For Image Generator to fill)
+      // We slightly dilate the alpha mask (1.1x) to ensure the inpainting overlaps the edge, blending better
       const alphaCanvas = document.createElement('canvas');
       alphaCanvas.width = img.width;
       alphaCanvas.height = img.height;
       const alphaCtx = alphaCanvas.getContext('2d');
       alphaCtx.drawImage(img, 0, 0);
-      drawStrokes(alphaCtx, 'rgba(0,0,0,1)', 'destination-out'); // ERASE to transparent
+      drawStrokes(alphaCtx, 'rgba(0,0,0,1)', 'destination-out', 1.1); // ERASE to transparent with dilation
 
       // Convert to blobs/files
       const [redBlob, alphaBlob] = await Promise.all([
