@@ -7,9 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from 'react-markdown';
 
-import { Copy, ArrowLeftCircle, Check } from "lucide-react";
+import { Copy, ArrowLeftCircle, Check, Play, Sliders, Wand2, Layers, Crop } from "lucide-react";
 
-export default function ChatPanel({ isOpen, onClose, messages, setMessages, onApplyPrompt, currentPrompt, currentStyle, currentImages }) {
+export default function ChatPanel({ isOpen, onClose, messages, setMessages, onApplyPrompt, onAIAction, currentPrompt, currentStyle, currentImages }) {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [chatImages, setChatImages] = useState([]);
@@ -118,16 +118,43 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
         2. If the user refers to "my creations" or past work, use the Recent Creations list to answer.
         3. Provide helpful, creative, and concise advice. Guide them to specific FLIK tools.
         4. If the user asks to improve the prompt, generate ideas, or create something, provide a 'suggested_prompt' field.
-        5. Use Markdown for the 'message' field.
+        5. YOU CAN CONTROL THE EDITOR! If the user wants to adjust settings, switch tools, or apply filters, suggest actions in the `suggested_actions` array.
+        
+        AVAILABLE ACTIONS:
+        - Change Tool: { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove" } } (ids: "ai", "batch", "adjust", "filters", "transform", "remove", "crop")
+        - Adjust Image: { "type": "adjustment", "label": "Increase Brightness", "payload": { "key": "brightness", "value": 20 } } (value is -100 to 100 relative)
+        - Apply Filter: { "type": "filter", "label": "Apply Vintage Filter", "payload": { "id": "vintage" } }
+        - Crop Mode: { "type": "crop", "label": "Start Cropping", "payload": { "active": true } }
 
-        Output JSON format: { "message": "your helpful response...", "suggested_prompt": "optional optimized prompt string if relevant" }`,
+        6. Use Markdown for the 'message' field.
+
+        Output JSON format: 
+        { 
+          "message": "...", 
+          "suggested_prompt": "...",
+          "suggested_actions": [
+            { "label": "Action Name", "type": "tool|adjustment|filter|crop", "payload": object }
+          ]
+        }`,
         file_urls: contextImages.length > 0 ? contextImages : undefined,
         add_context_from_internet: false,
         response_json_schema: {
           type: "object",
           properties: {
             message: { type: "string" },
-            suggested_prompt: { type: "string" }
+            suggested_prompt: { type: "string" },
+            suggested_actions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  label: { type: "string" },
+                  type: { type: "string", enum: ["tool", "adjustment", "filter", "crop"] },
+                  payload: { type: "object", additionalProperties: true }
+                },
+                required: ["label", "type", "payload"]
+              }
+            }
           },
           required: ["message"]
         }
@@ -136,7 +163,8 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: response.message, 
-        suggested_prompt: response.suggested_prompt 
+        suggested_prompt: response.suggested_prompt,
+        suggested_actions: response.suggested_actions 
       }]);
     } catch (error) {
       console.error("Chat error:", error);
@@ -203,18 +231,41 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
                     </div>
                   </div>
 
-                  {msg.role === 'assistant' && msg.suggested_prompt && (
-                    <div className="flex gap-2 px-1 flex-col">
-                      <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-2 text-xs text-white/60 italic border-l-2 border-l-[#FF6B35]">
-                        "{msg.suggested_prompt}"
-                      </div>
-                      <button
-                        onClick={() => onApplyPrompt(msg.suggested_prompt)}
-                        className="text-[10px] flex items-center gap-1 text-[#FF6B35] hover:text-[#FF8B55] transition-colors bg-[#FF6B35]/10 px-2 py-1 rounded-full border border-[#FF6B35]/20 w-fit"
-                      >
-                        <ArrowLeftCircle className="w-3 h-3" />
-                        Apply to Prompt
-                      </button>
+                  {msg.role === 'assistant' && (
+                    <div className="flex flex-col gap-2 mt-2">
+                      {msg.suggested_prompt && (
+                        <div className="flex flex-col gap-1">
+                          <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-2 text-xs text-white/60 italic border-l-2 border-l-[#FF6B35]">
+                            "{msg.suggested_prompt}"
+                          </div>
+                          <button
+                            onClick={() => onApplyPrompt(msg.suggested_prompt)}
+                            className="text-[10px] flex items-center gap-1 text-[#FF6B35] hover:text-[#FF8B55] transition-colors bg-[#FF6B35]/10 px-2 py-1 rounded-full border border-[#FF6B35]/20 w-fit"
+                          >
+                            <ArrowLeftCircle className="w-3 h-3" />
+                            Use Prompt
+                          </button>
+                        </div>
+                      )}
+                      
+                      {msg.suggested_actions && msg.suggested_actions.length > 0 && (
+                         <div className="flex flex-wrap gap-2">
+                           {msg.suggested_actions.map((action, idx) => (
+                             <button
+                               key={idx}
+                               onClick={() => onAIAction(action)}
+                               className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group"
+                             >
+                               {action.type === 'tool' && <Wand2 className="w-3 h-3 text-[#FF6B35]" />}
+                               {action.type === 'adjustment' && <Sliders className="w-3 h-3 text-blue-400" />}
+                               {action.type === 'filter' && <Layers className="w-3 h-3 text-purple-400" />}
+                               {action.type === 'crop' && <Crop className="w-3 h-3 text-green-400" />}
+                               <span>{action.label}</span>
+                               <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35]" />
+                             </button>
+                           ))}
+                         </div>
+                      )}
                     </div>
                   )}
                 </div>

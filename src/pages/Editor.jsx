@@ -214,20 +214,22 @@ export default function Editor() {
     setBatchProgress(0);
   };
 
-  const getProcessedImageBlob = async () => {
-    if (!currentImage) return null;
-    
+  // Unified Canvas Generator - The Source of Truth for Visual State
+  const generateCanvas = async (sourceImage = currentImage) => {
+    if (!sourceImage) return null;
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = currentImage.preview || currentImage.url;
-    
+    img.src = sourceImage.preview || sourceImage.url;
+
     await new Promise((resolve, reject) => {
       img.onload = resolve;
       img.onerror = reject;
     });
 
+    // Handle rotation dimensions
     if (transform.rotate === 90 || transform.rotate === 270) {
       canvas.width = img.height;
       canvas.height = img.width;
@@ -241,6 +243,7 @@ export default function Editor() {
     ctx.rotate((transform.rotate * Math.PI) / 180);
     ctx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
 
+    // Construct CSS Filter String
     const filters = [];
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
     if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
@@ -249,25 +252,27 @@ export default function Editor() {
     if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
     if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
     if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
-    
+
     if (selectedFilter && selectedFilter.id !== "none") {
       filters.push(selectedFilter.filter);
     }
-    
+
     ctx.filter = filters.join(" ") || "none";
 
-    if (transform.rotate === 90 || transform.rotate === 270) {
-      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
-    } else {
-      ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
-    }
-    
-    ctx.restore();
+    // Draw image centered in the transformed context
+    ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
 
+    ctx.restore();
+    return canvas;
+  };
+
+  const getProcessedImageBlob = async () => {
+    const canvas = await generateCanvas();
+    if (!canvas) return null;
     return new Promise((resolve) => {
       canvas.toBlob((blob) => {
         resolve(blob);
-      }, 'image/png');
+      }, 'image/png', 1.0);
     });
   };
 
@@ -424,61 +429,23 @@ export default function Editor() {
 
   const handleDownload = async () => {
     if (!currentImage) return;
-    
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = currentImage.preview || currentImage.url;
-    
-    img.onload = () => {
-      if (transform.rotate === 90 || transform.rotate === 270) {
-        canvas.width = img.height;
-        canvas.height = img.width;
-      } else {
-        canvas.width = img.width;
-        canvas.height = img.height;
-      }
-
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((transform.rotate * Math.PI) / 180);
-      ctx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
-
-      const filters = [];
-      if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
-      if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
-      if (adjustments.saturation !== 0) filters.push(`saturate(${100 + adjustments.saturation}%)`);
-      if (adjustments.blur > 0) filters.push(`blur(${adjustments.blur}px)`);
-      if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
-      if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
-      if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
-      
-      if (selectedFilter && selectedFilter.id !== "none") {
-        filters.push(selectedFilter.filter);
-      }
-      
-      ctx.filter = filters.join(" ") || "none";
-
-      if (transform.rotate === 90 || transform.rotate === 270) {
-        ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
-      } else {
-        ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
-      }
-      
-      ctx.restore();
+    try {
+      const canvas = await generateCanvas();
+      if (!canvas) return;
 
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = "flik_edited_image.png";
+        link.download = `flik_${Date.now()}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      });
-    };
+      }, 'image/png', 1.0);
+    } catch (e) {
+      console.error("Download failed", e);
+    }
   };
 
   const handleAdjustmentChange = (newAdjustments) => {
@@ -871,47 +838,26 @@ export default function Editor() {
 
   const handleApplyCrop = async () => {
     if (!currentImage) return;
-    
+
     setIsProcessing(true);
     setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-    
+
     try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = currentImage.preview || currentImage.url;
-      
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
+      // 1. Get the current visual state (transforms/filters baked in)
+      const bakeCanvas = await generateCanvas();
 
-      // 1. Setup dimensions for the "Visual" image (baked transforms)
-      const isRotated90 = Math.abs(transform.rotate) === 90 || Math.abs(transform.rotate) === 270;
-      const visualWidth = isRotated90 ? img.height : img.width;
-      const visualHeight = isRotated90 ? img.width : img.height;
+      // 2. Calculate crop coordinates relative to the baked canvas
+      const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width));
+      const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height));
+      const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
+      const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
 
-      // 2. Bake transforms into a temporary canvas
-      const bakeCanvas = document.createElement('canvas');
-      bakeCanvas.width = visualWidth;
-      bakeCanvas.height = visualHeight;
-      const bCtx = bakeCanvas.getContext('2d');
-      
-      bCtx.translate(visualWidth / 2, visualHeight / 2);
-      bCtx.rotate((transform.rotate * Math.PI) / 180);
-      bCtx.scale(transform.flipH ? -1 : 1, transform.flipV ? -1 : 1);
-      bCtx.drawImage(img, -img.width / 2, -img.height / 2);
-
-      // 3. Calculate crop coordinates on the baked canvas
-      const cropX = Math.max(0, Math.min((cropArea.x / 100) * visualWidth, visualWidth));
-      const cropY = Math.max(0, Math.min((cropArea.y / 100) * visualHeight, visualHeight));
-      const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * visualWidth, visualWidth - cropX));
-      const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * visualHeight, visualHeight - cropY));
-
-      // 4. Draw the cropped region to the final canvas
+      // 3. Draw cropped region
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = cropWidth;
       finalCanvas.height = cropHeight;
       const fCtx = finalCanvas.getContext('2d');
-      
+
       fCtx.drawImage(bakeCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
       finalCanvas.toBlob((blob) => {
@@ -922,14 +868,46 @@ export default function Editor() {
           preview: url,
           name: "cropped_image.png"
         });
-        // Reset transform since we baked it in
+        // Reset state since it's now baked into the new image
         setTransform({ rotate: 0, flipH: false, flipV: false });
+        setAdjustments({
+          brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0
+        });
+        setSelectedFilter(null);
         setIsCropping(false);
         setIsProcessing(false);
       }, 'image/png', 1.0);
     } catch (error) {
       console.error("Error cropping:", error);
       setIsProcessing(false);
+    }
+  };
+
+  const handleAIAction = (action) => {
+    if (!action) return;
+
+    switch(action.type) {
+      case 'tool':
+        setActiveTab(action.payload.id);
+        break;
+      case 'adjustment':
+        const newAdjustments = { ...adjustments, [action.payload.key]: action.payload.value };
+        handleAdjustmentChange(newAdjustments);
+        setActiveTab('adjust');
+        break;
+      case 'filter':
+         // We need to look up filter object by id, but filters are in FiltersPanel. 
+         // For now we can pass a dummy object with just ID or try to find it if we have the list.
+         // Since Editor doesn't hold the filter list, we will just set ID and let FiltersPanel handle it or just set it if we move filters up.
+         // Actually, FiltersPanel handles the list. 
+         // Let's just switch tab to filters for now to keep it safe, or assume we can find it.
+         // Ideally we lift filter list state up. For now let's just switch tab.
+         setActiveTab('filters');
+         break;
+      case 'crop':
+         setActiveTab('crop');
+         if (action.payload.active) handleStartCrop();
+         break;
     }
   };
 
@@ -1613,6 +1591,7 @@ export default function Editor() {
         onApplyPrompt={(text) => {
           setMagicBrushPrompt(text);
         }}
+        onAIAction={handleAIAction}
       />
     </div>
   );
