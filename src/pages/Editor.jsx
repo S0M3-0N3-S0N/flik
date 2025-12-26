@@ -799,15 +799,33 @@ export default function Editor() {
       const maskedFile = new File([maskedBlob], "masked_input.png", { type: "image/png" });
       const maskedUpload = await base44.integrations.Core.UploadFile({ file: maskedFile });
       
-      const instruction = magicBrushPrompt.trim() 
-        ? magicBrushPrompt 
-        : "Completely REMOVE the objects/spots covered by the red mask and fill the area with background that seamlessly matches the surroundings (inpainting).";
+      // 1. Optimize the instruction using LLM to make it robust for the image generator
+      setActiveTool({ label: "Refining Instruction..." });
+
+      const userInstruction = magicBrushPrompt.trim() || "remove the object completely";
+
+      const llmResponse = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are an expert image editing assistant. The user has painted red marks on an image and wants to edit those areas.
+        User instruction: "${userInstruction}"
+
+        Create a detailed prompt for an image generation model to execute this edit.
+        The prompt MUST:
+        1. Explicitly state that the bright RED areas are a mask to be modified.
+        2. Describe exactly what to generate in place of the red areas (matching the user's intent: removal/inpainting vs replacement/addition).
+        3. EMPHASIZE that the red color must be completely gone in the result.
+        4. Instruct to keep the rest of the image unchanged and blend the edits seamlessly.
+
+        Output ONLY the prompt text.`
+      });
+
+      // 2. Generate the edit
+      setActiveTool({ label: "Applying Magic..." });
 
       const result = await base44.integrations.Core.GenerateImage({
-        prompt: `Edit this image: The areas marked in bright RED are the mask. ${instruction} The red paint represents the area to change. The final output must NOT have any red marks. Keep the rest of the image exactly as is. High quality, realistic.`,
+        prompt: llmResponse, // Use the smart optimized prompt
         existing_image_urls: [maskedUpload.file_url, ...magicBrushImages]
       });
-      
+
       setResultImage(result.url);
       setShowResult(true);
       setBrushStrokes([]);
