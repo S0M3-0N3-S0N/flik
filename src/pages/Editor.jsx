@@ -16,10 +16,9 @@ import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
-import { useAssistant } from "@/components/context/AssistantContext";
+import ChatPanel from "@/components/generate/ChatPanel";
 
 export default function Editor() {
-  const { setPageContext, openAssistant } = useAssistant();
   const [currentImage, setCurrentImage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
@@ -70,6 +69,10 @@ export default function Editor() {
   const cursorRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'assistant', content: "Hi! I can help you refine your editing instructions. What would you like to do with this image?" }
+  ]);
   const [regenerateAction, setRegenerateAction] = useState(null);
 
   useEffect(() => {
@@ -693,7 +696,7 @@ export default function Editor() {
     }
   };
 
-  const handleAIAction = React.useCallback((action) => {
+  const handleAIAction = (action) => {
     if (!action) return;
 
     switch(action.type) {
@@ -701,14 +704,17 @@ export default function Editor() {
         setActiveTab(action.payload.id);
         break;
       case 'adjustment':
-        // We need to use function update to avoid stale closure if adjustments aren't dependencies
-        // But adjustments are in state. 
-        // Better: We rely on the context update which will have fresh state if we put it in useEffect dep
         const newAdjustments = { ...adjustments, [action.payload.key]: action.payload.value };
         handleAdjustmentChange(newAdjustments);
         setActiveTab('adjust');
         break;
       case 'filter':
+         // We need to look up filter object by id, but filters are in FiltersPanel. 
+         // For now we can pass a dummy object with just ID or try to find it if we have the list.
+         // Since Editor doesn't hold the filter list, we will just set ID and let FiltersPanel handle it or just set it if we move filters up.
+         // Actually, FiltersPanel handles the list. 
+         // Let's just switch tab to filters for now to keep it safe, or assume we can find it.
+         // Ideally we lift filter list state up. For now let's just switch tab.
          setActiveTab('filters');
          break;
       case 'crop':
@@ -716,20 +722,7 @@ export default function Editor() {
          if (action.payload.active) handleStartCrop();
          break;
     }
-  }, [adjustments]);
-
-  // Sync Context with Global Assistant
-  useEffect(() => {
-      setPageContext({
-          page: 'editor',
-          data: {
-              currentPrompt: magicBrushPrompt,
-              currentImages: currentImage ? [currentImage.url || currentImage.preview] : [],
-              onApplyPrompt: (text) => setMagicBrushPrompt(text)
-          },
-          actionHandler: handleAIAction
-      });
-  }, [currentImage, magicBrushPrompt, handleAIAction, setPageContext]);
+  };
 
   useEffect(() => {
     if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
@@ -1009,7 +1002,7 @@ export default function Editor() {
                     onBrushModeChange={setBrushMode}
                     prompt={magicBrushPrompt}
                     onPromptChange={setMagicBrushPrompt}
-                    onDiscuss={() => openAssistant()}
+                    onDiscuss={() => setIsChatOpen(true)}
                     referenceImages={magicBrushImages}
                     onReferenceImagesChange={setMagicBrushImages}
                   />
@@ -1395,6 +1388,23 @@ export default function Editor() {
         transform={processedImage ? undefined : transform}
         onRegenerate={regenerateAction}
         isRegenerating={isProcessing}
+      />
+      
+      <ChatPanel 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+        messages={chatMessages}
+        setMessages={setChatMessages}
+        currentPrompt={magicBrushPrompt}
+        currentStyle=""
+        currentImages={[
+          ...(currentImage ? [{ url: currentImage.url || currentImage.preview, id: 'current', label: 'Main Image' }] : []),
+          ...magicBrushImages.map((url, i) => ({ url, id: `ref-${i}`, label: `Reference Image ${i+1}` }))
+        ]}
+        onApplyPrompt={(text) => {
+          setMagicBrushPrompt(text);
+        }}
+        onAIAction={handleAIAction}
       />
     </div>
   );

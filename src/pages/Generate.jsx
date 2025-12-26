@@ -9,14 +9,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-
+import ChatPanel from "@/components/generate/ChatPanel";
 import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
 import ImageGrid from "@/components/generate/ImageGrid";
 import ImageUploader from "@/components/editor/ImageUploader";
-import { useAssistant } from "@/components/context/AssistantContext";
 
 export default function Generate() {
-  const { setPageContext, openAssistant, isOpen } = useAssistant();
   const [prompt, setPrompt] = useState("");
   const [selectedStyles, setSelectedStyles] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -28,9 +26,13 @@ export default function Generate() {
   const [isUploading, setIsUploading] = useState(false);
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageStrength, setImageStrength] = useState(0.5);
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'assistant', content: "Hi! I'm your creative assistant. I can help you refine your prompts or brainstorm ideas. What would you like to create today?" }
+  ]);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -41,19 +43,6 @@ export default function Generate() {
       setUploadedImages([{ url: loadUrl, id: Date.now() }]);
     }
   }, []);
-
-  // Sync Context with Global Assistant
-  useEffect(() => {
-      setPageContext({
-          page: 'generate',
-          data: {
-              currentPrompt: prompt,
-              currentImages: uploadedImages.map(u => u.url),
-              onApplyPrompt: (text) => setPrompt(text)
-          },
-          actionHandler: null // Generate page doesn't have complex actions yet
-      });
-  }, [prompt, uploadedImages, setPageContext]);
 
   const handleImageUpload = async (filesOrEvent) => {
     // Handle both event (from hidden input) and direct file array (from ImageUploader)
@@ -337,7 +326,8 @@ export default function Generate() {
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-80 p-0 bg-[#141414] border border-white/10" align="start">
-                      <div className="p-2">
+                      <div className="p-4">
+                        <h4 className="text-sm font-medium text-white mb-2">Reference Images</h4>
                         <div className="h-40">
                           <ImageUploader 
                             onImageSelect={handleImageUpload} 
@@ -349,9 +339,9 @@ export default function Generate() {
                   </Popover>
 
                   <button 
-                    onClick={() => openAssistant()}
+                    onClick={() => setIsChatOpen(!isChatOpen)}
                     className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
-                      isOpen
+                      isChatOpen
                         ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                         : 'text-white/60 hover:bg-white/5 hover:text-white'
                     }`}
@@ -454,7 +444,21 @@ export default function Generate() {
               </div>
               </div>
 
-
+              <ChatPanel 
+                isOpen={isChatOpen} 
+                onClose={() => setIsChatOpen(false)} 
+                messages={chatMessages}
+                setMessages={setChatMessages}
+                currentPrompt={prompt}
+                currentStyle={selectedStyles.map(id => stylePresets.find(s => s.id === id)?.label).join(", ")}
+                currentImages={uploadedImages}
+                onApplyPrompt={(text) => {
+                  setPrompt(text);
+                }}
+                onAIAction={(action) => {
+                  alert("Editor actions are only available in the Photo Studio.");
+                }}
+              />
 
             <StyleSelector 
               selectedStyles={selectedStyles} 
