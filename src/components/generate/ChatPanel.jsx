@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from 'react-markdown';
 
-import { Copy, ArrowLeftCircle, Check, Play, Sliders, Wand2, Layers, Crop } from "lucide-react";
+import { Copy, ArrowLeft, Check, Play, Sliders, Wand2, Layers, Crop } from "lucide-react";
 
 export default function ChatPanel({ isOpen, onClose, messages, setMessages, onApplyPrompt, onAIAction, currentPrompt, currentStyle, currentImages }) {
   const [input, setInput] = useState("");
@@ -242,7 +242,7 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
                             onClick={() => onApplyPrompt(msg.suggested_prompt)}
                             className="text-[10px] flex items-center gap-1 text-[#FF6B35] hover:text-[#FF8B55] transition-colors bg-[#FF6B35]/10 px-2 py-1 rounded-full border border-[#FF6B35]/20 w-fit"
                           >
-                            <ArrowLeftCircle className="w-3 h-3" />
+                            <ArrowLeft className="w-3 h-3" />
                             Use Prompt
                           </button>
                         </div>
@@ -253,8 +253,9 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
                            {msg.suggested_actions.map((action, idx) => (
                              <button
                                key={idx}
-                               onClick={() => onAIAction(action)}
-                               className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group"
+                               onClick={() => onAIAction && onAIAction(action)}
+                               className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group ${!onAIAction ? 'opacity-50 cursor-not-allowed' : ''}`}
+                               disabled={!onAIAction}
                              >
                                {action.type === 'tool' && <Wand2 className="w-3 h-3 text-[#FF6B35]" />}
                                {action.type === 'adjustment' && <Sliders className="w-3 h-3 text-blue-400" />}

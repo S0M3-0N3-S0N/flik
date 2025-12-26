@@ -455,6 +455,9 @@ export default function Generate() {
                 onApplyPrompt={(text) => {
                   setPrompt(text);
                 }}
+                onAIAction={(action) => {
+                  alert("Editor actions are only available in the Photo Studio.");
+                }}
               />
 
             <StyleSelector 
