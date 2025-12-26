@@ -411,43 +411,23 @@ export default function Editor() {
     setIsProcessing(true);
 
     try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = currentImage.preview || currentImage.url;
-      
-      await new Promise(resolve => img.onload = resolve);
+      // Calculate temporary transform for this operation
+      let tempTransform = { rotate: 0, flipH: false, flipV: false };
+      if (type === 'rotate-right') tempTransform.rotate = 90;
+      else if (type === 'rotate-left') tempTransform.rotate = -90;
+      else if (type === 'flip-horizontal') tempTransform.flipH = true;
+      else if (type === 'flip-vertical') tempTransform.flipV = true;
 
-      let rotate = 0;
-      let scaleX = 1;
-      let scaleY = 1;
-      let newWidth = img.width;
-      let newHeight = img.height;
+      // Generate canvas with ONLY the transform applied (no filters/adjustments)
+      // We use the hook directly to pass specific state
+      const canvas = await generateCanvas(
+        currentImage, 
+        { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 }, 
+        tempTransform, 
+        null
+      );
 
-      if (type === 'rotate-right') {
-        rotate = 90;
-        newWidth = img.height;
-        newHeight = img.width;
-      } else if (type === 'rotate-left') {
-        rotate = -90;
-        newWidth = img.height;
-        newHeight = img.width;
-      } else if (type === 'flip-horizontal') {
-        scaleX = -1;
-      } else if (type === 'flip-vertical') {
-        scaleY = -1;
-      }
-
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((rotate * Math.PI) / 180);
-      ctx.scale(scaleX, scaleY);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
-      ctx.restore();
+      if (!canvas) throw new Error("Failed to generate canvas");
 
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
@@ -457,6 +437,17 @@ export default function Editor() {
           preview: url,
           name: "transformed.png"
         });
+        // We baked the transform into the image, so we keep the current "visual" transform state as is? 
+        // Wait, if we bake it, the image effectively changes. 
+        // The previous logic reset transform to 0. 
+        // But what if the user had previous adjustments? They are preserved in state but NOT baked.
+        // So we are correct to bake ONLY transform and keep adjustments in state.
+        // However, the previous logic reset transform to 0.
+        // If we bake a 90deg rotation, the new image is rotated. The transform state should be 0.
+        // BUT `generateCanvas` takes `currentImage` (which is raw) and applies `transform` (current state).
+        // If we want to ADD a rotation, we should modify the transform state?
+        // Ah, the previous logic BAKED the rotation into a NEW image.
+        // This effectively "commits" the rotation.
         setTransform({ rotate: 0, flipH: false, flipV: false });
         setBrushStrokes([]);
         setIsProcessing(false);

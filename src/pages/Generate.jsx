@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import ChatPanel from "@/components/generate/ChatPanel";
 import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
 import ImageGrid from "@/components/generate/ImageGrid";
+import ImageUploader from "@/components/editor/ImageUploader";
 
 export default function Generate() {
   const [prompt, setPrompt] = useState("");
@@ -43,9 +44,17 @@ export default function Generate() {
     }
   }, []);
 
-  const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    const validFiles = files.filter(f => f.type.startsWith('image/'));
+  const handleImageUpload = async (filesOrEvent) => {
+    // Handle both event (from hidden input) and direct file array (from ImageUploader)
+    let validFiles = [];
+    if (filesOrEvent.target) {
+       validFiles = Array.from(filesOrEvent.target.files).filter(f => f.type.startsWith('image/'));
+    } else if (Array.isArray(filesOrEvent)) {
+       validFiles = filesOrEvent; // Already filtered in ImageUploader
+    } else if (filesOrEvent.file) {
+       validFiles = [filesOrEvent.file]; // Single file object from ImageUploader (legacy mode)
+    }
+
     if (validFiles.length === 0) return;
     
     setIsUploading(true);
@@ -249,40 +258,40 @@ export default function Generate() {
           >
             <div className="relative bg-[#141414]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-2 shadow-2xl transition-all duration-300 hover:border-white/20">
               {/* Input Area */}
-              <div className="relative px-4 pt-4">
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe your vision (e.g., 'A cat in 3 different styles')..."
-                  className="w-full min-h-[140px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                      handleGenerate();
-                    }
-                  }}
-                />
+              <div className="relative px-4 pt-4 flex flex-col gap-4">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe your vision (e.g., 'A cat in 3 different styles')..."
+                className="w-full min-h-[100px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    handleGenerate();
+                  }
+                }}
+              />
 
-                {/* Minimal Uploaded Images Preview */}
-                {(uploadedImages.length > 0 || isUploading) && (
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                    {uploadedImages.map((img) => (
-                      <div key={img.id} className="relative w-8 h-8 rounded-md overflow-hidden border border-white/10 group cursor-pointer shadow-lg">
-                        <img src={img.url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                        <button 
-                          onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
-                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                        >
-                          <X className="w-3 h-3 text-white" />
-                        </button>
-                      </div>
-                    ))}
-                    {isUploading && (
-                      <div className="w-8 h-8 rounded-md bg-white/5 flex items-center justify-center border border-white/10 animate-pulse">
-                        <Loader2 className="w-3 h-3 text-white/50 animate-spin" />
-                      </div>
-                    )}
-                  </div>
-                )}
+              {/* Uploaded Images Preview */}
+              {(uploadedImages.length > 0 || isUploading) && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
+                  {uploadedImages.map((img) => (
+                    <div key={img.id} className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/10 group flex-shrink-0">
+                      <img src={img.url} className="w-full h-full object-cover" />
+                      <button 
+                        onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                      >
+                        <X className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                  {isUploading && (
+                    <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 animate-pulse flex-shrink-0">
+                      <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
+                    </div>
+                  )}
+                </div>
+              )}
               </div>
 
               {/* Toolbar */}

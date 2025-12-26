@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import { Upload, Image, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function ImageUploader({ onImageSelect, currentImage }) {
+export default function ImageUploader({ onImageSelect, currentImage, multiple = false }) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragOver = useCallback((e) => {
@@ -18,16 +18,25 @@ export default function ImageUploader({ onImageSelect, currentImage }) {
   const handleDrop = useCallback((e) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      processFile(file);
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith("image/"));
+    
+    if (files.length > 0) {
+      if (multiple) {
+        processFiles(files);
+      } else {
+        processFile(files[0]);
+      }
     }
-  }, []);
+  }, [multiple]);
 
   const handleFileInput = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      processFile(file);
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      if (multiple) {
+        processFiles(files);
+      } else {
+        processFile(files[0]);
+      }
     }
   };
 
@@ -41,6 +50,15 @@ export default function ImageUploader({ onImageSelect, currentImage }) {
       });
     };
     reader.readAsDataURL(file);
+  };
+
+  const processFiles = (files) => {
+    // For multiple files, we might need to handle them differently depending on parent expectation
+    // If parent expects array, we should pass array.
+    // However, onImageSelect usually expects a single object in the legacy code.
+    // If multiple=true, we assume onImageSelect handles array OR we pass them one by one?
+    // Let's assume onImageSelect handles an array if multiple is true.
+    onImageSelect(files);
   };
 
   if (currentImage) {
@@ -90,6 +108,7 @@ export default function ImageUploader({ onImageSelect, currentImage }) {
         <input
           type="file"
           accept="image/*"
+          multiple={multiple}
           onChange={handleFileInput}
           className="hidden"
         />
