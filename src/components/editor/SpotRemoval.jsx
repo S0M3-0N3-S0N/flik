@@ -111,8 +111,8 @@ export default function SpotRemoval({
             value={prompt}
             onChange={(e) => onPromptChange(e.target.value)}
             placeholder="What should happen to the painted area? (e.g. 'remove it', 'change to red flower')"
-            className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6B35]/50 focus:bg-white/5 min-h-[100px] resize-none transition-all mb-3"
-          />
+            className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6B35]/50 focus:bg-white/5 min-h-[100px] resize-none transition-all mb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            />
 
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -135,7 +135,7 @@ export default function SpotRemoval({
             </div>
             
             {referenceImages.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+              <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {referenceImages.map((url, idx) => (
                   <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 group border border-white/10">
                     <img src={url} alt="Reference" className="w-full h-full object-cover" />
