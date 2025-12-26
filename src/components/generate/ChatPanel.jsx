@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Bot, User, Sparkles, Loader2, Image as ImageIcon, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from 'react-markdown';
 
-import { Copy, ArrowLeft, Check, Play, Sliders, Wand2, Layers, Crop } from "lucide-react";
+import { Copy, ArrowLeft, Check, Play, SlidersHorizontal, Wand2, Layers, Crop } from "lucide-react";
 
 export default function ChatPanel({ isOpen, onClose, messages, setMessages, onApplyPrompt, onAIAction, currentPrompt, currentStyle, currentImages }) {
   const [input, setInput] = useState("");
@@ -258,7 +258,7 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
                                disabled={!onAIAction}
                              >
                                {action.type === 'tool' && <Wand2 className="w-3 h-3 text-[#FF6B35]" />}
-                               {action.type === 'adjustment' && <Sliders className="w-3 h-3 text-blue-400" />}
+                               {action.type === 'adjustment' && <SlidersHorizontal className="w-3 h-3 text-blue-400" />}
                                {action.type === 'filter' && <Layers className="w-3 h-3 text-purple-400" />}
                                {action.type === 'crop' && <Crop className="w-3 h-3 text-green-400" />}
                                <span>{action.label}</span>
