@@ -53,7 +53,7 @@ export default function SpotRemoval({
           <div className="flex-1">
             <h4 className="text-white font-medium text-sm mb-1">Magic Brush</h4>
             <p className="text-xs text-white/60 leading-relaxed">
-              Paint over areas to modify them. Use the AI prompt to describe what should change.
+              Paint over areas to transform them. Describe what you want to add, change, or remove.
             </p>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function SpotRemoval({
           <textarea
             value={prompt}
             onChange={(e) => onPromptChange(e.target.value)}
-            placeholder="What should happen to the painted area? (e.g. 'remove it', 'change to red flower')"
+            placeholder="Describe your magic edit... (e.g., 'put a vintage lamp here', 'make the sky purple', 'remove this person')"
             className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6B35]/50 focus:bg-white/5 min-h-[100px] resize-none transition-all mb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             />
 

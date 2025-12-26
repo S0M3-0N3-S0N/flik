@@ -709,42 +709,24 @@ export default function Editor() {
     }
   };
 
-  const handleRemoveSpots = async () => {
+  const handleMagicBrush = async () => {
     if (brushStrokes.length === 0 || !currentImage) return;
     
     setIsProcessing(true);
-    setActiveTool({ label: "Spot Removal" });
-    setRegenerateAction(() => () => handleRemoveSpots());
+    setActiveTool({ label: "Magic Brush" });
+    setRegenerateAction(() => () => handleMagicBrush());
     
     try {
       // Bake the current image state (transforms, adjustments)
       const blob = await getProcessedImageBlob();
-      const file = new File([blob], "processed_cleanup.png", { type: "image/png" });
+      // const file = new File([blob], "processed_cleanup.png", { type: "image/png" });
       
-      const uploadResult = await base44.integrations.Core.UploadFile({
-        file: file
-      });
-      const imageUrl = uploadResult.file_url;
+      // const uploadResult = await base44.integrations.Core.UploadFile({
+      //   file: file
+      // });
+      // const imageUrl = uploadResult.file_url;
       
-      // We also need to potentially mask the brush strokes if the backend required it,
-      // but GenerateImage generic prompt might just look at the image.
-      // However, usually for inpainting we need to send the mask.
-      // The current prompt says "at the marked painted areas". 
-      // If we just send the clean image, the AI won't know WHERE to paint unless we draw the strokes ON the image?
-      // Wait, the previous code sent `currentImage` and `prompt`. It didn't send a mask.
-      // The previous code relied on the AI "figuring it out"? Or maybe the `ProcessingOverlay` drew on it? No.
-      // Actually, if we look at `handleRemoveSpots` in the original code, it didn't seem to draw the red strokes onto the image sent to AI.
-      // It just sent the original image and said "marked painted areas". 
-      // This suggests the previous implementation might not have worked well for spot removal unless the "existing_image_urls" implies a state where the client draws on it?
-      // No, `GenerateImage` takes a URL.
-      // To make this work properly, I should probably DRAW the red strokes onto the baked image so the AI sees them!
-      // OR send a separate mask. But `GenerateImage` schema doesn't show a mask input.
-      // It assumes the prompt handles it or the image has the markings?
-      // Let's assume for "Spot Removal" with a generic LLM/Image gen, drawing the mask on the image (e.g. in bright green/red) and telling it "remove the red areas" is a common strategy if no explicit mask input exists.
-      // So, let's modify `getProcessedImageBlob` to optionally accept `drawStrokes`.
-      // Or just draw them here manually.
-      
-      // Let's create a specific blob for spot removal that INCLUDES the brush strokes burned in
+      // Create a specific blob for magic brush that INCLUDES the brush strokes burned in as a mask guide
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
@@ -756,7 +738,7 @@ export default function Editor() {
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
       
-      // Draw strokes
+      // Draw strokes for the "masked" version
       if (brushStrokes.length > 0) {
         brushStrokes.forEach(stroke => {
           const points = stroke.points || stroke;
@@ -766,6 +748,7 @@ export default function Editor() {
           const size = stroke.size || brushSize;
           
           ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
+          // Use a very distinct color for the mask that the AI can easily identify
           ctx.strokeStyle = `rgba(255, 0, 0, 1)`; 
           ctx.fillStyle = `rgba(255, 0, 0, 1)`;
           
@@ -811,31 +794,35 @@ export default function Editor() {
       // 1. Optimize the instruction using LLM with Vision to analyze the images
       setActiveTool({ label: "Analyzing Request..." });
 
-      const userInstruction = magicBrushPrompt.trim() || "remove the object completely";
+      const userInstruction = magicBrushPrompt.trim();
+      // If prompt is empty, default to "remove", but we want to support any instruction
+      const instruction = userInstruction || "remove the object completely and fill the background";
       const hasReferences = magicBrushImages.length > 0;
 
       const llmResponse = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are an expert image editing assistant. 
-        Attached images:
-        1. The original "clean" image (before mask).
-        ${hasReferences ? "2+. Reference images provided by the user." : ""}
-
-        User instruction: "${userInstruction}"
-
-        Your task is to create a HIGHLY DETAILED prompt for an image generation model to execute this edit on a masked version of the image (where the edit area will be marked in RED).
-
-        Analyze the original image to understand the context of what is being replaced/edited.
-        ${hasReferences ? "Analyze the reference images to understand exactly what visual details (style, color, texture, object) should be inserted." : ""}
-
-        The final prompt MUST:
-        1. Explicitly state that the bright RED areas in the input image are a mask to be modified.
-        2. VISUALLY DESCRIBE exactly what to generate in place of the red areas. 
-           ${hasReferences ? "Do NOT just say 'use the reference'. Instead, DESCRIBE the reference image in detail (e.g., 'a black knitted hoodie with a silver zipper and pockets') so the generator knows exactly what to draw." : "Infer the details from the original image context if needed."}
-        3. EMPHASIZE that the red paint color must be completely gone in the result.
-        4. Instruct to keep the rest of the image unchanged and blend the edits seamlessly.
-
-        Output ONLY the prompt text.`,
-        file_urls: [cleanUpload.file_url, ...magicBrushImages]
+        prompt: `You are an elite AI image editor.
+        
+        INPUTS:
+        1. A clean original image.
+        2. A masked version of the same image (where the area to edit is painted in RED).
+        ${hasReferences ? "3. Reference images provided by the user." : ""}
+        
+        USER REQUEST: "${instruction}"
+        
+        YOUR TASK:
+        Write a precise image generation prompt to modify ONLY the red masked area based on the user's request.
+        
+        GUIDELINES:
+        - The RED area is your canvas. Everything else must remain exactly as is.
+        - If the user wants to ADD or CHANGE something: Describe the new object in extreme detail (lighting, shadows, perspective, style match).
+        - If the user wants to REMOVE something: Describe the background texture/pattern that should fill the void to make it seamless.
+        - The prompt must explicitly tell the generator that the RED area is a mask to be replaced.
+        - Mention that the red paint itself must NOT appear in the final output.
+        - If reference images are provided, incorporate their visual details (colors, materials, shapes) into the description of the new object.
+        
+        OUTPUT:
+        Return ONLY the detailed prompt string.`,
+        file_urls: [cleanUpload.file_url, maskedUpload.file_url, ...magicBrushImages]
       });
 
       // 2. Generate the edit
@@ -850,8 +837,8 @@ export default function Editor() {
       setShowResult(true);
       // Brush strokes preserved for regeneration - cleared on apply
     } catch (error) {
-      console.error("Error removing spots:", error);
-      alert("Error removing spots. Please try again.");
+      console.error("Error executing magic brush:", error);
+      alert("Error executing magic brush. Please try again.");
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
@@ -1199,7 +1186,7 @@ export default function Editor() {
               {currentImage ? (
                 <>
                   <SpotRemoval 
-                    onRemoveSpot={handleRemoveSpots}
+                    onRemoveSpot={handleMagicBrush}
                     isProcessing={isProcessing}
                     brushSize={brushSize}
                     onBrushSizeChange={setBrushSize}
