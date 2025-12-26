@@ -183,7 +183,7 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
               <Button
                 variant="outline"
                 onClick={onDownload}
-                className="w-full sm:w-auto bg-transparent border-white/20 text-white hover:bg-white/10 hover:border-white/40 hover:text-white transition-all duration-300 hover:-translate-y-0.5 shadow-sm hover:shadow-white/10 sm:min-w-[120px]"
+                className="w-full sm:w-auto bg-white/10 border-white/40 text-white hover:bg-white/20 hover:border-white/60 hover:text-white transition-all shadow-sm"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download
