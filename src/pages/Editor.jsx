@@ -550,6 +550,13 @@ export default function Editor() {
     }
   };
 
+  const handleWheel = (e) => {
+    if (currentImage) {
+      const delta = e.deltaY * -0.001;
+      setZoom(z => Math.min(Math.max(z + delta, 0.1), 5));
+    }
+  };
+
   const getRelativePosition = (e) => {
     if (!imageRef.current) return null;
     const rect = imageRef.current.getBoundingClientRect();
