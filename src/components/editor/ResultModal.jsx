@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye, RefreshCw } from "lucide-react";
+import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function ResultModal({ isOpen, onClose, originalImage, resultImage, onApply, onDownload, transform, onRegenerate }) {
+export default function ResultModal({ isOpen, onClose, originalImage, resultImage, onApply, onDownload, transform, onRegenerate, isRegenerating }) {
   const [mode, setMode] = useState("compare"); // 'compare' (slider) or 'side' (side-by-side)
   const [sliderPos, setSliderPos] = useState(50);
 
@@ -168,14 +168,19 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                 Discard
               </Button>
               {onRegenerate && (
-                <Button
-                  variant="ghost"
-                  onClick={onRegenerate}
-                  className="flex-1 sm:flex-none text-[#FF6B35] hover:text-[#F72C25] hover:bg-[#FF6B35]/10"
-                >
+              <Button
+                variant="ghost"
+                onClick={onRegenerate}
+                disabled={isRegenerating}
+                className="flex-1 sm:flex-none text-[#FF6B35] hover:text-[#F72C25] hover:bg-[#FF6B35]/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRegenerating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Regenerate
-                </Button>
+                )}
+                {isRegenerating ? "Regenerating..." : "Regenerate"}
+              </Button>
               )}
             </div>
             

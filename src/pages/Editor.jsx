@@ -1594,6 +1594,7 @@ export default function Editor() {
         onDownload={handleDownload}
         transform={processedImage ? undefined : transform}
         onRegenerate={regenerateAction}
+        isRegenerating={isProcessing}
       />
       
       <ChatPanel 
