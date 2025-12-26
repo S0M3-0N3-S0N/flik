@@ -106,10 +106,6 @@ export default function SpotRemoval({
         <div>
           <div className="flex justify-between items-center mb-3">
             <Label className="text-white/80 text-xs font-medium uppercase tracking-wider">Instructions</Label>
-            <Button variant="ghost" size="sm" onClick={onDiscuss} className="h-6 text-[10px] gap-1.5 text-[#FF6B35] bg-[#FF6B35]/10 hover:bg-[#FF6B35]/20 rounded-full px-3">
-              <MessageSquare className="w-3 h-3" />
-              Discuss
-            </Button>
           </div>
           <textarea
             value={prompt}
@@ -119,14 +115,20 @@ export default function SpotRemoval({
           />
 
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors">
                 {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
                 <span>Add Reference Image</span>
                 <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
               </label>
+              
+              <Button variant="ghost" size="sm" onClick={onDiscuss} className="h-[30px] text-[10px] gap-1.5 text-[#FF6B35] bg-[#FF6B35]/10 hover:bg-[#FF6B35]/20 rounded-lg px-3 border border-[#FF6B35]/20">
+                <MessageSquare className="w-3.5 h-3.5" />
+                Discuss
+              </Button>
+
               {referenceImages.length > 0 && (
-                <span className="text-[10px] text-white/40">{referenceImages.length} image(s) added</span>
+                <span className="text-[10px] text-white/40 ml-auto">{referenceImages.length} image(s) added</span>
               )}
             </div>
             
