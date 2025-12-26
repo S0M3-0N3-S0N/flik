@@ -265,6 +265,19 @@ function LayoutContent({ children, currentPageName }) {
                     AI Assistant
                   </button>
 
+                  <button
+                    onClick={() => {
+                      toggleOpen();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                      isOpen ? "bg-[#FF6B35]/20 text-[#FF6B35]" : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                    AI Assistant
+                  </button>
+
                   <Link 
                     to={createPageUrl("Profile")} 
                     onClick={() => setIsMobileMenuOpen(false)}
