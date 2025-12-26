@@ -797,34 +797,49 @@ export default function Editor() {
       
       const maskedBlob = await new Promise(r => canvas.toBlob(r, 'image/png'));
       const maskedFile = new File([maskedBlob], "masked_input.png", { type: "image/png" });
-      const maskedUpload = await base44.integrations.Core.UploadFile({ file: maskedFile });
-      
-      // 1. Optimize the instruction using LLM to make it robust for the image generator
-      setActiveTool({ label: "Refining Instruction..." });
+      const cleanFile = new File([blob], "clean_input.png", { type: "image/png" }); // Create file from clean blob
+
+      // Upload both clean and masked versions
+      const [maskedUpload, cleanUpload] = await Promise.all([
+        base44.integrations.Core.UploadFile({ file: maskedFile }),
+        base44.integrations.Core.UploadFile({ file: cleanFile })
+      ]);
+
+      // 1. Optimize the instruction using LLM with Vision to analyze the images
+      setActiveTool({ label: "Analyzing Request..." });
 
       const userInstruction = magicBrushPrompt.trim() || "remove the object completely";
       const hasReferences = magicBrushImages.length > 0;
 
       const llmResponse = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are an expert image editing assistant. The user has painted red marks on an image and wants to edit those areas.
-        User instruction: "${userInstruction}"
-        ${hasReferences ? "IMPORTANT: The user has provided REFERENCE IMAGES. The content of these reference images MUST be used to fill the masked area." : ""}
+        prompt: `You are an expert image editing assistant. 
+        Attached images:
+        1. The original "clean" image (before mask).
+        ${hasReferences ? "2+. Reference images provided by the user." : ""}
 
-        Create a detailed prompt for an image generation model to execute this edit.
-        The prompt MUST:
-        1. Explicitly state that the bright RED areas are a mask to be modified.
-        2. Describe exactly what to generate in place of the red areas. ${hasReferences ? "CRITICAL: Instruct the model to strictly use the visual characteristics (style, color, texture, object) from the provided additional reference images to replace the content in the masked area." : "Match the user's intent (removal/inpainting vs replacement/addition)."}
-        3. EMPHASIZE that the red color must be completely gone in the result.
+        User instruction: "${userInstruction}"
+
+        Your task is to create a HIGHLY DETAILED prompt for an image generation model to execute this edit on a masked version of the image (where the edit area will be marked in RED).
+
+        Analyze the original image to understand the context of what is being replaced/edited.
+        ${hasReferences ? "Analyze the reference images to understand exactly what visual details (style, color, texture, object) should be inserted." : ""}
+
+        The final prompt MUST:
+        1. Explicitly state that the bright RED areas in the input image are a mask to be modified.
+        2. VISUALLY DESCRIBE exactly what to generate in place of the red areas. 
+           ${hasReferences ? "Do NOT just say 'use the reference'. Instead, DESCRIBE the reference image in detail (e.g., 'a black knitted hoodie with a silver zipper and pockets') so the generator knows exactly what to draw." : "Infer the details from the original image context if needed."}
+        3. EMPHASIZE that the red paint color must be completely gone in the result.
         4. Instruct to keep the rest of the image unchanged and blend the edits seamlessly.
 
-        Output ONLY the prompt text.`
+        Output ONLY the prompt text.`,
+        file_urls: [cleanUpload.file_url, ...magicBrushImages]
       });
 
       // 2. Generate the edit
       setActiveTool({ label: "Applying Magic..." });
 
       const result = await base44.integrations.Core.GenerateImage({
-        prompt: llmResponse, // Use the smart optimized prompt
+        prompt: llmResponse,
         existing_image_urls: [maskedUpload.file_url, ...magicBrushImages]
       });
 
