@@ -693,39 +693,32 @@ export default function Editor() {
       // });
       // const imageUrl = uploadResult.file_url;
       
-      // Create a specific blob for magic brush that INCLUDES the brush strokes burned in as a mask guide
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      // Load the baked image
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.src = URL.createObjectURL(blob); // Load the baked image
-      
+      img.src = URL.createObjectURL(blob);
       await new Promise(r => img.onload = r);
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      
-      // Draw strokes for the "masked" version
-      if (brushStrokes.length > 0) {
+
+      // HELPER: Draw strokes function
+      const drawStrokes = (ctx, color = 'red', composite = 'source-over') => {
+        if (brushStrokes.length === 0) return;
+
         brushStrokes.forEach(stroke => {
           const points = stroke.points || stroke;
           if (!points || points.length === 0) return;
-          
-          const isErase = stroke.type === 'erase';
           const size = stroke.size || brushSize;
-          
-          ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
-          // Use a very distinct color for the mask that the AI can easily identify
-          ctx.strokeStyle = `rgba(255, 0, 0, 1)`; 
-          ctx.fillStyle = `rgba(255, 0, 0, 1)`;
-          
+
+          ctx.globalCompositeOperation = composite;
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+
           let scaledSize = size;
           if (imageRef.current) {
              const domWidth = imageRef.current.getBoundingClientRect().width;
-             const scale = canvas.width / domWidth;
+             const scale = ctx.canvas.width / domWidth;
              scaledSize = size * scale;
           } else {
-             scaledSize = size * (canvas.width / 800);
+             scaledSize = size * (ctx.canvas.width / 800);
           }
 
           ctx.lineWidth = scaledSize;
@@ -734,85 +727,95 @@ export default function Editor() {
 
           if (points.length === 1) {
              ctx.beginPath();
-             ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
+             ctx.arc((points[0].x / 100) * ctx.canvas.width, (points[0].y / 100) * ctx.canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
              ctx.fill();
           } else {
              ctx.beginPath();
-             ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
+             ctx.moveTo((points[0].x / 100) * ctx.canvas.width, (points[0].y / 100) * ctx.canvas.height);
              for (let i = 1; i < points.length; i++) {
-               ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
+               ctx.lineTo((points[i].x / 100) * ctx.canvas.width, (points[i].y / 100) * ctx.canvas.height);
              }
              ctx.stroke();
           }
         });
         ctx.globalCompositeOperation = 'source-over';
-      }
-      
-      const maskedBlob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      const maskedFile = new File([maskedBlob], "masked_input.png", { type: "image/png" });
-      const cleanFile = new File([blob], "clean_input.png", { type: "image/png" }); // Create file from clean blob
+      };
 
-      // Upload both clean and masked versions
-      const [maskedUpload, cleanUpload] = await Promise.all([
-        base44.integrations.Core.UploadFile({ file: maskedFile }),
+      // 1. Create RED MASK Canvas (For Vision LLM to see context)
+      const redCanvas = document.createElement('canvas');
+      redCanvas.width = img.width;
+      redCanvas.height = img.height;
+      const redCtx = redCanvas.getContext('2d');
+      redCtx.drawImage(img, 0, 0);
+      drawStrokes(redCtx, `rgba(255, 0, 0, 1)`, 'source-over');
+
+      // 2. Create ALPHA MASK Canvas (For Image Generator to fill)
+      const alphaCanvas = document.createElement('canvas');
+      alphaCanvas.width = img.width;
+      alphaCanvas.height = img.height;
+      const alphaCtx = alphaCanvas.getContext('2d');
+      alphaCtx.drawImage(img, 0, 0);
+      drawStrokes(alphaCtx, 'rgba(0,0,0,1)', 'destination-out'); // ERASE to transparent
+
+      // Convert to blobs/files
+      const [redBlob, alphaBlob] = await Promise.all([
+        new Promise(r => redCanvas.toBlob(r, 'image/png')),
+        new Promise(r => alphaCanvas.toBlob(r, 'image/png'))
+      ]);
+
+      const redFile = new File([redBlob], "visual_mask.png", { type: "image/png" });
+      const alphaFile = new File([alphaBlob], "gen_input.png", { type: "image/png" });
+      const cleanFile = new File([blob], "original.png", { type: "image/png" });
+
+      // Upload all
+      const [redUpload, alphaUpload, cleanUpload] = await Promise.all([
+        base44.integrations.Core.UploadFile({ file: redFile }),
+        base44.integrations.Core.UploadFile({ file: alphaFile }),
         base44.integrations.Core.UploadFile({ file: cleanFile })
       ]);
 
-      // 1. Optimize the instruction using LLM with Vision to analyze the images
+      // 3. Analyze with LLM
       setActiveTool({ label: "Analyzing Request..." });
-
-      const userInstruction = magicBrushPrompt.trim();
-      // If prompt is empty, default to "remove", but we want to support any instruction
-      const instruction = userInstruction || "remove the object completely and fill the background";
+      const instruction = magicBrushPrompt.trim() || "remove this object and fill the background seamlessly";
       const hasReferences = magicBrushImages.length > 0;
 
       const llmResponse = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a world-class AI visual director specializing in seamless image manipulation.
+        prompt: `You are a world-class AI visual director.
 
-        CONTEXT:
-        We are performing an inpainting task. 
-        Input 1: Original "Clean" Image.
-        Input 2: "Masked" Image (User painted bright RED over the area to edit).
-        ${hasReferences ? "Input 3+: Reference images for the desired object/style." : ""}
-        
-        USER INTENT: "${instruction}"
+        TASK: Inpainting / Image Editing.
+
+        INPUTS:
+        1. "Visual Reference": Image with the edit area marked in RED.
+        2. "Original": The clean original image.
+        ${hasReferences ? "3. Reference Images: User provided style/object references." : ""}
+
+        USER INSTRUCTION: "${instruction}"
+
+        TECHNICAL CONTEXT:
+        - We will send the image to a generator with the RED area made TRANSPARENT (erased).
+        - The generator will fill the transparent pixels.
+        - We need a prompt that describes the FINAL DESIRED IMAGE key elements, ensuring the filled area matches the surroundings.
 
         YOUR GOAL:
-        Construct the perfect image generation prompt that will cause the diffusion model to transform the RED MASKED AREA according to the user's intent, while matching the original image's lighting, grain, and perspective perfectly.
+        Write a robust Stable Diffusion / DALL-E style prompt that describes the SCENE as it should look AFTER the edit.
 
-        STEP 1: ANALYZE THE SCENE (Mental Scratchpad)
-        - Lighting: Direction (from left/right/top?), Hardness (soft/harsh?), Color temperature (warm/cool?).
-        - Perspective: Eye level? Top-down? Macro?
-        - Style: Photorealistic? Illustration? Vintage?
-
-        STEP 2: DETERMINE INTENT
-        - REMOVAL: If removing, describe the background that is *behind* the object (extrapolate from surroundings).
-        - ADDITION/REPLACEMENT: Describe the new object interacting with the scene (e.g., "casting a shadow to the right", "reflecting the blue sky").
-
-        STEP 3: GENERATE THE PROMPT
-        The prompt must be singular and descriptive.
-        
-        Mandatory Prompt Structure:
-        "[Core Action: Replace the red masked area with...] [Subject Description] [Scene Integration details] [Style Match]"
-
-        CRITICAL RULES:
-        - EXPLICITLY reference the 'red masked area' as the target for inpainting.
-        - If REMOVING: "Fill the red masked area with [description of background texture/geometry] to seamlessly erase the object."
-        - If ADDING: "Inside the red masked area, generate [detailed object] that is [lighting details] and [perspective details]."
-        - Mention: "The final image must have NO red paint. The red is strictly a mask."
-        - ${hasReferences ? "Use the visual characteristics (color, shape, texture) from the Reference Images for the Subject Description." : "Infer realistic details for the Subject Description."}
+        GUIDELINES:
+        - Do NOT mention "red mask" or "remove red" in the final prompt (the generator won't see red, it sees transparency).
+        - IF REMOVING: Describe the background texture/lighting that should exist in that spot (e.g., "seamless wall texture", "continuation of the forest background").
+        - IF ADDING: Describe the new object in detail, including how it interacts with the scene (shadows, reflections, lighting direction).
+        - IF REPLACING: Describe the new object in the context of the scene.
+        - Focus on visual consistency: "photorealistic, matching lighting, 8k, seamless blend".
 
         OUTPUT:
-        Return ONLY the final prompt string. Do not include your analysis.`,
-        file_urls: [cleanUpload.file_url, maskedUpload.file_url, ...magicBrushImages]
+        Return ONLY the raw prompt string.`,
+        file_urls: [redUpload.file_url, cleanUpload.file_url, ...magicBrushImages]
       });
 
-      // 2. Generate the edit
+      // 4. Generate
       setActiveTool({ label: "Applying Magic..." });
-
       const result = await base44.integrations.Core.GenerateImage({
         prompt: llmResponse,
-        existing_image_urls: [maskedUpload.file_url, ...magicBrushImages]
+        existing_image_urls: [alphaUpload.file_url, ...magicBrushImages]
       });
 
       setResultImage(result.url);
