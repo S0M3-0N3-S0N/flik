@@ -9,12 +9,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import ChatPanel from "@/components/generate/ChatPanel";
+
 import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
 import ImageGrid from "@/components/generate/ImageGrid";
 import ImageUploader from "@/components/editor/ImageUploader";
+import { useAssistant } from "@/components/context/AssistantContext";
 
 export default function Generate() {
+  const { setPageContext, openAssistant, isOpen } = useAssistant();
   const [prompt, setPrompt] = useState("");
   const [selectedStyles, setSelectedStyles] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,13 +28,9 @@ export default function Generate() {
   const [isUploading, setIsUploading] = useState(false);
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageStrength, setImageStrength] = useState(0.5);
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', content: "Hi! I'm your creative assistant. I can help you refine your prompts or brainstorm ideas. What would you like to create today?" }
-  ]);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
