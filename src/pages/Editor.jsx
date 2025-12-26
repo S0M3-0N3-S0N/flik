@@ -800,28 +800,43 @@ export default function Editor() {
       const hasReferences = magicBrushImages.length > 0;
 
       const llmResponse = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are an elite AI image editor.
+        prompt: `You are a world-class AI visual director specializing in seamless image manipulation.
+
+        CONTEXT:
+        We are performing an inpainting task. 
+        Input 1: Original "Clean" Image.
+        Input 2: "Masked" Image (User painted bright RED over the area to edit).
+        ${hasReferences ? "Input 3+: Reference images for the desired object/style." : ""}
         
-        INPUTS:
-        1. A clean original image.
-        2. A masked version of the same image (where the area to edit is painted in RED).
-        ${hasReferences ? "3. Reference images provided by the user." : ""}
+        USER INTENT: "${instruction}"
+
+        YOUR GOAL:
+        Construct the perfect image generation prompt that will cause the diffusion model to transform the RED MASKED AREA according to the user's intent, while matching the original image's lighting, grain, and perspective perfectly.
+
+        STEP 1: ANALYZE THE SCENE (Mental Scratchpad)
+        - Lighting: Direction (from left/right/top?), Hardness (soft/harsh?), Color temperature (warm/cool?).
+        - Perspective: Eye level? Top-down? Macro?
+        - Style: Photorealistic? Illustration? Vintage?
+
+        STEP 2: DETERMINE INTENT
+        - REMOVAL: If removing, describe the background that is *behind* the object (extrapolate from surroundings).
+        - ADDITION/REPLACEMENT: Describe the new object interacting with the scene (e.g., "casting a shadow to the right", "reflecting the blue sky").
+
+        STEP 3: GENERATE THE PROMPT
+        The prompt must be singular and descriptive.
         
-        USER REQUEST: "${instruction}"
-        
-        YOUR TASK:
-        Write a precise image generation prompt to modify ONLY the red masked area based on the user's request.
-        
-        GUIDELINES:
-        - The RED area is your canvas. Everything else must remain exactly as is.
-        - If the user wants to ADD or CHANGE something: Describe the new object in extreme detail (lighting, shadows, perspective, style match).
-        - If the user wants to REMOVE something: Describe the background texture/pattern that should fill the void to make it seamless.
-        - The prompt must explicitly tell the generator that the RED area is a mask to be replaced.
-        - Mention that the red paint itself must NOT appear in the final output.
-        - If reference images are provided, incorporate their visual details (colors, materials, shapes) into the description of the new object.
-        
+        Mandatory Prompt Structure:
+        "[Core Action: Replace the red masked area with...] [Subject Description] [Scene Integration details] [Style Match]"
+
+        CRITICAL RULES:
+        - EXPLICITLY reference the 'red masked area' as the target for inpainting.
+        - If REMOVING: "Fill the red masked area with [description of background texture/geometry] to seamlessly erase the object."
+        - If ADDING: "Inside the red masked area, generate [detailed object] that is [lighting details] and [perspective details]."
+        - Mention: "The final image must have NO red paint. The red is strictly a mask."
+        - ${hasReferences ? "Use the visual characteristics (color, shape, texture) from the Reference Images for the Subject Description." : "Infer realistic details for the Subject Description."}
+
         OUTPUT:
-        Return ONLY the detailed prompt string.`,
+        Return ONLY the final prompt string. Do not include your analysis.`,
         file_urls: [cleanUpload.file_url, maskedUpload.file_url, ...magicBrushImages]
       });
 
