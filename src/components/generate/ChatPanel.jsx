@@ -54,13 +54,27 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
     
     setMessages(prev => [...prev, userMsg]);
     const currentInput = input;
-    const currentImages = chatImages;
+    const userUploadedImages = chatImages; // Images uploaded in chat
     
     setInput("");
     setChatImages([]);
     setIsTyping(true);
 
     try {
+      // Fetch recent creations for context
+      let recentCreations = [];
+      try {
+        recentCreations = await base44.entities.Creation.list('-created_date', 5);
+      } catch (e) {
+        console.warn("Failed to fetch creations for context", e);
+      }
+
+      // Combine editor context images (main image, refs) with chat uploaded images
+      const contextImages = [
+        ...(currentImages || []).map(img => img.url),
+        ...userUploadedImages.map(img => img.url)
+      ];
+
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are FLIK ASSISTANT, the intelligent companion for the FLIK AI Creative Suite.
         
@@ -79,29 +93,35 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
            - Text-to-Image: Generate images from scratch using prompts.
            - Style Selector: Apply presets like "Cyberpunk", "Watercolor", etc.
         
-        3. GALLERY:
-           - View, organize, and manage generated creations.
+        3. GALLERY (My Creations):
+           - The user has a library of past creations. You have access to the 5 most recent ones below.
         
-        CONTEXT:
-        - Current Prompt in Editor: "${currentPrompt || '(empty)'}"
-        - Current Style Selected: "${currentStyle || 'None'}"
-        - Context Images (Main Editor): ${currentImages?.length || 0} images attached.
+        CONTEXT DATA:
+        - Current Editor Prompt: "${currentPrompt || '(empty)'}"
+        - Current Style: "${currentStyle || 'None'}"
+        
+        VISUAL CONTEXT (Attached Images):
+        - Editor Images: ${(currentImages || []).length} (Main image being edited + Reference images).
+        - Chat Images: ${userUploadedImages.length} (Uploaded just now).
+        Total images sent to your vision model: ${contextImages.length}
+        
+        USER'S RECENT CREATIONS (Gallery):
+        ${recentCreations.length > 0 ? recentCreations.map(c => `- [${c.type}] "${c.title}" (Prompt: "${c.prompt || 'N/A'}")`).join('\n') : "No recent creations found."}
         
         Current conversation history:
         ${messages.map(m => `${m.role}: ${m.content} ${m.images?.length ? `[${m.images.length} Images Attached]` : ''}`).join('\n')}
         
         User input: ${currentInput}
-        ${currentImages.length > 0 ? `User also uploaded ${currentImages.length} image(s) within chat for analysis/reference.` : ''}
 
         INSTRUCTIONS:
-        1. Analyze the user's request, the current prompt context, and any images.
-        2. Provide helpful, creative, and concise advice. Guide them to specific FLIK tools if their request matches a feature (e.g., "Use the Magic Brush for that").
-        3. If the user asks to improve the prompt, generate ideas, or create something, provide a 'suggested_prompt' field in the JSON response.
-        4. If the user asks about the app, explain the relevant feature clearly.
-        5. Use Markdown for the 'message' field (bold, lists, etc.).
+        1. Analyze the user's request. USE THE VISUAL CONTEXT! If images are provided, refer to them explicitly (e.g., "The reference image you added has great lighting...").
+        2. If the user refers to "my creations" or past work, use the Recent Creations list to answer.
+        3. Provide helpful, creative, and concise advice. Guide them to specific FLIK tools.
+        4. If the user asks to improve the prompt, generate ideas, or create something, provide a 'suggested_prompt' field.
+        5. Use Markdown for the 'message' field.
 
         Output JSON format: { "message": "your helpful response...", "suggested_prompt": "optional optimized prompt string if relevant" }`,
-        file_urls: currentImages.length > 0 ? currentImages.map(img => img.url) : undefined,
+        file_urls: contextImages.length > 0 ? contextImages : undefined,
         add_context_from_internet: false,
         response_json_schema: {
           type: "object",

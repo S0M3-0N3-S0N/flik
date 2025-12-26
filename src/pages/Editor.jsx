@@ -1606,7 +1606,10 @@ export default function Editor() {
         setMessages={setChatMessages}
         currentPrompt={magicBrushPrompt}
         currentStyle=""
-        currentImages={currentImage ? [{ url: currentImage.url || currentImage.preview, id: 'current' }] : []}
+        currentImages={[
+          ...(currentImage ? [{ url: currentImage.url || currentImage.preview, id: 'current', label: 'Main Image' }] : []),
+          ...magicBrushImages.map((url, i) => ({ url, id: `ref-${i}`, label: `Reference Image ${i+1}` }))
+        ]}
         onApplyPrompt={(text) => {
           setMagicBrushPrompt(text);
         }}
