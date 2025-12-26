@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
@@ -43,6 +43,11 @@ export default function Editor() {
   const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
   const [magicBrushImages, setMagicBrushImages] = useState([]);
   
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [isSpacePressed, setIsSpacePressed] = useState(false);
+
   const [isCropping, setIsCropping] = useState(false);
   const [cropArea, setCropArea] = useState({ x: 10, y: 10, width: 80, height: 80 });
   const [isDragging, setIsDragging] = useState(false);
@@ -72,9 +77,11 @@ export default function Editor() {
   }, []);
 
   const handleImageSelect = (image) => {
-    setCurrentImage(image);
-    if (image) {
-      setAdjustments({
+  setCurrentImage(image);
+  if (image) {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setAdjustments({
         brightness: 0,
         contrast: 0,
         saturation: 0,
@@ -141,7 +148,9 @@ export default function Editor() {
     
     setActiveBatchIndex(index);
     setCurrentImage(targetImage);
-    
+
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
     setAdjustments(targetImage.adjustments || {
       brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0
     });
@@ -150,7 +159,7 @@ export default function Editor() {
     setBrushStrokes(targetImage.brushStrokes || []);
     setUndoHistory([]);
     setRedoHistory([]);
-  };
+    };
 
   const [batchProgress, setBatchProgress] = useState(0);
 
@@ -384,8 +393,29 @@ export default function Editor() {
         handleDownload();
       }
     };
+
+    const handleKeyDown = (e) => {
+      if (e.code === 'Space' && !e.repeat && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault(); // Prevent scrolling
+        setIsSpacePressed(true);
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false);
+        setIsPanning(false);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
   }, [undoHistory, redoHistory, currentImage]);
 
   const handleDownload = async () => {
@@ -541,6 +571,13 @@ export default function Editor() {
   };
 
   const handleMouseDown = (e) => {
+    // Check for pan mode (Space key or middle mouse button)
+    if (isSpacePressed || e.button === 1 || activeTab === "pan") {
+      setIsPanning(true);
+      setDragStart({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
     if (activeTab === "remove" && currentImage) {
       const pos = getRelativePosition(e);
       if (pos) {
@@ -576,12 +613,20 @@ export default function Editor() {
 
   const handleMouseMove = (e) => {
   // Prevent default touch actions (scrolling) if we are interacting
-  if (e.cancelable && (isDrawing || isDragging)) {
-  e.preventDefault();
+  if (e.cancelable && (isDrawing || isDragging || isPanning)) {
+    e.preventDefault();
   }
 
   const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
   const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+
+  if (isPanning && dragStart) {
+    const deltaX = clientX - dragStart.x;
+    const deltaY = clientY - dragStart.y;
+    setPan({ x: pan.x + deltaX, y: pan.y + deltaY });
+    setDragStart({ x: clientX, y: clientY });
+    return;
+  }
 
   if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
   const rect = containerRef.current.getBoundingClientRect();
@@ -642,6 +687,7 @@ export default function Editor() {
   const handleMouseUp = () => {
     setIsDrawing(false);
     setIsDragging(false);
+    setIsPanning(false);
     setDragType(null);
   };
   
@@ -1284,13 +1330,13 @@ export default function Editor() {
           onTouchEnd={handleMouseUp}
           style={{ touchAction: (activeTab === 'remove' || (activeTab === 'crop' && isCropping)) ? 'none' : 'auto' }}
         >
-          {activeTab === "remove" && (
+          {activeTab === "remove" && !isSpacePressed && !isPanning && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 border-white/80 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
               style={{
-                width: brushSize,
-                height: brushSize,
+                width: brushSize * zoom, // Scale cursor visual with zoom
+                height: brushSize * zoom,
                 transform: 'translate(-50%, -50%)',
                 display: 'none',
                 backgroundColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)'
@@ -1310,13 +1356,21 @@ export default function Editor() {
           
           {currentImage ? (
             <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
-              <div className="relative inline-flex max-w-full max-h-full no-invert">
+              <div 
+                className={`relative inline-flex max-w-full max-h-full no-invert transition-transform duration-75 ease-out ${
+                  (isPanning || isSpacePressed) ? 'cursor-move' : ''
+                }`}
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  cursor: (isPanning || isSpacePressed) ? 'grab' : undefined
+                }}
+              >
                 <img
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                    activeTab === "remove" ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
+                    activeTab === "remove" && !isSpacePressed ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
@@ -1413,6 +1467,43 @@ export default function Editor() {
                 <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
                 <span className="text-2xl text-white/20">+</span>
               </label>
+            </div>
+          )}
+          
+          {currentImage && (
+            <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-30">
+              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl p-2 flex flex-col gap-2 shadow-2xl">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
+                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
+                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }}
+                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white"
+                  title="Reset View"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl px-2 py-1 text-center shadow-2xl">
+                <span className="text-[10px] text-white/60 font-mono">{Math.round(zoom * 100)}%</span>
+              </div>
             </div>
           )}
         </div>
