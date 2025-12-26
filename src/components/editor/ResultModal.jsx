@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye } from "lucide-react";
+import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function ResultModal({ isOpen, onClose, originalImage, resultImage, onApply, onDownload, transform }) {
+export default function ResultModal({ isOpen, onClose, originalImage, resultImage, onApply, onDownload, transform, onRegenerate }) {
   const [mode, setMode] = useState("compare"); // 'compare' (slider) or 'side' (side-by-side)
   const [sliderPos, setSliderPos] = useState(50);
 
@@ -158,14 +158,26 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
           
           {/* Actions */}
           <div className="flex flex-col-reverse sm:flex-row items-center justify-between p-4 sm:p-6 gap-4 border-t border-white/10 bg-[#141414] shrink-0">
-            <Button
-              variant="ghost"
-              onClick={onClose}
-              className="w-full sm:w-auto text-white/60 hover:text-white hover:bg-white/10"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Discard
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="ghost"
+                onClick={onClose}
+                className="flex-1 sm:flex-none text-white/60 hover:text-white hover:bg-white/10"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Discard
+              </Button>
+              {onRegenerate && (
+                <Button
+                  variant="ghost"
+                  onClick={onRegenerate}
+                  className="flex-1 sm:flex-none text-[#FF6B35] hover:text-[#F72C25] hover:bg-[#FF6B35]/10"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Regenerate
+                </Button>
+              )}
+            </div>
             
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <Button

@@ -69,6 +69,7 @@ export default function Editor() {
   const [chatMessages, setChatMessages] = useState([
     { role: 'assistant', content: "Hi! I can help you refine your editing instructions. What would you like to do with this image?" }
   ]);
+  const [regenerateAction, setRegenerateAction] = useState(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -275,6 +276,7 @@ export default function Editor() {
     
     setActiveTool(tool);
     setIsProcessing(true);
+    setRegenerateAction(() => () => handleToolSelect(tool));
     
     try {
       // Bake current edits into a new image for the AI
@@ -712,6 +714,7 @@ export default function Editor() {
     
     setIsProcessing(true);
     setActiveTool({ label: "Spot Removal" });
+    setRegenerateAction(() => () => handleRemoveSpots());
     
     try {
       // Bake the current image state (transforms, adjustments)
@@ -845,7 +848,7 @@ export default function Editor() {
 
       setResultImage(result.url);
       setShowResult(true);
-      setBrushStrokes([]);
+      // Brush strokes preserved for regeneration - cleared on apply
     } catch (error) {
       console.error("Error removing spots:", error);
       alert("Error removing spots. Please try again.");
@@ -1590,6 +1593,7 @@ export default function Editor() {
         onApply={handleApplyResult}
         onDownload={handleDownload}
         transform={processedImage ? undefined : transform}
+        onRegenerate={regenerateAction}
       />
       
       <ChatPanel 
