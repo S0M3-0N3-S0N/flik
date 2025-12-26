@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, MessageSquare } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
+import { AssistantProvider, useAssistant } from "@/components/context/AssistantContext";
+import ChatPanel from "@/components/generate/ChatPanel";
 
 export const LanguageContext = React.createContext();
 
-export default function Layout({ children, currentPageName }) {
+function LayoutContent({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en');
+  const { isOpen, toggleOpen, closeAssistant } = useAssistant();
 
   const t = (key) => translations[language]?.[key] || translations['en'][key] || key;
 
@@ -159,6 +162,16 @@ export default function Layout({ children, currentPageName }) {
             </nav>
             
             <div className="flex items-center gap-4">
+              <button
+                onClick={toggleOpen}
+                className={`hidden md:flex p-2 rounded-full transition-colors border border-white/5 ${
+                  isOpen ? "bg-[#FF6B35]/20 text-[#FF6B35] border-[#FF6B35]/50" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                }`}
+                title="AI Assistant"
+              >
+                <MessageSquare className="w-5 h-5" />
+              </button>
+
               <Link 
                 to={createPageUrl("Profile")}
                 className={`hidden md:flex p-2 rounded-full transition-colors border border-white/5 ${
@@ -259,7 +272,18 @@ export default function Layout({ children, currentPageName }) {
         <main className="pt-16">
           {children}
         </main>
-      </div>
-    </LanguageContext.Provider>
-  );
-}
+
+        {/* Global Chat Panel */}
+        <ChatPanel />
+        </div>
+        </LanguageContext.Provider>
+        );
+        }
+
+        export default function Layout(props) {
+        return (
+        <AssistantProvider>
+        <LayoutContent {...props} />
+        </AssistantProvider>
+        );
+        }

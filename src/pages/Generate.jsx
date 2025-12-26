@@ -44,6 +44,19 @@ export default function Generate() {
     }
   }, []);
 
+  // Sync Context with Global Assistant
+  useEffect(() => {
+      setPageContext({
+          page: 'generate',
+          data: {
+              currentPrompt: prompt,
+              currentImages: uploadedImages.map(u => u.url),
+              onApplyPrompt: (text) => setPrompt(text)
+          },
+          actionHandler: null // Generate page doesn't have complex actions yet
+      });
+  }, [prompt, uploadedImages, setPageContext]);
+
   const handleImageUpload = async (filesOrEvent) => {
     // Handle both event (from hidden input) and direct file array (from ImageUploader)
     let validFiles = [];
@@ -339,9 +352,9 @@ export default function Generate() {
                   </Popover>
 
                   <button 
-                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    onClick={() => openAssistant()}
                     className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
-                      isChatOpen
+                      isOpen
                         ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                         : 'text-white/60 hover:bg-white/5 hover:text-white'
                     }`}
@@ -444,21 +457,7 @@ export default function Generate() {
               </div>
               </div>
 
-              <ChatPanel 
-                isOpen={isChatOpen} 
-                onClose={() => setIsChatOpen(false)} 
-                messages={chatMessages}
-                setMessages={setChatMessages}
-                currentPrompt={prompt}
-                currentStyle={selectedStyles.map(id => stylePresets.find(s => s.id === id)?.label).join(", ")}
-                currentImages={uploadedImages}
-                onApplyPrompt={(text) => {
-                  setPrompt(text);
-                }}
-                onAIAction={(action) => {
-                  alert("Editor actions are only available in the Photo Studio.");
-                }}
-              />
+
 
             <StyleSelector 
               selectedStyles={selectedStyles} 
