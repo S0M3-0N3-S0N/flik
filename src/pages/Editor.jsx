@@ -41,6 +41,7 @@ export default function Editor() {
   const [brushOpacity, setBrushOpacity] = useState(0.8);
   const [brushMode, setBrushMode] = useState('draw'); // 'draw' or 'erase'
   const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
+  const [magicBrushImages, setMagicBrushImages] = useState([]);
   
   const [isCropping, setIsCropping] = useState(false);
   const [cropArea, setCropArea] = useState({ x: 10, y: 10, width: 80, height: 80 });
@@ -749,7 +750,7 @@ export default function Editor() {
 
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `Edit this image: The areas marked in bright RED are the mask. ${instruction} The red paint represents the area to change. The final output must NOT have any red marks. Keep the rest of the image exactly as is. High quality, realistic.`,
-        existing_image_urls: [maskedUpload.file_url]
+        existing_image_urls: [maskedUpload.file_url, ...magicBrushImages]
       });
       
       setResultImage(result.url);
@@ -1116,6 +1117,8 @@ export default function Editor() {
                     prompt={magicBrushPrompt}
                     onPromptChange={setMagicBrushPrompt}
                     onDiscuss={() => setIsChatOpen(true)}
+                    referenceImages={magicBrushImages}
+                    onReferenceImagesChange={setMagicBrushImages}
                   />
                   {brushStrokes.length > 0 && (
                     <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">

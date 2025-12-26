@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Wand2, Paintbrush, Eraser, MessageSquare } from "lucide-react";
+import { Wand2, Paintbrush, Eraser, MessageSquare, ImagePlus, X, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -15,8 +16,29 @@ export default function SpotRemoval({
   onBrushModeChange,
   prompt,
   onPromptChange,
-  onDiscuss
+  onDiscuss,
+  referenceImages = [],
+  onReferenceImagesChange
 }) {
+  const [isUploading, setIsUploading] = React.useState(false);
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const newImages = await Promise.all(files.map(async (file) => {
+        const result = await base44.integrations.Core.UploadFile({ file });
+        return result.file_url;
+      }));
+      onReferenceImagesChange([...referenceImages, ...newImages]);
+    } catch (error) {
+      console.error("Upload failed:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -93,8 +115,37 @@ export default function SpotRemoval({
             value={prompt}
             onChange={(e) => onPromptChange(e.target.value)}
             placeholder="What should happen to the painted area? (e.g. 'remove it', 'change to red flower')"
-            className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6B35]/50 focus:bg-white/5 min-h-[100px] resize-none transition-all"
+            className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6B35]/50 focus:bg-white/5 min-h-[100px] resize-none transition-all mb-3"
           />
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors">
+                {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+                <span>Add Reference Image</span>
+                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
+              </label>
+              {referenceImages.length > 0 && (
+                <span className="text-[10px] text-white/40">{referenceImages.length} image(s) added</span>
+              )}
+            </div>
+            
+            {referenceImages.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                {referenceImages.map((url, idx) => (
+                  <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 group border border-white/10">
+                    <img src={url} alt="Reference" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => onReferenceImagesChange(referenceImages.filter((_, i) => i !== idx))}
+                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <Button
