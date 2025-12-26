@@ -36,7 +36,7 @@ export default function ProcessingOverlay({ tool }) {
             {tool?.label || "Processing"}...
           </h3>
           <p className="text-xs text-white/50 font-medium tracking-[0.3em] uppercase">
-            AI IS WORKING ITS MAGIC
+            FLIK IS WORKING ITS MAGIC
           </p>
         </motion.div>
       </div>
