@@ -48,6 +48,7 @@ export default function Editor() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [isPanToolActive, setIsPanToolActive] = useState(false);
 
   const [isCropping, setIsCropping] = useState(false);
   const [cropArea, setCropArea] = useState({ x: 10, y: 10, width: 80, height: 80 });
@@ -579,8 +580,8 @@ export default function Editor() {
   };
 
   const handleMouseDown = (e) => {
-    // Check for pan mode (Space key or middle mouse button)
-    if (isSpacePressed || e.button === 1 || activeTab === "pan") {
+    // Check for pan mode (Space key, middle mouse button, or active pan tool)
+    if (isSpacePressed || e.button === 1 || isPanToolActive) {
       setIsPanning(true);
       setDragStart({ x: e.clientX, y: e.clientY });
       return;
@@ -1339,7 +1340,7 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: 'none' }}
         >
-          {activeTab === "remove" && !isSpacePressed && !isPanning && (
+          {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 border-white/80 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
@@ -1371,7 +1372,7 @@ export default function Editor() {
                 }`}
                 style={{
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                  cursor: (isPanning || isSpacePressed) ? 'grab' : undefined
+                  cursor: (isPanning || isSpacePressed || isPanToolActive) ? (isPanning ? 'grabbing' : 'grab') : undefined
                 }}
               >
                 <img
@@ -1379,7 +1380,7 @@ export default function Editor() {
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                    activeTab === "remove" && !isSpacePressed ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
+                    activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
@@ -1481,12 +1482,24 @@ export default function Editor() {
           
           {currentImage && (
             <div className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30">
-              <div className="bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-xl p-1.5 flex items-center gap-2 shadow-2xl">
+              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsPanToolActive(!isPanToolActive)}
+                  className={`w-9 h-9 rounded-full transition-all ${isPanToolActive ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'hover:bg-white/10 text-white'}`}
+                  title="Pan Tool (Space)"
+                >
+                  <Move className="w-4 h-4" />
+                </Button>
+
+                <div className="w-px h-4 bg-white/10 mx-1" />
+
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
-                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white flex-shrink-0"
+                  className="w-9 h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-4 h-4" />
@@ -1499,7 +1512,7 @@ export default function Editor() {
                     max={5} 
                     step={0.1} 
                     onValueChange={(v) => setZoom(v[0])}
-                    className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35] [&_span]:border-none [&_span]:shadow-lg"
+                    className="[&_.relative]:bg-white/10 [&_.absolute]:bg-white [&_.absolute]:shadow-[0_0_10px_rgba(255,255,255,0.5)] [&_span]:border-white/50 [&_span]:shadow-lg"
                   />
                 </div>
 
@@ -1507,15 +1520,13 @@ export default function Editor() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
-                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white flex-shrink-0"
+                  className="w-9 h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Zoom In"
                 >
                   <ZoomIn className="w-4 h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
-                
-                <span className="text-[10px] font-mono text-white/60 w-8 lg:w-10 text-center select-none">
+                <span className="text-[10px] font-medium font-mono text-white/80 w-8 lg:w-10 text-center select-none hidden sm:block">
                   {Math.round(zoom * 100)}%
                 </span>
                 
@@ -1524,8 +1535,8 @@ export default function Editor() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }}
-                  className="w-8 h-8 rounded-lg hover:bg-white/10 text-white flex-shrink-0"
+                  onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
+                  className="w-9 h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Reset View"
                 >
                   <Maximize2 className="w-4 h-4" />
