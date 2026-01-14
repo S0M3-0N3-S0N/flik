@@ -13,7 +13,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Editor",
+    mainPage: "Generate",
     Pages: PAGES,
     Layout: __Layout,
 };
