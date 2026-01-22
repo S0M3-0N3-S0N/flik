@@ -148,9 +148,9 @@ export default function Layout({ children, currentPageName }) {
                 {t("nav.imagine_ai")}
                 </Link>
               <Link 
-                to={createPageUrl("Gallery")} 
+                to={createPageUrl("Profile")} 
                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Gallery" ? "text-white" : "text-white/60 hover:text-white"
+                  currentPageName === "Profile" ? "text-white" : "text-white/60 hover:text-white"
                 }`}
               >
                 <Sparkles className="w-4 h-4" />
@@ -159,15 +159,6 @@ export default function Layout({ children, currentPageName }) {
             </nav>
             
             <div className="flex items-center gap-4">
-              <Link 
-                to={createPageUrl("Profile")}
-                className={`hidden md:flex p-2 rounded-full transition-colors border border-white/5 ${
-                  currentPageName === "Profile" ? "bg-white/20 text-white" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-                }`}
-                title="My Profile"
-              >
-                <User className="w-5 h-5" />
-              </Link>
 
               <button
                 onClick={toggleTheme}
@@ -229,25 +220,14 @@ export default function Layout({ children, currentPageName }) {
                   </Link>
 
                   <Link 
-                    to={createPageUrl("Gallery")} 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                      currentPageName === "Gallery" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                    }`}
-                  >
-                    <Sparkles className="w-5 h-5" />
-                    {t("nav.my_creations")}
-                  </Link>
-
-                  <Link 
                     to={createPageUrl("Profile")} 
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
                       currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    <User className="w-5 h-5" />
-                    {t("nav.profile")}
+                    <Sparkles className="w-5 h-5" />
+                    {t("nav.my_creations")}
                   </Link>
                 </nav>
               </motion.div>
