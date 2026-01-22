@@ -370,42 +370,45 @@ export default function Profile() {
         </div>
 
         {/* Stats & Creations Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">{t("nav.my_creations")}</h2>
-            <div className="flex gap-4 text-sm text-white/60">
-               <div className="flex items-center gap-2">
+        <div className="space-y-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">{t("nav.my_creations")}</h2>
+              <p className="text-white/50 text-sm">{stats.total} total creations</p>
+            </div>
+            <div className="flex gap-3">
+               <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
                  <ImageIcon className="w-4 h-4 text-[#FF6B35]" />
-                 <span>{stats.images} Images</span>
+                 <span className="text-white/80 text-sm font-medium">{stats.images}</span>
                </div>
-               <div className="flex items-center gap-2">
+               <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
                  <Video className="w-4 h-4 text-[#FF6B35]" />
-                 <span>{stats.videos} Videos</span>
+                 <span className="text-white/80 text-sm font-medium">{stats.videos}</span>
                </div>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <Input
-                placeholder="Search your creations..."
+                placeholder="Search by title or prompt..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className="pl-11 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/40 rounded-xl"
               />
             </div>
             
-            <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-               <Tabs value={filterType} onValueChange={setFilterType} className="w-auto">
-                <TabsList className="bg-white/5">
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="image">Images</TabsTrigger>
+            <div className="flex gap-2">
+               <Tabs value={filterType} onValueChange={setFilterType}>
+                <TabsList className="bg-white/5 border border-white/10 h-11">
+                  <TabsTrigger value="all" className="px-6">All</TabsTrigger>
+                  <TabsTrigger value="image" className="px-6">Images</TabsTrigger>
                 </TabsList>
               </Tabs>
               
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[140px] bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="w-[160px] bg-white/5 border-white/10 text-white h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -418,47 +421,56 @@ export default function Profile() {
           </div>
 
           {selectedItems.length > 0 && (
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
-                <span className="text-white">{selectedItems.length} items selected</span>
-                <div className="flex gap-2">
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-5 rounded-2xl bg-gradient-to-r from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20 flex items-center justify-between"
+              >
+                <span className="text-white font-medium">{selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected</span>
+                <div className="flex gap-3">
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={() => setSelectedItems([])}
-                    className="bg-transparent border-white/20 text-white hover:bg-white/10"
+                    className="bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-4"
                   >
                     Clear
                   </Button>
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={handleBatchDelete}
-                    className="border-red-500/50 text-red-400 hover:bg-red-500/20"
+                    className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border-0 h-9 px-4"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Selected
+                    Delete
                   </Button>
                 </div>
-              </div>
+              </motion.div>
             )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+            <div className="flex flex-col items-center justify-center py-32">
+              <div className="w-12 h-12 border-3 border-[#FF6B35] border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-white/40 text-sm">Loading your creations...</p>
             </div>
           ) : filteredCreations.length === 0 ? (
-            <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/5">
-              <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-6">
-                <ImageIcon className="w-8 h-8 text-white/30" />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-32 bg-gradient-to-br from-white/5 to-white/0 rounded-3xl border border-white/5"
+            >
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center mx-auto mb-6 border border-[#FF6B35]/20">
+                <Sparkles className="w-10 h-10 text-[#FF6B35]" />
               </div>
-              <p className="text-white/40 text-lg mb-2">No creations found</p>
-              <Button onClick={() => navigate(createPageUrl('Generate'))} className="mt-4 btn-gradient text-white">
-                Create Something New
+              <h3 className="text-white text-xl font-semibold mb-2">No creations yet</h3>
+              <p className="text-white/40 mb-6 max-w-sm mx-auto">Start creating amazing content with FLIK's AI tools</p>
+              <Button onClick={() => navigate(createPageUrl('Generate'))} className="btn-gradient text-white px-8 h-11">
+                <Wand2 className="w-4 h-4 mr-2" />
+                Create Your First Masterpiece
               </Button>
-            </div>
+            </motion.div>
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <AnimatePresence mode="popLayout">
                   {paginatedCreations.map((item, index) => (
                     <motion.div
@@ -466,11 +478,11 @@ export default function Profile() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`group relative md:aspect-square h-auto rounded-2xl overflow-hidden bg-[#141414] border transition-all duration-300 hover:shadow-2xl hover:shadow-[#FF6B35]/10 flex flex-col md:block ${
+                      transition={{ delay: index * 0.03 }}
+                      className={`group relative aspect-square rounded-2xl overflow-hidden bg-[#0a0a0a] border transition-all duration-300 hover:shadow-2xl hover:shadow-[#FF6B35]/20 cursor-pointer ${
                         selectedItems.includes(item.id) 
-                          ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/20' 
-                          : 'border-white/10 hover:border-white/20'
+                          ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/30 scale-[0.98]' 
+                          : 'border-white/5 hover:border-[#FF6B35]/30'
                       }`}
                       onClick={(e) => {
                         if (window.innerWidth < 768) {
@@ -484,73 +496,54 @@ export default function Profile() {
                         }
                       }}
                     >
-                      <div className="aspect-square w-full relative md:h-full">
+                      <div className="absolute inset-0">
                         {item.thumbnail_url || item.url ? (
                             <img
                             src={item.thumbnail_url || item.url}
                             alt={item.title || 'Creation'}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-white/5">
-                            <ImageIcon className="w-12 h-12 text-white/30" />
+                            <ImageIcon className="w-12 h-12 text-white/20" />
                             </div>
                         )}
-                        
-                        <div className="absolute top-2 right-2 md:hidden flex gap-2">
-                             <button
-                                onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    toggleSelectItem(item.id);
-                                }}
-                                className={`h-8 w-8 rounded-full bg-black/50 text-white backdrop-blur-md border border-white/10 flex items-center justify-center ${
-                                    selectedItems.includes(item.id) ? 'bg-[#FF6B35]/80 border-[#FF6B35]' : ''
-                                }`}
-                             >
-                                {selectedItems.includes(item.id) ? '✓' : '○'}
-                             </button>
-                        </div>
                       </div>
 
-                      <div className="md:absolute md:inset-0 md:bg-gradient-to-t md:from-black/80 md:via-black/20 md:to-transparent md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-3 bg-[#1a1a1a] md:bg-transparent">
-                        <div className="hidden md:flex justify-end gap-2 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75">
-                          <Button
-                            size="icon"
-                            variant="ghost"
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-4">
+                        {/* Top Actions */}
+                        <div className="flex justify-end gap-2 translate-y-[-10px] group-hover:translate-y-0 transition-transform duration-300">
+                          <button
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               toggleSelectItem(item.id);
                             }}
-                            className={`h-8 w-8 rounded-full bg-black/50 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 ${
-                              selectedItems.includes(item.id) ? 'bg-[#FF6B35]/80 border-[#FF6B35]' : ''
+                            className={`h-9 w-9 rounded-xl flex items-center justify-center backdrop-blur-xl border transition-all ${
+                              selectedItems.includes(item.id) 
+                                ? 'bg-[#FF6B35] border-[#FF6B35] text-white scale-110' 
+                                : 'bg-black/40 border-white/20 text-white hover:bg-white/20'
                             }`}
                           >
-                            {selectedItems.includes(item.id) ? '✓' : '○'}
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                            className="h-8 w-8 rounded-full bg-black/50 hover:bg-red-500/80 text-white backdrop-blur-md border border-white/10 hover:border-red-500/50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            {selectedItems.includes(item.id) ? <Check className="w-4 h-4" /> : '○'}
+                          </button>
                         </div>
 
-                        <div className="md:translate-y-[10px] md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-100 w-full">
-                          <h3 className="font-medium text-white text-sm line-clamp-1 mb-1 drop-shadow-md">
+                        {/* Bottom Info */}
+                        <div className="translate-y-[20px] group-hover:translate-y-0 transition-transform duration-300 space-y-3">
+                          <h3 className="font-semibold text-white text-base line-clamp-2">
                             {item.title || 'Untitled'}
                           </h3>
-                          <div className="grid grid-cols-2 gap-2 mt-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 w-full">
+                          <div className="flex gap-2">
                             <Button
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                               }}
-                              className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 h-8 text-[10px] sm:text-xs backdrop-blur-md px-1"
+                              className="flex-1 bg-white/10 hover:bg-white/20 text-white border-0 h-9 text-xs backdrop-blur-xl"
                             >
-                              <Edit className="w-3 h-3 mr-1 shrink-0" />
+                              <Edit className="w-3.5 h-3.5 mr-1.5" />
                               Edit
                             </Button>
                             <Button
@@ -559,9 +552,9 @@ export default function Profile() {
                                 e.stopPropagation();
                                 navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
                               }}
-                              className="w-full bg-purple-500/20 hover:bg-purple-500/40 text-white border border-purple-500/40 h-8 text-[10px] sm:text-xs backdrop-blur-md px-1"
+                              className="flex-1 bg-purple-500/20 hover:bg-purple-500/30 text-white border-0 h-9 text-xs backdrop-blur-xl"
                             >
-                              <Wand2 className="w-3 h-3 mr-1 shrink-0" />
+                              <Wand2 className="w-3.5 h-3.5 mr-1.5" />
                               Remix
                             </Button>
                           </div>
@@ -573,25 +566,25 @@ export default function Profile() {
               </div>
 
               {totalPages > 1 && (
-                <div className="mt-8 flex items-center justify-center gap-2">
+                <div className="mt-12 flex items-center justify-center gap-3 pt-8 border-t border-white/5">
                   <Button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                     variant="outline"
-                    size="sm"
-                    className="bg-transparent border-white/20 text-white hover:bg-white/10 disabled:opacity-30"
+                    className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-30 h-10 px-6"
                   >
                     Previous
                   </Button>
-                  <span className="text-white/60 text-sm">
-                    Page {currentPage} of {totalPages}
-                  </span>
+                  <div className="px-6 py-2 bg-white/5 rounded-xl border border-white/10">
+                    <span className="text-white font-medium">
+                      {currentPage} <span className="text-white/40">of</span> {totalPages}
+                    </span>
+                  </div>
                   <Button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                     variant="outline"
-                    size="sm"
-                    className="bg-transparent border-white/20 text-white hover:bg-white/10 disabled:opacity-30"
+                    className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-30 h-10 px-6"
                   >
                     Next
                   </Button>
