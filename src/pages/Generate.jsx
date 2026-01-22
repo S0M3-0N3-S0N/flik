@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wand2, Loader2, Zap, Upload, X, MessageSquare, Settings2, RectangleHorizontal, RectangleVertical, Square, Ban } from "lucide-react";
+import { 
+  Wand2, Loader2, Zap, Upload, X, Send, Bot, User, 
+  Settings2, RectangleHorizontal, RectangleVertical, Square, Image as ImageIcon 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -9,50 +12,62 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import ChatPanel from "@/components/generate/ChatPanel";
 import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
-import ImageGrid from "@/components/generate/ImageGrid";
 import ImageUploader from "@/components/editor/ImageUploader";
+import ReactMarkdown from 'react-markdown';
 
 export default function Generate() {
-  const [prompt, setPrompt] = useState("");
+  // Chat State
+  const [messages, setMessages] = useState([
+    { 
+      role: 'assistant', 
+      content: "Hi! I'm FLIK's AI. Describe an image you want to create, or just chat with me!" 
+    }
+  ]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef(null);
+
+  // Generation Settings State
   const [selectedStyles, setSelectedStyles] = useState([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState([]);
-  const [copiedId, setCopiedId] = useState(null);
-  const [error, setError] = useState(null);
   const [aiModel, setAiModel] = useState("default");
   const [uploadedImages, setUploadedImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [promptHistory, setPromptHistory] = useState([]);
-  const [showHistory, setShowHistory] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageStrength, setImageStrength] = useState(0.5);
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', content: "Hi! I'm your creative assistant. I can help you refine your prompts or brainstorm ideas. What would you like to create today?" }
-  ]);
-  const fileInputRef = useRef(null);
+  
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, isTyping]);
+
+  // Load image from URL if present
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const loadUrl = params.get('load');
     if (loadUrl) {
       setUploadedImages([{ url: loadUrl, id: Date.now() }]);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "I see you've loaded an image. How would you like me to modify it?" 
+      }]);
     }
   }, []);
 
   const handleImageUpload = async (filesOrEvent) => {
-    // Handle both event (from hidden input) and direct file array (from ImageUploader)
     let validFiles = [];
     if (filesOrEvent.target) {
        validFiles = Array.from(filesOrEvent.target.files).filter(f => f.type.startsWith('image/'));
     } else if (Array.isArray(filesOrEvent)) {
-       validFiles = filesOrEvent; // Already filtered in ImageUploader
+       validFiles = filesOrEvent;
     } else if (filesOrEvent.file) {
-       validFiles = [filesOrEvent.file]; // Single file object from ImageUploader (legacy mode)
+       validFiles = [filesOrEvent.file];
     }
 
     if (validFiles.length === 0) return;
@@ -64,428 +79,418 @@ export default function Generate() {
         return { url: uploadResult.file_url, file, id: Date.now() + Math.random() };
       }));
       setUploadedImages(prev => [...prev, ...newUploads]);
-      setIsUploading(false);
     } catch (err) {
-      setError("Failed to upload images");
+      console.error("Upload failed", err);
+    } finally {
       setIsUploading(false);
     }
   };
 
-  const handleGenerate = async () => {
-    if (!prompt.trim() && uploadedImages.length === 0) {
-      setError("Please enter a prompt or upload an image");
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-    
-    setIsGenerating(true);
-    setError(null);
-    
+  const generateImage = async (promptText, enhancedPrompt) => {
     try {
-      // Step 1: Analyze prompt for multiplicity and enhancement
-      let promptsToGenerate = [];
-      
       const selectedStyleObjects = selectedStyles.map(id => stylePresets.find(s => s.id === id)).filter(Boolean);
       const styleInstruction = selectedStyleObjects.map(s => s.prompt).join(", ");
-      const styleLabels = selectedStyleObjects.map(s => s.label).join(" + ");
       
-      const llmAnalysis = await base44.integrations.Core.InvokeLLM({
-        prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
+      let fullPrompt = selectedStyleObjects.length > 0
+        ? `((${styleInstruction})), ${enhancedPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
+        : `${enhancedPrompt}, masterpiece, high quality, detailed`;
+      
+      if (aspectRatio === "16:9") fullPrompt += ", wide cinematic shot, 16:9 aspect ratio";
+      else if (aspectRatio === "9:16") fullPrompt += ", tall portrait shot, 9:16 aspect ratio";
+      
+      if (negativePrompt.trim()) {
+        fullPrompt += ` --no ${negativePrompt.trim()}`;
+      }
+
+      const imageResult = await base44.integrations.Core.GenerateImage({
+        prompt: fullPrompt,
+        existing_image_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined
+      });
+
+      // Save to DB
+      await base44.entities.Creation.create({
+        title: promptText.slice(0, 100) || 'AI Generated Image',
+        type: 'image',
+        url: imageResult.url,
+        thumbnail_url: imageResult.url,
+        prompt: promptText,
+        metadata: { 
+          style: selectedStyles, 
+          model: aiModel, 
+          enhancedPrompt: enhancedPrompt, 
+          aspectRatio,
+          negativePrompt
+        }
+      });
+
+      return imageResult.url;
+    } catch (e) {
+      console.error("Generation failed:", e);
+      throw e;
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() && uploadedImages.length === 0) return;
+
+    const userMsg = { 
+      role: 'user', 
+      content: input,
+      images: uploadedImages.map(img => img.url)
+    };
+    
+    setMessages(prev => [...prev, userMsg]);
+    const currentInput = input;
+    const currentUploads = uploadedImages;
+    
+    setInput("");
+    setUploadedImages([]); // Clear uploads after sending
+    setIsTyping(true);
+
+    try {
+      // Analyze intent and enhance prompt
+      const styleLabels = selectedStyles.map(id => stylePresets.find(s => s.id === id)?.label).join(", ");
+      
+      const llmResponse = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are FLIK AI, an expert visual assistant.
         
-        ${uploadedImages.length > 0 ? `IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates ${imageStrength > 0.7 ? "EXTREMELY STRICTLY (maintain exact composition and forms)" : imageStrength < 0.4 ? "loosely (use as vague inspiration)" : "strongly"} to them, while applying the user's text prompt as a modification or style.` : ""}
-        ${aiModel === 'gemini' ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
+        USER REQUEST: "${currentInput}"
+        ATTACHED IMAGES: ${currentUploads.length}
+        ACTIVE STYLES: ${styleLabels || "None"}
+        
+        TASK:
+        Determine if the user wants to GENERATE an image or just CHAT.
+        
+        1. If GENERATE (e.g., "draw a cat", "make it cyberpunk", or if images attached without question):
+           - Create a highly detailed, professional Enhanced Prompt for image generation.
+           - Return JSON: { "type": "generate", "enhanced_prompt": "..." }
+           
+        2. If CHAT (e.g., "how are you", "what is this app", "help"):
+           - Answer helpfuly.
+           - Return JSON: { "type": "chat", "response": "..." }
 
-        CRITICAL RULES:
-        1. DEFAULT to generating EXACTLY ONE prompt. 
-        2. ONLY generate multiple prompts if the user EXPLICITLY specifies a quantity (e.g., "3 images", "5 variations") or explicitly asks for "variations" or "different angles".
-        3. If no quantity/variation is requested, return an array with ONLY ONE prompt.
-
-        Enhancement Tasks:
-        1. Greatly improve the prompt quality. Add professional details: lighting (e.g., volumetric, cinematic, studio), camera parameters (e.g., 85mm, f/1.8, 4k, 8k), composition, and textures.
-        2. Make it a masterpiece.
-        3. Maintain the user's original core subject and intent perfectly.
-        ${selectedStyleObjects.length > 0 ? `4. Apply the requested style blend strictly: ${styleLabels} (${styleInstruction}). Blend these styles harmoniously.` : ''}
-
-        Return JSON format: { "prompts": ["enhanced prompt 1", ...] }`,
-        file_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined,
-        add_context_from_internet: aiModel === 'gemini' && uploadedImages.length === 0,
+        3. If AMBIGUOUS but likely visual:
+           - Assume GENERATE.
+           
+        JSON SCHEMA ONLY.`,
+        file_urls: currentUploads.map(u => u.url),
         response_json_schema: {
           type: "object",
           properties: {
-            prompts: { type: "array", items: { type: "string" } }
+            type: { type: "string", enum: ["generate", "chat"] },
+            enhanced_prompt: { type: "string" },
+            response: { type: "string" }
           },
-          required: ["prompts"]
-        }
-      });
-      
-      promptsToGenerate = llmAnalysis.prompts || [prompt];
-      
-      // Limit to 5 max to prevent abuse/timeout
-      if (promptsToGenerate.length > 5) promptsToGenerate = promptsToGenerate.slice(0, 5);
-
-      // Step 2: Generate all images
-      const promises = promptsToGenerate.map(async (finalPrompt) => {
-        try {
-          let fullPrompt = selectedStyleObjects.length > 0
-            ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
-            : `${finalPrompt}, masterpiece, high quality, detailed`;
-          
-          // Append aspect ratio instruction (handled by model or prompt engineering)
-          if (aspectRatio === "16:9") fullPrompt += ", wide cinematic shot, 16:9 aspect ratio";
-          else if (aspectRatio === "9:16") fullPrompt += ", tall portrait shot, 9:16 aspect ratio";
-          
-          // Append negative prompt if exists
-          if (negativePrompt.trim()) {
-            fullPrompt += ` --no ${negativePrompt.trim()}`;
-          }
-
-          const imageResult = await base44.integrations.Core.GenerateImage({
-            prompt: fullPrompt,
-            existing_image_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined
-          });
-
-          // Save to DB
-          await base44.entities.Creation.create({
-            title: prompt.slice(0, 100) || 'AI Generated Image',
-            type: 'image',
-            url: imageResult.url,
-            thumbnail_url: imageResult.url,
-            prompt: prompt,
-            metadata: { 
-              style: selectedStyles, 
-              model: aiModel, 
-              enhancedPrompt: finalPrompt, 
-              batchSize: promptsToGenerate.length,
-              aspectRatio,
-              negativePrompt,
-              imageStrength: uploadedImages.length > 0 ? imageStrength : null
-            }
-          });
-
-          return {
-            id: Date.now() + Math.random(),
-            url: imageResult.url,
-            prompt: prompt,
-            enhancedPrompt: finalPrompt,
-            style: selectedStyles,
-            model: aiModel,
-            timestamp: new Date().toISOString()
-          };
-        } catch (e) {
-          console.error("Single generation failed:", e);
-          return null;
+          required: ["type"]
         }
       });
 
-      const results = await Promise.allSettled(promises);
-      const successfulImages = results
-        .filter(r => r.status === 'fulfilled' && r.value !== null)
-        .map(r => r.value);
-
-      if (successfulImages.length === 0 && promptsToGenerate.length > 0) {
-        throw new Error("Failed to generate any images.");
+      if (llmResponse.type === 'generate') {
+        // Inform user we are generating
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: `Creating that for you... \n\n*Prompt: ${llmResponse.enhanced_prompt}*` 
+        }]);
+        
+        const imageUrl = await generateImage(currentInput, llmResponse.enhanced_prompt);
+        
+        // Add image message
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          // Remove the "Creating..." message or update it? Let's just append result.
+          // Or strictly speaking, we can update the last message to include the image.
+          // But appending is safer for state.
+          newMsgs.push({
+            role: 'assistant',
+            content: "Here is your image:",
+            image: imageUrl,
+            actions: ['download', 'edit']
+          });
+          return newMsgs;
+        });
+      } else {
+        // Chat response
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: llmResponse.response 
+        }]);
       }
 
-      setGeneratedImages([...successfulImages, ...generatedImages]);
-      
-      if (prompt.trim()) {
-        setPromptHistory(prev => [prompt, ...prev.filter(p => p !== prompt)].slice(0, 10));
-      }
-      
-      setPrompt("");
-      // Don't clear uploads automatically for workflow continuity
-      // But clearing styles is usually better for new starts
-      setSelectedStyles([]);
     } catch (err) {
-      console.error("Error generating image:", err);
-      setError("Failed to generate. " + (err.message || "Please try again."));
+      console.error("Error:", err);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "Sorry, I encountered an error. Please try again." 
+      }]);
     } finally {
-      setIsGenerating(false);
+      setIsTyping(false);
     }
   };
 
-  const handleDeleteImage = (id) => {
-    setGeneratedImages(generatedImages.filter(img => img.id !== id));
+  const handleDownload = async (url) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `flik_generated_${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      window.open(url, '_blank');
+    }
   };
 
   return (
-    <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <section className="relative py-20 px-6 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <motion.div 
-            initial={{ x: "-50%" }}
-            animate={{ 
-              scale: [1, 1.15, 1],
-              opacity: [0.6, 1, 0.6],
-              x: "-50%"
-            }}
-            transition={{ 
-              duration: 3, 
-              repeat: Infinity,
-              ease: "easeInOut" 
-            }}
-            className="absolute top-0 left-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/80 to-transparent blur-[100px]" 
-          />
-        </div>
-        
-        <div className="relative max-w-4xl mx-auto text-center">
-
-          
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl font-bold mb-6"
+    <div className="h-[calc(100dvh-4rem)] flex flex-col bg-[#0A0A0A]">
+      {/* Messages Area */}
+      <div 
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        {messages.map((msg, i) => (
+          <div 
+            key={i} 
+            className={`flex gap-3 max-w-3xl mx-auto ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <span className="text-white">Create with </span>
-            <span className="gradient-text">Imagination</span>
-          </motion.h1>
-          
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-lg text-white/50 mb-12 max-w-2xl mx-auto"
-          >
-            Describe your vision and watch AI bring it to life in seconds
-          </motion.p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="relative max-w-3xl mx-auto"
-          >
-            <div className="relative bg-[#141414]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-2 shadow-2xl transition-all duration-300 hover:border-white/20">
-              {/* Input Area */}
-              <div className="relative px-4 pt-4 flex flex-col gap-4">
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe your vision (e.g., 'A cat in 3 different styles')..."
-                className="w-full min-h-[100px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    handleGenerate();
-                  }
-                }}
-              />
-
-              {/* Uploaded Images Preview */}
-              {(uploadedImages.length > 0 || isUploading) && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
-                  {uploadedImages.map((img) => (
-                    <div key={img.id} className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/10 group flex-shrink-0">
-                      <img src={img.url} className="w-full h-full object-cover" />
-                      <button 
-                        onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
-                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                      >
-                        <X className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  ))}
-                  {isUploading && (
-                    <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 animate-pulse flex-shrink-0">
-                      <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
-                    </div>
-                  )}
-                </div>
-              )}
-              </div>
-
-              {/* Toolbar */}
-              <div className="flex items-center justify-between p-2 mt-2 bg-white/5 rounded-2xl flex-wrap gap-2">
-                <div className="flex items-center gap-2 px-2 flex-wrap">
-
-
-                  <Select value={aiModel} onValueChange={setAiModel}>
-                    <SelectTrigger className="h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-xs rounded-full gap-2 px-3 focus:ring-0">
-                      <Zap className={`w-3.5 h-3.5 ${aiModel === 'gemini' ? 'text-[#FF6B35]' : 'text-white/50'}`} />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Standard</SelectItem>
-                      <SelectItem value="gemini">Smart Enhanced</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <div className="w-px h-4 bg-white/10 mx-1" />
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button 
-                        className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
-                          uploadedImages.length > 0
-                            ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                            : 'text-white/60 hover:bg-white/5 hover:text-white'
-                        }`}
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        {uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0 bg-[#141414] border border-white/10" align="start">
-                      <div className="p-4">
-                        <h4 className="text-sm font-medium text-white mb-2">Reference Images</h4>
-                        <div className="h-40">
-                          <ImageUploader 
-                            onImageSelect={handleImageUpload} 
-                            multiple={true} 
-                          />
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-
-                  <button 
-                    onClick={() => setIsChatOpen(!isChatOpen)}
-                    className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
-                      isChatOpen
-                        ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                        : 'text-white/60 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Discuss
-                  </button>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button 
-                        className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
-                          (aspectRatio !== "1:1" || negativePrompt) 
-                            ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                            : 'text-white/60 hover:bg-white/5 hover:text-white'
-                        }`}
-                        title="Advanced Settings"
-                      >
-                        <Settings2 className="w-4 h-4" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {[
-                              { id: "1:1", icon: Square, label: "Square" },
-                              { id: "16:9", icon: RectangleHorizontal, label: "Landscape" },
-                              { id: "9:16", icon: RectangleVertical, label: "Portrait" }
-                            ].map((ratio) => (
-                              <button
-                                key={ratio.id}
-                                onClick={() => setAspectRatio(ratio.id)}
-                                className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
-                                  aspectRatio === ratio.id 
-                                    ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                    : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
-                                }`}
-                              >
-                                <ratio.icon className="w-4 h-4" />
-                                <span className="text-[10px]">{ratio.label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
-                          <Input 
-                            value={negativePrompt}
-                            onChange={(e) => setNegativePrompt(e.target.value)}
-                            placeholder="Things to avoid (e.g. blurry, ugly)..."
-                            className="bg-black/20 border-white/10 h-8 text-xs text-white"
-                          />
-                        </div>
-
-                        {uploadedImages.length > 0 && (
-                          <div className="space-y-3">
-                             <div className="flex justify-between">
-                                <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
-                                <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
-                             </div>
-                             <Slider 
-                               value={[imageStrength]} 
-                               min={0.1} 
-                               max={0.9} 
-                               step={0.1} 
-                               onValueChange={(v) => setImageStrength(v[0])}
-                               className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
-                             />
-                             <p className="text-[10px] text-white/40 leading-tight">
-                               Higher values make the result look more like your reference images.
-                             </p>
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-
-                </div>
-
-                <Button
-                  onClick={handleGenerate}
-                  disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
-                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all ml-auto"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Generate
-                    </>
-                  )}
-                </Button>
-              </div>
-              </div>
-
-              <ChatPanel 
-                isOpen={isChatOpen} 
-                onClose={() => setIsChatOpen(false)} 
-                messages={chatMessages}
-                setMessages={setChatMessages}
-                currentPrompt={prompt}
-                currentStyle={selectedStyles.map(id => stylePresets.find(s => s.id === id)?.label).join(", ")}
-                currentImages={uploadedImages}
-                onApplyPrompt={(text) => {
-                  setPrompt(text);
-                }}
-                onAIAction={(action) => {
-                  alert("Editor actions are only available in the Photo Studio.");
-                }}
-              />
-
-            <StyleSelector 
-              selectedStyles={selectedStyles} 
-              onSelect={setSelectedStyles} 
-              onClear={() => setSelectedStyles([])} 
-            />
-
-            {error && (
-              <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-                {error}
+            {msg.role === 'assistant' && (
+              <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4 text-[#FF6B35]" />
               </div>
             )}
-          </motion.div>
+            
+            <div className={`flex flex-col gap-2 max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div 
+                className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                  msg.role === 'user' 
+                    ? 'bg-[#FF6B35] text-white rounded-tr-none' 
+                    : 'bg-white/10 text-white/90 rounded-tl-none'
+                }`}
+              >
+                {/* User uploaded images in chat bubble */}
+                {msg.images && msg.images.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {msg.images.map((img, idx) => (
+                      <img key={idx} src={img} alt="User upload" className="w-20 h-20 object-cover rounded-lg border border-white/20" />
+                    ))}
+                  </div>
+                )}
+                
+                <ReactMarkdown className="prose prose-invert prose-sm max-w-none">
+                  {msg.content}
+                </ReactMarkdown>
+              </div>
+
+              {/* Generated Image Result */}
+              {msg.image && (
+                <div className="relative group rounded-2xl overflow-hidden border border-white/10 max-w-md shadow-2xl">
+                  <img src={msg.image} alt="Generated" className="w-full h-auto" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleDownload(msg.image)}
+                      className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border border-white/10"
+                    >
+                      <Upload className="w-4 h-4 mr-2 rotate-180" /> Download
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => navigate(`/Editor?load=${encodeURIComponent(msg.image)}`)}
+                      className="bg-[#FF6B35] hover:bg-[#FF8B55] text-white border border-white/10"
+                    >
+                      <Wand2 className="w-4 h-4 mr-2" /> Edit
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {msg.role === 'user' && (
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-white" />
+              </div>
+            )}
+          </div>
+        ))}
+        
+        {isTyping && (
+           <div className="flex gap-3 max-w-3xl mx-auto">
+             <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
+               <Bot className="w-4 h-4 text-[#FF6B35]" />
+             </div>
+             <div className="bg-white/5 p-4 rounded-2xl rounded-tl-none flex items-center gap-1.5 h-12">
+               <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
+               <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
+               <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" />
+             </div>
+           </div>
+        )}
+      </div>
+
+      {/* Input Area */}
+      <div className="p-4 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-3xl mx-auto space-y-3">
+          {/* Upload Preview */}
+          {uploadedImages.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto py-2">
+              {uploadedImages.map((img) => (
+                <div key={img.id} className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-white/10 group">
+                  <img src={img.url} alt="Upload" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))}
+                    className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Controls Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+             <Popover>
+              <PopoverTrigger asChild>
+                <button className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  selectedStyles.length > 0 
+                    ? 'bg-[#FF6B35]/10 border-[#FF6B35]/30 text-[#FF6B35]' 
+                    : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
+                }`}>
+                  <Wand2 className="w-3.5 h-3.5" />
+                  {selectedStyles.length > 0 ? `${selectedStyles.length} Styles` : 'Styles'}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 bg-[#141414] border-white/10" side="top" align="start">
+                <StyleSelector 
+                  selectedStyles={selectedStyles} 
+                  onSelect={setSelectedStyles} 
+                  onClear={() => setSelectedStyles([])} 
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  aspectRatio !== "1:1" 
+                    ? 'bg-[#FF6B35]/10 border-[#FF6B35]/30 text-[#FF6B35]' 
+                    : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
+                }`}>
+                  <Settings2 className="w-3.5 h-3.5" />
+                  Settings
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4 bg-[#141414] border-white/10" side="top" align="start">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-white/50 uppercase">Aspect Ratio</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "1:1", icon: Square, label: "Square" },
+                        { id: "16:9", icon: RectangleHorizontal, label: "Wide" },
+                        { id: "9:16", icon: RectangleVertical, label: "Tall" }
+                      ].map((ratio) => (
+                        <button
+                          key={ratio.id}
+                          onClick={() => setAspectRatio(ratio.id)}
+                          className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                            aspectRatio === ratio.id 
+                              ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                              : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10'
+                          }`}
+                        >
+                          <ratio.icon className="w-4 h-4 mb-1" />
+                          <span className="text-[10px]">{ratio.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-white/50 uppercase">Negative Prompt</Label>
+                    <Input 
+                      value={negativePrompt}
+                      onChange={(e) => setNegativePrompt(e.target.value)}
+                      placeholder="e.g. blurry, ugly..."
+                      className="h-8 text-xs bg-black/20 border-white/10"
+                    />
+                  </div>
+                  {uploadedImages.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/50">Image Strength</span>
+                        <span className="text-white">{Math.round(imageStrength * 100)}%</span>
+                      </div>
+                      <Slider 
+                        value={[imageStrength]} 
+                        min={0.1} max={0.9} step={0.1} 
+                        onValueChange={(v) => setImageStrength(v[0])}
+                        className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
+                      />
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Select value={aiModel} onValueChange={setAiModel}>
+              <SelectTrigger className="h-8 w-auto gap-2 rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:text-white px-3">
+                <Zap className={`w-3.5 h-3.5 ${aiModel === 'gemini' ? 'text-[#FF6B35]' : ''}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Standard Model</SelectItem>
+                <SelectItem value="gemini">Gemini Enhanced</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Main Input */}
+          <div className="relative flex items-end gap-2 bg-[#141414] border border-white/10 rounded-2xl p-2 focus-within:border-[#FF6B35]/50 transition-colors">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+              title="Upload Image"
+            >
+              {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+            </button>
+            <input 
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+            
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Describe what you want to create..."
+              className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder:text-white/30 resize-none py-2 max-h-32 min-h-[44px]"
+              rows={1}
+              style={{ height: 'auto', minHeight: '44px' }}
+            />
+            
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={(!input.trim() && uploadedImages.length === 0) || isTyping}
+              className="mb-0.5 rounded-xl bg-[#FF6B35] hover:bg-[#FF8B55] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-      </section>
-      
-      <section className="px-6 pb-20">
-        <div className="max-w-7xl mx-auto">
-          <ImageGrid 
-            images={generatedImages} 
-            onDelete={handleDeleteImage} 
-            onClearAll={() => setGeneratedImages([])}
-            isGenerating={isGenerating}
-            stylePresets={stylePresets}
-          />
-        </div>
-      </section>
+      </div>
     </div>
   );
 }
