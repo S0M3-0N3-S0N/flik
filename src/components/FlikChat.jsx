@@ -327,7 +327,7 @@ ${allCreations.slice(0, SHOWN_CREATIONS_LIMIT).map((c, i) =>
 CONVERSATION HISTORY (last ${CONTEXT_MESSAGES_LIMIT} messages):
 ${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
 
-User: ${currentInput}
+User: ${currentInput}${contextImages.length > 0 ? `\n📸 IMPORTANT: User has attached ${contextImages.length} image(s) to this message. You can see these images and should analyze them in your response. Reference what you see in the images!` : ''}
 
 YOUR RESPONSE STYLE:
 - Speak as FLIK (use "I", never "the assistant")
@@ -336,6 +336,7 @@ YOUR RESPONSE STYLE:
 - Keep responses concise but complete
 - Reference their work when relevant
 - Guide to the right tools/pages
+- When images are provided, describe what you see and provide relevant advice
 
 ACTIONS YOU CAN PERFORM:
 
