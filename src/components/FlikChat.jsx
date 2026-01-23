@@ -13,11 +13,12 @@ import { getFlikActions } from "./useFlikActions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function FlikChat() {
-  const { isOpen, setIsOpen, messages, setMessages, clearHistory } = useFlik();
+  const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages } = useFlik();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [chatImages, setChatImages] = useState([]);
   const [isUploadingChat, setIsUploadingChat] = useState(false);
+  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
+  const [galleryCreations, setGalleryCreations] = useState([]);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
@@ -71,12 +72,38 @@ export default function FlikChat() {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
         return { url: uploadResult.file_url, file, id: Date.now() + Math.random() };
       }));
-      setChatImages(prev => [...prev, ...newImages]);
+      setAttachedImages(prev => [...prev, ...newImages]);
     } catch (err) {
       console.error("Chat upload error:", err);
     } finally {
       setIsUploadingChat(false);
       if (chatFileRef.current) chatFileRef.current.value = '';
+    }
+  };
+
+  const handleGalleryPick = async () => {
+    try {
+      const user = await base44.auth.me();
+      const creations = await base44.entities.Creation.filter(
+        { created_by: user.email },
+        '-created_date',
+        50
+      );
+      setGalleryCreations(creations);
+      setShowGalleryPicker(true);
+    } catch (e) {
+      console.error("Failed to load gallery", e);
+    }
+  };
+
+  const addCreationToChat = (creation) => {
+    const imageUrl = creation.thumbnail_url || creation.url;
+    if (!attachedImages.find(img => img.url === imageUrl)) {
+      setAttachedImages([...attachedImages, { 
+        url: imageUrl, 
+        name: creation.title || 'Creation',
+        id: Date.now() + Math.random()
+      }]);
     }
   };
 
@@ -86,16 +113,16 @@ export default function FlikChat() {
     const userMsg = { 
       role: 'user', 
       content: input,
-      images: chatImages.map(img => img.url),
+      images: attachedImages.map(img => img.url),
       timestamp: new Date().toISOString()
     };
     
     setMessages(prev => [...prev, userMsg]);
     const currentInput = input;
-    const userUploadedImages = chatImages;
+    const userUploadedImages = attachedImages;
     
     setInput("");
-    setChatImages([]);
+    setAttachedImages([]);
     setIsTyping(true);
 
     try {
@@ -228,7 +255,8 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
 
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: response.message, 
+        content: response.message,
+        image_urls: response.image_urls,
         suggested_prompt: response.suggested_prompt,
         suggested_actions: response.suggested_actions,
         timestamp: new Date().toISOString()
@@ -366,11 +394,25 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                         : 'bg-white/10 text-white/90 rounded-tl-none backdrop-blur-sm border border-white/5'
                     }`}
                   >
-                    {msg.images && msg.images.length > 0 && (
+                    {msg.role === 'user' && msg.images && msg.images.length > 0 && (
                       <div className={`grid gap-2 mb-2 ${msg.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                         {msg.images.map((imgUrl, idx) => (
                           <div key={idx} className="rounded-lg overflow-hidden border border-white/20 aspect-square">
                             <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {msg.role === 'assistant' && msg.image_urls && msg.image_urls.length > 0 && (
+                      <div className={`grid gap-2 mb-2 ${msg.image_urls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {msg.image_urls.map((imgUrl, idx) => (
+                          <div key={idx} className="rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35]/50 transition-colors cursor-pointer">
+                            <img 
+                              src={imgUrl} 
+                              alt={`Response ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                              onClick={() => window.open(imgUrl, '_blank')}
+                            />
                           </div>
                         ))}
                       </div>
@@ -450,13 +492,13 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
           </div>
 
           <div className="p-4 border-t border-white/10 bg-[#1a1a1a]">
-            {chatImages.length > 0 && (
+            {attachedImages.length > 0 && (
               <div className="mb-2 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                {chatImages.map((img) => (
+                {attachedImages.map((img) => (
                   <div key={img.id} className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-white/10 group">
                     <img src={img.url} className="w-full h-full object-cover" />
                     <button 
-                      onClick={() => setChatImages(prev => prev.filter(i => i.id !== img.id))} 
+                      onClick={() => setAttachedImages(prev => prev.filter(i => i.id !== img.id))} 
                       className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                     >
                       <X className="w-4 h-4 text-white" />
@@ -479,8 +521,17 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   isUploadingChat ? 'bg-white/10 cursor-wait' : 'hover:bg-white/10 text-white/60 hover:text-white'
                 }`}
                 disabled={isUploadingChat}
+                title="Upload images"
               >
-                {isUploadingChat ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                {isUploadingChat ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+              </button>
+              <button
+                type="button"
+                onClick={handleGalleryPick}
+                className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                title="Pick from gallery"
+              >
+                <Grid3x3 className="w-5 h-5" />
               </button>
               <input
                 ref={chatFileRef}
@@ -500,13 +551,42 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               <Button 
                 type="submit" 
                 size="icon"
-                disabled={(!input.trim() && chatImages.length === 0) || isTyping || isUploadingChat}
+                disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
                 className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg"
               >
                 {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </form>
           </div>
+        </motion.div>
+      )}
+      
+      {/* Gallery Picker Dialog */}
+      <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
+        <DialogContent className="max-w-4xl max-h-[80vh] bg-[#0a0a0a] border border-white/10 text-white flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-xl gradient-text">Pick from Your Creations</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 p-2">
+            {galleryCreations.map((creation) => (
+              <button
+                key={creation.id}
+                onClick={() => {
+                  addCreationToChat(creation);
+                  setShowGalleryPicker(false);
+                }}
+                className="aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35] transition-all group"
+              >
+                <img 
+                  src={creation.thumbnail_url || creation.url}
+                  alt={creation.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                />
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
         </motion.div>
       )}
     </AnimatePresence>
