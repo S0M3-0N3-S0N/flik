@@ -219,31 +219,35 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-6 py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-8">{t("profile.title")}</h1>
+    <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-4 sm:px-6 py-6 sm:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Profile Header */}
-        <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 md:p-8 mb-8 glass-card">
-          <div className="flex flex-col md:flex-row items-center gap-6 mb-8 text-center md:text-left">
+        <div className="relative bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-10 glass-card overflow-hidden">
+          {/* Background Glow Effect */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="relative flex flex-col md:flex-row items-center gap-8 mb-10 text-center md:text-left">
             <div className="relative group">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-[#FF6B35]/20 overflow-hidden border-2 border-white/10">
-                {user.profile_picture ? (
-                  <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{(user.display_name || user.full_name || user.email || 'U')[0].toUpperCase()}</span>
-                )}
+              <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30">
+                <div className="w-full h-full rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-4xl font-bold text-white overflow-hidden">
+                  {user.profile_picture ? (
+                    <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="gradient-text">{(user.display_name || user.full_name || user.email || 'U')[0].toUpperCase()}</span>
+                  )}
+                </div>
               </div>
               
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer disabled:cursor-not-allowed"
+                className="absolute -bottom-2 -right-2 w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
               >
                 {isUploading ? (
-                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
                 ) : (
-                  <Camera className="w-6 h-6 text-white" />
+                  <Camera className="w-5 h-5 text-white" />
                 )}
               </button>
               <input
@@ -256,53 +260,63 @@ export default function Profile() {
             </div>
             
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1 justify-center md:justify-start">
+              <div className="flex items-center gap-3 mb-2 justify-center md:justify-start">
                 {isEditingName ? (
                   <div className="flex items-center gap-2">
                     <Input
                       value={nameInput}
                       onChange={(e) => setNameInput(e.target.value)}
-                      className="h-9 bg-black/20 border-white/10 text-white text-xl font-bold w-64"
+                      className="h-11 bg-white/5 border-white/10 text-white text-2xl font-bold w-72 rounded-xl"
                       placeholder="Enter name"
                       autoFocus
                     />
-                    <button onClick={handleNameUpdate} className="p-1.5 rounded-lg bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors">
-                      <Check className="w-4 h-4" />
+                    <button onClick={handleNameUpdate} className="p-2.5 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors">
+                      <Check className="w-5 h-5" />
                     </button>
-                    <button onClick={() => setIsEditingName(false)} className="p-1.5 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 transition-colors">
-                      <X className="w-4 h-4" />
+                    <button onClick={() => setIsEditingName(false)} className="p-2.5 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors">
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
                 ) : (
                   <>
-                    <h2 className="text-2xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
-                    <button onClick={startEditingName} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+                    <h2 className="text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
+                    <button onClick={startEditingName} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all">
                       <Pencil className="w-4 h-4" />
                     </button>
                   </>
                 )}
               </div>
-              <p className="text-white/50">{user.email}</p>
+              <p className="text-white/50 text-base flex items-center gap-2 justify-center md:justify-start">
+                <Mail className="w-4 h-4" />
+                {user.email}
+              </p>
+              <div className="mt-3 flex items-center gap-2 text-sm text-white/40 justify-center md:justify-start">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+              </div>
             </div>
             
             <Button 
-              variant="outline" 
               onClick={handleLogout}
-              className="border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40"
+              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-11 px-6"
             >
               <LogOut className="w-4 h-4 mr-2" />
               {t("profile.sign_out")}
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
-              <div className="flex items-center gap-3 text-white/70">
-                <Globe className="w-5 h-5 text-[#FF6B35]" />
-                <span>{t("profile.language")}</span>
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="group p-5 bg-white/5 hover:bg-white/[0.07] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-[#FF6B35]" />
+                  </div>
+                  <span className="text-white/60 text-sm font-medium">{t("profile.language")}</span>
+                </div>
               </div>
               <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="w-[100px] bg-black/20 border-white/10 text-white h-8 text-xs">
+                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white h-10 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -314,76 +328,97 @@ export default function Profile() {
               </Select>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
-              <div className="flex items-center gap-3 text-white/70 flex-1 overflow-hidden">
-                <Mail className="w-5 h-5 text-[#FF6B35] flex-shrink-0" />
-                {isEditingEmail ? (
-                  <Input
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    className="h-8 bg-black/20 border-white/10 text-white w-full min-w-0"
-                    placeholder="Email"
-                  />
-                ) : (
-                  <span className="truncate">{user.contact_email || user.email}</span>
-                )}
-              </div>
-              
-              <div className="ml-2 flex-shrink-0">
-                {isEditingEmail ? (
-                  <div className="flex items-center gap-1">
-                    <button onClick={handleEmailUpdate} className="p-1 rounded-lg bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30">
-                      <Check className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => setIsEditingEmail(false)} className="p-1 rounded-lg bg-white/5 text-white/60 hover:bg-white/10">
-                      <X className="w-3 h-3" />
-                    </button>
+            <div className="group p-5 bg-white/5 hover:bg-white/[0.07] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 text-[#FF6B35]" />
                   </div>
-                ) : (
-                  <button onClick={startEditingEmail} className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10">
-                    <Pencil className="w-3 h-3" />
+                  <span className="text-white/60 text-sm font-medium">Contact Email</span>
+                </div>
+                {!isEditingEmail && (
+                  <button onClick={startEditingEmail} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10">
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
+              {isEditingEmail ? (
+                <div className="space-y-2">
+                  <Input
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="h-10 bg-white/5 border-white/10 text-white rounded-xl"
+                    placeholder="Email address"
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleEmailUpdate} size="sm" className="flex-1 btn-gradient text-white h-9">
+                      <Check className="w-3.5 h-3.5 mr-1.5" />
+                      Save
+                    </Button>
+                    <Button onClick={() => setIsEditingEmail(false)} size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-9">
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-white/90 text-sm truncate">{user.contact_email || user.email}</p>
+              )}
             </div>
             
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
-              <div className="flex items-center gap-3 text-white/70">
-                <Lock className="w-5 h-5 text-[#FF6B35]" />
-                <span>{t("profile.password")}</span>
+            <div className="group p-5 bg-white/5 hover:bg-white/[0.07] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-[#FF6B35]" />
+                  </div>
+                  <span className="text-white/60 text-sm font-medium">{t("profile.password")}</span>
+                </div>
               </div>
               <Button 
-                variant="ghost" 
                 size="sm" 
                 onClick={() => setShowPasswordDialog(true)}
-                className="text-white/40 hover:text-white hover:bg-white/10 h-8 text-xs"
+                className="w-full bg-white/5 hover:bg-white/10 text-white border-0 h-9"
               >
                 {t("profile.change")}
               </Button>
             </div>
 
-            <div className="flex items-center gap-3 text-white/70 p-4 bg-white/5 rounded-xl border border-white/5">
-              <Calendar className="w-5 h-5 text-[#FF6B35]" />
-              <span>Joined {new Date(user.created_date).toLocaleDateString()}</span>
+            <div className="group p-5 bg-white/5 hover:bg-white/[0.07] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-[#FF6B35]" />
+                </div>
+                <span className="text-white/60 text-sm font-medium">Total Creations</span>
+              </div>
+              <p className="text-3xl font-bold gradient-text">{stats.total}</p>
             </div>
           </div>
         </div>
 
         {/* Stats & Creations Section */}
         <div className="space-y-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/5">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-white/5">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">{t("nav.my_creations")}</h2>
-              <p className="text-white/50 text-sm">{stats.total} total creations</p>
+              <h2 className="text-3xl font-bold text-white mb-3 flex items-center gap-3">
+                <Sparkles className="w-7 h-7 text-[#FF6B35]" />
+                My Creations
+              </h2>
+              <p className="text-white/50">Explore and manage all your AI-generated content</p>
             </div>
             <div className="flex gap-3">
-               <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
-                 <ImageIcon className="w-4 h-4 text-[#FF6B35]" />
-                 <span className="text-white/80 text-sm font-medium">{stats.images}</span>
+               <div className="px-5 py-3 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
+                 <ImageIcon className="w-5 h-5 text-[#FF6B35]" />
+                 <div>
+                   <p className="text-2xl font-bold text-white">{stats.images}</p>
+                   <p className="text-xs text-white/50">Images</p>
+                 </div>
                </div>
-               <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
-                 <Video className="w-4 h-4 text-[#FF6B35]" />
-                 <span className="text-white/80 text-sm font-medium">{stats.videos}</span>
+               <div className="px-5 py-3 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
+                 <Video className="w-5 h-5 text-[#FF6B35]" />
+                 <div>
+                   <p className="text-2xl font-bold text-white">{stats.videos}</p>
+                   <p className="text-xs text-white/50">Videos</p>
+                 </div>
                </div>
             </div>
           </div>

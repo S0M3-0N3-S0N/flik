@@ -1,13 +1,13 @@
 import Editor from './pages/Editor';
-import Profile from './pages/Profile';
 import Generate from './pages/Generate';
+import Profile from './pages/Profile';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Editor": Editor,
-    "Profile": Profile,
     "Generate": Generate,
+    "Profile": Profile,
 }
 
 export const pagesConfig = {

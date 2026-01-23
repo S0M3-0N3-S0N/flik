@@ -153,8 +153,8 @@ export default function Layout({ children, currentPageName }) {
                   currentPageName === "Profile" ? "text-white" : "text-white/60 hover:text-white"
                 }`}
               >
-                <Sparkles className="w-4 h-4" />
-                {t("nav.my_creations")}
+                <User className="w-4 h-4" />
+                {t("nav.profile")}
               </Link>
             </nav>
             
@@ -226,8 +226,8 @@ export default function Layout({ children, currentPageName }) {
                       currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    <Sparkles className="w-5 h-5" />
-                    {t("nav.my_creations")}
+                    <User className="w-5 h-5" />
+                    {t("nav.profile")}
                   </Link>
                 </nav>
               </motion.div>
