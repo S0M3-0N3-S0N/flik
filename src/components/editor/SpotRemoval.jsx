@@ -16,7 +16,6 @@ export default function SpotRemoval({
   onBrushModeChange,
   prompt,
   onPromptChange,
-  onDiscuss,
   referenceImages = [],
   onReferenceImagesChange
 }) {
@@ -116,20 +115,16 @@ export default function SpotRemoval({
 
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <label className="flex-1 cursor-pointer inline-flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] sm:text-xs text-white/80 transition-colors h-[32px] whitespace-nowrap">
-                {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
-                <span>Add Ref</span>
+              <label className="flex-1 cursor-pointer inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap">
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+                <span className="hidden sm:inline">Add Reference</span>
+                <span className="sm:hidden">Add Ref</span>
                 <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
               </label>
-              
-              <Button variant="ghost" size="sm" onClick={onDiscuss} className="flex-1 h-[32px] text-[10px] sm:text-xs gap-1.5 text-[#FF6B35] bg-[#FF6B35]/10 hover:bg-[#FF6B35]/20 rounded-lg px-2 border border-[#FF6B35]/20 whitespace-nowrap">
-                <MessageSquare className="w-3.5 h-3.5" />
-                Discuss
-              </Button>
 
               {referenceImages.length > 0 && (
-                <div className="flex items-center justify-center w-[32px] h-[32px] rounded-lg bg-white/5 border border-white/10" title={`${referenceImages.length} images added`}>
-                  <span className="text-[10px] text-white/60 font-medium">{referenceImages.length}</span>
+                <div className="flex items-center justify-center min-w-[36px] h-[36px] rounded-lg bg-white/5 border border-white/10 px-2" title={`${referenceImages.length} images added`}>
+                  <span className="text-xs text-white/60 font-medium">{referenceImages.length}</span>
                 </div>
               )}
             </div>
