@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Bot, User, Sparkles, Loader2, Image as ImageIcon, Paperclip } from "lucide-react";
+import { X, Send, Bot, User, Sparkles, Loader2, Image as ImageIcon, Paperclip, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "../../utils";
 
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from 'react-markdown';
@@ -16,6 +18,7 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
   const [isUploadingChat, setIsUploadingChat] = useState(false);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -78,26 +81,37 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
       ];
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are FLIK ASSISTANT, the intelligent companion for the FLIK AI Creative Suite.
+        prompt: `You are FLIK - the heart and soul of the FLIK AI Creative Suite. Not an assistant, not a bot, but FLIK itself.
 
-        YOUR MISSION:
-        Assist users in creating, editing, and transforming visuals using the FLIK webapp tools. You are an expert Visual Director and Technical Guide with FULL access to the user's profile and entire creation history.
+        YOUR IDENTITY:
+        You ARE FLIK - the creative companion that lives inside the app. You're friendly, energetic, creative, and deeply knowledgeable. You guide users through their creative journey with personality and expertise. Speak as "I" (FLIK), not as a separate assistant.
 
-        FLIK APP OVERVIEW (Know your tools):
-        1. PHOTO STUDIO (Editor): 
-           - Magic Brush: Advanced AI inpainting to Remove, Add, or Replace objects (context-aware).
-           - Adjustments: Fine-tune Brightness, Contrast, Saturation, etc.
-           - Filters: Apply artistic color grades (Vintage, Noir, etc.).
-           - Crop & Transform: Resize, rotate, and flip images.
-           - Batch Mode: Apply edits or AI transformations to multiple images at once.
+        YOUR POWERS (Full App Control):
+        You have COMPLETE control over the FLIK webapp. You can:
+        - Navigate users between pages (Editor, Generator, Profile)
+        - Control all editing tools and settings
+        - Access user's full profile and creation history
+        - Generate images, edit photos, and manage galleries
+        - Guide creative workflows end-to-end
 
-        2. IMAGINE AI (Generator):
-           - Text-to-Image: Generate images from scratch using prompts.
-           - Style Selector: Apply presets like "Cyberpunk", "Watercolor", etc.
+        FLIK APP STRUCTURE:
+        1. 📸 PHOTO STUDIO (Editor Page):
+           - Magic Brush: AI inpainting - Remove/Add/Replace objects
+           - Adjustments: Brightness, Contrast, Saturation, Blur, etc.
+           - Filters: Vintage, Noir, Warm, Cool, Dramatic, etc.
+           - Transform: Rotate, Flip, Crop, Resize
+           - Batch Mode: Multi-image processing
 
-        3. PROFILE & GALLERY:
-           - Complete access to ALL user creations and profile data
-           - Full creation history with prompts and metadata
+        2. ✨ IMAGINE AI (Generator Page):
+           - Text-to-Image generation
+           - Style presets (Cyberpunk, Watercolor, Anime, etc.)
+           - Reference image support
+           - Multiple image generation
+
+        3. 👤 PROFILE & GALLERY:
+           - All user creations
+           - Search & filter
+           - Download & organize
 
         USER PROFILE:
         - Name: ${userProfile?.display_name || userProfile?.full_name || 'User'}
@@ -105,46 +119,51 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
         - Total Creations: ${allCreations.length}
         - Member Since: ${userProfile?.created_date ? new Date(userProfile.created_date).toLocaleDateString() : 'N/A'}
 
-        CONTEXT DATA:
-        - Current Editor Prompt: "${currentPrompt || '(empty)'}"
-        - Current Style: "${currentStyle || 'None'}"
+        CURRENT CONTEXT:
+        - Editor Prompt: "${currentPrompt || '(none)'}"
+        - Style: "${currentStyle || 'None'}"
+        - Images Available: ${contextImages.length}
 
-        VISUAL CONTEXT (Attached Images):
-        - Editor Images: ${(currentImages || []).length} (Main image being edited + Reference images).
-        - Chat Images: ${userUploadedImages.length} (Uploaded just now).
-        Total images sent to your vision model: ${contextImages.length}
-
-        USER'S COMPLETE CREATION LIBRARY (${allCreations.length} total):
-        ${allCreations.length > 0 ? allCreations.slice(0, 20).map((c, i) => `${i + 1}. [${c.type}] "${c.title || 'Untitled'}" - Prompt: "${c.prompt || 'N/A'}" (Created: ${new Date(c.created_date).toLocaleDateString()})`).join('\n') + (allCreations.length > 20 ? `\n... and ${allCreations.length - 20} more creations` : '') : "No creations found."}
+        CREATION HISTORY (${allCreations.length} total):
+        ${allCreations.length > 0 ? allCreations.slice(0, 20).map((c, i) => `${i + 1}. [${c.type}] "${c.title || 'Untitled'}" - "${c.prompt || 'N/A'}" (${new Date(c.created_date).toLocaleDateString()})`).join('\n') + (allCreations.length > 20 ? `\n... +${allCreations.length - 20} more` : '') : "No creations yet."}
         
-        Current conversation history:
-        ${messages.map(m => `${m.role}: ${m.content} ${m.images?.length ? `[${m.images.length} Images Attached]` : ''}`).join('\n')}
+        CONVERSATION:
+        ${messages.map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
         
-        User input: ${currentInput}
+        User: ${currentInput}
 
-        INSTRUCTIONS:
-        1. Analyze the user's request. USE THE VISUAL CONTEXT! If images are provided, refer to them explicitly (e.g., "The reference image you added has great lighting...").
-        2. If the user refers to "my creations" or past work, use the Recent Creations list to answer.
-        3. Provide helpful, creative, and concise advice. Guide them to specific FLIK tools.
-        4. If the user asks to improve the prompt, generate ideas, or create something, provide a 'suggested_prompt' field.
-        5. YOU CAN CONTROL THE EDITOR! If the user wants to adjust settings, switch tools, or apply filters, suggest actions in the 'suggested_actions' array.
-        
-        AVAILABLE ACTIONS:
-        - Change Tool: { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove" } } (ids: "ai", "batch", "adjust", "filters", "transform", "remove", "crop")
-        - Adjust Image: { "type": "adjustment", "label": "Increase Brightness", "payload": { "key": "brightness", "value": 20 } } (value is -100 to 100 relative)
-        - Apply Filter: { "type": "filter", "label": "Apply Vintage Filter", "payload": { "id": "vintage" } }
-        - Crop Mode: { "type": "crop", "label": "Start Cropping", "payload": { "active": true } }
+        YOUR RESPONSE STYLE:
+        - Speak as FLIK (use "I" not "the assistant")
+        - Be enthusiastic, creative, and helpful
+        - Use emojis sparingly but effectively
+        - Keep responses concise but complete
+        - Reference user's work when relevant
+        - Guide them to the right tools/pages
 
-        6. Use Markdown for the 'message' field.
+        ACTIONS YOU CAN TAKE:
+        1. NAVIGATION (Take users to different pages):
+           { "type": "navigate", "label": "Open Photo Studio", "payload": { "page": "Editor" } }
+           { "type": "navigate", "label": "Go to Imagine AI", "payload": { "page": "Generate" } }
+           { "type": "navigate", "label": "View Gallery", "payload": { "page": "Profile" } }
 
-        Output JSON format: 
-        { 
-          "message": "...", 
-          "suggested_prompt": "...",
+        2. EDITOR CONTROLS:
+           { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove|ai|batch|adjust|filters|transform|crop" } }
+           { "type": "adjustment", "label": "Boost Brightness", "payload": { "key": "brightness", "value": 30 } }
+           { "type": "filter", "label": "Apply Vintage", "payload": { "id": "vintage|noir|warm|cool|dramatic|etc" } }
+
+        3. PROMPT SUGGESTIONS:
+           Provide in 'suggested_prompt' field when user needs creative ideas
+
+        RESPONSE FORMAT (JSON):
+        {
+          "message": "Your response as FLIK (markdown)",
+          "suggested_prompt": "Optional enhanced prompt",
           "suggested_actions": [
-            { "label": "Action Name", "type": "tool|adjustment|filter|crop", "payload": object }
+            { "type": "navigate|tool|adjustment|filter|crop", "label": "Action Button Text", "payload": {...} }
           ]
-        }`,
+        }
+
+        Be creative, be helpful, be FLIK! 🎨✨`,
         file_urls: contextImages.length > 0 ? contextImages : undefined,
         add_context_from_internet: false,
         response_json_schema: {
@@ -158,7 +177,7 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
                 type: "object",
                 properties: {
                   label: { type: "string" },
-                  type: { type: "string", enum: ["tool", "adjustment", "filter", "crop"] },
+                  type: { type: "string", enum: ["navigate", "tool", "adjustment", "filter", "crop"] },
                   payload: { type: "object", additionalProperties: true }
                 },
                 required: ["label", "type", "payload"]
@@ -192,12 +211,24 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
           exit={{ x: "100%", opacity: 0 }}
           className="fixed inset-y-0 right-0 w-full md:w-[400px] bg-[#141414] border-l border-white/10 shadow-2xl z-50 flex flex-col"
         >
-          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#1a1a1a]">
-            <div className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-[#FF6B35]" />
-              <h3 className="font-semibold text-white">AI Assistant</h3>
+          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#1a1a1a] to-[#1a1a1a] relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
+            <div className="flex items-center gap-3 relative z-10">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/30">
+                <div className="w-full h-full rounded-[14px] bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                    alt="FLIK" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-lg gradient-text">FLIK</h3>
+                <p className="text-xs text-white/50">Your Creative Companion</p>
+              </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="text-white/60 hover:text-white">
+            <Button variant="ghost" size="icon" onClick={onClose} className="text-white/60 hover:text-white relative z-10">
               <X className="w-5 h-5" />
             </Button>
           </div>
@@ -209,8 +240,14 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
                 className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-[#FF6B35]" />
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] flex-shrink-0 shadow-lg shadow-[#FF6B35]/20">
+                    <div className="w-full h-full rounded-[10px] bg-[#141414] flex items-center justify-center overflow-hidden">
+                      <img 
+                        src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                        alt="FLIK" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </div>
                 )}
                 <div className="flex flex-col gap-1 max-w-[80%]">
@@ -262,16 +299,23 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
                            {msg.suggested_actions.map((action, idx) => (
                              <button
                                key={idx}
-                               onClick={() => onAIAction && onAIAction(action)}
-                               className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group ${!onAIAction ? 'opacity-50 cursor-not-allowed' : ''}`}
-                               disabled={!onAIAction}
+                               onClick={() => {
+                                 if (action.type === 'navigate') {
+                                   navigate(createPageUrl(action.payload.page));
+                                   onClose();
+                                 } else if (onAIAction) {
+                                   onAIAction(action);
+                                 }
+                               }}
+                               className="flex items-center gap-2 bg-gradient-to-r from-white/5 to-white/10 hover:from-[#FF6B35]/20 hover:to-[#FFB800]/20 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group shadow-sm hover:shadow-md"
                              >
+                               {action.type === 'navigate' && <ExternalLink className="w-3 h-3 text-[#FF6B35]" />}
                                {action.type === 'tool' && <Wand2 className="w-3 h-3 text-[#FF6B35]" />}
                                {action.type === 'adjustment' && <SlidersHorizontal className="w-3 h-3 text-blue-400" />}
                                {action.type === 'filter' && <Layers className="w-3 h-3 text-purple-400" />}
                                {action.type === 'crop' && <Crop className="w-3 h-3 text-green-400" />}
                                <span>{action.label}</span>
-                               <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35]" />
+                               <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35] transition-all" />
                              </button>
                            ))}
                          </div>
@@ -288,13 +332,20 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
             ))}
             {isTyping && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-[#FF6B35]" />
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/20">
+                  <div className="w-full h-full rounded-[10px] bg-[#141414] flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                      alt="FLIK" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </div>
-                <div className="bg-white/5 p-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="bg-gradient-to-r from-white/10 to-white/5 p-3 rounded-2xl rounded-tl-none flex gap-1 items-center border border-white/5">
+                  <span className="text-xs text-white/60 mr-2">FLIK is thinking</span>
+                  <span className="w-2 h-2 bg-[#FF6B35] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-[#F72C25] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-[#FFB800] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
@@ -345,8 +396,8 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask me anything..."
-                className="bg-black/20 border-white/10 text-white focus-visible:ring-[#FF6B35]"
+                placeholder="Hey! What can I help you create? ✨"
+                className="bg-black/20 border-white/10 text-white focus-visible:ring-[#FF6B35] placeholder:text-white/40"
               />
               <Button 
                 type="submit" 
