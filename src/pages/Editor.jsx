@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2 } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +22,7 @@ import { useFlikActions } from "@/components/useFlikActions";
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
   const [resultImage, setResultImage] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);
@@ -42,7 +44,7 @@ export default function Editor() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(30);
   const [brushOpacity, setBrushOpacity] = useState(0.8);
-  const [brushMode, setBrushMode] = useState('draw'); // 'draw' or 'erase'
+  const [brushMode, setBrushMode] = useState('draw');
   const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
   const [magicBrushImages, setMagicBrushImages] = useState([]);
   
@@ -60,6 +62,9 @@ export default function Editor() {
   const [batchImages, setBatchImages] = useState([]);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [activeBatchIndex, setActiveBatchIndex] = useState(null);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchCancelled, setBatchCancelled] = useState(false);
+
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
   
@@ -69,7 +74,11 @@ export default function Editor() {
   const cursorRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
+  const [redoHistory, setRedoHistory] = useState([]);
   const [regenerateAction, setRegenerateAction] = useState(null);
+
+  // Track object URLs for proper cleanup
+  const objectURLsRef = useRef(new Set());
 
   // Register actions for FLIK
   useFlikActions('Editor', {
@@ -90,6 +99,7 @@ export default function Editor() {
     }
   });
 
+  // Load image from URL parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const loadUrl = urlParams.get('load');
@@ -98,12 +108,43 @@ export default function Editor() {
     }
   }, []);
 
-  const handleImageSelect = (image) => {
-  setCurrentImage(image);
-  if (image) {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-    setAdjustments({
+  // Cleanup all object URLs on unmount
+  useEffect(() => {
+    return () => {
+      objectURLsRef.current.forEach(url => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      });
+      objectURLsRef.current.clear();
+    };
+  }, []);
+
+  const createObjectURL = useCallback((blob) => {
+    const url = URL.createObjectURL(blob);
+    objectURLsRef.current.add(url);
+    return url;
+  }, []);
+
+  const revokeObjectURL = useCallback((url) => {
+    if (url && url.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(url);
+        objectURLsRef.current.delete(url);
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  }, []);
+
+  const handleImageSelect = useCallback((image) => {
+    setCurrentImage(image);
+    if (image) {
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      setAdjustments({
         brightness: 0,
         contrast: 0,
         saturation: 0,
@@ -117,16 +158,18 @@ export default function Editor() {
       setBrushStrokes([]);
       setIsCropping(false);
       setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+      setUndoHistory([]);
+      setRedoHistory([]);
     }
-  };
+  }, []);
 
-  const handleBatchUpload = (e) => {
+  const handleBatchUpload = useCallback((e) => {
     const files = Array.from(e.target.files);
     const imageFiles = files.filter(f => f.type.startsWith('image/'));
     const images = imageFiles.map(file => ({
       id: Date.now() + Math.random(),
       file,
-      preview: URL.createObjectURL(file),
+      preview: createObjectURL(file),
       name: file.name,
       adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
       transform: { rotate: 0, flipH: false, flipV: false },
@@ -140,9 +183,9 @@ export default function Editor() {
     if (activeBatchIndex === null && newBatch.length > 0) {
       switchToBatchImage(0, newBatch);
     }
-  };
+  }, [batchImages, activeBatchIndex, createObjectURL]);
 
-  const saveCurrentStateToBatch = () => {
+  const saveCurrentStateToBatch = useCallback(() => {
     if (activeBatchIndex === null || !batchImages[activeBatchIndex]) return;
     
     const updatedBatch = [...batchImages];
@@ -154,15 +197,11 @@ export default function Editor() {
       brushStrokes,
     };
     setBatchImages(updatedBatch);
-  };
+  }, [activeBatchIndex, batchImages, adjustments, selectedFilter, transform, brushStrokes]);
 
-  const switchToBatchImage = (index, currentBatch = batchImages) => {
-    // Save current state if we are already editing a batch image
+  const switchToBatchImage = useCallback((index, currentBatch = batchImages) => {
     if (activeBatchIndex !== null && activeBatchIndex !== index && batchImages[activeBatchIndex]) {
-       // We can't use saveCurrentStateToBatch here because we might be using 'currentBatch' which is newer
-       // But typically we switch active index.
-       // Let's just rely on the user explicit save or auto-save on switch? 
-       // For simplicity, let's assume we are using the component state batchImages
+      saveCurrentStateToBatch();
     }
 
     const targetImage = currentBatch[index];
@@ -181,13 +220,9 @@ export default function Editor() {
     setBrushStrokes(targetImage.brushStrokes || []);
     setUndoHistory([]);
     setRedoHistory([]);
-    };
+  }, [activeBatchIndex, batchImages, saveCurrentStateToBatch]);
 
-  const [batchProgress, setBatchProgress] = useState(0);
-
-  const [batchCancelled, setBatchCancelled] = useState(false);
-
-  const handleBatchProcess = async (tool) => {
+  const handleBatchProcess = useCallback(async (tool) => {
     if (batchImages.length === 0) return;
     
     setIsBatchProcessing(true);
@@ -213,31 +248,31 @@ export default function Editor() {
           thumbnail_url: result.url,
           prompt: tool.prompt,
           metadata: { batch: true, original: image.name }
-        });
+        }, { data_env: "dev" });
         
         results.push({ original: image, result: result.url });
         setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
       } catch (err) {
         console.error('Batch error:', err);
+        toast.error(`Failed to process ${image.name}`);
       }
     }
     
     if (batchCancelled) {
-      alert(`Batch processing cancelled. Processed ${results.length} of ${batchImages.length} images.`);
+      toast.info(`Batch processing cancelled. Processed ${results.length} of ${batchImages.length} images.`);
     } else {
-      alert(`Successfully processed ${results.length} of ${batchImages.length} images! Saved to Gallery.`);
+      toast.success(`Successfully processed ${results.length} of ${batchImages.length} images! Saved to Gallery.`);
     }
     
     setIsBatchProcessing(false);
     setBatchImages([]);
     setBatchProgress(0);
-  };
+  }, [batchImages, batchCancelled]);
 
-  // Wrappers for the hook functions to provide current state
-  const handleGenerateCanvas = () => generateCanvas(currentImage, adjustments, transform, selectedFilter);
-  const handleGetProcessedBlob = () => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
+  const handleGenerateCanvas = useCallback(() => generateCanvas(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
+  const handleGetProcessedBlob = useCallback(() => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
-  const handleToolSelect = async (tool) => {
+  const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) return;
     
     setActiveTool(tool);
@@ -245,37 +280,32 @@ export default function Editor() {
     setRegenerateAction(() => () => handleToolSelect(tool));
     
     try {
-      // Bake current edits into a new image for the AI
       const blob = await handleGetProcessedBlob();
-      const processedUrl = URL.createObjectURL(blob);
+      const processedUrl = createObjectURL(blob);
       setProcessedImage(processedUrl);
       
       const file = new File([blob], "processed_input.png", { type: "image/png" });
-      
-      const uploadResult = await base44.integrations.Core.UploadFile({
-        file: file
-      });
-      const imageUrl = uploadResult.file_url;
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
       
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
-        existing_image_urls: [imageUrl]
+        existing_image_urls: [uploadResult.file_url]
       });
       
       setResultImage(result.url);
       setShowResult(true);
     } catch (error) {
       console.error("Error processing image:", error);
-      alert("Error processing image. Please try again.");
+      toast.error("Error processing image. Please try again.");
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
     }
-  };
+  }, [currentImage, handleGetProcessedBlob, createObjectURL]);
 
-  const handleApplyResult = () => {
+  const handleApplyResult = useCallback(() => {
     if (resultImage) {
-      setUndoHistory([...undoHistory, currentImage]);
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
       setCurrentImage({ 
         url: resultImage, 
         preview: resultImage, 
@@ -294,29 +324,28 @@ export default function Editor() {
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
       setBrushStrokes([]);
+      setRedoHistory([]);
     }
     setShowResult(false);
     setResultImage(null);
     if (processedImage) {
-      URL.revokeObjectURL(processedImage);
+      revokeObjectURL(processedImage);
       setProcessedImage(null);
     }
-  };
+  }, [resultImage, currentImage, adjustments, selectedFilter, transform, processedImage, revokeObjectURL]);
 
-  const handleCloseResult = () => {
+  const handleCloseResult = useCallback(() => {
     setShowResult(false);
     if (processedImage) {
-      URL.revokeObjectURL(processedImage);
+      revokeObjectURL(processedImage);
       setProcessedImage(null);
     }
-  };
+  }, [processedImage, revokeObjectURL]);
 
-  const [redoHistory, setRedoHistory] = useState([]);
-
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (undoHistory.length > 0) {
       const previous = undoHistory[undoHistory.length - 1];
-      setRedoHistory([...redoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+      setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
       
       if (previous.image) {
         setCurrentImage(previous.image);
@@ -327,15 +356,15 @@ export default function Editor() {
         setCurrentImage(previous);
       }
       
-      setUndoHistory(undoHistory.slice(0, -1));
+      setUndoHistory(prev => prev.slice(0, -1));
     }
-  };
+  }, [undoHistory, currentImage, adjustments, selectedFilter, transform]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (redoHistory.length > 0) {
       const next = redoHistory[redoHistory.length - 1];
-      setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-      
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+
       if (next.image) {
         setCurrentImage(next.image);
         if (next.adjustments) setAdjustments(next.adjustments);
@@ -345,9 +374,228 @@ export default function Editor() {
         setCurrentImage(next);
       }
       
-      setRedoHistory(redoHistory.slice(0, -1));
+      setRedoHistory(prev => prev.slice(0, -1));
     }
-  };
+  }, [redoHistory, currentImage, adjustments, selectedFilter, transform]);
+
+  const handleDownload = useCallback(async () => {
+    if (!currentImage) return;
+    try {
+      const blob = await handleGetProcessedBlob();
+      if (!blob) {
+        toast.error("Could not get image data to download.");
+        return;
+      }
+      const url = createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `flik_${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      revokeObjectURL(url);
+      toast.success("Image downloaded successfully!");
+    } catch (e) {
+      console.error("Download failed", e);
+      toast.error("Download failed. Please try again.");
+    }
+  }, [currentImage, handleGetProcessedBlob, createObjectURL, revokeObjectURL]);
+
+  const handleAdjustmentChange = useCallback((newAdjustments) => {
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setAdjustments(newAdjustments);
+    setRedoHistory([]);
+  }, [currentImage, adjustments, selectedFilter, transform]);
+
+  const handleFilterSelect = useCallback((filter) => {
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setSelectedFilter(filter);
+    setRedoHistory([]);
+  }, [currentImage, adjustments, selectedFilter, transform]);
+
+  const handleTransform = useCallback(async (type) => {
+    if (!currentImage) return;
+
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setIsProcessing(true);
+
+    try {
+      let tempTransform = { rotate: 0, flipH: false, flipV: false };
+      if (type === 'rotate-right') tempTransform.rotate = 90;
+      else if (type === 'rotate-left') tempTransform.rotate = -90;
+      else if (type === 'flip-horizontal') tempTransform.flipH = true;
+      else if (type === 'flip-vertical') tempTransform.flipV = true;
+
+      const canvas = await generateCanvas(
+        currentImage, 
+        { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 }, 
+        tempTransform, 
+        null
+      );
+
+      if (!canvas) {
+        toast.error("Failed to generate canvas for transform.");
+        throw new Error("Failed to generate canvas");
+      }
+
+      canvas.toBlob((blob) => {
+        const url = createObjectURL(blob);
+        setCurrentImage({
+          ...currentImage,
+          url: url,
+          preview: url,
+          name: "transformed.png"
+        });
+        setTransform({ rotate: 0, flipH: false, flipV: false });
+        setBrushStrokes([]);
+        setRedoHistory([]);
+        setIsProcessing(false);
+      }, 'image/png');
+    } catch (error) {
+      console.error("Transform error:", error);
+      setIsProcessing(false);
+      toast.error("Transform failed. Please try again.");
+    }
+  }, [currentImage, adjustments, selectedFilter, transform, generateCanvas, createObjectURL]);
+
+  const handleMagicBrush = useCallback(async () => {
+    setRegenerateAction(() => () => handleMagicBrush());
+
+    try {
+      const resultUrl = await processMagicBrush({
+        imageRef,
+        brushStrokes,
+        brushSize,
+        magicBrushPrompt,
+        magicBrushImages,
+        getProcessedImageBlob,
+        currentImage,
+        adjustments,
+        transform,
+        selectedFilter,
+        setActiveTool
+      });
+
+      if (resultUrl) {
+        setResultImage(resultUrl);
+        setShowResult(true);
+      }
+    } catch (error) {
+      console.error("Magic brush error:", error);
+      toast.error("Error executing magic brush. Please try again.");
+    }
+  }, [brushStrokes, brushSize, magicBrushPrompt, magicBrushImages, getProcessedImageBlob, currentImage, adjustments, transform, selectedFilter, processMagicBrush]);
+
+  const handleStartCrop = useCallback(() => {
+    setIsCropping(true);
+    setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+  }, []);
+
+  const handleCancelCrop = useCallback(() => {
+    setIsCropping(false);
+  }, []);
+
+  const handleApplyCrop = useCallback(async () => {
+    if (!currentImage) return;
+
+    setIsProcessing(true);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+
+    try {
+      const bakeCanvas = await handleGenerateCanvas();
+      if (!bakeCanvas) {
+        toast.error("Failed to generate canvas for cropping.");
+        throw new Error("Failed to generate canvas");
+      }
+
+      const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width));
+      const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height));
+      const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
+      const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
+
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = cropWidth;
+      finalCanvas.height = cropHeight;
+      const fCtx = finalCanvas.getContext('2d');
+
+      fCtx.drawImage(bakeCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+      finalCanvas.toBlob((blob) => {
+        const url = createObjectURL(blob);
+        setCurrentImage({
+          ...currentImage,
+          url: url,
+          preview: url,
+          name: "cropped_image.png"
+        });
+        setTransform({ rotate: 0, flipH: false, flipV: false });
+        setAdjustments({
+          brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0
+        });
+        setSelectedFilter(null);
+        setIsCropping(false);
+        setRedoHistory([]);
+        setIsProcessing(false);
+        toast.success("Image cropped successfully!");
+      }, 'image/png', 1.0);
+    } catch (error) {
+      console.error("Error cropping:", error);
+      setIsProcessing(false);
+      toast.error("Crop failed. Please try again.");
+    }
+  }, [currentImage, adjustments, selectedFilter, transform, cropArea, handleGenerateCanvas, createObjectURL]);
+
+  const handleSaveToGallery = useCallback(async () => {
+    if (!currentImage) return;
+    setIsSaving(true);
+    try {
+      const blob = await handleGetProcessedBlob();
+      if (!blob) {
+        toast.error("Could not get image data to save.");
+        return;
+      }
+      const file = new File([blob], `flik_creation_${Date.now()}.png`, { type: blob.type });
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.Creation.create({
+        title: `Edited Image (${new Date().toLocaleString()})`,
+        type: 'image',
+        url: uploadResult.file_url,
+        thumbnail_url: uploadResult.file_url
+      }, { data_env: "dev" });
+      toast.success('Saved to Gallery!');
+    } catch (err) {
+      console.error("Error saving to gallery:", err);
+      toast.error('Error saving to gallery. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [currentImage, handleGetProcessedBlob]);
+
+  const handleClearBatch = useCallback(() => {
+    batchImages.forEach(img => revokeObjectURL(img.preview));
+    setBatchImages([]);
+    setCurrentImage(null);
+    setActiveBatchIndex(null);
+  }, [batchImages, revokeObjectURL]);
+
+  const handleRemoveBatchImage = useCallback((idx) => {
+    const removedImage = batchImages[idx];
+    revokeObjectURL(removedImage.preview);
+    
+    const newBatch = batchImages.filter((_, i) => i !== idx);
+    setBatchImages(newBatch);
+    
+    if (activeBatchIndex === idx) {
+      if (newBatch.length > 0) {
+        switchToBatchImage(0, newBatch);
+      } else {
+        setCurrentImage(null);
+        setActiveBatchIndex(null);
+      }
+    } else if (activeBatchIndex > idx) {
+      setActiveBatchIndex(prev => prev - 1);
+    }
+  }, [batchImages, activeBatchIndex, revokeObjectURL, switchToBatchImage]);
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -366,7 +614,7 @@ export default function Editor() {
 
     const handleKeyDown = (e) => {
       if (e.code === 'Space' && !e.repeat && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-        e.preventDefault(); // Prevent scrolling
+        e.preventDefault();
         setIsSpacePressed(true);
       }
     };
@@ -386,105 +634,19 @@ export default function Editor() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [undoHistory, redoHistory, currentImage]);
+  }, [handleUndo, handleRedo, handleDownload]);
 
-  const handleDownload = async () => {
-    if (!currentImage) return;
-    try {
-      const canvas = await handleGenerateCanvas();
-      if (!canvas) return;
-
-      canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `flik_${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 'image/png', 1.0);
-    } catch (e) {
-      console.error("Download failed", e);
-    }
-  };
-
-  const handleAdjustmentChange = (newAdjustments) => {
-    setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-    setAdjustments(newAdjustments);
-  };
-
-  const handleFilterSelect = (filter) => {
-    setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-    setSelectedFilter(filter);
-  };
-
-  const handleTransform = async (type) => {
-    if (!currentImage) return;
-
-    setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-    setIsProcessing(true);
-
-    try {
-      // Calculate temporary transform for this operation
-      let tempTransform = { rotate: 0, flipH: false, flipV: false };
-      if (type === 'rotate-right') tempTransform.rotate = 90;
-      else if (type === 'rotate-left') tempTransform.rotate = -90;
-      else if (type === 'flip-horizontal') tempTransform.flipH = true;
-      else if (type === 'flip-vertical') tempTransform.flipV = true;
-
-      // Generate canvas with ONLY the transform applied (no filters/adjustments)
-      // We use the hook directly to pass specific state
-      const canvas = await generateCanvas(
-        currentImage, 
-        { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 }, 
-        tempTransform, 
-        null
-      );
-
-      if (!canvas) throw new Error("Failed to generate canvas");
-
-      canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        setCurrentImage({
-          ...currentImage,
-          url: url,
-          preview: url,
-          name: "transformed.png"
-        });
-        // We baked the transform into the image, so we keep the current "visual" transform state as is? 
-        // Wait, if we bake it, the image effectively changes. 
-        // The previous logic reset transform to 0. 
-        // But what if the user had previous adjustments? They are preserved in state but NOT baked.
-        // So we are correct to bake ONLY transform and keep adjustments in state.
-        // However, the previous logic reset transform to 0.
-        // If we bake a 90deg rotation, the new image is rotated. The transform state should be 0.
-        // BUT `generateCanvas` takes `currentImage` (which is raw) and applies `transform` (current state).
-        // If we want to ADD a rotation, we should modify the transform state?
-        // Ah, the previous logic BAKED the rotation into a NEW image.
-        // This effectively "commits" the rotation.
-        setTransform({ rotate: 0, flipH: false, flipV: false });
-        setBrushStrokes([]);
-        setIsProcessing(false);
-      }, 'image/png');
-    } catch (error) {
-      console.error("Transform error:", error);
-      setIsProcessing(false);
-    }
-  };
-
-  const handleWheel = (e) => {
+  const handleWheel = useCallback((e) => {
     if (currentImage) {
       const delta = e.deltaY * -0.001;
       setZoom(z => Math.min(Math.max(z + delta, 0.1), 5));
     }
-  };
+  }, [currentImage]);
 
-  const getRelativePosition = (e) => {
+  const getRelativePosition = useCallback((e) => {
     if (!imageRef.current) return null;
     const rect = imageRef.current.getBoundingClientRect();
     
-    // Handle both mouse and touch events
     const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
     
@@ -493,15 +655,13 @@ export default function Editor() {
     const x = ((clientX - rect.left) / rect.width) * 100;
     const y = ((clientY - rect.top) / rect.height) * 100;
     
-    // Allow some tolerance for touch interactions near the edge
     const tolerance = 5; 
     if (x < -tolerance || x > 100 + tolerance || y < -tolerance || y > 100 + tolerance) return null;
     
     return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
-  };
+  }, []);
 
-  const handleMouseDown = (e) => {
-    // Check for pan mode (Space key, middle mouse button, or active pan tool)
+  const handleMouseDown = useCallback((e) => {
     if (isSpacePressed || e.button === 1 || isPanToolActive) {
       setIsPanning(true);
       setDragStart({ x: e.clientX, y: e.clientY });
@@ -512,7 +672,7 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsDrawing(true);
-        setBrushStrokes([...brushStrokes, { points: [pos], type: brushMode, size: brushSize }]);
+        setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
       }
     } else if (activeTab === "crop" && isCropping) {
       const pos = getRelativePosition(e);
@@ -539,40 +699,41 @@ export default function Editor() {
         }
       }
     }
-  };
+  }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea]);
 
-  const handleMouseMove = (e) => {
-  // Prevent default touch actions (scrolling) if we are interacting
-  if (e.cancelable && (isDrawing || isDragging || isPanning)) {
-    e.preventDefault();
-  }
+  const handleMouseMove = useCallback((e) => {
+    if (e.cancelable && (isDrawing || isDragging || isPanning)) {
+      e.preventDefault();
+    }
 
-  const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+    const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
 
-  if (isPanning && dragStart) {
-    const deltaX = clientX - dragStart.x;
-    const deltaY = clientY - dragStart.y;
-    setPan({ x: pan.x + deltaX, y: pan.y + deltaY });
-    setDragStart({ x: clientX, y: clientY });
-    return;
-  }
+    if (isPanning && dragStart) {
+      const deltaX = clientX - dragStart.x;
+      const deltaY = clientY - dragStart.y;
+      setPan(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+      setDragStart({ x: clientX, y: clientY });
+      return;
+    }
 
-  if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
-  const rect = containerRef.current.getBoundingClientRect();
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
-  cursorRef.current.style.left = `${x}px`;
-  cursorRef.current.style.top = `${y}px`;
-  cursorRef.current.style.display = 'block';
-  }
+    if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      cursorRef.current.style.left = `${x}px`;
+      cursorRef.current.style.top = `${y}px`;
+      cursorRef.current.style.display = 'block';
+    }
 
-  if (activeTab === "remove" && isDrawing && currentImage) {
+    if (activeTab === "remove" && isDrawing && currentImage) {
       const pos = getRelativePosition(e);
       if (pos && brushStrokes.length > 0) {
-        const newStrokes = [...brushStrokes];
-        newStrokes[newStrokes.length - 1].points.push(pos);
-        setBrushStrokes(newStrokes);
+        setBrushStrokes(prev => {
+          const newStrokes = [...prev];
+          newStrokes[newStrokes.length - 1].points.push(pos);
+          return newStrokes;
+        });
       }
     } else if (activeTab === "crop" && isDragging && dragStart && dragType) {
       const pos = getRelativePosition(e);
@@ -612,132 +773,21 @@ export default function Editor() {
         setDragStart(pos);
       }
     }
-  };
+  }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, isDragging, dragStart, dragType, cropArea, isPanning, pan]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
     setIsDragging(false);
     setIsPanning(false);
     setDragType(null);
-  };
+  }, []);
   
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     handleMouseUp();
     if (cursorRef.current) {
       cursorRef.current.style.display = 'none';
     }
-  };
-
-  const handleMagicBrush = async () => {
-    setRegenerateAction(() => () => handleMagicBrush());
-
-    try {
-      const resultUrl = await processMagicBrush({
-        imageRef,
-        brushStrokes,
-        brushSize,
-        magicBrushPrompt,
-        magicBrushImages,
-        getProcessedImageBlob: getProcessedImageBlob,
-        currentImage,
-        adjustments,
-        transform,
-        selectedFilter,
-        setActiveTool
-      });
-
-      if (resultUrl) {
-        setResultImage(resultUrl);
-        setShowResult(true);
-      }
-    } catch (error) {
-      alert("Error executing magic brush. Please try again.");
-    }
-  };
-
-  const handleStartCrop = () => {
-    setIsCropping(true);
-    setCropArea({ x: 10, y: 10, width: 80, height: 80 });
-  };
-
-  const handleCancelCrop = () => {
-    setIsCropping(false);
-  };
-
-  const handleApplyCrop = async () => {
-    if (!currentImage) return;
-
-    setIsProcessing(true);
-    setUndoHistory([...undoHistory, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-
-    try {
-      // 1. Get the current visual state (transforms/filters baked in)
-      const bakeCanvas = await handleGenerateCanvas();
-
-      // 2. Calculate crop coordinates relative to the baked canvas
-      const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width));
-      const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height));
-      const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
-      const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
-
-      // 3. Draw cropped region
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = cropWidth;
-      finalCanvas.height = cropHeight;
-      const fCtx = finalCanvas.getContext('2d');
-
-      fCtx.drawImage(bakeCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-
-      finalCanvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        setCurrentImage({
-          ...currentImage,
-          url: url,
-          preview: url,
-          name: "cropped_image.png"
-        });
-        // Reset state since it's now baked into the new image
-        setTransform({ rotate: 0, flipH: false, flipV: false });
-        setAdjustments({
-          brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0
-        });
-        setSelectedFilter(null);
-        setIsCropping(false);
-        setIsProcessing(false);
-      }, 'image/png', 1.0);
-    } catch (error) {
-      console.error("Error cropping:", error);
-      setIsProcessing(false);
-    }
-  };
-
-  const handleAIAction = (action) => {
-    if (!action) return;
-
-    switch(action.type) {
-      case 'tool':
-        setActiveTab(action.payload.id);
-        break;
-      case 'adjustment':
-        const newAdjustments = { ...adjustments, [action.payload.key]: action.payload.value };
-        handleAdjustmentChange(newAdjustments);
-        setActiveTab('adjust');
-        break;
-      case 'filter':
-         // We need to look up filter object by id, but filters are in FiltersPanel. 
-         // For now we can pass a dummy object with just ID or try to find it if we have the list.
-         // Since Editor doesn't hold the filter list, we will just set ID and let FiltersPanel handle it or just set it if we move filters up.
-         // Actually, FiltersPanel handles the list. 
-         // Let's just switch tab to filters for now to keep it safe, or assume we can find it.
-         // Ideally we lift filter list state up. For now let's just switch tab.
-         setActiveTab('filters');
-         break;
-      case 'crop':
-         setActiveTab('crop');
-         if (action.payload.active) handleStartCrop();
-         break;
-    }
-  };
+  }, [handleMouseUp]);
 
   useEffect(() => {
     if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
@@ -755,7 +805,7 @@ export default function Editor() {
     if (brushStrokes.length === 0) return;
 
     brushStrokes.forEach(stroke => {
-      const points = stroke.points || stroke; // Handle legacy format just in case
+      const points = stroke.points || stroke;
       if (!points || points.length === 0) return;
       
       const isErase = stroke.type === 'erase';
@@ -784,9 +834,9 @@ export default function Editor() {
       }
     });
     ctx.globalCompositeOperation = 'source-over';
-  }, [brushStrokes, brushSize, activeTab]);
+  }, [brushStrokes, brushSize, brushOpacity, activeTab]);
 
-  const getFilterStyle = () => {
+  const getFilterStyle = useCallback(() => {
     const filters = [];
     
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
@@ -802,9 +852,9 @@ export default function Editor() {
     }
     
     return filters.length > 0 ? filters.join(" ") : "none";
-  };
+  }, [adjustments, selectedFilter]);
 
-  const getTransformStyle = () => {
+  const getTransformStyle = useCallback(() => {
     const transforms = [];
     
     if (transform.rotate !== 0) transforms.push(`rotate(${transform.rotate}deg)`);
@@ -812,7 +862,7 @@ export default function Editor() {
     if (transform.flipV) transforms.push(`scaleY(-1)`);
     
     return transforms.length > 0 ? transforms.join(" ") : "none";
-  };
+  }, [transform]);
 
   return (
     <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
@@ -896,7 +946,7 @@ export default function Editor() {
                             transform: { ...transform }
                           }));
                           setBatchImages(updatedBatch);
-                          alert('Synced current edits to all images!');
+                          toast.success('Synced current edits to all images!');
                         }}
                         className="w-full p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition-all text-left flex items-center gap-3 group"
                       >
@@ -910,11 +960,7 @@ export default function Editor() {
                       </button>
 
                       <button 
-                        onClick={() => {
-                          setBatchImages([]);
-                          setCurrentImage(null);
-                          setActiveBatchIndex(null);
-                        }}
+                        onClick={handleClearBatch}
                         className="w-full p-4 rounded-xl bg-white/[0.03] hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 transition-all text-left flex items-center gap-3 group"
                       >
                         <div className="w-10 h-10 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center">
@@ -948,7 +994,7 @@ export default function Editor() {
                             <span className="flex-1 text-left">
                               {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
                             </span>
-                            {isBatchProcessing && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                            {isBatchProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
                           </Button>
                         ))}
                       </div>
@@ -1008,7 +1054,7 @@ export default function Editor() {
                 <>
                   <SpotRemoval 
                     onRemoveSpot={handleMagicBrush}
-                    isProcessing={isProcessing}
+                    isProcessing={isMagicBrushProcessing}
                     brushSize={brushSize}
                     onBrushSizeChange={setBrushSize}
                     brushOpacity={brushOpacity}
@@ -1030,7 +1076,7 @@ export default function Editor() {
                             variant="ghost"
                             onClick={() => {
                               if (brushStrokes.length > 0) {
-                                setBrushStrokes(brushStrokes.slice(0, -1));
+                                setBrushStrokes(prev => prev.slice(0, -1));
                               }
                             }}
                             className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
@@ -1122,42 +1168,17 @@ export default function Editor() {
             </div>
             {currentImage && (
               <Button
-                onClick={async () => {
-                  try {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const img = new Image();
-                    img.crossOrigin = "anonymous";
-                    img.src = currentImage.preview || currentImage.url;
-                    
-                    img.onload = async () => {
-                      canvas.width = img.width;
-                      canvas.height = img.height;
-                      ctx.drawImage(img, 0, 0);
-                      
-                      canvas.toBlob(async (blob) => {
-                        const file = new File([blob], 'image.png', { type: 'image/png' });
-                        const uploadResult = await base44.integrations.Core.UploadFile({ file });
-                        
-                        await base44.entities.Creation.create({
-                          title: 'Edited Image',
-                          type: 'image',
-                          url: uploadResult.file_url,
-                          thumbnail_url: uploadResult.file_url
-                        });
-                        
-                        alert('Saved to Gallery!');
-                      });
-                    };
-                  } catch (err) {
-                    alert('Error saving: ' + err.message);
-                  }
-                }}
+                onClick={handleSaveToGallery}
+                disabled={isSaving}
                 className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20"
                 title="Save to Gallery"
               >
-                <Sparkles className="w-4 h-4 lg:mr-2" />
-                <span className="hidden lg:inline">Save</span>
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 lg:mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 lg:mr-2" />
+                )}
+                <span className="hidden lg:inline">{isSaving ? "Saving..." : "Save"}</span>
               </Button>
             )}
             <Button
@@ -1190,7 +1211,7 @@ export default function Editor() {
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 border-white/80 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
               style={{
-                width: brushSize * zoom, // Scale cursor visual with zoom
+                width: brushSize * zoom,
                 height: brushSize * zoom,
                 transform: 'translate(-50%, -50%)',
                 display: 'none',
@@ -1234,7 +1255,7 @@ export default function Editor() {
                   draggable={false}
                 />
                 
-                {activeTab === "remove" && (
+                {activeTab === "remove" && currentImage && (
                   <canvas
                     ref={canvasRef}
                     className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full"
@@ -1254,7 +1275,6 @@ export default function Editor() {
                         height: `${cropArea.height}%`,
                       }}
                     >
-                      {/* Hit areas are larger (6x6) but visible handles are 4x4 (w-4) inside to maintain visuals while improving usability */}
                       <div className="absolute -top-3 -left-3 w-8 h-8 flex items-center justify-center cursor-nw-resize z-10 touch-none">
                         <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
                       </div>
@@ -1296,21 +1316,11 @@ export default function Editor() {
                     activeBatchIndex === idx ? 'border-[#FF6B35]' : 'border-transparent hover:border-white/20'
                   }`}
                 >
-                  <img src={img.preview} className="w-full h-full object-cover" />
+                  <img src={img.preview} alt={img.name} className="w-full h-full object-cover" />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const newBatch = batchImages.filter((_, i) => i !== idx);
-                      setBatchImages(newBatch);
-                      if (activeBatchIndex === idx) {
-                        if (newBatch.length > 0) switchToBatchImage(0, newBatch);
-                        else {
-                          setCurrentImage(null);
-                          setActiveBatchIndex(null);
-                        }
-                      } else if (activeBatchIndex > idx) {
-                        setActiveBatchIndex(activeBatchIndex - 1);
-                      }
+                      handleRemoveBatchImage(idx);
                     }}
                     className="absolute top-0 right-0 p-0.5 bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
                   >
