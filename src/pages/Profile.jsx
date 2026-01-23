@@ -828,7 +828,7 @@ export default function Profile() {
             </motion.div>
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-6">
                 <AnimatePresence mode="popLayout">
                   {paginatedCreations.map((item, index) => (
                     <motion.div
@@ -837,7 +837,7 @@ export default function Profile() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ delay: index * 0.02 }}
-                      className={`group relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-[#141414] to-[#0a0a0a] border transition-all duration-500 hover:shadow-2xl cursor-pointer ${
+                      className={`group relative aspect-[3/4] rounded-3xl overflow-hidden bg-gradient-to-br from-[#141414] to-[#0a0a0a] border transition-all duration-500 hover:shadow-2xl cursor-pointer ${
                         selectedItems.includes(item.id) 
                           ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/40 shadow-[#FF6B35]/30 shadow-lg scale-[0.97]' 
                           : 'border-white/5 hover:border-[#FF6B35]/40 hover:shadow-[#FF6B35]/10'
