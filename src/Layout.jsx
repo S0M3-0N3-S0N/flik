@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, MessageSquare } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
+import { FlikProvider, useFlik } from "@/components/FlikContext";
+import FlikChat from "@/components/FlikChat";
 
 export const LanguageContext = React.createContext();
 
-export default function Layout({ children, currentPageName }) {
+function LayoutContent({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en');
+  const { isOpen, setIsOpen, messages } = useFlik();
 
   const t = (key) => translations[language]?.[key] || translations['en'][key] || key;
 
@@ -239,7 +242,39 @@ export default function Layout({ children, currentPageName }) {
         <main className="pt-16">
           {children}
         </main>
-      </div>
-    </LanguageContext.Provider>
-  );
-}
+
+        {/* Global FLIK Button */}
+        <motion.button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 hover:scale-110 transition-transform duration-300"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <div className="w-full h-full rounded-[14px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden relative">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+              alt="Chat with FLIK" 
+              className="w-full h-full object-cover"
+            />
+            {messages.length > 0 && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B35] rounded-full border-2 border-[#0a0a0a] flex items-center justify-center">
+                <span className="text-white text-[10px] font-bold">{messages.length}</span>
+              </div>
+            )}
+          </div>
+        </motion.button>
+
+        {/* FLIK Chat Panel */}
+        <FlikChat />
+        </div>
+        </LanguageContext.Provider>
+        );
+        }
+
+        export default function Layout({ children, currentPageName }) {
+        return (
+        <FlikProvider>
+        <LayoutContent children={children} currentPageName={currentPageName} />
+        </FlikProvider>
+        );
+        }
