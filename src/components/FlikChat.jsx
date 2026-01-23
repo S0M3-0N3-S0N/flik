@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -47,6 +48,50 @@ export default function FlikChat() {
   const location = useLocation();
   const abortControllerRef = useRef(null);
   const isFetchingUserDataRef = useRef(false);
+
+  // Memoized ReactMarkdown components configuration
+  const markdownComponents = useMemo(() => ({
+    code: ({ inline, className, children, ...props }) => {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline && match ? (
+        <div className="relative group/code">
+          <pre className="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto my-2">
+            <code className={className} {...props}>{children}</code>
+          </pre>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover/code:opacity-100 bg-slate-800 hover:bg-slate-700"
+            onClick={() => {
+              navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+              toast.success('Code copied');
+            }}
+          >
+            <Copy className="h-3 w-3 text-slate-400" />
+          </Button>
+        </div>
+      ) : (
+        <code className="px-1 py-0.5 rounded bg-slate-100 text-slate-700 text-xs">
+          {children}
+        </code>
+      );
+    },
+    a: ({ children, ...props }) => (
+      <a {...props} target="_blank" rel="noopener noreferrer">{children}</a>
+    ),
+    p: ({ children }) => <p className="my-1 leading-relaxed">{children}</p>,
+    ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
+    ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
+    li: ({ children }) => <li className="my-0.5">{children}</li>,
+    h1: ({ children }) => <h1 className="text-lg font-semibold my-2">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-base font-semibold my-2">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-sm font-semibold my-2">{children}</h3>,
+    blockquote: ({ children }) => (
+      <blockquote className="border-l-2 border-slate-300 pl-3 my-2 text-slate-600">
+        {children}
+      </blockquote>
+    ),
+  }), []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -626,13 +671,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                       </div>
                     )}
                     <div className="prose prose-invert prose-sm max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 last:[&>*]:mb-0 [&>p]:leading-relaxed">
-                      <ReactMarkdown
-                        components={{
-                          a: ({ node, children, ...props }) => (
-                            <a {...props} target="_blank" rel="noopener noreferrer">{children}</a>
-                          )
-                        }}
-                      >
+                      <ReactMarkdown components={markdownComponents}>
                         {msg.content}
                       </ReactMarkdown>
                       </div>
@@ -827,10 +866,16 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         </DialogHeader>
         <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {isLoadingGallery ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-              <Loader2 className="w-10 h-10 text-[#FF6B35] animate-spin mb-4" />
-              <p className="text-white/60 text-sm">Loading your creations...</p>
-            </div>
+            <>
+              {Array.from({ length: 15 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-white/5 border-2 border-white/10 animate-pulse"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5" />
+                </div>
+              ))}
+            </>
           ) : galleryCreations.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
               <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
