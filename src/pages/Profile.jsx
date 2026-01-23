@@ -460,7 +460,7 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="h-[calc(100dvh-4rem)] overflow-x-hidden overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <Toaster 
         position="top-center"
         toastOptions={{
@@ -471,7 +471,7 @@ export default function Profile() {
           }
         }}
       />
-      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8 w-full">
         
         {/* Profile Header */}
         <div className="relative bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-10 glass-card overflow-hidden">
@@ -551,7 +551,7 @@ export default function Profile() {
                   </div>
                 ) : (
                   <>
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white break-words">{user.display_name || user.full_name || 'User'}</h2>
                     <button 
                       onClick={startEditingName} 
                       className="p-2 sm:p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -562,9 +562,9 @@ export default function Profile() {
                   </>
                 )}
               </div>
-              <p className="text-white/50 text-sm sm:text-base flex items-center gap-2 justify-center md:justify-start flex-wrap break-all">
+              <p className="text-white/50 text-sm sm:text-base flex items-center gap-2 justify-center md:justify-start flex-wrap max-w-full">
                 <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="break-all">{user.email}</span>
+                <span className="break-all overflow-hidden text-ellipsis">{user.email}</span>
               </p>
               <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -706,17 +706,17 @@ export default function Profile() {
         <div className="space-y-6">
 
           <div className="flex flex-col gap-3 sm:gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/30" />
+            <div className="relative flex-1 w-full min-w-0">
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/30 pointer-events-none" />
               <Input
                 placeholder="Search your creations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 sm:pl-12 h-11 sm:h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl sm:rounded-2xl text-sm sm:text-base"
+                className="w-full pl-10 sm:pl-12 h-11 sm:h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl sm:rounded-2xl text-sm sm:text-base"
               />
             </div>
             
-            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
                <Tabs value={filterType} onValueChange={setFilterType} className="flex-shrink-0">
                 <TabsList className="bg-white/5 border border-white/10 h-10 sm:h-12 rounded-xl sm:rounded-2xl">
                   {FILTER_TYPES.map(filter => (
@@ -756,17 +756,17 @@ export default function Profile() {
           </div>
 
           {selectedItems.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 sm:p-5 rounded-2xl bg-gradient-to-r from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-              >
-                <span className="text-white font-medium text-sm sm:text-base">
-                  {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected
-                  {batchDeleteProgress > 0 && (
-                    <span className="ml-2 text-xs text-white/60">({batchDeleteProgress}% deleted)</span>
-                  )}
-                </span>
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"
+            >
+              <span className="text-white font-medium text-xs sm:text-sm break-words w-full sm:w-auto">
+                {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected
+                {batchDeleteProgress > 0 && (
+                  <span className="ml-2 text-xs text-white/60">({batchDeleteProgress}%)</span>
+                )}
+              </span>
                 <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
                   <Button
                     size="sm"
@@ -828,7 +828,7 @@ export default function Profile() {
             </motion.div>
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full">
                 <AnimatePresence mode="popLayout">
                   {paginatedCreations.map((item, index) => (
                     <motion.div
@@ -907,15 +907,15 @@ export default function Profile() {
                         </div>
 
                         {/* Bottom Info */}
-                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-3">
-                          <div>
+                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-3 overflow-hidden">
+                          <div className="overflow-hidden">
                             <h3 
-                              className="font-bold text-white text-base sm:text-lg line-clamp-2 mb-1 drop-shadow-lg"
+                              className="font-bold text-white text-sm sm:text-base line-clamp-2 mb-1 drop-shadow-lg break-words"
                               dangerouslySetInnerHTML={{ __html: highlightText(item.title || 'Untitled', searchQuery) }}
                             />
                             {item.prompt && (
                               <p 
-                                className="text-xs text-white/60 line-clamp-1"
+                                className="text-xs text-white/60 line-clamp-1 break-words"
                                 dangerouslySetInnerHTML={{ __html: highlightText(item.prompt, searchQuery) }}
                               />
                             )}
@@ -1041,7 +1041,7 @@ export default function Profile() {
       </Dialog>
 
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-[100vw] sm:max-w-[95vw] md:max-w-6xl w-full h-[100dvh] sm:h-[95vh] md:h-[90vh] bg-[#1a1a1a] border-0 sm:border sm:border-white/10 text-white p-0 overflow-hidden flex flex-col md:flex-row gap-0 sm:rounded-2xl">
+        <DialogContent className="max-w-[100vw] sm:max-w-[95vw] md:max-w-6xl w-full h-[100dvh] sm:h-[95vh] md:h-[90vh] bg-[#1a1a1a] border-0 sm:border sm:border-white/10 text-white p-0 overflow-hidden flex flex-col md:flex-row gap-0 sm:rounded-2xl [&>button]:hidden sm:[&>button]:flex">
           {/* Image/Video Section */}
           <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden min-h-0">
             {selectedItem?.url && (
