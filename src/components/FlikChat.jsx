@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle } from "lucide-react";
+import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -10,14 +10,18 @@ import ReactMarkdown from 'react-markdown';
 import { useFlik } from "./FlikContext";
 import { getFlikActions } from "./useFlikActions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatDistanceToNow } from 'date-fns';
 
 // Constants
 const CACHE_DURATION = 30000; // 30 seconds
+const GALLERY_CACHE_DURATION = 60000; // 1 minute
 const MAX_RECENT_CREATIONS = 30;
 const CONTEXT_MESSAGES_LIMIT = 15;
 const SHOWN_CREATIONS_LIMIT = 20;
 const GALLERY_FETCH_LIMIT = 50;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const NAVIGATION_DELAY = 800; // ms
+const MAX_IN_MEMORY_MESSAGES = 100;
 
 export default function FlikChat() {
   const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages } = useFlik();
@@ -29,11 +33,20 @@ export default function FlikChat() {
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [retryMessage, setRetryMessage] = useState(null);
+  const [galleryCachedData, setGalleryCachedData] = useState(null);
+  const [galleryLastFetch, setGalleryLastFetch] = useState(0);
+  const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
+  const [fullImageView, setFullImageView] = useState(null);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editInput, setEditInput] = useState("");
+  const [copiedMessageId, setCopiedMessageId] = useState(null);
+  const [actionLoadingStates, setActionLoadingStates] = useState({});
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const abortControllerRef = useRef(null);
+  const isFetchingUserDataRef = useRef(false);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,13 +54,13 @@ export default function FlikChat() {
     }
   }, [messages, isOpen]);
 
-  const getCurrentPage = () => {
+  const getCurrentPage = useCallback(() => {
     const path = location.pathname;
     if (path.includes('Editor') || path.includes('editor')) return 'Editor';
     if (path.includes('Generate') || path.includes('generate')) return 'Generate';
     if (path.includes('Profile') || path.includes('profile')) return 'Profile';
     return 'Unknown';
-  };
+  }, [location.pathname]);
 
   // Cache user data to avoid refetching on every message
   const [cachedUserData, setCachedUserData] = useState(null);
@@ -69,7 +82,17 @@ export default function FlikChat() {
     };
   }, []);
 
-  const fetchUserData = async () => {
+  // Limit in-memory messages
+  useEffect(() => {
+    if (messages.length > MAX_IN_MEMORY_MESSAGES) {
+      setMessages(prev => prev.slice(-MAX_IN_MEMORY_MESSAGES));
+    }
+  }, [messages.length]);
+
+  const fetchUserData = useCallback(async () => {
+    if (isFetchingUserDataRef.current) return;
+    
+    isFetchingUserDataRef.current = true;
     try {
       const userProfile = await base44.auth.me();
       const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', MAX_RECENT_CREATIONS);
@@ -78,8 +101,10 @@ export default function FlikChat() {
     } catch (e) {
       console.error("Failed to fetch user data:", e);
       setCachedUserData({ userProfile: null, allCreations: [] });
+    } finally {
+      isFetchingUserDataRef.current = false;
     }
-  };
+  }, []);
 
   const handleChatImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -111,8 +136,16 @@ export default function FlikChat() {
   };
 
   const handleGalleryPick = async () => {
-    setIsLoadingGallery(true);
     setShowGalleryPicker(true);
+    setSelectedGalleryImages([]);
+    
+    // Use cached gallery data if fresh
+    if (galleryCachedData && Date.now() - galleryLastFetch < GALLERY_CACHE_DURATION) {
+      setGalleryCreations(galleryCachedData);
+      return;
+    }
+    
+    setIsLoadingGallery(true);
     try {
       const user = await base44.auth.me();
       const creations = await base44.entities.Creation.filter(
@@ -121,6 +154,8 @@ export default function FlikChat() {
         GALLERY_FETCH_LIMIT
       );
       setGalleryCreations(creations);
+      setGalleryCachedData(creations);
+      setGalleryLastFetch(Date.now());
     } catch (e) {
       console.error("Failed to load gallery:", e);
       setGalleryCreations([]);
@@ -129,15 +164,25 @@ export default function FlikChat() {
     }
   };
 
-  const addCreationToChat = (creation) => {
+  const toggleGallerySelection = (creation) => {
     const imageUrl = creation.thumbnail_url || creation.url;
-    if (!attachedImages.find(img => img.url === imageUrl)) {
-      setAttachedImages(prev => [...prev, { 
-        url: imageUrl, 
+    const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
+    
+    if (isSelected) {
+      setSelectedGalleryImages(prev => prev.filter(img => img.url !== imageUrl));
+    } else {
+      setSelectedGalleryImages(prev => [...prev, {
+        url: imageUrl,
         name: creation.title || 'Creation',
         id: `creation-${creation.id}-${Date.now()}`
       }]);
     }
+  };
+
+  const confirmGallerySelection = () => {
+    setAttachedImages(prev => [...prev, ...selectedGalleryImages]);
+    setShowGalleryPicker(false);
+    setSelectedGalleryImages([]);
   };
 
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
@@ -185,7 +230,9 @@ export default function FlikChat() {
       }
 
       const { userProfile = null, allCreations = [] } = cachedUserData || {};
-      const contextImages = userUploadedImages.map(img => img.url);
+      const contextImages = userUploadedImages && userUploadedImages.length > 0 
+        ? userUploadedImages.map(img => img.url) 
+        : [];
       const currentPage = getCurrentPage();
       const pageActions = getFlikActions(currentPage);
 
@@ -337,23 +384,62 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
     }
   };
 
-  const handleAction = (action) => {
-    const currentPage = getCurrentPage();
-    const pageActions = getFlikActions(currentPage);
+  const handleAction = async (action, actionIdx) => {
+    const actionKey = `${actionIdx}`;
+    setActionLoadingStates(prev => ({ ...prev, [actionKey]: true }));
+    
+    try {
+      const currentPage = getCurrentPage();
+      const pageActions = getFlikActions(currentPage);
 
-    if (action.type === 'navigate') {
-      let url = createPageUrl(action.payload.page);
-      if (action.payload.loadUrl) {
-        url += '?load=' + encodeURIComponent(action.payload.loadUrl);
+      if (action.type === 'navigate') {
+        let url = createPageUrl(action.payload.page);
+        if (action.payload.loadUrl) {
+          url += '?load=' + encodeURIComponent(action.payload.loadUrl);
+        }
+        navigate(url);
+        setTimeout(() => setIsOpen(false), NAVIGATION_DELAY);
+      } else if (pageActions && typeof pageActions[action.type] === 'function') {
+        await pageActions[action.type](action.payload);
+      } else {
+        console.warn('Action not available on current page:', action.type, currentPage);
       }
-      navigate(url);
-      setTimeout(() => setIsOpen(false), 800);
-    } else if (pageActions && typeof pageActions[action.type] === 'function') {
-      pageActions[action.type](action.payload);
-    } else {
-      console.warn('Action not available on current page:', action.type, currentPage);
+    } catch (error) {
+      console.error('Action execution failed:', error);
+    } finally {
+      setActionLoadingStates(prev => ({ ...prev, [actionKey]: false }));
     }
   };
+
+  const handleCopyMessage = useCallback((messageId, content) => {
+    navigator.clipboard.writeText(content);
+    setCopiedMessageId(messageId);
+    setTimeout(() => setCopiedMessageId(null), 2000);
+  }, []);
+
+  const handleDeleteMessage = useCallback((messageId) => {
+    setMessages(prev => prev.filter(m => m.id !== messageId));
+  }, [setMessages]);
+
+  const handleEditMessage = useCallback((message) => {
+    setEditingMessageId(message.id);
+    setEditInput(message.content);
+  }, []);
+
+  const handleSaveEdit = useCallback(() => {
+    if (!editInput.trim()) return;
+    
+    setMessages(prev => prev.map(m => 
+      m.id === editingMessageId ? { ...m, content: editInput, edited: true } : m
+    ));
+    setEditingMessageId(null);
+    setEditInput("");
+  }, [editingMessageId, editInput, setMessages]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessageId(null);
+    setEditInput("");
+  }, []);
 
   return (
     <>
@@ -433,10 +519,13 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               </div>
             )}
 
-            {messages.map((msg) => (
+            {messages.map((msg) => {
+              const isEditing = editingMessageId === msg.id;
+
+              return (
               <div
                 key={msg.id || msg.timestamp}
-                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] flex-shrink-0 shadow-lg shadow-[#FF6B35]/20">
@@ -450,6 +539,55 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   </div>
                 )}
                 <div className="flex flex-col gap-1 max-w-[80%]">
+                  {msg.role === 'user' && (
+                    <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity mb-1">
+                      <button
+                        onClick={() => handleEditMessage(msg)}
+                        className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white/80"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleCopyMessage(msg.id, msg.content)}
+                        className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white/80"
+                        title="Copy"
+                      >
+                        {copiedMessageId === msg.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="p-1 rounded hover:bg-red-500/20 text-white/50 hover:text-red-400"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  {isEditing ? (
+                    <div className="flex gap-2 bg-white/10 p-3 rounded-2xl border border-white/20">
+                      <Input
+                        value={editInput}
+                        onChange={(e) => setEditInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSaveEdit();
+                          }
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        className="bg-black/20 border-white/10 text-white"
+                        autoFocus
+                      />
+                      <Button size="icon" onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={handleCancelEdit}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
                   <div
                     className={`p-3 rounded-2xl text-sm space-y-2 ${
                       msg.role === 'user'
@@ -460,7 +598,11 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                     {msg.role === 'user' && msg.images && msg.images.length > 0 && (
                       <div className={`grid gap-2 mb-2 ${msg.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                         {msg.images.map((imgUrl, idx) => (
-                          <div key={idx} className="rounded-lg overflow-hidden border border-white/20 aspect-square">
+                          <div 
+                            key={idx} 
+                            className="rounded-lg overflow-hidden border border-white/20 aspect-square cursor-pointer hover:border-[#FF6B35] transition-colors"
+                            onClick={() => setFullImageView(imgUrl)}
+                          >
                             <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
                           </div>
                         ))}
@@ -469,12 +611,15 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                     {msg.role === 'assistant' && msg.image_urls && msg.image_urls.length > 0 && (
                       <div className={`grid gap-2 mb-2 ${msg.image_urls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                         {msg.image_urls.map((imgUrl, idx) => (
-                          <div key={idx} className="rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35]/50 transition-colors cursor-pointer">
+                          <div 
+                            key={idx} 
+                            className="rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35]/50 transition-colors cursor-pointer"
+                            onClick={() => setFullImageView(imgUrl)}
+                          >
                             <img 
                               src={imgUrl} 
                               alt={`Response ${idx + 1}`}
                               className="w-full h-full object-cover"
-                              onClick={() => window.open(imgUrl, '_blank')}
                             />
                           </div>
                         ))}
@@ -490,8 +635,15 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                       >
                         {msg.content}
                       </ReactMarkdown>
-                    </div>
-                  </div>
+                      </div>
+                      {msg.timestamp && (
+                      <div className="text-[10px] text-white/30 mt-1 flex items-center gap-1">
+                        {formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}
+                        {msg.edited && <span className="italic">(edited)</span>}
+                      </div>
+                      )}
+                      </div>
+                      )}
 
                   {msg.role === 'assistant' && (
                     <div className="flex flex-col gap-2 mt-2">
@@ -530,16 +682,23 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                                return Play;
                              };
                              const Icon = getIcon();
-                             
+                             const actionKey = `${idx}`;
+                             const isLoading = actionLoadingStates[actionKey];
+
                              return (
                                <button
                                  key={idx}
-                                 onClick={() => handleAction(action)}
-                                 className="flex items-center gap-2 bg-gradient-to-r from-white/5 to-white/10 hover:from-[#FF6B35]/20 hover:to-[#FFB800]/20 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group shadow-sm hover:shadow-md"
+                                 onClick={() => handleAction(action, idx)}
+                                 disabled={isLoading}
+                                 className="flex items-center gap-2 bg-gradient-to-r from-white/5 to-white/10 hover:from-[#FF6B35]/20 hover:to-[#FFB800]/20 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                >
-                                 <Icon className="w-3 h-3 text-[#FF6B35]" />
+                                 {isLoading ? (
+                                   <Loader2 className="w-3 h-3 text-[#FF6B35] animate-spin" />
+                                 ) : (
+                                   <Icon className="w-3 h-3 text-[#FF6B35]" />
+                                 )}
                                  <span>{action.label}</span>
-                                 <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35] transition-all" />
+                                 {!isLoading && <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35] transition-all" />}
                                </button>
                              );
                            })}
@@ -679,43 +838,89 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               <p className="text-white/40 text-sm">No creations yet</p>
             </div>
           ) : (
-            galleryCreations.map((creation) => (
+            galleryCreations.map((creation) => {
+              const imageUrl = creation.thumbnail_url || creation.url;
+              const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
+
+              return (
               <button
                 key={creation.id}
-                onClick={() => {
-                  addCreationToChat(creation);
-                  setShowGalleryPicker(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    addCreationToChat(creation);
-                    setShowGalleryPicker(false);
-                  }
-                }}
-                className="relative aspect-square rounded-2xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35] transition-all duration-300 group hover:scale-105 hover:shadow-[0_0_30px_rgba(255,107,53,0.3)] bg-white/5 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/50"
-                aria-label={`Add ${creation.title || 'Untitled'} to chat`}
+                onClick={() => toggleGallerySelection(creation)}
+                className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 group hover:scale-105 bg-white/5 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/50 ${
+                  isSelected 
+                    ? 'border-[#FF6B35] shadow-[0_0_30px_rgba(255,107,53,0.5)]' 
+                    : 'border-white/10 hover:border-[#FF6B35]/50'
+                }`}
+                aria-label={`${isSelected ? 'Remove' : 'Add'} ${creation.title || 'Untitled'}`}
               >
                 <img 
-                  src={creation.thumbnail_url || creation.url}
+                  src={imageUrl}
                   alt={creation.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-all duration-300 ${
+                  isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`} />
                 <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/20 via-transparent to-[#FFB800]/20 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-75">
-                  <ImageIcon className="w-3 h-3 text-white" />
+                <div className={`absolute top-2 right-2 w-6 h-6 rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
+                  isSelected 
+                    ? 'bg-[#FF6B35] opacity-100 scale-100' 
+                    : 'bg-white/10 opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'
+                }`}>
+                  <Check className="w-3 h-3 text-white" />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                   <p className="text-xs text-white font-semibold truncate drop-shadow-lg">{creation.title || 'Untitled'}</p>
                   <p className="text-[10px] text-white/60 mt-0.5">{new Date(creation.created_date).toLocaleDateString()}</p>
                 </div>
-              </button>
-            ))
-          )}
+                </button>
+                )})
+                )}
         </div>
-      </DialogContent>
-    </Dialog>
-    </>
-  );
-}
+        {selectedGalleryImages.length > 0 && (
+          <div className="sticky bottom-0 p-4 border-t border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl flex items-center justify-between">
+            <span className="text-white text-sm">
+              {selectedGalleryImages.length} image{selectedGalleryImages.length !== 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedGalleryImages([])}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Clear
+              </Button>
+              <Button
+                onClick={confirmGallerySelection}
+                className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white"
+              >
+                Add to Chat
+              </Button>
+            </div>
+          </div>
+        )}
+        </DialogContent>
+        </Dialog>
+
+        {/* Full Image Viewer */}
+        <Dialog open={!!fullImageView} onOpenChange={() => setFullImageView(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] bg-black/95 border border-white/10 p-2">
+        <button
+          onClick={() => setFullImageView(null)}
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        {fullImageView && (
+          <img
+            src={fullImageView}
+            alt="Full view"
+            className="w-full h-full object-contain"
+          />
+        )}
+        </DialogContent>
+        </Dialog>
+        </>
+        );
+        }
