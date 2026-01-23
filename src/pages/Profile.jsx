@@ -253,14 +253,6 @@ export default function Profile() {
     );
   }, []);
 
-  const selectAll = useCallback(() => {
-    if (selectedItems.length === paginatedCreations.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(paginatedCreations.map(c => c.id));
-    }
-  }, [selectedItems.length, paginatedCreations]);
-
   const handleDownload = async (url, title, type) => {
     const toastId = toast.loading('Downloading...');
     try {
@@ -330,6 +322,14 @@ export default function Profile() {
   React.useEffect(() => {
     setCurrentPage(1);
   }, [filterType, dateFilter, searchQuery, sortBy]);
+
+  const selectAll = useCallback(() => {
+    if (selectedItems.length === paginatedCreations.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(paginatedCreations.map(c => c.id));
+    }
+  }, [selectedItems.length, paginatedCreations]);
 
   const handleKeyDown = useCallback((e, item) => {
     if (e.key === 'Enter' || e.key === ' ') {
