@@ -44,6 +44,10 @@ export default function FlikChat() {
   const [editInput, setEditInput] = useState("");
   const [copiedMessageId, setCopiedMessageId] = useState(null);
   const [actionLoadingStates, setActionLoadingStates] = useState({});
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [galleryHasMore, setGalleryHasMore] = useState(true);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [imageErrors, setImageErrors] = useState({});
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
@@ -187,10 +191,12 @@ export default function FlikChat() {
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
     setDisplayedCount(20);
+    setImageErrors({});
     
     // Use cached gallery data if fresh
     if (galleryCachedData && Date.now() - galleryLastFetch < GALLERY_CACHE_DURATION) {
       setGalleryCreations(galleryCachedData);
+      setGalleryHasMore(galleryCachedData.length >= GALLERY_FETCH_LIMIT);
       return;
     }
     
@@ -200,14 +206,16 @@ export default function FlikChat() {
       const creations = await base44.entities.Creation.filter(
         { created_by: user.email },
         '-created_date',
-        200
+        GALLERY_FETCH_LIMIT
       );
       setGalleryCreations(creations);
       setGalleryCachedData(creations);
       setGalleryLastFetch(Date.now());
+      setGalleryHasMore(creations.length >= GALLERY_FETCH_LIMIT);
     } catch (e) {
       console.error("Failed to load gallery:", e);
       setGalleryCreations([]);
+      setGalleryHasMore(false);
     } finally {
       setIsLoadingGallery(false);
     }
@@ -235,6 +243,35 @@ export default function FlikChat() {
     setGallerySearchTerm("");
   };
 
+  const handleLoadMoreGallery = async () => {
+    if (isLoadingMore || !galleryHasMore) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const user = await base44.auth.me();
+      const newCreations = await base44.entities.Creation.filter(
+        { created_by: user.email },
+        '-created_date',
+        GALLERY_FETCH_LIMIT,
+        galleryCreations.length
+      );
+      
+      const updatedCreations = [...galleryCreations, ...newCreations];
+      setGalleryCreations(updatedCreations);
+      setGalleryCachedData(updatedCreations);
+      setGalleryHasMore(newCreations.length >= GALLERY_FETCH_LIMIT);
+    } catch (e) {
+      console.error("Failed to load more gallery items:", e);
+      toast.error("Failed to load more images");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const handleImageError = useCallback((creationId) => {
+    setImageErrors(prev => ({ ...prev, [creationId]: true }));
+  }, []);
+
   // Memoized filtered and sliced gallery creations
   const filteredGalleryCreations = useMemo(() => {
     if (!gallerySearchTerm.trim()) return galleryCreations;
@@ -246,10 +283,8 @@ export default function FlikChat() {
   }, [galleryCreations, gallerySearchTerm]);
 
   const displayedGalleryCreations = useMemo(() => {
-    return filteredGalleryCreations.slice(0, displayedCount);
-  }, [filteredGalleryCreations, displayedCount]);
-
-  const hasMore = displayedCount < filteredGalleryCreations.length;
+    return filteredGalleryCreations;
+  }, [filteredGalleryCreations]);
 
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
@@ -553,7 +588,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={clearHistory}
+                  onClick={() => setShowClearConfirm(true)}
                   className="text-white/40 hover:text-red-400 hover:bg-red-500/10"
                   title="Clear conversation"
                 >
@@ -890,137 +925,198 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
     </AnimatePresence>
       
     <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] sm:h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a] border border-white/10 text-white flex flex-col shadow-2xl p-0">
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b border-white/5 flex-shrink-0">
-          <DialogTitle className="text-xl sm:text-2xl font-bold gradient-text flex items-center gap-2">
-            <Grid3x3 className="w-5 h-5 sm:w-6 sm:h-6 text-[#FF6B35]" />
-            Pick from Your Creations
-          </DialogTitle>
-          <p className="text-xs sm:text-sm text-white/50 mt-1">
-            {filteredGalleryCreations.length} image{filteredGalleryCreations.length !== 1 ? 's' : ''} available
-          </p>
-          <div className="mt-3">
-            <Input
-              value={gallerySearchTerm}
-              onChange={(e) => setGallerySearchTerm(e.target.value)}
-              placeholder="Search by title or prompt..."
-              className="bg-black/30 border-white/10 text-white text-sm focus-visible:ring-[#FF6B35]/50 placeholder:text-white/40 h-9"
-            />
+      <DialogContent className="max-w-7xl w-[96vw] h-[92vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col shadow-2xl p-0 rounded-3xl overflow-hidden">
+        <DialogHeader className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4 border-b border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] flex-shrink-0 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
+          <div className="relative z-10">
+            <DialogTitle className="text-2xl sm:text-3xl font-bold gradient-text flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
+                <div className="w-full h-full rounded-[10px] bg-[#0a0a0a] flex items-center justify-center">
+                  <Grid3x3 className="w-5 h-5 text-[#FF6B35]" />
+                </div>
+              </div>
+              Gallery Picker
+            </DialogTitle>
+            <p className="text-sm text-white/60 mb-4 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-xs font-medium">
+                <ImageIcon className="w-3.5 h-3.5" />
+                {filteredGalleryCreations.length} image{filteredGalleryCreations.length !== 1 ? 's' : ''}
+              </span>
+              {selectedGalleryImages.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium animate-pulse">
+                  ✓ {selectedGalleryImages.length} selected
+                </span>
+              )}
+            </p>
+            <div className="relative">
+              <Input
+                value={gallerySearchTerm}
+                onChange={(e) => setGallerySearchTerm(e.target.value)}
+                placeholder="🔍 Search by title or prompt..."
+                className="bg-black/40 border-white/20 text-white text-sm focus-visible:ring-2 focus-visible:ring-[#FF6B35] placeholder:text-white/40 h-11 pl-4 pr-4 rounded-xl shadow-lg backdrop-blur-sm"
+              />
+            </div>
           </div>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 p-3 sm:p-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent"
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#FF6B35]/40 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-[#FF6B35]/60 [&::-webkit-scrollbar-track]:bg-white/5 [&::-webkit-scrollbar-track]:rounded-full"
           style={{ 
             willChange: 'scroll-position',
             transform: 'translateZ(0)',
             backfaceVisibility: 'hidden'
           }}
         >
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
           {isLoadingGallery ? (
             <>
-              {Array.from({ length: 12 }).map((_, idx) => (
+              {Array.from({ length: 18 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="relative aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-white/5 border border-white/10"
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-white/5 to-white/10 border border-white/10 shadow-lg"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5 animate-pulse" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/10 via-transparent to-[#FFB800]/10 animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-8 h-8 border-3 border-white/20 border-t-[#FF6B35] rounded-full animate-spin" />
+                  </div>
                 </div>
               ))}
             </>
-          ) : displayedGalleryCreations.length === 0 && filteredGalleryCreations.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center mb-3 sm:mb-4">
-                <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 text-white/20" />
+          ) : displayedGalleryCreations.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-16 sm:py-20 text-center px-4">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center mb-5 border border-white/10 shadow-lg">
+                <ImageIcon className="w-12 h-12 text-white/20" />
               </div>
-              <p className="text-white/40 text-sm">
-                {gallerySearchTerm ? 'No matching creations found' : 'No creations yet'}
+              <h3 className="text-lg font-semibold text-white/80 mb-2">
+                {gallerySearchTerm ? 'No Matching Images' : 'No Creations Yet'}
+              </h3>
+              <p className="text-sm text-white/40 mb-4">
+                {gallerySearchTerm ? 'Try a different search term' : 'Start creating amazing images to see them here'}
               </p>
               {gallerySearchTerm && (
                 <button
                   onClick={() => setGallerySearchTerm("")}
-                  className="mt-3 text-xs text-[#FF6B35] hover:text-[#FF8B55] transition-colors"
+                  className="px-4 py-2 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-sm rounded-xl transition-all shadow-lg"
                 >
-                  Clear search
+                  Clear Search
                 </button>
               )}
             </div>
           ) : (
             <>
-            {displayedGalleryCreations.map((creation) => {
-              const imageUrl = creation.thumbnail_url || creation.url;
-              const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
+              {displayedGalleryCreations.map((creation) => {
+                const imageUrl = creation.thumbnail_url || creation.url;
+                const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
+                const hasError = imageErrors[creation.id];
 
-              return (
-              <button
-                key={creation.id}
-                onClick={() => toggleGallerySelection(creation)}
-                className={`relative aspect-square rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-200 group active:scale-95 bg-black/30 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/50 ${
-                  isSelected 
-                    ? 'border-[#FF6B35] shadow-[0_0_20px_rgba(255,107,53,0.4)]' 
-                    : 'border-white/10 hover:border-[#FF6B35]/30'
-                }`}
-                aria-label={`${isSelected ? 'Remove' : 'Add'} ${creation.title || 'Untitled'}`}
-                style={{ 
-                  willChange: 'transform',
-                  transform: 'translateZ(0)'
-                }}
-              >
-                <img 
-                  src={imageUrl}
-                  alt={creation.title || 'Creation'}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent transition-opacity duration-200 ${
-                  isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                }`} />
-                <div className={`absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-200 ${
-                  isSelected 
-                    ? 'bg-[#FF6B35] opacity-100 scale-100' 
-                    : 'bg-white/20 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100'
-                }`}>
-                  <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-2.5 transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-                  <p className="text-[10px] sm:text-xs text-white font-semibold truncate drop-shadow-lg leading-tight">
-                    {creation.title || 'Untitled'}
-                  </p>
-                </div>
-                </button>
-              );
+                return (
+                  <button
+                    key={creation.id}
+                    onClick={() => !hasError && toggleGallerySelection(creation)}
+                    disabled={hasError}
+                    className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 group active:scale-95 bg-gradient-to-br from-black/40 to-black/60 focus:outline-none shadow-lg hover:shadow-2xl ${
+                      isSelected 
+                        ? 'border-[#FF6B35] shadow-[0_0_30px_rgba(255,107,53,0.5)] scale-105' 
+                        : hasError
+                        ? 'border-red-500/30 opacity-50 cursor-not-allowed'
+                        : 'border-white/10 hover:border-[#FF6B35]/50 hover:scale-105'
+                    }`}
+                    aria-label={`${isSelected ? 'Remove' : 'Add'} ${creation.title || 'Untitled'}`}
+                    style={{ 
+                      willChange: 'transform',
+                      transform: 'translateZ(0)'
+                    }}
+                  >
+                    {hasError ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-red-400">
+                        <AlertCircle className="w-8 h-8" />
+                        <span className="text-xs">Failed to load</span>
+                      </div>
+                    ) : (
+                      <>
+                        <img 
+                          src={imageUrl}
+                          alt={creation.title || 'Creation'}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
+                          decoding="async"
+                          onError={() => handleImageError(creation.id)}
+                        />
+                        <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${
+                          isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                        }`} />
+                        <div className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-300 shadow-lg ${
+                          isSelected 
+                            ? 'bg-[#FF6B35] opacity-100 scale-100 ring-2 ring-white/30' 
+                            : 'bg-white/20 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100'
+                        }`}>
+                          <Check className="w-4 h-4 text-white font-bold" />
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/90 to-transparent">
+                          <p className="text-xs text-white font-semibold truncate drop-shadow-lg">
+                            {creation.title || 'Untitled'}
+                          </p>
+                          {creation.prompt && (
+                            <p className="text-[10px] text-white/60 truncate mt-0.5">
+                              {creation.prompt}
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </button>
+                );
               })}
-                {hasMore && (
-                  <div className="col-span-full flex justify-center py-4">
-                    <Button
-                      onClick={() => setDisplayedCount(prev => prev + 20)}
-                      variant="outline"
-                      className="border-white/20 text-white hover:bg-white/10 text-sm"
-                    >
-                      Load More ({filteredGalleryCreations.length - displayedCount} remaining)
-                    </Button>
-                  </div>
-                )}
+              {galleryHasMore && (
+                <div className="col-span-full flex justify-center py-6">
+                  <Button
+                    onClick={handleLoadMoreGallery}
+                    disabled={isLoadingMore}
+                    className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white px-8 py-3 rounded-xl text-sm font-semibold shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        Load More Images
+                        <span className="ml-2 opacity-70">↓</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </>
-                )}
-        </div>
+          )}
+          </div>
+          </div>
         {selectedGalleryImages.length > 0 && (
-          <div className="px-3 py-3 sm:px-4 sm:py-4 border-t border-white/10 bg-[#0a0a0a]/98 backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 flex-shrink-0">
-            <span className="text-white text-xs sm:text-sm font-medium px-2">
-              ✓ {selectedGalleryImages.length} image{selectedGalleryImages.length !== 1 ? 's' : ''} selected
-            </span>
-            <div className="flex gap-2">
+          <div className="px-5 sm:px-7 py-4 sm:py-5 border-t-2 border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 flex-shrink-0 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center">
+                <Check className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">
+                  {selectedGalleryImages.length} Image{selectedGalleryImages.length !== 1 ? 's' : ''} Selected
+                </p>
+                <p className="text-white/50 text-xs">Ready to add to conversation</p>
+              </div>
+            </div>
+            <div className="flex gap-2 sm:gap-3 relative z-10">
               <Button
                 variant="outline"
                 onClick={() => setSelectedGalleryImages([])}
-                className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 text-xs sm:text-sm h-9"
+                className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 hover:border-white/40 text-sm px-6 py-2.5 rounded-xl transition-all"
               >
-                Clear
+                Clear Selection
               </Button>
               <Button
                 onClick={confirmGallerySelection}
-                className="flex-1 sm:flex-none bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-xs sm:text-sm h-9 shadow-lg shadow-[#FF6B35]/20"
+                className="flex-1 sm:flex-none bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-sm px-8 py-2.5 rounded-xl shadow-xl hover:shadow-2xl transition-all font-semibold"
               >
-                Add to Chat
+                Add to Chat →
               </Button>
             </div>
           </div>
@@ -1030,21 +1126,58 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
 
         {/* Full Image Viewer */}
         <Dialog open={!!fullImageView} onOpenChange={() => setFullImageView(null)}>
-        <DialogContent className="max-w-5xl max-h-[90vh] bg-black/95 border border-white/10 p-2">
-        <button
-          onClick={() => setFullImageView(null)}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-        {fullImageView && (
-          <img
-            src={fullImageView}
-            alt="Full view"
-            className="w-full h-full object-contain"
-          />
-        )}
-        </DialogContent>
+          <DialogContent className="max-w-5xl max-h-[90vh] bg-black/95 border border-white/10 p-2 rounded-2xl">
+            <button
+              onClick={() => setFullImageView(null)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {fullImageView && (
+              <img
+                src={fullImageView}
+                alt="Full view"
+                className="w-full h-full object-contain"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Clear Conversation Confirmation */}
+        <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+          <DialogContent className="max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-red-500/30 text-white rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-red-400" />
+                </div>
+                Clear Conversation?
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <p className="text-white/70 text-sm">
+                This will permanently delete all messages in your conversation with FLIK. This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowClearConfirm(false)}
+                  className="flex-1 border-white/20 text-white hover:bg-white/10 rounded-xl"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    clearHistory();
+                    setShowClearConfirm(false);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg"
+                >
+                  Clear All
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
         </Dialog>
         </>
         );
