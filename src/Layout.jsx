@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
 import FlikChat from "@/components/FlikChat";
+import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
 
 export const LanguageContext = React.createContext();
 
@@ -347,7 +348,9 @@ function LayoutContent({ children, currentPageName }) {
         </motion.button>
 
         {/* FLIK Chat Panel */}
-        <FlikChat />
+        <FlikChatErrorBoundary>
+          <FlikChat />
+        </FlikChatErrorBoundary>
         </div>
         </LanguageContext.Provider>
         );
