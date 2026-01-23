@@ -21,6 +21,18 @@ function LayoutContent({ children, currentPageName }) {
     localStorage.setItem('app_language', language);
   }, [language]);
 
+  // Global keyboard shortcut for FLIK
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') {
@@ -246,7 +258,7 @@ function LayoutContent({ children, currentPageName }) {
         {/* Global FLIK Button */}
         <motion.button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 hover:scale-110 transition-transform duration-300"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 hover:scale-110 transition-transform duration-300"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -257,8 +269,8 @@ function LayoutContent({ children, currentPageName }) {
               className="w-full h-full object-cover"
             />
             {messages.length > 0 && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B35] rounded-full border-2 border-[#0a0a0a] flex items-center justify-center">
-                <span className="text-white text-[10px] font-bold">{messages.length}</span>
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B35] rounded-full border-2 border-[#0a0a0a] flex items-center justify-center animate-pulse">
+                <span className="text-white text-[10px] font-bold">{Math.min(messages.length, 99)}</span>
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, MessageSquare } from "lucide-react";
+import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, MessageSquare, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -9,6 +9,7 @@ import { base44 } from "@/api/base44Client";
 import ReactMarkdown from 'react-markdown';
 import { Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft } from "lucide-react";
 import { useFlik } from "./FlikContext";
+import { getFlikActions } from "./useFlikActions";
 
 export default function FlikChat() {
   const { isOpen, setIsOpen, messages, setMessages, clearHistory } = useFlik();
@@ -33,6 +34,29 @@ export default function FlikChat() {
     if (path.includes('Generate') || path.includes('generate')) return 'Generate';
     if (path.includes('Profile') || path.includes('profile')) return 'Profile';
     return 'Unknown';
+  };
+
+  // Cache user data to avoid refetching on every message
+  const [cachedUserData, setCachedUserData] = useState(null);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const CACHE_DURATION = 30000; // 30 seconds
+
+  useEffect(() => {
+    // Prefetch user data when chat opens
+    if (isOpen && (!cachedUserData || Date.now() - lastFetchTime > CACHE_DURATION)) {
+      fetchUserData();
+    }
+  }, [isOpen]);
+
+  const fetchUserData = async () => {
+    try {
+      const userProfile = await base44.auth.me();
+      const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', 30);
+      setCachedUserData({ userProfile, allCreations });
+      setLastFetchTime(Date.now());
+    } catch (e) {
+      console.warn("Failed to fetch user data", e);
+    }
   };
 
   const handleChatImageUpload = async (e) => {
@@ -74,17 +98,15 @@ export default function FlikChat() {
     setIsTyping(true);
 
     try {
-      let userProfile = null;
-      let allCreations = [];
-      try {
-        userProfile = await base44.auth.me();
-        allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', 50);
-      } catch (e) {
-        console.warn("Failed to fetch user data", e);
+      // Use cached data if available
+      if (!cachedUserData || Date.now() - lastFetchTime > CACHE_DURATION) {
+        await fetchUserData();
       }
 
+      const { userProfile = null, allCreations = [] } = cachedUserData || {};
       const contextImages = userUploadedImages.map(img => img.url);
       const currentPage = getCurrentPage();
+      const pageActions = getFlikActions(currentPage);
 
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are FLIK - the heart and soul of the FLIK AI Creative Suite. Not an assistant, but FLIK itself - the creative companion living inside the app.
@@ -124,13 +146,13 @@ USER CONTEXT:
 - Member Since: ${userProfile?.created_date ? new Date(userProfile.created_date).toLocaleDateString() : 'N/A'}
 - Current Page: **${currentPage}**
 
-RECENT CREATIONS (${Math.min(allCreations.length, 15)} shown):
-${allCreations.slice(0, 15).map((c, i) => 
+RECENT CREATIONS (${Math.min(allCreations.length, 20)} shown):
+${allCreations.slice(0, 20).map((c, i) => 
   `${i + 1}. [${c.type}] "${c.title || 'Untitled'}" - "${c.prompt || 'N/A'}" (${new Date(c.created_date).toLocaleDateString()})`
 ).join('\n') || "No creations yet. Let's make something amazing!"}
 
-CONVERSATION HISTORY:
-${messages.slice(-10).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
+CONVERSATION HISTORY (last 15 messages):
+${messages.slice(-15).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
 
 User: ${currentInput}
 
@@ -144,19 +166,29 @@ YOUR RESPONSE STYLE:
 
 ACTIONS YOU CAN PERFORM:
 
-**NAVIGATION** (Switch pages):
+**1. NAVIGATION** (Switch pages):
 { "type": "navigate", "label": "Open Photo Studio", "payload": { "page": "Editor", "loadUrl": "optional_image_url" } }
 { "type": "navigate", "label": "Go to Imagine AI", "payload": { "page": "Generate" } }
 { "type": "navigate", "label": "View My Gallery", "payload": { "page": "Profile" } }
 
-**PROMPT SUGGESTIONS**:
-When user needs creative ideas, provide enhanced prompts in the 'suggested_prompt' field.
+**2. EDITOR CONTROLS** (Only when on Editor page):
+{ "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove|ai|batch|adjust|filters|transform|crop" } }
+{ "type": "adjustment", "label": "Increase Brightness", "payload": { "key": "brightness", "value": 30 } }
+{ "type": "filter", "label": "Apply Vintage", "payload": { "id": "vintage" } }
+{ "type": "crop", "label": "Start Cropping", "payload": { "active": true } }
 
-NAVIGATION EXAMPLES:
-- "Let me open Photo Studio for you" → { navigate to Editor }
-- "I'll take you to the Generator" → { navigate to Generate }
-- "Let's check your gallery" → { navigate to Profile }
-- "I'll open that image in the editor" → { navigate to Editor with loadUrl }
+**3. GENERATOR CONTROLS** (Only when on Generate page):
+{ "type": "apply_prompt", "label": "Use This Prompt", "payload": { "prompt": "enhanced prompt text" } }
+{ "type": "apply_style", "label": "Apply Cyberpunk Style", "payload": { "style": "cyberpunk" } }
+
+**4. PROMPT SUGGESTIONS**:
+Provide enhanced prompts in 'suggested_prompt' field when user needs creative ideas.
+
+PAGE-SPECIFIC ACTIONS AVAILABLE RIGHT NOW:
+${currentPage === 'Editor' ? '✅ Editor tools, adjustments, filters, transforms, crop' : 
+  currentPage === 'Generate' ? '✅ Prompt suggestions, style application' :
+  currentPage === 'Profile' ? '✅ Navigation to edit/generate with specific creations' :
+  '❌ No page-specific actions (not on a main page)'}
 
 RESPONSE FORMAT (JSON):
 {
@@ -181,15 +213,8 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 type: "object",
                 properties: {
                   label: { type: "string" },
-                  type: { type: "string", enum: ["navigate"] },
-                  payload: { 
-                    type: "object",
-                    properties: {
-                      page: { type: "string" },
-                      loadUrl: { type: "string" }
-                    },
-                    required: ["page"]
-                  }
+                  type: { type: "string", enum: ["navigate", "tool", "adjustment", "filter", "crop", "apply_prompt", "apply_style"] },
+                  payload: { type: "object", additionalProperties: true }
                 },
                 required: ["label", "type", "payload"]
               }
@@ -219,13 +244,22 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
   };
 
   const handleAction = (action) => {
+    const currentPage = getCurrentPage();
+    const pageActions = getFlikActions(currentPage);
+
     if (action.type === 'navigate') {
       let url = createPageUrl(action.payload.page);
       if (action.payload.loadUrl) {
         url += '?load=' + encodeURIComponent(action.payload.loadUrl);
       }
       navigate(url);
-      setIsOpen(false);
+      // Don't close immediately - let user see response
+      setTimeout(() => setIsOpen(false), 800);
+    } else if (pageActions[action.type]) {
+      // Execute page-specific action
+      pageActions[action.type](action.payload);
+    } else {
+      console.warn('Action not available on current page:', action.type, currentPage);
     }
   };
 
@@ -356,17 +390,30 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                       
                       {msg.suggested_actions && msg.suggested_actions.length > 0 && (
                          <div className="flex flex-wrap gap-2">
-                           {msg.suggested_actions.map((action, idx) => (
-                             <button
-                               key={idx}
-                               onClick={() => handleAction(action)}
-                               className="flex items-center gap-2 bg-gradient-to-r from-white/5 to-white/10 hover:from-[#FF6B35]/20 hover:to-[#FFB800]/20 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group shadow-sm hover:shadow-md"
-                             >
-                               <ExternalLink className="w-3 h-3 text-[#FF6B35]" />
-                               <span>{action.label}</span>
-                               <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35] transition-all" />
-                             </button>
-                           ))}
+                           {msg.suggested_actions.map((action, idx) => {
+                             const getIcon = () => {
+                               if (action.type === 'navigate') return ExternalLink;
+                               if (action.type === 'tool') return Wand2;
+                               if (action.type === 'adjustment') return SlidersHorizontal;
+                               if (action.type === 'filter') return Layers;
+                               if (action.type === 'crop') return Crop;
+                               if (action.type === 'apply_prompt') return ArrowLeft;
+                               return Play;
+                             };
+                             const Icon = getIcon();
+                             
+                             return (
+                               <button
+                                 key={idx}
+                                 onClick={() => handleAction(action)}
+                                 className="flex items-center gap-2 bg-gradient-to-r from-white/5 to-white/10 hover:from-[#FF6B35]/20 hover:to-[#FFB800]/20 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group shadow-sm hover:shadow-md"
+                               >
+                                 <Icon className="w-3 h-3 text-[#FF6B35]" />
+                                 <span>{action.label}</span>
+                                 <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35] transition-all" />
+                               </button>
+                             );
+                           })}
                          </div>
                       )}
                     </div>

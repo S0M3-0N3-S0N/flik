@@ -16,7 +16,7 @@ import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
-import ChatPanel from "@/components/generate/ChatPanel";
+import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
@@ -69,11 +69,26 @@ export default function Editor() {
   const cursorRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', content: "Hi! I can help you refine your editing instructions. What would you like to do with this image?" }
-  ]);
   const [regenerateAction, setRegenerateAction] = useState(null);
+
+  // Register actions for FLIK
+  useFlikActions('Editor', {
+    tool: (payload) => {
+      setActiveTab(payload.id);
+    },
+    adjustment: (payload) => {
+      const newAdjustments = { ...adjustments, [payload.key]: payload.value };
+      handleAdjustmentChange(newAdjustments);
+      setActiveTab('adjust');
+    },
+    filter: (payload) => {
+      setActiveTab('filters');
+    },
+    crop: (payload) => {
+      setActiveTab('crop');
+      if (payload.active) handleStartCrop();
+    }
+  });
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1002,7 +1017,6 @@ export default function Editor() {
                     onBrushModeChange={setBrushMode}
                     prompt={magicBrushPrompt}
                     onPromptChange={setMagicBrushPrompt}
-                    onDiscuss={() => setIsChatOpen(true)}
                     referenceImages={magicBrushImages}
                     onReferenceImagesChange={setMagicBrushImages}
                   />
@@ -1388,23 +1402,6 @@ export default function Editor() {
         transform={processedImage ? undefined : transform}
         onRegenerate={regenerateAction}
         isRegenerating={isProcessing}
-      />
-      
-      <ChatPanel 
-        isOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
-        messages={chatMessages}
-        setMessages={setChatMessages}
-        currentPrompt={magicBrushPrompt}
-        currentStyle=""
-        currentImages={[
-          ...(currentImage ? [{ url: currentImage.url || currentImage.preview, id: 'current', label: 'Main Image' }] : []),
-          ...magicBrushImages.map((url, i) => ({ url, id: `ref-${i}`, label: `Reference Image ${i+1}` }))
-        ]}
-        onApplyPrompt={(text) => {
-          setMagicBrushPrompt(text);
-        }}
-        onAIAction={handleAIAction}
       />
     </div>
   );

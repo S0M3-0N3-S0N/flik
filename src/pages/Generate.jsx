@@ -9,10 +9,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import ChatPanel from "@/components/generate/ChatPanel";
 import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
 import ImageGrid from "@/components/generate/ImageGrid";
 import ImageUploader from "@/components/editor/ImageUploader";
+import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Generate() {
   const [prompt, setPrompt] = useState("");
@@ -26,15 +26,24 @@ export default function Generate() {
   const [isUploading, setIsUploading] = useState(false);
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageStrength, setImageStrength] = useState(0.5);
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', content: "Hi! I'm your creative assistant. I can help you refine your prompts or brainstorm ideas. What would you like to create today?" }
-  ]);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Register actions for FLIK
+  useFlikActions('Generate', {
+    apply_prompt: (payload) => {
+      setPrompt(payload.prompt);
+    },
+    apply_style: (payload) => {
+      const styleId = payload.style;
+      if (!selectedStyles.includes(styleId)) {
+        setSelectedStyles([...selectedStyles, styleId]);
+      }
+    }
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -338,18 +347,6 @@ export default function Generate() {
                     </PopoverContent>
                   </Popover>
 
-                  <button 
-                    onClick={() => setIsChatOpen(!isChatOpen)}
-                    className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
-                      isChatOpen
-                        ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                        : 'text-white/60 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Discuss
-                  </button>
-
                   <Popover>
                     <PopoverTrigger asChild>
                       <button 
@@ -443,22 +440,6 @@ export default function Generate() {
                 </Button>
               </div>
               </div>
-
-              <ChatPanel 
-                isOpen={isChatOpen} 
-                onClose={() => setIsChatOpen(false)} 
-                messages={chatMessages}
-                setMessages={setChatMessages}
-                currentPrompt={prompt}
-                currentStyle={selectedStyles.map(id => stylePresets.find(s => s.id === id)?.label).join(", ")}
-                currentImages={uploadedImages}
-                onApplyPrompt={(text) => {
-                  setPrompt(text);
-                }}
-                onAIAction={(action) => {
-                  alert("Editor actions are only available in the Photo Studio.");
-                }}
-              />
 
             <StyleSelector 
               selectedStyles={selectedStyles} 
