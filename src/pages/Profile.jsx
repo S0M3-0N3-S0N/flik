@@ -1041,41 +1041,48 @@ export default function Profile() {
       </Dialog>
 
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-[95vw] md:max-w-6xl w-full h-[90vh] md:h-[85vh] bg-[#1a1a1a] border-white/10 text-white p-0 overflow-hidden flex flex-col md:flex-row gap-0">
-          <div className="flex-1 bg-black/50 relative flex items-center justify-center p-4 overflow-hidden">
+        <DialogContent className="max-w-[100vw] sm:max-w-[95vw] md:max-w-6xl w-full h-[100dvh] sm:h-[95vh] md:h-[90vh] bg-[#1a1a1a] border-0 sm:border sm:border-white/10 text-white p-0 overflow-hidden flex flex-col md:flex-row gap-0 sm:rounded-2xl">
+          {/* Image/Video Section */}
+          <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden min-h-0">
             {selectedItem?.url && (
-              selectedItem.type === 'video' ? (
-                <video 
-                  src={selectedItem.url} 
-                  controls 
-                  className="max-w-full max-h-full shadow-2xl"
-                  poster={selectedItem.thumbnail_url}
-                >
-                  Your browser does not support video playback.
-                </video>
-              ) : (
-                <img 
-                  src={selectedItem.url} 
-                  alt={`${selectedItem.title || 'Creation'} - Full view`}
-                  className="max-w-full max-h-full object-contain shadow-2xl" 
-                />
-              )
+              <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
+                {selectedItem.type === 'video' ? (
+                  <video 
+                    src={selectedItem.url} 
+                    controls 
+                    className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl rounded-lg"
+                    poster={selectedItem.thumbnail_url}
+                  >
+                    Your browser does not support video playback.
+                  </video>
+                ) : (
+                  <img 
+                    src={selectedItem.url} 
+                    alt={`${selectedItem.title || 'Creation'} - Full view`}
+                    className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl rounded-lg" 
+                  />
+                )}
+              </div>
             )}
           </div>
 
-          <div className="w-full md:w-[90vw] md:max-w-[400px] flex flex-col border-l border-white/10 bg-[#1a1a1a] overflow-hidden">
-            <div className="p-6 border-b border-white/10 flex-shrink-0">
-              <DialogHeader className="p-0 space-y-2 pr-8">
-                <DialogTitle className="text-xl gradient-text line-clamp-2 text-left">
+          {/* Details Panel */}
+          <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col border-t md:border-t-0 md:border-l border-white/10 bg-[#1a1a1a] max-h-[40vh] md:max-h-full overflow-hidden">
+            {/* Header */}
+            <div className="p-4 sm:p-5 md:p-6 border-b border-white/10 flex-shrink-0">
+              <DialogHeader className="p-0 space-y-2">
+                <DialogTitle className="text-lg sm:text-xl gradient-text line-clamp-2 text-left pr-8">
                   {selectedItem?.title || selectedItem?.prompt || 'Creation'}
                 </DialogTitle>
-                <DialogDescription className="text-white/50 text-left" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
+                <DialogDescription className="text-white/50 text-left text-xs sm:text-sm" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
                   Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
                 </DialogDescription>
               </DialogHeader>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 space-y-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full min-h-0">
+              {/* Title Edit */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Title</label>
@@ -1086,7 +1093,7 @@ export default function Profile() {
                         updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } });
                       }}
                       disabled={updateMutation.isPending}
-                      className="h-6 text-xs px-2 btn-gradient text-white disabled:opacity-50"
+                      className="h-7 text-xs px-3 btn-gradient text-white disabled:opacity-50"
                     >
                       {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
                     </Button>
@@ -1099,9 +1106,10 @@ export default function Profile() {
                         setNewTitle(selectedItem?.title || '');
                         setOriginalTitle(selectedItem?.title || '');
                       }}
-                      className="h-6 w-6 p-0 text-white/40 hover:text-white"
+                      className="h-7 w-7 p-0 text-white/40 hover:text-white hover:bg-white/10 rounded-lg"
+                      aria-label="Edit title"
                     >
-                      <Edit className="w-3 h-3" />
+                      <Edit className="w-3.5 h-3.5" />
                     </Button>
                   )}
                 </div>
@@ -1110,7 +1118,7 @@ export default function Profile() {
                     <Input
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      className="bg-white/5 border-white/10 text-white"
+                      className="bg-white/5 border-white/10 text-white h-10 text-sm rounded-lg"
                       placeholder="Enter title..."
                       autoFocus
                       disabled={updateMutation.isPending}
@@ -1119,16 +1127,17 @@ export default function Profile() {
                       size="sm"
                       variant="ghost"
                       onClick={() => setEditingTitle(null)}
-                      className="text-xs text-white/40 hover:text-white h-6"
+                      className="text-xs text-white/40 hover:text-white h-7"
                     >
                       Cancel
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-sm text-white/90 font-medium">{selectedItem?.title || 'Untitled'}</p>
+                  <p className="text-sm text-white/90 font-medium break-words">{selectedItem?.title || 'Untitled'}</p>
                 )}
               </div>
 
+              {/* Prompt Edit */}
               {selectedItem?.prompt && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -1142,7 +1151,7 @@ export default function Profile() {
                           }
                         }}
                         disabled={updateMutation.isPending}
-                        className="h-6 text-xs px-2 btn-gradient text-white disabled:opacity-50"
+                        className="h-7 text-xs px-3 btn-gradient text-white disabled:opacity-50"
                       >
                         {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
                       </Button>
@@ -1155,10 +1164,10 @@ export default function Profile() {
                           setNewPrompt(selectedItem?.prompt || '');
                           setOriginalPrompt(selectedItem?.prompt || '');
                         }}
-                        className="h-6 w-6 p-0 text-white/40 hover:text-white"
+                        className="h-7 w-7 p-0 text-white/40 hover:text-white hover:bg-white/10 rounded-lg"
                         aria-label="Edit prompt"
                       >
-                        <Edit className="w-3 h-3" />
+                        <Edit className="w-3.5 h-3.5" />
                       </Button>
                     )}
                   </div>
@@ -1167,7 +1176,7 @@ export default function Profile() {
                       <Textarea
                         value={newPrompt}
                         onChange={(e) => setNewPrompt(e.target.value)}
-                        className="bg-white/5 border-white/10 text-white min-h-[100px] text-sm"
+                        className="bg-white/5 border-white/10 text-white min-h-[100px] text-sm rounded-lg"
                         placeholder="Enter prompt..."
                         autoFocus
                         disabled={updateMutation.isPending}
@@ -1176,35 +1185,36 @@ export default function Profile() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setEditingPrompt(null)}
-                        className="text-xs text-white/40 hover:text-white h-6"
+                        className="text-xs text-white/40 hover:text-white h-7"
                       >
                         Cancel
                       </Button>
                     </div>
                   ) : (
                     <div className="p-3 rounded-lg bg-white/5 border border-white/5">
-                      <p className="text-sm text-white/70 leading-relaxed">{selectedItem.prompt}</p>
+                      <p className="text-sm text-white/70 leading-relaxed break-words">{selectedItem.prompt}</p>
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            <div className="p-6 border-t border-white/10 bg-[#1a1a1a] space-y-3">
+            {/* Action Buttons */}
+            <div className="p-4 sm:p-5 md:p-6 border-t border-white/10 bg-[#1a1a1a] space-y-2.5 flex-shrink-0">
               <Button
                 onClick={() => {
                   navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url));
                 }}
-                className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10"
+                className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 h-11 text-sm font-medium rounded-xl"
               >
                 <Edit className="w-4 h-4 mr-2" />
-                Edit in Editor
+                Edit in Photo Studio
               </Button>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2.5">
                 <Button
                   onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
-                  className="flex-1 btn-gradient text-white"
+                  className="flex-1 btn-gradient text-white h-11 text-sm font-medium rounded-xl"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download
@@ -1212,7 +1222,8 @@ export default function Profile() {
                 <Button
                   onClick={() => handleDelete(selectedItem.id)}
                   variant="outline"
-                  className="px-3 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/30"
+                  className="w-11 h-11 p-0 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/30 rounded-xl"
+                  aria-label="Delete creation"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
