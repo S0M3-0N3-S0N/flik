@@ -22,6 +22,7 @@ export function FlikProvider({ children }) {
       return [];
     }
   });
+  const [attachedImages, setAttachedImages] = useState([]);
 
   // Persist messages with limit
   useEffect(() => {
@@ -31,6 +32,7 @@ export function FlikProvider({ children }) {
 
   const clearHistory = () => {
     setMessages([]);
+    setAttachedImages([]);
     localStorage.removeItem('flik_messages');
   };
 
@@ -40,7 +42,9 @@ export function FlikProvider({ children }) {
       setIsOpen,
       messages,
       setMessages,
-      clearHistory
+      clearHistory,
+      attachedImages,
+      setAttachedImages
     }}>
       {children}
     </FlikContext.Provider>
