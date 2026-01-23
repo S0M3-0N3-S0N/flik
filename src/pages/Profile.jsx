@@ -707,32 +707,32 @@ export default function Profile() {
 
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/30" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/30 pointer-events-none" />
               <Input
                 placeholder="Search your creations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 sm:pl-12 h-11 sm:h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl sm:rounded-2xl text-sm sm:text-base"
+                className="pl-10 sm:pl-12 h-11 sm:h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl sm:rounded-2xl text-sm sm:text-base focus:border-[#FF6B35]/40 focus:ring-1 focus:ring-[#FF6B35]/20 transition-all"
               />
             </div>
-            
-            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
+
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin">
                <Tabs value={filterType} onValueChange={setFilterType} className="flex-shrink-0">
-                <TabsList className="bg-white/5 border border-white/10 h-10 sm:h-12 rounded-xl sm:rounded-2xl">
+                <TabsList className="bg-white/5 border border-white/10 h-10 rounded-xl p-1 gap-1">
                   {FILTER_TYPES.map(filter => (
                     <TabsTrigger 
                       key={filter.value}
                       value={filter.value} 
-                      className="px-4 sm:px-6 data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white rounded-lg sm:rounded-xl text-xs sm:text-sm"
+                      className="px-3 sm:px-5 h-8 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg text-xs sm:text-sm font-medium transition-all"
                     >
                       {filter.label}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>
-              
+
               <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="w-[120px] sm:w-[150px] bg-white/5 border-white/10 text-white h-10 sm:h-12 rounded-xl sm:rounded-2xl text-xs sm:text-sm flex-shrink-0">
+                <SelectTrigger className="w-[110px] sm:w-[140px] bg-white/5 border-white/10 text-white h-10 rounded-xl text-xs sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -741,9 +741,9 @@ export default function Profile() {
                   ))}
                 </SelectContent>
               </Select>
-              
+
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[140px] sm:w-[180px] bg-white/5 border-white/10 text-white h-10 sm:h-12 rounded-xl sm:rounded-2xl text-xs sm:text-sm flex-shrink-0">
+                <SelectTrigger className="w-[120px] sm:w-[160px] bg-white/5 border-white/10 text-white h-10 rounded-xl text-xs sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
