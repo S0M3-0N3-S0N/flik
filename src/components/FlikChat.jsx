@@ -38,6 +38,7 @@ export default function FlikChat() {
   const [galleryLastFetch, setGalleryLastFetch] = useState(0);
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
+  const [displayedCount, setDisplayedCount] = useState(20);
   const [fullImageView, setFullImageView] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editInput, setEditInput] = useState("");
@@ -185,6 +186,7 @@ export default function FlikChat() {
     setShowGalleryPicker(true);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
+    setDisplayedCount(20);
     
     // Use cached gallery data if fresh
     if (galleryCachedData && Date.now() - galleryLastFetch < GALLERY_CACHE_DURATION) {
@@ -198,7 +200,7 @@ export default function FlikChat() {
       const creations = await base44.entities.Creation.filter(
         { created_by: user.email },
         '-created_date',
-        100 // Increased limit for better UX
+        200
       );
       setGalleryCreations(creations);
       setGalleryCachedData(creations);
@@ -233,7 +235,7 @@ export default function FlikChat() {
     setGallerySearchTerm("");
   };
 
-  // Memoized filtered gallery creations
+  // Memoized filtered and sliced gallery creations
   const filteredGalleryCreations = useMemo(() => {
     if (!gallerySearchTerm.trim()) return galleryCreations;
     const term = gallerySearchTerm.toLowerCase();
@@ -242,6 +244,12 @@ export default function FlikChat() {
       (c.prompt?.toLowerCase().includes(term))
     );
   }, [galleryCreations, gallerySearchTerm]);
+
+  const displayedGalleryCreations = useMemo(() => {
+    return filteredGalleryCreations.slice(0, displayedCount);
+  }, [filteredGalleryCreations, displayedCount]);
+
+  const hasMore = displayedCount < filteredGalleryCreations.length;
 
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
@@ -918,7 +926,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 </div>
               ))}
             </>
-          ) : filteredGalleryCreations.length === 0 ? (
+          ) : displayedGalleryCreations.length === 0 && filteredGalleryCreations.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center mb-3 sm:mb-4">
                 <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 text-white/20" />
@@ -936,7 +944,8 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               )}
             </div>
           ) : (
-            filteredGalleryCreations.map((creation) => {
+            <>
+            {displayedGalleryCreations.map((creation) => {
               const imageUrl = creation.thumbnail_url || creation.url;
               const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
 
@@ -978,7 +987,19 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   </p>
                 </div>
                 </button>
-                )})
+                ))}
+                {hasMore && (
+                  <div className="col-span-full flex justify-center py-4">
+                    <Button
+                      onClick={() => setDisplayedCount(prev => prev + 20)}
+                      variant="outline"
+                      className="border-white/20 text-white hover:bg-white/10 text-sm"
+                    >
+                      Load More ({filteredGalleryCreations.length - displayedCount} remaining)
+                    </Button>
+                  </div>
+                )}
+            </>
                 )}
         </div>
         {selectedGalleryImages.length > 0 && (
