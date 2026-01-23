@@ -564,27 +564,44 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
     </AnimatePresence>
       
     <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-      <DialogContent className="max-w-4xl max-h-[80vh] bg-[#0a0a0a] border border-white/10 text-white flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-xl gradient-text">Pick from Your Creations</DialogTitle>
+      <DialogContent className="max-w-5xl max-h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a] border border-white/10 text-white flex flex-col shadow-2xl">
+        <DialogHeader className="pb-4 border-b border-white/5">
+          <DialogTitle className="text-2xl font-bold gradient-text flex items-center gap-2">
+            <Grid3x3 className="w-6 h-6 text-[#FF6B35]" />
+            Pick from Your Creations
+          </DialogTitle>
+          <p className="text-sm text-white/50 mt-1">Select images to add to your conversation</p>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 p-2">
-          {galleryCreations.map((creation) => (
-            <button
-              key={creation.id}
-              onClick={() => {
-                addCreationToChat(creation);
-                setShowGalleryPicker(false);
-              }}
-              className="aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35] transition-all group"
-            >
-              <img 
-                src={creation.thumbnail_url || creation.url}
-                alt={creation.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-              />
-            </button>
-          ))}
+        <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {galleryCreations.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
+                <ImageIcon className="w-10 h-10 text-white/20" />
+              </div>
+              <p className="text-white/40 text-sm">No creations yet</p>
+            </div>
+          ) : (
+            galleryCreations.map((creation) => (
+              <button
+                key={creation.id}
+                onClick={() => {
+                  addCreationToChat(creation);
+                  setShowGalleryPicker(false);
+                }}
+                className="relative aspect-square rounded-2xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35] transition-all duration-300 group hover:scale-105 hover:shadow-[0_0_30px_rgba(255,107,53,0.3)] bg-white/5"
+              >
+                <img 
+                  src={creation.thumbnail_url || creation.url}
+                  alt={creation.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute bottom-0 left-0 right-0 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-xs text-white font-medium truncate">{creation.title || 'Untitled'}</p>
+                </div>
+              </button>
+            ))
+          )}
         </div>
       </DialogContent>
     </Dialog>
