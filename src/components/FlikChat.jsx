@@ -475,12 +475,24 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
   const handleSaveEdit = useCallback(() => {
     if (!editInput.trim()) return;
     
-    setMessages(prev => prev.map(m => 
-      m.id === editingMessageId ? { ...m, content: editInput, edited: true } : m
-    ));
+    // Find the index of the edited message
+    const editedMsgIndex = messages.findIndex(m => m.id === editingMessageId);
+    if (editedMsgIndex === -1) return;
+    
+    const editedMessage = messages[editedMsgIndex];
+    
+    // Remove all messages after the edited one
+    setMessages(prev => prev.slice(0, editedMsgIndex));
+    
+    // Clear edit state
     setEditingMessageId(null);
     setEditInput("");
-  }, [editingMessageId, editInput, setMessages]);
+    
+    // Resend with the edited content and original images
+    setTimeout(() => {
+      handleSend(editInput, editedMessage.images?.map(url => ({ url, id: `retry-${Date.now()}-${Math.random()}` })) || []);
+    }, 100);
+  }, [editingMessageId, editInput, messages, setMessages, handleSend]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingMessageId(null);
