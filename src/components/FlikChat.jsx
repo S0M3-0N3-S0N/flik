@@ -58,7 +58,16 @@ export default function FlikChat() {
     if (isOpen && (!cachedUserData || Date.now() - lastFetchTime > CACHE_DURATION)) {
       fetchUserData();
     }
-  }, [isOpen]);
+  }, [isOpen, cachedUserData, lastFetchTime]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const fetchUserData = async () => {
     try {
@@ -87,9 +96,9 @@ export default function FlikChat() {
     setIsUploadingChat(true);
     setUploadError(null);
     try {
-      const newImages = await Promise.all(validFiles.map(async (file) => {
+      const newImages = await Promise.all(validFiles.map(async (file, idx) => {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
-        return { url: uploadResult.file_url, name: file.name, id: Date.now() + Math.random() };
+        return { url: uploadResult.file_url, name: file.name, id: `${Date.now()}-${idx}-${Math.random()}` };
       }));
       setAttachedImages(prev => [...prev, ...newImages]);
     } catch (err) {
@@ -123,15 +132,15 @@ export default function FlikChat() {
   const addCreationToChat = (creation) => {
     const imageUrl = creation.thumbnail_url || creation.url;
     if (!attachedImages.find(img => img.url === imageUrl)) {
-      setAttachedImages([...attachedImages, { 
+      setAttachedImages(prev => [...prev, { 
         url: imageUrl, 
         name: creation.title || 'Creation',
-        id: Date.now() + Math.random()
+        id: `creation-${creation.id}-${Date.now()}`
       }]);
     }
   };
 
-  const handleSend = async (retryInput = null, retryImages = null) => {
+  const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
     const messageImages = retryImages || attachedImages;
     
@@ -142,11 +151,14 @@ export default function FlikChat() {
       content: messageContent,
       images: messageImages.map(img => img.url),
       timestamp: new Date().toISOString(),
-      id: Date.now() + Math.random()
+      id: `msg-${Date.now()}-${Math.random()}`
     };
     
     if (!retryInput) {
       setMessages(prev => [...prev, userMsg]);
+    } else if (retryMsgId) {
+      // Remove error message when retrying
+      setMessages(prev => prev.filter(m => m.id !== retryMsgId));
     }
     
     const currentInput = messageContent;
@@ -162,6 +174,9 @@ export default function FlikChat() {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
+    
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
 
     try {
       // Use cached data if available
@@ -291,28 +306,34 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         }
       });
 
-      setMessages(prev => [...prev, { 
+      const assistantMsg = { 
         role: 'assistant', 
         content: response.message,
         image_urls: response.image_urls,
         suggested_prompt: response.suggested_prompt,
         suggested_actions: response.suggested_actions,
         timestamp: new Date().toISOString(),
-        id: Date.now() + Math.random()
-      }]);
+        id: `msg-${Date.now()}-${Math.random()}`
+      };
+      setMessages(prev => [...prev, assistantMsg]);
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Request aborted');
+        return;
+      }
       console.error("FLIK error:", error);
       const errorMsg = { 
         role: 'assistant', 
         content: "Oops! I'm having trouble connecting right now. Try again in a moment? 🔌",
         timestamp: new Date().toISOString(),
-        id: Date.now() + Math.random(),
+        id: `error-${Date.now()}-${Math.random()}`,
         isError: true
       };
       setMessages(prev => [...prev, errorMsg]);
-      setRetryMessage({ input: currentInput, images: userUploadedImages });
+      setRetryMessage({ input: currentInput, images: userUploadedImages, errorMsgId: errorMsg.id });
     } finally {
       setIsTyping(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -326,10 +347,8 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         url += '?load=' + encodeURIComponent(action.payload.loadUrl);
       }
       navigate(url);
-      // Don't close immediately - let user see response
       setTimeout(() => setIsOpen(false), 800);
-    } else if (pageActions[action.type]) {
-      // Execute page-specific action
+    } else if (pageActions && typeof pageActions[action.type] === 'function') {
       pageActions[action.type](action.payload);
     } else {
       console.warn('Action not available on current page:', action.type, currentPage);
@@ -462,7 +481,15 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                       </div>
                     )}
                     <div className="prose prose-invert prose-sm max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 last:[&>*]:mb-0 [&>p]:leading-relaxed">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <ReactMarkdown
+                        components={{
+                          a: ({ node, children, ...props }) => (
+                            <a {...props} target="_blank" rel="noopener noreferrer">{children}</a>
+                          )
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
                     </div>
                   </div>
 
@@ -482,7 +509,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                       
                       {msg.isError && retryMessage && (
                         <button
-                          onClick={() => handleSend(retryMessage.input, retryMessage.images)}
+                          onClick={() => handleSend(retryMessage.input, retryMessage.images, retryMessage.errorMsgId)}
                           className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs px-3 py-1.5 rounded-lg transition-all"
                         >
                           <RefreshCw className="w-3 h-3" />
@@ -575,7 +602,9 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSend();
+                if (!isTyping && !isUploadingChat) {
+                  handleSend();
+                }
               }}
               className="flex gap-2"
             >
