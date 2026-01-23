@@ -294,6 +294,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
   };
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <motion.div
