@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, MessageSquare, RefreshCw } from "lucide-react";
+import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, MessageSquare, RefreshCw, Upload, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown';
 import { Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft } from "lucide-react";
 import { useFlik } from "./FlikContext";
 import { getFlikActions } from "./useFlikActions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function FlikChat() {
   const { isOpen, setIsOpen, messages, setMessages, clearHistory } = useFlik();
@@ -104,7 +105,7 @@ export default function FlikChat() {
       }
 
       const { userProfile = null, allCreations = [] } = cachedUserData || {};
-      const contextImages = userUploadedImages.map(img => img.url);
+      const contextImages = attachedImages.map(img => img.url);
       const currentPage = getCurrentPage();
       const pageActions = getFlikActions(currentPage);
 
@@ -206,6 +207,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
           type: "object",
           properties: {
             message: { type: "string" },
+            image_urls: { type: "array", items: { type: "string" } },
             suggested_prompt: { type: "string" },
             suggested_actions: {
               type: "array",

@@ -14,6 +14,16 @@ function LayoutContent({ children, currentPageName }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en');
   const { isOpen, setIsOpen, messages } = useFlik();
+  const [flikPosition, setFlikPosition] = useState(() => {
+    try {
+      const saved = localStorage.getItem('flik_button_position');
+      return saved ? JSON.parse(saved) : { bottom: 24, right: 24 };
+    } catch {
+      return { bottom: 24, right: 24 };
+    }
+  });
+  const [isDraggingFlik, setIsDraggingFlik] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const t = (key) => translations[language]?.[key] || translations['en'][key] || key;
 
@@ -32,6 +42,56 @@ function LayoutContent({ children, currentPageName }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Save FLIK position
+  useEffect(() => {
+    localStorage.setItem('flik_button_position', JSON.stringify(flikPosition));
+  }, [flikPosition]);
+
+  const handleFlikDragStart = (e) => {
+    e.preventDefault();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    });
+    setIsDraggingFlik(true);
+  };
+
+  const handleFlikDrag = (e) => {
+    if (!isDraggingFlik) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    const newRight = window.innerWidth - clientX - dragOffset.x;
+    const newBottom = window.innerHeight - clientY - dragOffset.y;
+    
+    setFlikPosition({
+      right: Math.max(16, Math.min(window.innerWidth - 80, newRight)),
+      bottom: Math.max(16, Math.min(window.innerHeight - 80, newBottom))
+    });
+  };
+
+  const handleFlikDragEnd = () => {
+    setIsDraggingFlik(false);
+  };
+
+  useEffect(() => {
+    if (isDraggingFlik) {
+      window.addEventListener('mousemove', handleFlikDrag);
+      window.addEventListener('mouseup', handleFlikDragEnd);
+      window.addEventListener('touchmove', handleFlikDrag);
+      window.addEventListener('touchend', handleFlikDragEnd);
+      return () => {
+        window.removeEventListener('mousemove', handleFlikDrag);
+        window.removeEventListener('mouseup', handleFlikDragEnd);
+        window.removeEventListener('touchmove', handleFlikDrag);
+        window.removeEventListener('touchend', handleFlikDragEnd);
+      };
+    }
+  }, [isDraggingFlik, dragOffset]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -255,21 +315,31 @@ function LayoutContent({ children, currentPageName }) {
           {children}
         </main>
 
-        {/* Global FLIK Button */}
+        {/* Global FLIK Button - Draggable */}
         <motion.button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 hover:scale-110 transition-transform duration-300"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          onClick={(e) => {
+            if (!isDraggingFlik) setIsOpen(true);
+          }}
+          onMouseDown={handleFlikDragStart}
+          onTouchStart={handleFlikDragStart}
+          style={{
+            bottom: `${flikPosition.bottom}px`,
+            right: `${flikPosition.right}px`
+          }}
+          className={`fixed z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 transition-shadow duration-300 ${
+            isDraggingFlik ? 'cursor-grabbing scale-110' : 'cursor-grab hover:scale-110'
+          }`}
+          whileHover={!isDraggingFlik ? { scale: 1.1 } : {}}
+          whileTap={!isDraggingFlik ? { scale: 0.95 } : {}}
         >
           <div className="w-full h-full rounded-[14px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden relative">
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
               alt="Chat with FLIK" 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover pointer-events-none"
             />
             {messages.length > 0 && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B35] rounded-full border-2 border-[#0a0a0a] flex items-center justify-center animate-pulse">
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B35] rounded-full border-2 border-[#0a0a0a] flex items-center justify-center animate-pulse pointer-events-none">
                 <span className="text-white text-[10px] font-bold">{Math.min(messages.length, 99)}</span>
               </div>
             )}
