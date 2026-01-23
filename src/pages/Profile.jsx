@@ -219,18 +219,18 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-4 sm:px-6 py-6 sm:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
         
         {/* Profile Header */}
-        <div className="relative bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-10 glass-card overflow-hidden">
+        <div className="relative bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-10 glass-card overflow-hidden">
           {/* Background Glow Effect */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="relative flex flex-col md:flex-row items-center gap-8 mb-10 text-center md:text-left">
+          <div className="relative flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 md:mb-10 text-center md:text-left">
             <div className="relative group">
-              <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30">
-                <div className="w-full h-full rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-4xl font-bold text-white overflow-hidden">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30">
+                <div className="w-full h-full rounded-[18px] sm:rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-3xl sm:text-4xl font-bold text-white overflow-hidden">
                   {user.profile_picture ? (
                     <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -242,7 +242,7 @@ export default function Profile() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="absolute -bottom-2 -right-2 w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
+                className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
               >
                 {isUploading ? (
                   <Loader2 className="w-5 h-5 text-white animate-spin" />
@@ -259,64 +259,64 @@ export default function Profile() {
               />
             </div>
             
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2 justify-center md:justify-start">
+            <div className="flex-1 w-full">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 justify-center md:justify-start flex-wrap">
                 {isEditingName ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Input
                       value={nameInput}
                       onChange={(e) => setNameInput(e.target.value)}
-                      className="h-11 bg-white/5 border-white/10 text-white text-2xl font-bold w-72 rounded-xl"
+                      className="h-10 sm:h-11 bg-white/5 border-white/10 text-white text-lg sm:text-2xl font-bold w-full sm:w-72 rounded-xl"
                       placeholder="Enter name"
                       autoFocus
                     />
-                    <button onClick={handleNameUpdate} className="p-2.5 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors">
-                      <Check className="w-5 h-5" />
+                    <button onClick={handleNameUpdate} className="p-2 sm:p-2.5 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors flex-shrink-0">
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
-                    <button onClick={() => setIsEditingName(false)} className="p-2.5 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors">
-                      <X className="w-5 h-5" />
+                    <button onClick={() => setIsEditingName(false)} className="p-2 sm:p-2.5 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors flex-shrink-0">
+                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 ) : (
                   <>
-                    <h2 className="text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
-                    <button onClick={startEditingName} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all">
-                      <Pencil className="w-4 h-4" />
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
+                    <button onClick={startEditingName} className="p-1.5 sm:p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0">
+                      <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </>
                 )}
               </div>
-              <p className="text-white/50 text-base flex items-center gap-2 justify-center md:justify-start">
-                <Mail className="w-4 h-4" />
-                {user.email}
+              <p className="text-white/50 text-sm sm:text-base flex items-center gap-2 justify-center md:justify-start flex-wrap break-all">
+                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="break-all">{user.email}</span>
               </p>
-              <div className="mt-3 flex items-center gap-2 text-sm text-white/40 justify-center md:justify-start">
-                <Calendar className="w-3.5 h-3.5" />
+              <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
+                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
               </div>
             </div>
             
             <Button 
               onClick={handleLogout}
-              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-11 px-6"
+              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base w-full md:w-auto"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
               {t("profile.sign_out")}
             </Button>
           </div>
 
-          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="group p-5 bg-white/5 hover:bg-white/[0.07] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="group p-4 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-[#FF6B35]" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
+                    <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-sm font-medium">{t("profile.language")}</span>
+                  <span className="text-white/60 text-xs sm:text-sm font-medium">{t("profile.language")}</span>
                 </div>
               </div>
               <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white h-10 rounded-xl">
+                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -328,13 +328,13 @@ export default function Profile() {
               </Select>
             </div>
 
-            <div className="group p-5 bg-white/5 hover:bg-white/[0.07] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+            <div className="group p-4 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-5 h-5 text-[#FF6B35]" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-sm font-medium">Contact Email</span>
+                  <span className="text-white/60 text-xs sm:text-sm font-medium">Contact Email</span>
                 </div>
                 {!isEditingEmail && (
                   <button onClick={startEditingEmail} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10">
@@ -347,50 +347,50 @@ export default function Profile() {
                   <Input
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    className="h-10 bg-white/5 border-white/10 text-white rounded-xl"
+                    className="h-9 sm:h-10 bg-white/5 border-white/10 text-white rounded-xl text-sm"
                     placeholder="Email address"
                   />
                   <div className="flex gap-2">
-                    <Button onClick={handleEmailUpdate} size="sm" className="flex-1 btn-gradient text-white h-9">
-                      <Check className="w-3.5 h-3.5 mr-1.5" />
+                    <Button onClick={handleEmailUpdate} size="sm" className="flex-1 btn-gradient text-white h-8 sm:h-9 text-xs sm:text-sm">
+                      <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
                       Save
                     </Button>
-                    <Button onClick={() => setIsEditingEmail(false)} size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-9">
+                    <Button onClick={() => setIsEditingEmail(false)} size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-8 sm:h-9 text-xs sm:text-sm">
                       Cancel
                     </Button>
                   </div>
                 </div>
               ) : (
-                <p className="text-white/90 text-sm truncate">{user.contact_email || user.email}</p>
+                <p className="text-white/90 text-xs sm:text-sm truncate">{user.contact_email || user.email}</p>
               )}
             </div>
             
-            <div className="group p-5 bg-white/5 hover:bg-white/[0.07] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+            <div className="group p-4 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
-                    <Lock className="w-5 h-5 text-[#FF6B35]" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
+                    <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-sm font-medium">{t("profile.password")}</span>
+                  <span className="text-white/60 text-xs sm:text-sm font-medium">{t("profile.password")}</span>
                 </div>
               </div>
               <Button 
                 size="sm" 
                 onClick={() => setShowPasswordDialog(true)}
-                className="w-full bg-white/5 hover:bg-white/10 text-white border-0 h-9"
+                className="w-full bg-white/5 hover:bg-white/10 text-white border-0 h-8 sm:h-9 text-xs sm:text-sm"
               >
                 {t("profile.change")}
               </Button>
             </div>
 
-            <div className="group p-5 bg-white/5 hover:bg-white/[0.07] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-[#FF6B35]" />
+            <div className="group p-4 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
                 </div>
-                <span className="text-white/60 text-sm font-medium">Total Creations</span>
+                <span className="text-white/60 text-xs sm:text-sm font-medium">Total Creations</span>
               </div>
-              <p className="text-3xl font-bold gradient-text">{stats.total}</p>
+              <p className="text-2xl sm:text-3xl font-bold gradient-text">{stats.total}</p>
             </div>
           </div>
         </div>
@@ -398,27 +398,27 @@ export default function Profile() {
         {/* Creations Section */}
         <div className="space-y-6">
 
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/30" />
               <Input
                 placeholder="Search your creations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-2xl text-base"
+                className="pl-10 sm:pl-12 h-11 sm:h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl sm:rounded-2xl text-sm sm:text-base"
               />
             </div>
             
-            <div className="flex gap-3">
-               <Tabs value={filterType} onValueChange={setFilterType}>
-                <TabsList className="bg-white/5 border border-white/10 h-12 rounded-2xl">
-                  <TabsTrigger value="all" className="px-8 data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white rounded-xl">All</TabsTrigger>
-                  <TabsTrigger value="image" className="px-8 data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white rounded-xl">Images</TabsTrigger>
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1">
+               <Tabs value={filterType} onValueChange={setFilterType} className="flex-shrink-0">
+                <TabsList className="bg-white/5 border border-white/10 h-10 sm:h-12 rounded-xl sm:rounded-2xl">
+                  <TabsTrigger value="all" className="px-4 sm:px-8 data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white rounded-lg sm:rounded-xl text-xs sm:text-sm">All</TabsTrigger>
+                  <TabsTrigger value="image" className="px-4 sm:px-8 data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white rounded-lg sm:rounded-xl text-xs sm:text-sm">Images</TabsTrigger>
                 </TabsList>
               </Tabs>
               
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-white h-12 rounded-2xl">
+                <SelectTrigger className="w-[140px] sm:w-[180px] bg-white/5 border-white/10 text-white h-10 sm:h-12 rounded-xl sm:rounded-2xl text-xs sm:text-sm flex-shrink-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

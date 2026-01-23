@@ -61,12 +61,14 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
     setIsTyping(true);
 
     try {
-      // Fetch recent creations for context
-      let recentCreations = [];
+      // Fetch user profile and ALL creations for complete context
+      let userProfile = null;
+      let allCreations = [];
       try {
-        recentCreations = await base44.entities.Creation.list('-created_date', 5);
+        userProfile = await base44.auth.me();
+        allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', 100);
       } catch (e) {
-        console.warn("Failed to fetch creations for context", e);
+        console.warn("Failed to fetch user data for context", e);
       }
 
       // Combine editor context images (main image, refs) with chat uploaded images
@@ -77,9 +79,9 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
 
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are FLIK ASSISTANT, the intelligent companion for the FLIK AI Creative Suite.
-        
+
         YOUR MISSION:
-        Assist users in creating, editing, and transforming visuals using the FLIK webapp tools. You are an expert Visual Director and Technical Guide.
+        Assist users in creating, editing, and transforming visuals using the FLIK webapp tools. You are an expert Visual Director and Technical Guide with FULL access to the user's profile and entire creation history.
 
         FLIK APP OVERVIEW (Know your tools):
         1. PHOTO STUDIO (Editor): 
@@ -88,25 +90,32 @@ export default function ChatPanel({ isOpen, onClose, messages, setMessages, onAp
            - Filters: Apply artistic color grades (Vintage, Noir, etc.).
            - Crop & Transform: Resize, rotate, and flip images.
            - Batch Mode: Apply edits or AI transformations to multiple images at once.
-        
+
         2. IMAGINE AI (Generator):
            - Text-to-Image: Generate images from scratch using prompts.
            - Style Selector: Apply presets like "Cyberpunk", "Watercolor", etc.
-        
-        3. GALLERY (My Creations):
-           - The user has a library of past creations. You have access to the 5 most recent ones below.
-        
+
+        3. PROFILE & GALLERY:
+           - Complete access to ALL user creations and profile data
+           - Full creation history with prompts and metadata
+
+        USER PROFILE:
+        - Name: ${userProfile?.display_name || userProfile?.full_name || 'User'}
+        - Email: ${userProfile?.email || 'N/A'}
+        - Total Creations: ${allCreations.length}
+        - Member Since: ${userProfile?.created_date ? new Date(userProfile.created_date).toLocaleDateString() : 'N/A'}
+
         CONTEXT DATA:
         - Current Editor Prompt: "${currentPrompt || '(empty)'}"
         - Current Style: "${currentStyle || 'None'}"
-        
+
         VISUAL CONTEXT (Attached Images):
         - Editor Images: ${(currentImages || []).length} (Main image being edited + Reference images).
         - Chat Images: ${userUploadedImages.length} (Uploaded just now).
         Total images sent to your vision model: ${contextImages.length}
-        
-        USER'S RECENT CREATIONS (Gallery):
-        ${recentCreations.length > 0 ? recentCreations.map(c => `- [${c.type}] "${c.title}" (Prompt: "${c.prompt || 'N/A'}")`).join('\n') : "No recent creations found."}
+
+        USER'S COMPLETE CREATION LIBRARY (${allCreations.length} total):
+        ${allCreations.length > 0 ? allCreations.slice(0, 20).map((c, i) => `${i + 1}. [${c.type}] "${c.title || 'Untitled'}" - Prompt: "${c.prompt || 'N/A'}" (Created: ${new Date(c.created_date).toLocaleDateString()})`).join('\n') + (allCreations.length > 20 ? `\n... and ${allCreations.length - 20} more creations` : '') : "No creations found."}
         
         Current conversation history:
         ${messages.map(m => `${m.role}: ${m.content} ${m.images?.length ? `[${m.images.length} Images Attached]` : ''}`).join('\n')}
