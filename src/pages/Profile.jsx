@@ -5,7 +5,7 @@ import { debounce } from "lodash";
 import { 
   Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, 
   Pencil, Check, X, Lock, Globe, Search, Trash2, Download, Edit, Wand2, Sparkles,
-  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play
+  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,13 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import { LanguageContext } from "../Layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from 'react-hot-toast';
+import LoadingSkeleton from "@/components/profile/LoadingSkeleton";
 import { 
   ITEMS_PER_PAGE, 
   MAX_CREATIONS_FETCH, 
@@ -43,6 +44,7 @@ export default function Profile() {
   const { t, language, setLanguage } = useContext(LanguageContext);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Profile State
   const [isUploading, setIsUploading] = useState(false);
@@ -53,14 +55,14 @@ export default function Profile() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const fileInputRef = useRef(null);
   
-  // Gallery State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  // Gallery State - Initialize from URL
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParams.get('q') || "");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [filterType, setFilterType] = useState("all");
-  const [sortBy, setSortBy] = useState("newest");
-  const [dateFilter, setDateFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [filterType, setFilterType] = useState(searchParams.get('type') || "all");
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || "newest");
+  const [dateFilter, setDateFilter] = useState(searchParams.get('date') || "all");
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
   const [selectedItems, setSelectedItems] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editingTitle, setEditingTitle] = useState(null);
@@ -70,9 +72,12 @@ export default function Profile() {
   const [newPrompt, setNewPrompt] = useState('');
   const [originalPrompt, setOriginalPrompt] = useState('');
   const [batchDeleteProgress, setBatchDeleteProgress] = useState(0);
+  const [batchDeleteFailed, setBatchDeleteFailed] = useState(0);
   const [deletedItems, setDeletedItems] = useState([]);
-  const [showStatsExpanded, setShowStatsExpanded] = useState(false);
-  const [undoQueue, setUndoQueue] = useState([]);
+  const [showStatsExpanded, setShowStatsExpanded] = useState(() => {
+    return localStorage.getItem('profile_stats_expanded') === 'true';
+  });
+  const [imageErrors, setImageErrors] = useState({});
 
   // Data Fetching
   const { data: user } = useQuery({
@@ -87,16 +92,32 @@ export default function Profile() {
     initialData: [],
   });
 
-  // Debounced search
-  const debouncedSearch = useMemo(
-    () => debounce((value) => setDebouncedSearchQuery(value), 300),
-    []
-  );
-
+  // Debounced search with cleanup
   useEffect(() => {
+    const debouncedSearch = debounce((value) => setDebouncedSearchQuery(value), 300);
     debouncedSearch(searchQuery);
-    return () => debouncedSearch.cancel();
-  }, [searchQuery, debouncedSearch]);
+    
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchQuery]);
+
+  // Sync state to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearchQuery) params.set('q', debouncedSearchQuery);
+    if (filterType !== 'all') params.set('type', filterType);
+    if (sortBy !== 'newest') params.set('sort', sortBy);
+    if (dateFilter !== 'all') params.set('date', dateFilter);
+    if (currentPage > 1) params.set('page', currentPage.toString());
+    
+    setSearchParams(params, { replace: true });
+  }, [debouncedSearchQuery, filterType, sortBy, dateFilter, currentPage, setSearchParams]);
+
+  // Persist stats expanded state
+  useEffect(() => {
+    localStorage.setItem('profile_stats_expanded', showStatsExpanded.toString());
+  }, [showStatsExpanded]);
 
   // Profile Mutations
   const handleAvatarUpload = async (e) => {
@@ -215,7 +236,7 @@ export default function Profile() {
       setSelectedItem(null);
       setDeleteConfirm(null);
       
-      // Real undo with restore capability
+      // Real undo with duplicate check
       toast((t) => (
         <div className="flex items-center gap-3">
           <span>Creation deleted</span>
@@ -223,7 +244,15 @@ export default function Profile() {
             size="sm"
             onClick={async () => {
               try {
-                await base44.entities.Creation.create(itemToDelete);
+                // Check if item still exists
+                const exists = await base44.entities.Creation.filter({ id: itemToDelete.id });
+                if (exists.length > 0) {
+                  toast.error('Item already exists', { id: t.id });
+                  return;
+                }
+                
+                const { id, created_date, updated_date, created_by, ...dataWithoutMeta } = itemToDelete;
+                await base44.entities.Creation.create(dataWithoutMeta);
                 await queryClient.invalidateQueries({ queryKey: ['creations'] });
                 toast.success('Creation restored!', { id: t.id });
               } catch (error) {
@@ -246,25 +275,42 @@ export default function Profile() {
 
   const confirmBatchDelete = async () => {
     const total = selectedItems.length;
+    
+    // Warning for large bulk operations
+    if (total > 50) {
+      if (!window.confirm(`You're about to delete ${total} items. This may take a while. Continue?`)) {
+        setDeleteConfirm(null);
+        return;
+      }
+    }
+    
     setBatchDeleteProgress(0);
+    setBatchDeleteFailed(0);
     const toastId = toast.loading(`Deleting 0/${total} items...`);
     
-    try {
-      for (let i = 0; i < selectedItems.length; i++) {
+    let failed = 0;
+    for (let i = 0; i < selectedItems.length; i++) {
+      try {
         await deleteMutation.mutateAsync(selectedItems[i]);
-        const progress = Math.round(((i + 1) / total) * 100);
-        setBatchDeleteProgress(progress);
-        toast.loading(`Deleting ${i + 1}/${total} items...`, { id: toastId });
+      } catch (error) {
+        failed++;
+        setBatchDeleteFailed(failed);
       }
-      
-      toast.success(`${total} items deleted successfully`, { id: toastId });
-      setSelectedItems([]);
-      setDeleteConfirm(null);
-      setBatchDeleteProgress(0);
-    } catch (error) {
-      toast.error('Failed to delete some items', { id: toastId });
-      setBatchDeleteProgress(0);
+      const progress = Math.round(((i + 1) / total) * 100);
+      setBatchDeleteProgress(progress);
+      toast.loading(`Deleting ${i + 1}/${total} items... ${failed > 0 ? `(${failed} failed)` : ''}`, { id: toastId });
     }
+    
+    if (failed === 0) {
+      toast.success(`${total} items deleted successfully`, { id: toastId });
+    } else {
+      toast.error(`${total - failed}/${total} deleted (${failed} failed)`, { id: toastId });
+    }
+    
+    setSelectedItems([]);
+    setDeleteConfirm(null);
+    setBatchDeleteProgress(0);
+    setBatchDeleteFailed(0);
   };
 
   const toggleSelectItem = useCallback((id) => {
@@ -331,6 +377,13 @@ export default function Profile() {
     );
   }, [filteredCreations, currentPage]);
 
+  // Auto-adjust page when it exceeds total pages
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const stats = useMemo(() => ({
     total: creations.length,
     images: creations.filter(c => c.type === 'image').length,
@@ -370,18 +423,27 @@ export default function Profile() {
   // Global keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      // Escape to close dialogs
+      // Escape to close dialogs (no double confirmation)
       if (e.key === 'Escape') {
-        if (selectedItem) setSelectedItem(null);
-        if (deleteConfirm) setDeleteConfirm(null);
-        if (showPasswordDialog) setShowPasswordDialog(false);
+        if (selectedItem) {
+          setSelectedItem(null);
+          return;
+        }
+        if (deleteConfirm) {
+          setDeleteConfirm(null);
+          return;
+        }
+        if (showPasswordDialog) {
+          setShowPasswordDialog(false);
+          return;
+        }
         if (editingTitle) {
-          if (newTitle !== originalTitle && !window.confirm('Discard unsaved changes?')) return;
           setEditingTitle(null);
+          return;
         }
         if (editingPrompt) {
-          if (newPrompt !== originalPrompt && !window.confirm('Discard unsaved changes?')) return;
           setEditingPrompt(null);
+          return;
         }
       }
       
@@ -393,7 +455,7 @@ export default function Profile() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [selectedItem, deleteConfirm, showPasswordDialog, selectedItems, editingTitle, editingPrompt, newTitle, originalTitle, newPrompt, originalPrompt]);
+  }, [selectedItem, deleteConfirm, showPasswordDialog, selectedItems, editingTitle, editingPrompt]);
 
   if (!user) return null;
 
@@ -421,10 +483,22 @@ export default function Profile() {
               <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30">
                 <div className="w-full h-full rounded-[18px] sm:rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-3xl sm:text-4xl font-bold text-white overflow-hidden">
                   {user.profile_picture ? (
-                    <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="gradient-text">{(user.display_name || user.full_name || user.email || 'U')[0].toUpperCase()}</span>
-                  )}
+                    <img 
+                      src={user.profile_picture} 
+                      alt={`${user.display_name || user.full_name || 'User'}'s profile picture`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span 
+                    className="gradient-text w-full h-full flex items-center justify-center"
+                    style={{ display: user.profile_picture ? 'none' : 'flex' }}
+                  >
+                    {(user.display_name || user.full_name || user.email || 'U')[0].toUpperCase()}
+                  </span>
                 </div>
               </div>
               
@@ -494,7 +568,9 @@ export default function Profile() {
               </p>
               <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
+                  Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </span>
               </div>
             </div>
             
@@ -725,10 +801,7 @@ export default function Profile() {
             )}
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-32">
-              <div className="w-12 h-12 border-3 border-[#FF6B35] border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-white/40 text-sm">Loading your creations...</p>
-            </div>
+            <LoadingSkeleton />
           ) : filteredCreations.length === 0 ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
@@ -785,13 +858,20 @@ export default function Profile() {
                         <div className="w-full h-full rounded-[20px] overflow-hidden">
                           {item.thumbnail_url || item.url ? (
                               <>
-                                <img
-                                  src={item.thumbnail_url || item.url}
-                                  alt={`${item.title || 'Untitled creation'} - ${item.type === 'video' ? 'Video' : 'Image'} created on ${new Date(item.created_date).toLocaleDateString()}`}
-                                  loading="lazy"
-                                  className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
-                                />
-                                {item.type === 'video' && (
+                                {!imageErrors[item.id] ? (
+                                  <img
+                                    src={item.thumbnail_url || item.url}
+                                    alt={`${item.title || 'Untitled creation'} - ${item.type === 'video' ? 'Video' : 'Image'} created on ${new Date(item.created_date).toLocaleDateString()}`}
+                                    loading="lazy"
+                                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+                                    onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5">
+                                    <ImageOff className="w-16 h-16 text-white/20" />
+                                  </div>
+                                )}
+                                {item.type === 'video' && !imageErrors[item.id] && (
                                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                     <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30">
                                       <Play className="w-8 h-8 text-white ml-1" fill="white" />
@@ -964,23 +1044,38 @@ export default function Profile() {
         <DialogContent className="max-w-[95vw] md:max-w-6xl w-full h-[90vh] md:h-[85vh] bg-[#1a1a1a] border-white/10 text-white p-0 overflow-hidden flex flex-col md:flex-row gap-0">
           <div className="flex-1 bg-black/50 relative flex items-center justify-center p-4 overflow-hidden">
             {selectedItem?.url && (
-              <img src={selectedItem.url} alt="Creation" className="max-w-full max-h-full object-contain shadow-2xl" />
+              selectedItem.type === 'video' ? (
+                <video 
+                  src={selectedItem.url} 
+                  controls 
+                  className="max-w-full max-h-full shadow-2xl"
+                  poster={selectedItem.thumbnail_url}
+                >
+                  Your browser does not support video playback.
+                </video>
+              ) : (
+                <img 
+                  src={selectedItem.url} 
+                  alt={`${selectedItem.title || 'Creation'} - Full view`}
+                  className="max-w-full max-h-full object-contain shadow-2xl" 
+                />
+              )
             )}
           </div>
 
-          <div className="w-full md:w-[90vw] md:max-w-[400px] flex flex-col border-l border-white/10 bg-[#1a1a1a]">
-            <div className="p-6 border-b border-white/10">
+          <div className="w-full md:w-[90vw] md:max-w-[400px] flex flex-col border-l border-white/10 bg-[#1a1a1a] overflow-hidden">
+            <div className="p-6 border-b border-white/10 flex-shrink-0">
               <DialogHeader className="p-0 space-y-2 pr-8">
                 <DialogTitle className="text-xl gradient-text line-clamp-2 text-left">
                   {selectedItem?.title || selectedItem?.prompt || 'Creation'}
                 </DialogTitle>
-                <DialogDescription className="text-white/50 text-left">
+                <DialogDescription className="text-white/50 text-left" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
                   Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
                 </DialogDescription>
               </DialogHeader>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Title</label>
@@ -1023,10 +1118,7 @@ export default function Profile() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => {
-                        if (newTitle !== originalTitle && !window.confirm('Discard changes?')) return;
-                        setEditingTitle(null);
-                      }}
+                      onClick={() => setEditingTitle(null)}
                       className="text-xs text-white/40 hover:text-white h-6"
                     >
                       Cancel
@@ -1083,10 +1175,7 @@ export default function Profile() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => {
-                          if (newPrompt !== originalPrompt && !window.confirm('Discard changes?')) return;
-                          setEditingPrompt(null);
-                        }}
+                        onClick={() => setEditingPrompt(null)}
                         className="text-xs text-white/40 hover:text-white h-6"
                       >
                         Cancel
