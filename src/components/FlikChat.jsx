@@ -19,7 +19,8 @@ const GALLERY_CACHE_DURATION = 60000; // 1 minute
 const MAX_RECENT_CREATIONS = 30;
 const CONTEXT_MESSAGES_LIMIT = 15;
 const SHOWN_CREATIONS_LIMIT = 20;
-const GALLERY_FETCH_LIMIT = 50;
+const GALLERY_INITIAL_LIMIT = 20;
+const GALLERY_LOAD_MORE = 20;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const NAVIGATION_DELAY = 800; // ms
 const MAX_IN_MEMORY_MESSAGES = 100;
@@ -37,6 +38,10 @@ export default function FlikChat() {
   const [galleryCachedData, setGalleryCachedData] = useState(null);
   const [galleryLastFetch, setGalleryLastFetch] = useState(0);
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
+  const [galleryPage, setGalleryPage] = useState(1);
+  const [hasMoreGallery, setHasMoreGallery] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [gallerySearch, setGallerySearch] = useState("");
   const [fullImageView, setFullImageView] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editInput, setEditInput] = useState("");
@@ -183,10 +188,13 @@ export default function FlikChat() {
   const handleGalleryPick = async () => {
     setShowGalleryPicker(true);
     setSelectedGalleryImages([]);
+    setGalleryPage(1);
+    setGallerySearch("");
     
     // Use cached gallery data if fresh
     if (galleryCachedData && Date.now() - galleryLastFetch < GALLERY_CACHE_DURATION) {
-      setGalleryCreations(galleryCachedData);
+      setGalleryCreations(galleryCachedData.slice(0, GALLERY_INITIAL_LIMIT));
+      setHasMoreGallery(galleryCachedData.length > GALLERY_INITIAL_LIMIT);
       return;
     }
     
@@ -196,18 +204,37 @@ export default function FlikChat() {
       const creations = await base44.entities.Creation.filter(
         { created_by: user.email },
         '-created_date',
-        GALLERY_FETCH_LIMIT
+        100
       );
-      setGalleryCreations(creations);
       setGalleryCachedData(creations);
+      setGalleryCreations(creations.slice(0, GALLERY_INITIAL_LIMIT));
+      setHasMoreGallery(creations.length > GALLERY_INITIAL_LIMIT);
       setGalleryLastFetch(Date.now());
     } catch (e) {
       console.error("Failed to load gallery:", e);
       setGalleryCreations([]);
+      setHasMoreGallery(false);
     } finally {
       setIsLoadingGallery(false);
     }
   };
+
+  const loadMoreGallery = useCallback(() => {
+    if (!hasMoreGallery || isLoadingMore || !galleryCachedData) return;
+    
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      const nextPage = galleryPage + 1;
+      const startIdx = 0;
+      const endIdx = nextPage * GALLERY_INITIAL_LIMIT;
+      const newCreations = galleryCachedData.slice(startIdx, endIdx);
+      
+      setGalleryCreations(newCreations);
+      setGalleryPage(nextPage);
+      setHasMoreGallery(galleryCachedData.length > endIdx);
+      setIsLoadingMore(false);
+    }, 300);
+  }, [galleryPage, hasMoreGallery, isLoadingMore, galleryCachedData]);
 
   const toggleGallerySelection = (creation) => {
     const imageUrl = creation.thumbnail_url || creation.url;
@@ -869,93 +896,160 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
     </AnimatePresence>
       
     <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-      <DialogContent className="max-w-5xl max-h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a] border border-white/10 text-white flex flex-col shadow-2xl">
-        <DialogHeader className="pb-4 border-b border-white/5">
-          <DialogTitle className="text-2xl font-bold gradient-text flex items-center gap-2">
-            <Grid3x3 className="w-6 h-6 text-[#FF6B35]" />
-            Pick from Your Creations
+      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a] border border-white/10 text-white flex flex-col shadow-2xl p-0 gap-0">
+        <DialogHeader className="p-4 sm:p-6 border-b border-white/5 space-y-3">
+          <DialogTitle className="text-xl sm:text-2xl font-bold gradient-text flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FFB800] p-[2px]">
+              <div className="w-full h-full rounded-[10px] bg-[#0a0a0a] flex items-center justify-center">
+                <Grid3x3 className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <div>Pick from Gallery</div>
+              <p className="text-xs sm:text-sm text-white/50 font-normal mt-0.5">
+                {selectedGalleryImages.length > 0 
+                  ? `${selectedGalleryImages.length} selected` 
+                  : 'Tap images to select'}
+              </p>
+            </div>
           </DialogTitle>
-          <p className="text-sm text-white/50 mt-1">Select images to add to your conversation</p>
+          <div className="relative">
+            <Input
+              value={gallerySearch}
+              onChange={(e) => setGallerySearch(e.target.value)}
+              placeholder="Search by title or prompt..."
+              className="bg-black/30 border-white/10 text-white text-sm focus-visible:ring-[#FF6B35]/50 placeholder:text-white/30 pl-10 h-10"
+            />
+            <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          </div>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div 
+          className="flex-1 overflow-y-auto p-3 sm:p-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full"
+          onScroll={(e) => {
+            const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+            if (scrollHeight - scrollTop - clientHeight < 200 && hasMoreGallery && !isLoadingMore) {
+              loadMoreGallery();
+            }
+          }}
+        >
           {isLoadingGallery ? (
-            <>
-              {Array.from({ length: 15 }).map((_, idx) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
+              {Array.from({ length: 12 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="relative aspect-square rounded-2xl overflow-hidden bg-white/5 border-2 border-white/10 animate-pulse"
+                  className="relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-white/5 to-white/10 border border-white/5"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5" />
+                  <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
                 </div>
               ))}
-            </>
-          ) : galleryCreations.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                <ImageIcon className="w-10 h-10 text-white/20" />
+            </div>
+          ) : galleryCreations.filter(c => {
+            if (!gallerySearch) return true;
+            const search = gallerySearch.toLowerCase();
+            return (c.title?.toLowerCase().includes(search)) || 
+                   (c.prompt?.toLowerCase().includes(search));
+          }).length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center mb-4 border border-white/5">
+                <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 text-white/20" />
               </div>
-              <p className="text-white/40 text-sm">No creations yet</p>
+              <p className="text-white/60 text-sm sm:text-base font-medium">
+                {gallerySearch ? 'No matching creations' : 'No creations yet'}
+              </p>
+              <p className="text-white/40 text-xs sm:text-sm mt-1">
+                {gallerySearch ? 'Try a different search term' : 'Create your first masterpiece!'}
+              </p>
             </div>
           ) : (
-            galleryCreations.map((creation) => {
-              const imageUrl = creation.thumbnail_url || creation.url;
-              const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
+                {galleryCreations.filter(c => {
+                  if (!gallerySearch) return true;
+                  const search = gallerySearch.toLowerCase();
+                  return (c.title?.toLowerCase().includes(search)) || 
+                         (c.prompt?.toLowerCase().includes(search));
+                }).map((creation) => {
+                  const imageUrl = creation.thumbnail_url || creation.url;
+                  const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
 
-              return (
-              <button
-                key={creation.id}
-                onClick={() => toggleGallerySelection(creation)}
-                className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 group hover:scale-105 bg-white/5 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/50 ${
-                  isSelected 
-                    ? 'border-[#FF6B35] shadow-[0_0_30px_rgba(255,107,53,0.5)]' 
-                    : 'border-white/10 hover:border-[#FF6B35]/50'
-                }`}
-                aria-label={`${isSelected ? 'Remove' : 'Add'} ${creation.title || 'Untitled'}`}
-              >
-                <img 
-                  src={imageUrl}
-                  alt={creation.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  loading="lazy"
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-all duration-300 ${
-                  isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                }`} />
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/20 via-transparent to-[#FFB800]/20 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                <div className={`absolute top-2 right-2 w-6 h-6 rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
-                  isSelected 
-                    ? 'bg-[#FF6B35] opacity-100 scale-100' 
-                    : 'bg-white/10 opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'
-                }`}>
-                  <Check className="w-3 h-3 text-white" />
+                  return (
+                  <button
+                    key={creation.id}
+                    onClick={() => toggleGallerySelection(creation)}
+                    className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 group active:scale-95 ${
+                      isSelected 
+                        ? 'border-[#FF6B35] shadow-[0_0_20px_rgba(255,107,53,0.4)] scale-[0.98]' 
+                        : 'border-white/10 hover:border-[#FF6B35]/50 hover:shadow-lg'
+                    }`}
+                  >
+                    <img 
+                      src={imageUrl}
+                      alt={creation.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-200 ${
+                      isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    }`} />
+                    <div className={`absolute inset-0 bg-[#FF6B35]/10 transition-opacity duration-200 ${
+                      isSelected ? 'opacity-100' : 'opacity-0'
+                    }`} />
+                    <div className={`absolute top-1.5 right-1.5 w-5 h-5 sm:w-6 sm:h-6 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 ${
+                      isSelected 
+                        ? 'bg-[#FF6B35] scale-100' 
+                        : 'bg-black/40 scale-0 group-hover:scale-100'
+                    }`}>
+                      <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" strokeWidth={3} />
+                    </div>
+                    {isSelected && (
+                      <div className="absolute inset-0 border-2 border-[#FF6B35] rounded-xl pointer-events-none" />
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 p-1.5 sm:p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <p className="text-[10px] sm:text-xs text-white font-medium truncate">{creation.title || 'Untitled'}</p>
+                    </div>
+                  </button>
+                  );
+                })}
+              </div>
+              {isLoadingMore && (
+                <div className="flex justify-center items-center py-6">
+                  <Loader2 className="w-6 h-6 text-[#FF6B35] animate-spin" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-xs text-white font-semibold truncate drop-shadow-lg">{creation.title || 'Untitled'}</p>
-                  <p className="text-[10px] text-white/60 mt-0.5">{new Date(creation.created_date).toLocaleDateString()}</p>
-                </div>
-                </button>
-                )})
-                )}
+              )}
+              {!hasMoreGallery && galleryCreations.length > GALLERY_INITIAL_LIMIT && (
+                <p className="text-center text-white/30 text-xs py-4">All images loaded</p>
+              )}
+            </>
+          )}
         </div>
         {selectedGalleryImages.length > 0 && (
-          <div className="sticky bottom-0 p-4 border-t border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl flex items-center justify-between">
-            <span className="text-white text-sm">
-              {selectedGalleryImages.length} image{selectedGalleryImages.length !== 1 ? 's' : ''} selected
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedGalleryImages([])}
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                Clear
-              </Button>
-              <Button
-                onClick={confirmGallerySelection}
-                className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white"
-              >
-                Add to Chat
-              </Button>
+          <div className="sticky bottom-0 p-3 sm:p-4 border-t border-white/10 bg-[#0a0a0a]/98 backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-sm font-bold">{selectedGalleryImages.length}</span>
+                </div>
+                <span className="text-white/80 text-xs sm:text-sm truncate">
+                  selected
+                </span>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedGalleryImages([])}
+                  className="border-white/20 text-white hover:bg-white/10 text-xs h-9"
+                >
+                  Clear
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={confirmGallerySelection}
+                  className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-xs h-9 px-4"
+                >
+                  Add to Chat
+                </Button>
+              </div>
             </div>
           </div>
         )}
