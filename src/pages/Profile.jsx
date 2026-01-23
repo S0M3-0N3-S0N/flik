@@ -952,23 +952,24 @@ export default function Profile() {
               </div>
 
               {totalPages > 1 && (
-                <div className="mt-16 flex items-center justify-center gap-4">
+                <div className="mt-8 sm:mt-12 md:mt-16 flex items-center justify-center gap-2 sm:gap-3">
                   <Button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="bg-white/5 hover:bg-white/10 text-white border-0 disabled:opacity-30 h-12 px-8 rounded-2xl font-medium"
+                    className="bg-white/5 hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed h-10 sm:h-11 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-medium text-sm sm:text-base transition-all hover:scale-105"
                   >
-                    Previous
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
                   </Button>
-                  <div className="px-8 py-3 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl border border-white/10">
-                    <span className="text-white font-bold text-lg">
+                  <div className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-br from-white/10 to-white/5 rounded-xl sm:rounded-2xl border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
+                    <span className="text-white font-bold text-base sm:text-lg">
                       {currentPage} <span className="text-white/30 font-normal">/</span> {totalPages}
                     </span>
                   </div>
                   <Button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="bg-white/5 hover:bg-white/10 text-white border-0 disabled:opacity-30 h-12 px-8 rounded-2xl font-medium"
+                    className="bg-white/5 hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed h-10 sm:h-11 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-medium text-sm sm:text-base transition-all hover:scale-105"
                   >
                     Next
                   </Button>
