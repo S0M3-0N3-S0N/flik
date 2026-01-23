@@ -1004,7 +1004,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 )}
         </div>
         {selectedGalleryImages.length > 0 && (
-          <div className="sticky bottom-0 px-3 py-3 sm:px-4 sm:py-4 border-t border-white/10 bg-[#0a0a0a]/98 backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 flex-shrink-0">
+          <div className="px-3 py-3 sm:px-4 sm:py-4 border-t border-white/10 bg-[#0a0a0a]/98 backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 flex-shrink-0">
             <span className="text-white text-xs sm:text-sm font-medium px-2">
               ✓ {selectedGalleryImages.length} image{selectedGalleryImages.length !== 1 ? 's' : ''} selected
             </span>
