@@ -108,7 +108,7 @@ export default function FlikChat() {
   };
 
   const handleSend = async () => {
-    if (!input.trim() && chatImages.length === 0) return;
+    if (!input.trim() && attachedImages.length === 0) return;
     
     const userMsg = { 
       role: 'user', 
@@ -561,35 +561,33 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
           </div>
         </motion.div>
       )}
-      
-      {/* Gallery Picker Dialog */}
-      <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-        <DialogContent className="max-w-4xl max-h-[80vh] bg-[#0a0a0a] border border-white/10 text-white flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-xl gradient-text">Pick from Your Creations</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 p-2">
-            {galleryCreations.map((creation) => (
-              <button
-                key={creation.id}
-                onClick={() => {
-                  addCreationToChat(creation);
-                  setShowGalleryPicker(false);
-                }}
-                className="aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35] transition-all group"
-              >
-                <img 
-                  src={creation.thumbnail_url || creation.url}
-                  alt={creation.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                />
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-        </motion.div>
-      )}
     </AnimatePresence>
+      
+    <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
+      <DialogContent className="max-w-4xl max-h-[80vh] bg-[#0a0a0a] border border-white/10 text-white flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-xl gradient-text">Pick from Your Creations</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 p-2">
+          {galleryCreations.map((creation) => (
+            <button
+              key={creation.id}
+              onClick={() => {
+                addCreationToChat(creation);
+                setShowGalleryPicker(false);
+              }}
+              className="aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35] transition-all group"
+            >
+              <img 
+                src={creation.thumbnail_url || creation.url}
+                alt={creation.title}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+              />
+            </button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
