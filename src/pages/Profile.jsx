@@ -907,10 +907,10 @@ export default function Profile() {
                         </div>
 
                         {/* Bottom Info */}
-                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-4">
+                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-3">
                           <div>
                             <h3 
-                              className="font-bold text-white text-lg line-clamp-2 mb-1 drop-shadow-lg"
+                              className="font-bold text-white text-base sm:text-lg line-clamp-2 mb-1 drop-shadow-lg"
                               dangerouslySetInnerHTML={{ __html: highlightText(item.title || 'Untitled', searchQuery) }}
                             />
                             {item.prompt && (
@@ -920,17 +920,17 @@ export default function Profile() {
                               />
                             )}
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1.5 sm:gap-2">
                             <Button
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                               }}
-                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-10 text-sm backdrop-blur-2xl font-medium"
+                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3"
                             >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
+                              <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
+                              <span className="hidden xs:inline sm:inline">Edit</span>
                             </Button>
                             <Button
                               size="sm"
@@ -938,10 +938,10 @@ export default function Profile() {
                                 e.stopPropagation();
                                 navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
                               }}
-                              className="flex-1 bg-purple-500/30 hover:bg-purple-500/40 text-white border-0 h-10 text-sm backdrop-blur-2xl font-medium"
+                              className="flex-1 bg-purple-500/30 hover:bg-purple-500/40 text-white border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3"
                             >
-                              <Wand2 className="w-4 h-4 mr-2" />
-                              Remix
+                              <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
+                              <span className="hidden xs:inline sm:inline">Remix</span>
                             </Button>
                           </div>
                         </div>
