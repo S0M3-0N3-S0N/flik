@@ -612,7 +612,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   )}
 
                   {isEditing ? (
-                    <div className="flex gap-2 bg-white/10 p-3 rounded-2xl border border-white/20">
+                    <div className="flex gap-2 bg-gradient-to-br from-white/10 to-white/5 p-3 rounded-2xl border border-[#FF6B35]/30 shadow-lg backdrop-blur-sm">
                       <Input
                         value={editInput}
                         onChange={(e) => setEditInput(e.target.value)}
@@ -623,13 +623,13 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                           }
                           if (e.key === 'Escape') handleCancelEdit();
                         }}
-                        className="bg-black/20 border-white/10 text-white"
+                        className="bg-black/30 border-white/20 text-white focus-visible:ring-[#FF6B35]/50 placeholder:text-white/30"
                         autoFocus
                       />
-                      <Button size="icon" onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
+                      <Button size="icon" onClick={handleSaveEdit} className="bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-md">
                         <Check className="w-4 h-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={handleCancelEdit}>
+                      <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="hover:bg-red-500/10 hover:text-red-400">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
