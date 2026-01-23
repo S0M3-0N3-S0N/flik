@@ -1067,21 +1067,21 @@ export default function Profile() {
           </div>
 
           {/* Details Panel */}
-          <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col border-t md:border-t-0 md:border-l border-white/10 bg-[#1a1a1a] max-h-[40vh] md:max-h-full overflow-hidden">
+          <div className="w-full md:w-[360px] lg:w-[400px] flex flex-col border-t md:border-t-0 md:border-l border-white/10 bg-[#1a1a1a] max-h-[35vh] md:max-h-full overflow-hidden">
             {/* Header */}
-            <div className="p-4 sm:p-5 md:p-6 border-b border-white/10 flex-shrink-0">
-              <DialogHeader className="p-0 space-y-2">
-                <DialogTitle className="text-lg sm:text-xl gradient-text line-clamp-2 text-left pr-8">
+            <div className="p-3 sm:p-4 md:p-5 border-b border-white/10 flex-shrink-0">
+              <DialogHeader className="p-0 space-y-1.5">
+                <DialogTitle className="text-base sm:text-lg md:text-xl gradient-text line-clamp-2 text-left pr-8">
                   {selectedItem?.title || selectedItem?.prompt || 'Creation'}
                 </DialogTitle>
-                <DialogDescription className="text-white/50 text-left text-xs sm:text-sm" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
+                <DialogDescription className="text-white/50 text-left text-xs" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
                   Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
                 </DialogDescription>
               </DialogHeader>
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 space-y-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full min-h-0">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 space-y-3 sm:space-y-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full min-h-0">
               {/* Title Edit */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -1200,32 +1200,34 @@ export default function Profile() {
             </div>
 
             {/* Action Buttons */}
-            <div className="p-4 sm:p-5 md:p-6 border-t border-white/10 bg-[#1a1a1a] space-y-2.5 flex-shrink-0">
+            <div className="p-3 sm:p-4 md:p-5 border-t border-white/10 bg-[#1a1a1a] space-y-2 flex-shrink-0">
               <Button
                 onClick={() => {
                   navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url));
                 }}
-                className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 h-11 text-sm font-medium rounded-xl"
+                className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 h-9 sm:h-10 md:h-11 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl"
               >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit in Photo Studio
+                <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                <span className="hidden xs:inline">Edit in Photo Studio</span>
+                <span className="xs:hidden">Edit</span>
               </Button>
 
-              <div className="flex gap-2.5">
+              <div className="flex gap-2">
                 <Button
                   onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
-                  className="flex-1 btn-gradient text-white h-11 text-sm font-medium rounded-xl"
+                  className="flex-1 btn-gradient text-white h-9 sm:h-10 md:h-11 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl"
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                  <span className="hidden xs:inline">Download</span>
+                  <span className="xs:hidden">Save</span>
                 </Button>
                 <Button
                   onClick={() => handleDelete(selectedItem.id)}
                   variant="outline"
-                  className="w-11 h-11 p-0 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/30 rounded-xl"
+                  className="w-9 sm:w-10 md:w-11 h-9 sm:h-10 md:h-11 p-0 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/30 rounded-lg sm:rounded-xl"
                   aria-label="Delete creation"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
               </div>
             </div>
