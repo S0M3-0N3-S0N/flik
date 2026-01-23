@@ -1,10 +1,11 @@
-import React, { useState, useRef, useContext, useMemo, useCallback } from "react";
+import React, { useState, useRef, useContext, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { debounce } from "lodash";
 import { 
   Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, 
   Pencil, Check, X, Lock, Globe, Search, Trash2, Download, Edit, Wand2, Sparkles,
-  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp
+  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ export default function Profile() {
   
   // Gallery State
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -63,11 +65,14 @@ export default function Profile() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editingTitle, setEditingTitle] = useState(null);
   const [newTitle, setNewTitle] = useState('');
+  const [originalTitle, setOriginalTitle] = useState('');
   const [editingPrompt, setEditingPrompt] = useState(null);
   const [newPrompt, setNewPrompt] = useState('');
+  const [originalPrompt, setOriginalPrompt] = useState('');
   const [batchDeleteProgress, setBatchDeleteProgress] = useState(0);
   const [deletedItems, setDeletedItems] = useState([]);
   const [showStatsExpanded, setShowStatsExpanded] = useState(false);
+  const [undoQueue, setUndoQueue] = useState([]);
 
   // Data Fetching
   const { data: user } = useQuery({
@@ -81,6 +86,17 @@ export default function Profile() {
     enabled: !!user?.email,
     initialData: [],
   });
+
+  // Debounced search
+  const debouncedSearch = useMemo(
+    () => debounce((value) => setDebouncedSearchQuery(value), 300),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSearch(searchQuery);
+    return () => debouncedSearch.cancel();
+  }, [searchQuery, debouncedSearch]);
 
   // Profile Mutations
   const handleAvatarUpload = async (e) => {
@@ -195,20 +211,24 @@ export default function Profile() {
   const confirmDelete = () => {
     if (deleteConfirm) {
       const itemToDelete = creations.find(c => c.id === deleteConfirm);
-      setDeletedItems([...deletedItems, { id: deleteConfirm, item: itemToDelete }]);
       deleteMutation.mutate(deleteConfirm);
       setSelectedItem(null);
       setDeleteConfirm(null);
       
-      // Undo option
+      // Real undo with restore capability
       toast((t) => (
         <div className="flex items-center gap-3">
           <span>Creation deleted</span>
           <Button
             size="sm"
-            onClick={() => {
-              // In a real app, we'd restore from a soft-delete
-              toast.dismiss(t.id);
+            onClick={async () => {
+              try {
+                await base44.entities.Creation.create(itemToDelete);
+                await queryClient.invalidateQueries({ queryKey: ['creations'] });
+                toast.success('Creation restored!', { id: t.id });
+              } catch (error) {
+                toast.error('Failed to restore', { id: t.id });
+              }
             }}
             className="h-7 px-3 bg-white/10 hover:bg-white/20 text-white text-xs"
           >
@@ -276,10 +296,10 @@ export default function Profile() {
 
   const filteredCreations = useMemo(() => {
     return creations.filter(item => {
-      const matchesSearch = !searchQuery || 
-        item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.prompt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.metadata?.toString().toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = !debouncedSearchQuery || 
+        item.title?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        item.prompt?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        item.metadata?.toString().toLowerCase().includes(debouncedSearchQuery.toLowerCase());
       const matchesType = filterType === 'all' || item.type === filterType;
       
       let matchesDate = true;
@@ -301,7 +321,7 @@ export default function Profile() {
       if (sortBy === 'prompt_length') return (b.prompt?.length || 0) - (a.prompt?.length || 0);
       return 0;
     });
-  }, [creations, searchQuery, filterType, dateFilter, sortBy]);
+  }, [creations, debouncedSearchQuery, filterType, dateFilter, sortBy]);
 
   const totalPages = Math.ceil(filteredCreations.length / ITEMS_PER_PAGE);
   const paginatedCreations = useMemo(() => {
@@ -318,10 +338,11 @@ export default function Profile() {
     ...getTimeframeStats(creations)
   }), [creations]);
 
-  // Reset page when filters change
-  React.useEffect(() => {
+  // Reset page and clear selections when filters change
+  useEffect(() => {
     setCurrentPage(1);
-  }, [filterType, dateFilter, searchQuery, sortBy]);
+    setSelectedItems([]);
+  }, [filterType, dateFilter, debouncedSearchQuery, sortBy]);
 
   const selectAll = useCallback(() => {
     if (selectedItems.length === paginatedCreations.length) {
@@ -331,6 +352,14 @@ export default function Profile() {
     }
   }, [selectedItems.length, paginatedCreations]);
 
+  const selectAllFiltered = useCallback(() => {
+    if (selectedItems.length === filteredCreations.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredCreations.map(c => c.id));
+    }
+  }, [selectedItems.length, filteredCreations]);
+
   const handleKeyDown = useCallback((e, item) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -338,12 +367,40 @@ export default function Profile() {
     }
   }, []);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // Escape to close dialogs
+      if (e.key === 'Escape') {
+        if (selectedItem) setSelectedItem(null);
+        if (deleteConfirm) setDeleteConfirm(null);
+        if (showPasswordDialog) setShowPasswordDialog(false);
+        if (editingTitle) {
+          if (newTitle !== originalTitle && !window.confirm('Discard unsaved changes?')) return;
+          setEditingTitle(null);
+        }
+        if (editingPrompt) {
+          if (newPrompt !== originalPrompt && !window.confirm('Discard unsaved changes?')) return;
+          setEditingPrompt(null);
+        }
+      }
+      
+      // Delete key for selected items
+      if (e.key === 'Delete' && selectedItems.length > 0 && !deleteConfirm && !editingTitle && !editingPrompt) {
+        handleBatchDelete();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [selectedItem, deleteConfirm, showPasswordDialog, selectedItems, editingTitle, editingPrompt, newTitle, originalTitle, newPrompt, originalPrompt]);
+
   if (!user) return null;
 
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <Toaster 
-        position="top-right"
+        position="top-center"
         toastOptions={{
           style: {
             background: '#1a1a1a',
@@ -637,14 +694,14 @@ export default function Profile() {
                 <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
                   <Button
                     size="sm"
-                    onClick={selectAll}
+                    onClick={totalPages > 1 ? selectAllFiltered : selectAll}
                     className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm"
-                    aria-label="Select all visible items"
+                    aria-label={totalPages > 1 ? "Select all filtered items" : "Select all visible items"}
                   >
-                    {selectedItems.length === paginatedCreations.length ? (
-                      <><CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Deselect All</>
+                    {selectedItems.length === filteredCreations.length ? (
+                      <><CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Deselect All {totalPages > 1 && `(${filteredCreations.length})`}</>
                     ) : (
-                      <><Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Select All</>
+                      <><Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Select All {totalPages > 1 && `(${filteredCreations.length})`}</>
                     )}
                   </Button>
                   <Button
@@ -679,14 +736,22 @@ export default function Profile() {
               className="text-center py-32 bg-gradient-to-br from-white/5 to-white/0 rounded-3xl border border-white/5"
             >
               <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center mx-auto mb-6 border border-[#FF6B35]/20">
-                <Sparkles className="w-10 h-10 text-[#FF6B35]" />
+                {creations.length === 0 ? <Sparkles className="w-10 h-10 text-[#FF6B35]" /> : <Search className="w-10 h-10 text-[#FF6B35]" />}
               </div>
-              <h3 className="text-white text-xl font-semibold mb-2">No creations yet</h3>
-              <p className="text-white/40 mb-6 max-w-sm mx-auto">Start creating amazing content with FLIK's AI tools</p>
-              <Button onClick={() => navigate(createPageUrl('Generate'))} className="btn-gradient text-white px-8 h-11">
-                <Wand2 className="w-4 h-4 mr-2" />
-                Create Your First Masterpiece
-              </Button>
+              <h3 className="text-white text-xl font-semibold mb-2">
+                {creations.length === 0 ? 'No creations yet' : 'No results found'}
+              </h3>
+              <p className="text-white/40 mb-6 max-w-sm mx-auto">
+                {creations.length === 0 
+                  ? "Start creating amazing content with FLIK's AI tools"
+                  : 'Try adjusting your filters or search query'}
+              </p>
+              {creations.length === 0 && (
+                <Button onClick={() => navigate(createPageUrl('Generate'))} className="btn-gradient text-white px-8 h-11">
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Create Your First Masterpiece
+                </Button>
+              )}
             </motion.div>
           ) : (
             <>
@@ -719,12 +784,21 @@ export default function Profile() {
                       <div className="absolute inset-0 p-1">
                         <div className="w-full h-full rounded-[20px] overflow-hidden">
                           {item.thumbnail_url || item.url ? (
-                              <img
-                              src={item.thumbnail_url || item.url}
-                              alt={item.title || 'Creation'}
-                              loading="lazy"
-                              className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
-                              />
+                              <>
+                                <img
+                                  src={item.thumbnail_url || item.url}
+                                  alt={`${item.title || 'Untitled creation'} - ${item.type === 'video' ? 'Video' : 'Image'} created on ${new Date(item.created_date).toLocaleDateString()}`}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+                                />
+                                {item.type === 'video' && (
+                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30">
+                                      <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                                    </div>
+                                  </div>
+                                )}
+                              </>
                           ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5">
                               <ImageIcon className="w-16 h-16 text-white/10" />
@@ -916,9 +990,10 @@ export default function Profile() {
                       onClick={() => {
                         updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } });
                       }}
-                      className="h-6 text-xs px-2 btn-gradient text-white"
+                      disabled={updateMutation.isPending}
+                      className="h-6 text-xs px-2 btn-gradient text-white disabled:opacity-50"
                     >
-                      Save
+                      {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
                     </Button>
                   ) : (
                     <Button
@@ -927,6 +1002,7 @@ export default function Profile() {
                       onClick={() => {
                         setEditingTitle(selectedItem?.id);
                         setNewTitle(selectedItem?.title || '');
+                        setOriginalTitle(selectedItem?.title || '');
                       }}
                       className="h-6 w-6 p-0 text-white/40 hover:text-white"
                     >
@@ -935,13 +1011,27 @@ export default function Profile() {
                   )}
                 </div>
                 {editingTitle === selectedItem?.id ? (
-                  <Input
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="bg-white/5 border-white/10 text-white"
-                    placeholder="Enter title..."
-                    autoFocus
-                  />
+                  <div className="space-y-2">
+                    <Input
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      className="bg-white/5 border-white/10 text-white"
+                      placeholder="Enter title..."
+                      autoFocus
+                      disabled={updateMutation.isPending}
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (newTitle !== originalTitle && !window.confirm('Discard changes?')) return;
+                        setEditingTitle(null);
+                      }}
+                      className="text-xs text-white/40 hover:text-white h-6"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 ) : (
                   <p className="text-sm text-white/90 font-medium">{selectedItem?.title || 'Untitled'}</p>
                 )}
@@ -959,9 +1049,10 @@ export default function Profile() {
                             updateMutation.mutate({ id: selectedItem.id, data: { prompt: newPrompt } });
                           }
                         }}
-                        className="h-6 text-xs px-2 btn-gradient text-white"
+                        disabled={updateMutation.isPending}
+                        className="h-6 text-xs px-2 btn-gradient text-white disabled:opacity-50"
                       >
-                        Save
+                        {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
                       </Button>
                     ) : (
                       <Button
@@ -970,6 +1061,7 @@ export default function Profile() {
                         onClick={() => {
                           setEditingPrompt(selectedItem?.id);
                           setNewPrompt(selectedItem?.prompt || '');
+                          setOriginalPrompt(selectedItem?.prompt || '');
                         }}
                         className="h-6 w-6 p-0 text-white/40 hover:text-white"
                         aria-label="Edit prompt"
@@ -979,13 +1071,27 @@ export default function Profile() {
                     )}
                   </div>
                   {editingPrompt === selectedItem?.id ? (
-                    <Textarea
-                      value={newPrompt}
-                      onChange={(e) => setNewPrompt(e.target.value)}
-                      className="bg-white/5 border-white/10 text-white min-h-[100px] text-sm"
-                      placeholder="Enter prompt..."
-                      autoFocus
-                    />
+                    <div className="space-y-2">
+                      <Textarea
+                        value={newPrompt}
+                        onChange={(e) => setNewPrompt(e.target.value)}
+                        className="bg-white/5 border-white/10 text-white min-h-[100px] text-sm"
+                        placeholder="Enter prompt..."
+                        autoFocus
+                        disabled={updateMutation.isPending}
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          if (newPrompt !== originalPrompt && !window.confirm('Discard changes?')) return;
+                          setEditingPrompt(null);
+                        }}
+                        className="text-xs text-white/40 hover:text-white h-6"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
                   ) : (
                     <div className="p-3 rounded-lg bg-white/5 border border-white/5">
                       <p className="text-sm text-white/70 leading-relaxed">{selectedItem.prompt}</p>

@@ -60,12 +60,22 @@ export const getTimeframeStats = (creations) => {
   };
   
   creations.forEach(creation => {
-    const createdDate = new Date(creation.created_date);
-    const daysDiff = (now - createdDate) / (1000 * 60 * 60 * 24);
-    
-    if (daysDiff < 1) stats.today++;
-    if (daysDiff < 7) stats.thisWeek++;
-    if (daysDiff < 30) stats.thisMonth++;
+    try {
+      if (!creation.created_date) return;
+      
+      const createdDate = new Date(creation.created_date);
+      
+      // Check if date is valid
+      if (isNaN(createdDate.getTime())) return;
+      
+      const daysDiff = (now - createdDate) / (1000 * 60 * 60 * 24);
+      
+      if (daysDiff < 1) stats.today++;
+      if (daysDiff < 7) stats.thisWeek++;
+      if (daysDiff < 30) stats.thisMonth++;
+    } catch (error) {
+      console.warn('Invalid date for creation:', creation.id, error);
+    }
   });
   
   return stats;
