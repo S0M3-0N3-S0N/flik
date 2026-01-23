@@ -37,6 +37,7 @@ export default function FlikChat() {
   const [galleryCachedData, setGalleryCachedData] = useState(null);
   const [galleryLastFetch, setGalleryLastFetch] = useState(0);
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
+  const [gallerySearchTerm, setGallerySearchTerm] = useState("");
   const [fullImageView, setFullImageView] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editInput, setEditInput] = useState("");
@@ -183,6 +184,7 @@ export default function FlikChat() {
   const handleGalleryPick = async () => {
     setShowGalleryPicker(true);
     setSelectedGalleryImages([]);
+    setGallerySearchTerm("");
     
     // Use cached gallery data if fresh
     if (galleryCachedData && Date.now() - galleryLastFetch < GALLERY_CACHE_DURATION) {
@@ -196,7 +198,7 @@ export default function FlikChat() {
       const creations = await base44.entities.Creation.filter(
         { created_by: user.email },
         '-created_date',
-        GALLERY_FETCH_LIMIT
+        100 // Increased limit for better UX
       );
       setGalleryCreations(creations);
       setGalleryCachedData(creations);
@@ -228,7 +230,18 @@ export default function FlikChat() {
     setAttachedImages(prev => [...prev, ...selectedGalleryImages]);
     setShowGalleryPicker(false);
     setSelectedGalleryImages([]);
+    setGallerySearchTerm("");
   };
+
+  // Memoized filtered gallery creations
+  const filteredGalleryCreations = useMemo(() => {
+    if (!gallerySearchTerm.trim()) return galleryCreations;
+    const term = gallerySearchTerm.toLowerCase();
+    return galleryCreations.filter(c => 
+      (c.title?.toLowerCase().includes(term)) || 
+      (c.prompt?.toLowerCase().includes(term))
+    );
+  }, [galleryCreations, gallerySearchTerm]);
 
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
@@ -869,35 +882,61 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
     </AnimatePresence>
       
     <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-      <DialogContent className="max-w-5xl max-h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a] border border-white/10 text-white flex flex-col shadow-2xl">
-        <DialogHeader className="pb-4 border-b border-white/5">
-          <DialogTitle className="text-2xl font-bold gradient-text flex items-center gap-2">
-            <Grid3x3 className="w-6 h-6 text-[#FF6B35]" />
+      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] sm:h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a] border border-white/10 text-white flex flex-col shadow-2xl p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b border-white/5 flex-shrink-0">
+          <DialogTitle className="text-xl sm:text-2xl font-bold gradient-text flex items-center gap-2">
+            <Grid3x3 className="w-5 h-5 sm:w-6 sm:h-6 text-[#FF6B35]" />
             Pick from Your Creations
           </DialogTitle>
-          <p className="text-sm text-white/50 mt-1">Select images to add to your conversation</p>
+          <p className="text-xs sm:text-sm text-white/50 mt-1">
+            {filteredGalleryCreations.length} image{filteredGalleryCreations.length !== 1 ? 's' : ''} available
+          </p>
+          <div className="mt-3">
+            <Input
+              value={gallerySearchTerm}
+              onChange={(e) => setGallerySearchTerm(e.target.value)}
+              placeholder="Search by title or prompt..."
+              className="bg-black/30 border-white/10 text-white text-sm focus-visible:ring-[#FF6B35]/50 placeholder:text-white/40 h-9"
+            />
+          </div>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 p-3 sm:p-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent"
+          style={{ 
+            willChange: 'scroll-position',
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden'
+          }}
+        >
           {isLoadingGallery ? (
             <>
-              {Array.from({ length: 15 }).map((_, idx) => (
+              {Array.from({ length: 12 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="relative aspect-square rounded-2xl overflow-hidden bg-white/5 border-2 border-white/10 animate-pulse"
+                  className="relative aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-white/5 border border-white/10"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5 animate-pulse" />
                 </div>
               ))}
             </>
-          ) : galleryCreations.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                <ImageIcon className="w-10 h-10 text-white/20" />
+          ) : filteredGalleryCreations.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center mb-3 sm:mb-4">
+                <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 text-white/20" />
               </div>
-              <p className="text-white/40 text-sm">No creations yet</p>
+              <p className="text-white/40 text-sm">
+                {gallerySearchTerm ? 'No matching creations found' : 'No creations yet'}
+              </p>
+              {gallerySearchTerm && (
+                <button
+                  onClick={() => setGallerySearchTerm("")}
+                  className="mt-3 text-xs text-[#FF6B35] hover:text-[#FF8B55] transition-colors"
+                >
+                  Clear search
+                </button>
+              )}
             </div>
           ) : (
-            galleryCreations.map((creation) => {
+            filteredGalleryCreations.map((creation) => {
               const imageUrl = creation.thumbnail_url || creation.url;
               const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
 
@@ -905,54 +944,59 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               <button
                 key={creation.id}
                 onClick={() => toggleGallerySelection(creation)}
-                className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 group hover:scale-105 bg-white/5 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/50 ${
+                className={`relative aspect-square rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-200 group active:scale-95 bg-black/30 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/50 ${
                   isSelected 
-                    ? 'border-[#FF6B35] shadow-[0_0_30px_rgba(255,107,53,0.5)]' 
-                    : 'border-white/10 hover:border-[#FF6B35]/50'
+                    ? 'border-[#FF6B35] shadow-[0_0_20px_rgba(255,107,53,0.4)]' 
+                    : 'border-white/10 hover:border-[#FF6B35]/30'
                 }`}
                 aria-label={`${isSelected ? 'Remove' : 'Add'} ${creation.title || 'Untitled'}`}
+                style={{ 
+                  willChange: 'transform',
+                  transform: 'translateZ(0)'
+                }}
               >
                 <img 
                   src={imageUrl}
-                  alt={creation.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  alt={creation.title || 'Creation'}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
+                  decoding="async"
                 />
-                <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-all duration-300 ${
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent transition-opacity duration-200 ${
                   isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                 }`} />
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/20 via-transparent to-[#FFB800]/20 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                <div className={`absolute top-2 right-2 w-6 h-6 rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
+                <div className={`absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-200 ${
                   isSelected 
                     ? 'bg-[#FF6B35] opacity-100 scale-100' 
-                    : 'bg-white/10 opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'
+                    : 'bg-white/20 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100'
                 }`}>
-                  <Check className="w-3 h-3 text-white" />
+                  <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-xs text-white font-semibold truncate drop-shadow-lg">{creation.title || 'Untitled'}</p>
-                  <p className="text-[10px] text-white/60 mt-0.5">{new Date(creation.created_date).toLocaleDateString()}</p>
+                <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-2.5 transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                  <p className="text-[10px] sm:text-xs text-white font-semibold truncate drop-shadow-lg leading-tight">
+                    {creation.title || 'Untitled'}
+                  </p>
                 </div>
                 </button>
                 )})
                 )}
         </div>
         {selectedGalleryImages.length > 0 && (
-          <div className="sticky bottom-0 p-4 border-t border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl flex items-center justify-between">
-            <span className="text-white text-sm">
-              {selectedGalleryImages.length} image{selectedGalleryImages.length !== 1 ? 's' : ''} selected
+          <div className="sticky bottom-0 px-3 py-3 sm:px-4 sm:py-4 border-t border-white/10 bg-[#0a0a0a]/98 backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 flex-shrink-0">
+            <span className="text-white text-xs sm:text-sm font-medium px-2">
+              ✓ {selectedGalleryImages.length} image{selectedGalleryImages.length !== 1 ? 's' : ''} selected
             </span>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => setSelectedGalleryImages([])}
-                className="border-white/20 text-white hover:bg-white/10"
+                className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 text-xs sm:text-sm h-9"
               >
                 Clear
               </Button>
               <Button
                 onClick={confirmGallerySelection}
-                className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white"
+                className="flex-1 sm:flex-none bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-xs sm:text-sm h-9 shadow-lg shadow-[#FF6B35]/20"
               >
                 Add to Chat
               </Button>
