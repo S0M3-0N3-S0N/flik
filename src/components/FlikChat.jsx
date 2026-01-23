@@ -1,16 +1,23 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, MessageSquare, RefreshCw, Upload, Grid3x3 } from "lucide-react";
+import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from 'react-markdown';
-import { Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft } from "lucide-react";
 import { useFlik } from "./FlikContext";
 import { getFlikActions } from "./useFlikActions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+// Constants
+const CACHE_DURATION = 30000; // 30 seconds
+const MAX_RECENT_CREATIONS = 30;
+const CONTEXT_MESSAGES_LIMIT = 15;
+const SHOWN_CREATIONS_LIMIT = 20;
+const GALLERY_FETCH_LIMIT = 50;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export default function FlikChat() {
   const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages } = useFlik();
@@ -19,10 +26,14 @@ export default function FlikChat() {
   const [isUploadingChat, setIsUploadingChat] = useState(false);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [galleryCreations, setGalleryCreations] = useState([]);
+  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [retryMessage, setRetryMessage] = useState(null);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,7 +52,6 @@ export default function FlikChat() {
   // Cache user data to avoid refetching on every message
   const [cachedUserData, setCachedUserData] = useState(null);
   const [lastFetchTime, setLastFetchTime] = useState(0);
-  const CACHE_DURATION = 30000; // 30 seconds
 
   useEffect(() => {
     // Prefetch user data when chat opens
@@ -53,28 +63,38 @@ export default function FlikChat() {
   const fetchUserData = async () => {
     try {
       const userProfile = await base44.auth.me();
-      const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', 30);
+      const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', MAX_RECENT_CREATIONS);
       setCachedUserData({ userProfile, allCreations });
       setLastFetchTime(Date.now());
     } catch (e) {
-      console.warn("Failed to fetch user data", e);
+      console.error("Failed to fetch user data:", e);
+      setCachedUserData({ userProfile: null, allCreations: [] });
     }
   };
 
   const handleChatImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter(f => f.type.startsWith('image/'));
+    const validFiles = files.filter(f => {
+      if (!f.type.startsWith('image/')) return false;
+      if (f.size > MAX_FILE_SIZE) {
+        setUploadError(`${f.name} is too large (max 10MB)`);
+        return false;
+      }
+      return true;
+    });
     if (validFiles.length === 0) return;
 
     setIsUploadingChat(true);
+    setUploadError(null);
     try {
       const newImages = await Promise.all(validFiles.map(async (file) => {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
-        return { url: uploadResult.file_url, file, id: Date.now() + Math.random() };
+        return { url: uploadResult.file_url, name: file.name, id: Date.now() + Math.random() };
       }));
       setAttachedImages(prev => [...prev, ...newImages]);
     } catch (err) {
       console.error("Chat upload error:", err);
+      setUploadError("Failed to upload images. Please try again.");
     } finally {
       setIsUploadingChat(false);
       if (chatFileRef.current) chatFileRef.current.value = '';
@@ -82,17 +102,21 @@ export default function FlikChat() {
   };
 
   const handleGalleryPick = async () => {
+    setIsLoadingGallery(true);
+    setShowGalleryPicker(true);
     try {
       const user = await base44.auth.me();
       const creations = await base44.entities.Creation.filter(
         { created_by: user.email },
         '-created_date',
-        50
+        GALLERY_FETCH_LIMIT
       );
       setGalleryCreations(creations);
-      setShowGalleryPicker(true);
     } catch (e) {
-      console.error("Failed to load gallery", e);
+      console.error("Failed to load gallery:", e);
+      setGalleryCreations([]);
+    } finally {
+      setIsLoadingGallery(false);
     }
   };
 
@@ -107,23 +131,37 @@ export default function FlikChat() {
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() && attachedImages.length === 0) return;
+  const handleSend = async (retryInput = null, retryImages = null) => {
+    const messageContent = retryInput || input;
+    const messageImages = retryImages || attachedImages;
+    
+    if (!messageContent.trim() && messageImages.length === 0) return;
     
     const userMsg = { 
       role: 'user', 
-      content: input,
-      images: attachedImages.map(img => img.url),
-      timestamp: new Date().toISOString()
+      content: messageContent,
+      images: messageImages.map(img => img.url),
+      timestamp: new Date().toISOString(),
+      id: Date.now() + Math.random()
     };
     
-    setMessages(prev => [...prev, userMsg]);
-    const currentInput = input;
-    const userUploadedImages = attachedImages;
+    if (!retryInput) {
+      setMessages(prev => [...prev, userMsg]);
+    }
+    
+    const currentInput = messageContent;
+    const userUploadedImages = [...messageImages];
     
     setInput("");
     setAttachedImages([]);
     setIsTyping(true);
+    setUploadError(null);
+    setRetryMessage(null);
+
+    // Abort previous request if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
     try {
       // Use cached data if available
@@ -132,7 +170,7 @@ export default function FlikChat() {
       }
 
       const { userProfile = null, allCreations = [] } = cachedUserData || {};
-      const contextImages = attachedImages.map(img => img.url);
+      const contextImages = userUploadedImages.map(img => img.url);
       const currentPage = getCurrentPage();
       const pageActions = getFlikActions(currentPage);
 
@@ -174,13 +212,13 @@ USER CONTEXT:
 - Member Since: ${userProfile?.created_date ? new Date(userProfile.created_date).toLocaleDateString() : 'N/A'}
 - Current Page: **${currentPage}**
 
-RECENT CREATIONS (${Math.min(allCreations.length, 20)} shown):
-${allCreations.slice(0, 20).map((c, i) => 
+RECENT CREATIONS (${Math.min(allCreations.length, SHOWN_CREATIONS_LIMIT)} shown):
+${allCreations.slice(0, SHOWN_CREATIONS_LIMIT).map((c, i) => 
   `${i + 1}. [${c.type}] "${c.title || 'Untitled'}" - "${c.prompt || 'N/A'}" (${new Date(c.created_date).toLocaleDateString()})`
 ).join('\n') || "No creations yet. Let's make something amazing!"}
 
-CONVERSATION HISTORY (last 15 messages):
-${messages.slice(-15).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
+CONVERSATION HISTORY (last ${CONTEXT_MESSAGES_LIMIT} messages):
+${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
 
 User: ${currentInput}
 
@@ -259,15 +297,20 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         image_urls: response.image_urls,
         suggested_prompt: response.suggested_prompt,
         suggested_actions: response.suggested_actions,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        id: Date.now() + Math.random()
       }]);
     } catch (error) {
       console.error("FLIK error:", error);
-      setMessages(prev => [...prev, { 
+      const errorMsg = { 
         role: 'assistant', 
         content: "Oops! I'm having trouble connecting right now. Try again in a moment? 🔌",
-        timestamp: new Date().toISOString()
-      }]);
+        timestamp: new Date().toISOString(),
+        id: Date.now() + Math.random(),
+        isError: true
+      };
+      setMessages(prev => [...prev, errorMsg]);
+      setRetryMessage({ input: currentInput, images: userUploadedImages });
     } finally {
       setIsTyping(false);
     }
@@ -371,9 +414,9 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               </div>
             )}
 
-            {messages.map((msg, i) => (
+            {messages.map((msg) => (
               <div
-                key={i}
+                key={msg.id || msg.timestamp}
                 className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.role === 'assistant' && (
@@ -426,11 +469,25 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   {msg.role === 'assistant' && (
                     <div className="flex flex-col gap-2 mt-2">
                       {msg.suggested_prompt && (
-                        <div className="flex flex-col gap-1">
-                          <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-2 text-xs text-white/60 italic border-l-2 border-l-[#FF6B35]">
-                            "{msg.suggested_prompt}"
-                          </div>
-                        </div>
+                        <button
+                          onClick={() => {
+                            setInput(msg.suggested_prompt);
+                          }}
+                          className="bg-[#1a1a1a] hover:bg-[#252525] border border-white/10 hover:border-[#FF6B35]/50 rounded-lg p-2 text-xs text-white/60 hover:text-white/80 italic border-l-2 border-l-[#FF6B35] transition-all text-left group"
+                        >
+                          <span className="block mb-1 text-[10px] text-white/40 group-hover:text-[#FF6B35]">💡 Click to use this prompt</span>
+                          "{msg.suggested_prompt}"
+                        </button>
+                      )}
+                      
+                      {msg.isError && retryMessage && (
+                        <button
+                          onClick={() => handleSend(retryMessage.input, retryMessage.images)}
+                          className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          Retry Message
+                        </button>
                       )}
                       
                       {msg.suggested_actions && msg.suggested_actions.length > 0 && (
@@ -493,14 +550,21 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
           </div>
 
           <div className="p-4 border-t border-white/10 bg-[#1a1a1a]">
+            {uploadError && (
+              <div className="mb-2 flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {uploadError}
+              </div>
+            )}
             {attachedImages.length > 0 && (
               <div className="mb-2 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
                 {attachedImages.map((img) => (
                   <div key={img.id} className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-white/10 group">
-                    <img src={img.url} className="w-full h-full object-cover" />
+                    <img src={img.url} alt={img.name || 'Attached'} className="w-full h-full object-cover" />
                     <button 
                       onClick={() => setAttachedImages(prev => prev.filter(i => i.id !== img.id))} 
                       className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                      title="Remove image"
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
@@ -573,7 +637,12 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
           <p className="text-sm text-white/50 mt-1">Select images to add to your conversation</p>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {galleryCreations.length === 0 ? (
+          {isLoadingGallery ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+              <Loader2 className="w-10 h-10 text-[#FF6B35] animate-spin mb-4" />
+              <p className="text-white/60 text-sm">Loading your creations...</p>
+            </div>
+          ) : galleryCreations.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
               <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
                 <ImageIcon className="w-10 h-10 text-white/20" />
@@ -588,7 +657,15 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   addCreationToChat(creation);
                   setShowGalleryPicker(false);
                 }}
-                className="relative aspect-square rounded-2xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35] transition-all duration-300 group hover:scale-105 hover:shadow-[0_0_30px_rgba(255,107,53,0.3)] bg-white/5"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    addCreationToChat(creation);
+                    setShowGalleryPicker(false);
+                  }
+                }}
+                className="relative aspect-square rounded-2xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35] transition-all duration-300 group hover:scale-105 hover:shadow-[0_0_30px_rgba(255,107,53,0.3)] bg-white/5 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/50"
+                aria-label={`Add ${creation.title || 'Untitled'} to chat`}
               >
                 <img 
                   src={creation.thumbnail_url || creation.url}
