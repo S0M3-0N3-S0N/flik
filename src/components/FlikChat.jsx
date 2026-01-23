@@ -987,7 +987,8 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   </p>
                 </div>
                 </button>
-                ))}
+              );
+              })}
                 {hasMore && (
                   <div className="col-span-full flex justify-center py-4">
                     <Button
