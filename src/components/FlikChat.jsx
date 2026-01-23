@@ -713,7 +713,8 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
             {isTyping && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/20">
