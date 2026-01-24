@@ -75,6 +75,8 @@ export default function Editor() {
   const [paintLayerVisible, setPaintLayerVisible] = useState(true);
   const [blendMode, setBlendMode] = useState('source-over');
   const [paintBrushMode, setPaintBrushMode] = useState('draw');
+  const [toolbarVisible, setToolbarVisible] = useState(true);
+  const toolbarHideTimeoutRef = useRef(null);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -1591,7 +1593,20 @@ export default function Editor() {
           )}
           
           {currentImage && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30">
+            <motion.div 
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30"
+              initial={{ opacity: 1, scale: 1 }}
+              animate={{ opacity: toolbarVisible ? 1 : 0, scale: toolbarVisible ? 1 : 0.8 }}
+              transition={{ duration: 0.3 }}
+              onMouseEnter={() => {
+                setToolbarVisible(true);
+                if (toolbarHideTimeoutRef.current) clearTimeout(toolbarHideTimeoutRef.current);
+              }}
+              onMouseLeave={() => {
+                if (toolbarHideTimeoutRef.current) clearTimeout(toolbarHideTimeoutRef.current);
+                toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
+              }}
+            >
               <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
                 <Button
                   variant="ghost"
@@ -1717,7 +1732,7 @@ export default function Editor() {
                   />
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </main>
