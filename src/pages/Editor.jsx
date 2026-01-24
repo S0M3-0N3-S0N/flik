@@ -1337,31 +1337,31 @@ export default function Editor() {
           )}
           
           {currentImage && (
-            <div className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30">
-              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30">
+              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsPanToolActive(!isPanToolActive)}
-                  className={`w-9 h-9 rounded-full transition-all ${isPanToolActive ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'hover:bg-white/10 text-white'}`}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'hover:bg-white/10 text-white'}`}
                   title="Pan Tool (Space)"
                 >
-                  <Move className="w-4 h-4" />
+                  <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10 mx-1" />
+                <div className="w-px h-4 bg-white/10" />
 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
-                  className="w-9 h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Zoom Out"
                 >
-                  <ZoomOut className="w-4 h-4" />
+                  <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-20 lg:w-32 px-2 hidden sm:block">
+                <div className="w-16 sm:w-20 lg:w-32 px-1.5 sm:px-2">
                   <Slider 
                     value={[zoom]} 
                     min={0.1} 
@@ -1376,26 +1376,22 @@ export default function Editor() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
-                  className="w-9 h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Zoom In"
                 >
-                  <ZoomIn className="w-4 h-4" />
+                  <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <span className="text-[10px] font-medium font-mono text-white/80 w-8 lg:w-10 text-center select-none hidden sm:block">
-                  {Math.round(zoom * 100)}%
-                </span>
-                
-                <div className="w-px h-4 bg-white/10 mx-1" />
+                <div className="w-px h-4 bg-white/10" />
 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
-                  className="w-9 h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Reset View"
                 >
-                  <Maximize2 className="w-4 h-4" />
+                  <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
               </div>
             </div>
