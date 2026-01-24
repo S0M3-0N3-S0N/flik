@@ -135,11 +135,11 @@ export default function FlikChat() {
     setVoiceEnabled(!voiceEnabled);
   };
 
-  const enqueueSpeech = (text) => {
-    if (!voiceEnabled || !window.speechSynthesis) return;
-    speechQueueRef.current.push(text);
-    processSpeechQueue();
-  };
+  const enqueueSpeech = useCallback((text) => {
+   if (!voiceEnabled || !window.speechSynthesis) return;
+   speechQueueRef.current.push(text);
+   processSpeechQueue();
+  }, [voiceEnabled, processSpeechQueue]);
 
   const processSpeechQueue = useCallback(() => {
    if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
