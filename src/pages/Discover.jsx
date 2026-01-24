@@ -171,7 +171,10 @@ export default function DiscoverPage() {
               likesCount={getLikesCount(creation.id)}
               isLiked={isLikedByUser(creation.id)}
               comments={getComments(creation.id)}
+              isFollowing={isFollowing(creation.created_by)}
+              followerCount={getFollowerCount(creation.created_by)}
               onLike={() => likeMutation.mutate(creation.id)}
+              onFollow={() => followMutation.mutate(creation.created_by)}
               onComment={(text) =>
                 commentMutation.mutate({
                   creation_id: creation.id,
