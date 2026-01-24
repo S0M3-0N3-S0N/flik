@@ -97,7 +97,7 @@ const ChatInput = React.memo(function ChatInput({
           <Button 
             type="submit" 
             size="icon"
-            disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
+            disabled={isTyping || isUploadingChat}
             className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg rounded-xl h-10 w-10 p-0"
           >
             {isTyping ? (
