@@ -1321,7 +1321,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 <Button
                   variant="outline"
                   onClick={() => setShowClearConfirm(false)}
-                  className="flex-1 border-white/20 text-white hover:bg-white/10 rounded-xl"
+                  className="flex-1 border-white/20 text-white bg-white/5 hover:bg-white/10 rounded-xl"
                 >
                   Cancel
                 </Button>
