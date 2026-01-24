@@ -1243,9 +1243,11 @@ export default function Editor() {
                 <p className="text-white/40 text-sm">Upload an image to start</p>
               )}
             </TabsContent>
-          </div>
-        </Tabs>
-      </motion.aside>
+              </div>
+            </Tabs>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
         <motion.div
