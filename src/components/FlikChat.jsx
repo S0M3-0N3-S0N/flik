@@ -818,6 +818,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
             onSend={handleSend}
             onGalleryPick={handleGalleryPick}
             onVoiceToggle={toggleVoiceInput}
+            onFileUpload={handleChatImageUpload}
             chatFileRef={chatFileRef}
             uploadError={uploadError}
           />

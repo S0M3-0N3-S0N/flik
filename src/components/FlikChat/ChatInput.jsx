@@ -15,6 +15,7 @@ const ChatInput = React.memo(function ChatInput({
   onSend,
   onGalleryPick,
   onVoiceToggle,
+  onFileUpload,
   chatFileRef,
   uploadError
 }) {
@@ -114,7 +115,7 @@ const ChatInput = React.memo(function ChatInput({
           type="file"
           accept="image/*"
           multiple
-          onChange={() => {}}
+          onChange={onFileUpload}
           className="hidden"
         />
       </form>
