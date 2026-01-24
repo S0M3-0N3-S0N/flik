@@ -1501,68 +1501,18 @@ export default function Editor() {
                    <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                  </Button>
 
-                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
-
-                <Button
-                   variant="ghost"
-                   size="icon"
-                   onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
-                   className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
-                   title="Zoom Out"
-                 >
-                   <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                 </Button>
-
-                <div className="hidden sm:block w-16 lg:w-32 px-1 sm:px-2">
-                   <Slider 
-                     value={[zoom]} 
-                     min={0.1} 
-                     max={5} 
-                     step={0.1} 
-                     onValueChange={(v) => setZoom(v[0])}
-                     className="[&_.relative]:bg-white/10 [&_.absolute]:bg-white [&_.absolute]:shadow-[0_0_10px_rgba(255,255,255,0.5)] [&_span]:border-white/50 [&_span]:shadow-lg"
-                   />
-                 </div>
-
-                <Button
-                   variant="ghost"
-                   size="icon"
-                   onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
-                   className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
-                   title="Zoom In"
-                 >
-                   <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                 </Button>
-
-                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
-
-                <Button
-                   variant="ghost"
-                   size="icon"
-                   onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
-                   className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
-                   title="Reset View"
-                 >
-                   <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                 </Button>
-
-                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
-
-                <Button
-                   variant="ghost"
-                   size="icon"
-                   onClick={() => setActiveTab('transform')}
-                   className={`hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
-                     activeTab === 'transform'
-                       ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
-                       : 'hover:bg-white/10 text-white'
-                   }`}
-                   title="Transform"
-                 >
-                   <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                 </Button>
-
-                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
+                {/* Mobile Tools Menu */}
+                <div className="lg:hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowToolsDrawer(!showToolsDrawer)}
+                    className={`w-7 h-7 rounded-lg transition-all flex-shrink-0 ${showToolsDrawer ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/10 text-white'}`}
+                    title="More tools"
+                  >
+                    <Menu className="w-4 h-4" />
+                  </Button>
+                </div>
 
                 <Button
                   variant="ghost"
