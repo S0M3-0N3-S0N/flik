@@ -57,14 +57,6 @@ export default function FlikChat() {
 
   // Memoized ReactMarkdown components configuration
   const markdownComponents = useMemo(() => ({
-    img: ({ src, alt }) => (
-      <img 
-        src={src} 
-        alt={alt} 
-        className="max-w-full h-auto rounded-lg my-2 cursor-pointer hover:opacity-90 transition-opacity"
-        onClick={() => setFullImageView(src)}
-      />
-    ),
     code: ({ inline, className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || '');
       return !inline && match ? (
@@ -105,7 +97,7 @@ export default function FlikChat() {
         {children}
       </blockquote>
     ),
-  }), [setFullImageView]);
+  }), []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -357,14 +349,6 @@ YOUR POWERS (Full App Control):
 🎨 Control all editing tools and settings
 📊 Access full user profile and creation history
 🚀 Guide entire creative workflows
-🌐 Access real-time internet information
-
-YOUR CAPABILITIES:
-- Analyze and understand uploaded images in detail
-- Access current web information for trends, inspiration, and references
-- Provide real-time insights on design, photography, and creative topics
-- Search for and reference current events, popular styles, and trends
-- Give expert advice on creative techniques using latest industry standards
 
 FLIK APP STRUCTURE:
 1. 📸 **Photo Studio (Editor)**
@@ -390,7 +374,6 @@ FLIK APP STRUCTURE:
     - Discover page with published creations
     - Like & comment on community work
     - Follow creators to see their work
-    - See notifications about interactions
 
 USER CONTEXT:
 - Name: ${userProfile?.display_name || userProfile?.full_name || 'User'}
@@ -407,7 +390,7 @@ ${allCreations.slice(0, SHOWN_CREATIONS_LIMIT).map((c, i) =>
 CONVERSATION HISTORY (last ${CONTEXT_MESSAGES_LIMIT} messages):
 ${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
 
-User: ${currentInput}${contextImages.length > 0 ? `\n📸 IMPORTANT: User has attached ${contextImages.length} image(s) to this message. You can see these images and should analyze them in detail in your response. Describe colors, composition, style, mood, and provide specific feedback!` : ''}
+User: ${currentInput}${contextImages.length > 0 ? `\n📸 IMPORTANT: User has attached ${contextImages.length} image(s) to this message. You can see these images and should analyze them in your response. Reference what you see in the images!` : ''}
 
 YOUR RESPONSE STYLE:
 - Speak as FLIK (use "I", never "the assistant")
@@ -416,8 +399,7 @@ YOUR RESPONSE STYLE:
 - Keep responses concise but complete
 - Reference their work when relevant
 - Guide to the right tools/pages
-- When images are provided, describe what you see and provide detailed, expert advice
-- Include current trends or references when relevant and helpful
+- When images are provided, describe what you see and provide relevant advice
 
 ACTIONS YOU CAN PERFORM:
 
@@ -456,7 +438,7 @@ RESPONSE FORMAT (JSON):
 
 Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         file_urls: contextImages.length > 0 ? contextImages : undefined,
-        add_context_from_internet: true,
+        add_context_from_internet: false,
         response_json_schema: {
           type: "object",
           properties: {
