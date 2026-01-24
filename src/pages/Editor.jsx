@@ -63,7 +63,11 @@ export default function Editor() {
   const [dragType, setDragType] = useState(null);
   const [layers, setLayers] = useState([]);
   const [selectedLayerId, setSelectedLayerId] = useState(null);
+  const [selectedLayerIds, setSelectedLayerIds] = useState([]);
+  const [layerGroups, setLayerGroups] = useState([]);
   const [canvasSize] = useState({ width: 1920, height: 1080 });
+  const [layerHistory, setLayerHistory] = useState([]);
+  const [layerHistoryIndex, setLayerHistoryIndex] = useState(-1);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -202,24 +206,86 @@ export default function Editor() {
     e.target.value = ''; // Reset input
   }, [layers, canvasSize, createObjectURL]);
 
-  const handleSelectLayer = useCallback((layerId) => {
+  const saveLayerState = useCallback(() => {
+    const newHistory = layerHistory.slice(0, layerHistoryIndex + 1);
+    newHistory.push(JSON.parse(JSON.stringify({ layers, groups: layerGroups })));
+    setLayerHistory(newHistory);
+    setLayerHistoryIndex(newHistory.length - 1);
+  }, [layers, layerGroups, layerHistory, layerHistoryIndex]);
+
+  const handleLayerUndo = useCallback(() => {
+    if (layerHistoryIndex > 0) {
+      const prevState = layerHistory[layerHistoryIndex - 1];
+      setLayers(prevState.layers);
+      setLayerGroups(prevState.groups);
+      setLayerHistoryIndex(layerHistoryIndex - 1);
+      toast.success('Layer action undone');
+    }
+  }, [layerHistory, layerHistoryIndex]);
+
+  const handleLayerRedo = useCallback(() => {
+    if (layerHistoryIndex < layerHistory.length - 1) {
+      const nextState = layerHistory[layerHistoryIndex + 1];
+      setLayers(nextState.layers);
+      setLayerGroups(nextState.groups);
+      setLayerHistoryIndex(layerHistoryIndex + 1);
+      toast.success('Layer action redone');
+    }
+  }, [layerHistory, layerHistoryIndex]);
+
+  const handleSelectLayer = useCallback((layerId, multiSelect = false) => {
     const layer = layers.find(l => l.id === layerId);
     if (!layer || layer.locked) return;
 
-    setSelectedLayerId(layerId);
-    setCurrentImage(layer.image);
-    setAdjustments(layer.adjustments);
-    setTransform(layer.transform);
-    setSelectedFilter(layer.filter);
+    if (multiSelect) {
+      setSelectedLayerIds(prev => 
+        prev.includes(layerId) ? prev.filter(id => id !== layerId) : [...prev, layerId]
+      );
+    } else {
+      setSelectedLayerId(layerId);
+      setSelectedLayerIds([layerId]);
+      setCurrentImage(layer.image);
+      setAdjustments(layer.adjustments);
+      setTransform(layer.transform);
+      setSelectedFilter(layer.filter);
+    }
   }, [layers]);
 
   const handleToggleVisibility = useCallback((layerId) => {
+    saveLayerState();
     setLayers(prev => prev.map(l => 
       l.id === layerId ? { ...l, visible: !l.visible } : l
     ));
-  }, []);
+  }, [saveLayerState]);
+
+  const handleBulkToggleVisibility = useCallback((visible) => {
+    if (selectedLayerIds.length === 0) return;
+    saveLayerState();
+    setLayers(prev => prev.map(l => 
+      selectedLayerIds.includes(l.id) ? { ...l, visible } : l
+    ));
+    toast.success(`${selectedLayerIds.length} layers ${visible ? 'shown' : 'hidden'}`);
+  }, [selectedLayerIds, saveLayerState]);
+
+  const handleBulkToggleLock = useCallback((locked) => {
+    if (selectedLayerIds.length === 0) return;
+    saveLayerState();
+    setLayers(prev => prev.map(l => 
+      selectedLayerIds.includes(l.id) ? { ...l, locked } : l
+    ));
+    toast.success(`${selectedLayerIds.length} layers ${locked ? 'locked' : 'unlocked'}`);
+  }, [selectedLayerIds, saveLayerState]);
+
+  const handleBulkUpdateOpacity = useCallback((opacity) => {
+    if (selectedLayerIds.length === 0) return;
+    saveLayerState();
+    setLayers(prev => prev.map(l => 
+      selectedLayerIds.includes(l.id) ? { ...l, opacity } : l
+    ));
+  }, [selectedLayerIds, saveLayerState]);
 
   const handleDeleteLayer = useCallback((layerId) => {
+    saveLayerState();
     const layer = layers.find(l => l.id === layerId);
     if (layer?.image?.preview) {
       revokeObjectURL(layer.image.preview);
@@ -236,15 +302,43 @@ export default function Editor() {
         setCurrentImage(null);
       }
     }
-  }, [layers, selectedLayerId, handleSelectLayer, revokeObjectURL]);
+  }, [layers, selectedLayerId, handleSelectLayer, revokeObjectURL, saveLayerState]);
+
+  const handleBulkDeleteLayers = useCallback(() => {
+    if (selectedLayerIds.length === 0) return;
+    saveLayerState();
+    
+    selectedLayerIds.forEach(layerId => {
+      const layer = layers.find(l => l.id === layerId);
+      if (layer?.image?.preview) {
+        revokeObjectURL(layer.image.preview);
+      }
+    });
+
+    setLayers(prev => prev.filter(l => !selectedLayerIds.includes(l.id)));
+    setSelectedLayerIds([]);
+    setSelectedLayerId(null);
+    setCurrentImage(null);
+    toast.success(`${selectedLayerIds.length} layers deleted`);
+  }, [selectedLayerIds, layers, revokeObjectURL, saveLayerState]);
 
   const handleToggleLock = useCallback((layerId) => {
+    saveLayerState();
     setLayers(prev => prev.map(l => 
       l.id === layerId ? { ...l, locked: !l.locked } : l
     ));
-  }, []);
+  }, [saveLayerState]);
+
+  const handleRenameLayer = useCallback((layerId, newName) => {
+    saveLayerState();
+    setLayers(prev => prev.map(l => 
+      l.id === layerId ? { ...l, name: newName } : l
+    ));
+    toast.success('Layer renamed');
+  }, [saveLayerState]);
 
   const handleReorderLayer = useCallback((layerId, direction) => {
+    saveLayerState();
     setLayers(prev => {
       const idx = prev.findIndex(l => l.id === layerId);
       if (idx === -1) return prev;
@@ -257,13 +351,40 @@ export default function Editor() {
       [newLayers[idx], newLayers[targetIdx]] = [newLayers[targetIdx], newLayers[idx]];
       return newLayers;
     });
-  }, []);
+  }, [saveLayerState]);
+
+  const handleCreateGroup = useCallback((name, layerIds) => {
+    saveLayerState();
+    const newGroup = {
+      id: Date.now() + Math.random(),
+      name,
+      layerIds,
+      visible: true,
+      locked: false
+    };
+    setLayerGroups(prev => [...prev, newGroup]);
+    toast.success('Group created');
+  }, [saveLayerState]);
+
+  const handleDeleteGroup = useCallback((groupId) => {
+    saveLayerState();
+    setLayerGroups(prev => prev.filter(g => g.id !== groupId));
+    toast.success('Group deleted');
+  }, [saveLayerState]);
 
   const handleUpdateLayerOpacity = useCallback((layerId, opacity) => {
     setLayers(prev => prev.map(l => 
       l.id === layerId ? { ...l, opacity } : l
     ));
   }, []);
+
+  // Save initial layer state
+  useEffect(() => {
+    if (layers.length > 0 && layerHistory.length === 0) {
+      setLayerHistory([JSON.parse(JSON.stringify({ layers, groups: layerGroups }))]);
+      setLayerHistoryIndex(0);
+    }
+  }, [layers.length]);
 
   // Update selected layer when adjustments/transforms change
   useEffect(() => {
@@ -900,6 +1021,8 @@ export default function Editor() {
               <LayersPanel
                 layers={layers}
                 selectedLayerId={selectedLayerId}
+                selectedLayerIds={selectedLayerIds}
+                layerGroups={layerGroups}
                 onSelectLayer={handleSelectLayer}
                 onToggleVisibility={handleToggleVisibility}
                 onDeleteLayer={handleDeleteLayer}
@@ -907,6 +1030,17 @@ export default function Editor() {
                 onReorderLayer={handleReorderLayer}
                 onAddImageLayer={handleAddImageLayer}
                 onUpdateLayerOpacity={handleUpdateLayerOpacity}
+                onRenameLayer={handleRenameLayer}
+                onBulkToggleVisibility={handleBulkToggleVisibility}
+                onBulkToggleLock={handleBulkToggleLock}
+                onBulkUpdateOpacity={handleBulkUpdateOpacity}
+                onBulkDeleteLayers={handleBulkDeleteLayers}
+                onCreateGroup={handleCreateGroup}
+                onDeleteGroup={handleDeleteGroup}
+                onLayerUndo={handleLayerUndo}
+                onLayerRedo={handleLayerRedo}
+                canUndo={layerHistoryIndex > 0}
+                canRedo={layerHistoryIndex < layerHistory.length - 1}
               />
             </TabsContent>
 
