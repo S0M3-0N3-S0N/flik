@@ -1,16 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, RectangleHorizontal, RectangleVertical, Square } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
-import ImageGrid from "@/components/generate/ImageGrid";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
 import { useCanvas } from "@/components/hooks/useCanvas";
@@ -81,17 +75,6 @@ export default function Editor() {
   const [paintLayerVisible, setPaintLayerVisible] = useState(true);
   const [blendMode, setBlendMode] = useState('source-over');
   const [paintBrushMode, setPaintBrushMode] = useState('draw');
-  
-  // Imagine AI states
-  const [generatePrompt, setGeneratePrompt] = useState("");
-  const [selectedStyles, setSelectedStyles] = useState([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState([]);
-  const [genError, setGenError] = useState(null);
-  const [aiModel, setAiModel] = useState("default");
-  const [aspectRatio, setAspectRatio] = useState("1:1");
-  const [negativePrompt, setNegativePrompt] = useState("");
-  const [imageStrength, setImageStrength] = useState(0.5);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -371,121 +354,6 @@ export default function Editor() {
       setProcessedImage(null);
     }
   }, [processedImage, revokeObjectURL]);
-
-  const handleGenerate = async () => {
-    if (!generatePrompt.trim()) {
-      setGenError("Please enter a prompt");
-      setTimeout(() => setGenError(null), 3000);
-      return;
-    }
-    
-    setIsGenerating(true);
-    setGenError(null);
-    
-    try {
-      const selectedStyleObjects = selectedStyles.map(id => stylePresets.find(s => s.id === id)).filter(Boolean);
-      const styleInstruction = selectedStyleObjects.map(s => s.prompt).join(", ");
-      const styleLabels = selectedStyleObjects.map(s => s.label).join(" + ");
-      
-      const llmAnalysis = await base44.integrations.Core.InvokeLLM({
-        prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${generatePrompt}".
-        
-        ${currentImage ? `IMPORTANT: The user has attached a reference image. You MUST analyze this image visually. Your enhanced prompt should describe the key visual elements (subject, composition, colors) to ensure the generated image relates ${imageStrength > 0.7 ? "EXTREMELY STRICTLY (maintain exact composition)" : imageStrength < 0.4 ? "loosely (use as vague inspiration)" : "strongly"} to it, while applying the user's text prompt as modification.` : ""}
-        ${aiModel === 'gemini' ? "SMART MODE ACTIVE: Use internet capabilities for specific details about real-world entities or current events." : ""}
-
-        CRITICAL RULES:
-        1. DEFAULT to generating EXACTLY ONE prompt.
-        2. ONLY generate multiple if user explicitly specifies quantity.
-
-        Enhancement Tasks:
-        1. Improve prompt quality with professional details: lighting, camera, composition, textures.
-        2. Make it a masterpiece.
-        3. Maintain original intent.
-        ${selectedStyleObjects.length > 0 ? `4. Apply style blend: ${styleLabels} (${styleInstruction}).` : ''}
-
-        Return JSON: { "prompts": ["enhanced prompt"] }`,
-        file_urls: currentImage ? [currentImage.url || currentImage.preview] : undefined,
-        add_context_from_internet: aiModel === 'gemini' && !currentImage,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            prompts: { type: "array", items: { type: "string" } }
-          },
-          required: ["prompts"]
-        }
-      });
-      
-      const promptsToGenerate = (llmAnalysis.prompts || [generatePrompt]).slice(0, 5);
-
-      const promises = promptsToGenerate.map(async (finalPrompt) => {
-        try {
-          let fullPrompt = selectedStyleObjects.length > 0
-            ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
-            : `${finalPrompt}, masterpiece, high quality, detailed`;
-          
-          if (aspectRatio === "16:9") fullPrompt += ", wide cinematic shot, 16:9 aspect ratio";
-          else if (aspectRatio === "9:16") fullPrompt += ", tall portrait shot, 9:16 aspect ratio";
-          
-          if (negativePrompt.trim()) {
-            fullPrompt += ` --no ${negativePrompt.trim()}`;
-          }
-
-          const imageResult = await base44.integrations.Core.GenerateImage({
-            prompt: fullPrompt,
-            existing_image_urls: currentImage ? [currentImage.url || currentImage.preview] : undefined
-          });
-
-          await base44.entities.Creation.create({
-            title: generatePrompt.slice(0, 100) || 'AI Generated Image',
-            type: 'image',
-            url: imageResult.url,
-            thumbnail_url: imageResult.url,
-            prompt: generatePrompt,
-            metadata: { 
-              style: selectedStyles, 
-              model: aiModel, 
-              enhancedPrompt: fullPrompt, 
-              batchSize: promptsToGenerate.length,
-              aspectRatio,
-              negativePrompt,
-              imageStrength: currentImage ? imageStrength : null
-            }
-          }, { data_env: "dev" });
-
-          return {
-            id: Date.now() + Math.random(),
-            url: imageResult.url,
-            prompt: generatePrompt,
-            enhancedPrompt: fullPrompt,
-            style: selectedStyles,
-            model: aiModel,
-            timestamp: new Date().toISOString()
-          };
-        } catch (e) {
-          console.error("Single generation failed:", e);
-          return null;
-        }
-      });
-
-      const results = await Promise.allSettled(promises);
-      const successfulImages = results
-        .filter(r => r.status === 'fulfilled' && r.value !== null)
-        .map(r => r.value);
-
-      if (successfulImages.length === 0) {
-        throw new Error("Failed to generate any images.");
-      }
-
-      setGeneratedImages([...successfulImages, ...generatedImages]);
-      setGeneratePrompt("");
-      setSelectedStyles([]);
-    } catch (err) {
-      console.error("Error generating image:", err);
-      setGenError("Failed to generate. " + (err.message || "Please try again."));
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleUndo = useCallback(() => {
     if (undoHistory.length > 0) {
@@ -1272,156 +1140,11 @@ export default function Editor() {
 
           <div className="px-4 pb-4">
             <TabsContent value="ai" className="mt-0">
-              <div className="space-y-4">
-                <div className="space-y-4">
-                  <textarea
-                    value={generatePrompt}
-                    onChange={(e) => setGeneratePrompt(e.target.value)}
-                    placeholder="Describe your vision..."
-                    className="w-full min-h-[100px] bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm resize-none focus:outline-none focus:border-[#FF6B35]"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                        handleGenerate();
-                      }
-                    }}
-                  />
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Select value={aiModel} onValueChange={setAiModel}>
-                      <SelectTrigger className="h-9 w-auto bg-white/5 border-white/10 hover:bg-white/10 text-white text-xs rounded-lg gap-2 px-3 focus:ring-0">
-                        <Sparkles className={`w-3.5 h-3.5 ${aiModel === 'gemini' ? 'text-[#FF6B35]' : 'text-white/50'}`} />
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Standard</SelectItem>
-                        <SelectItem value="gemini">Smart Enhanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button 
-                          className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors ${
-                            (aspectRatio !== "1:1" || negativePrompt) 
-                              ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                              : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-                          }`}
-                        >
-                          <Settings2 className="w-4 h-4" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl">
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
-                            <div className="grid grid-cols-3 gap-2">
-                              {[
-                                { id: "1:1", icon: Square, label: "Square" },
-                                { id: "16:9", icon: RectangleHorizontal, label: "Landscape" },
-                                { id: "9:16", icon: RectangleVertical, label: "Portrait" }
-                              ].map((ratio) => (
-                                <button
-                                  key={ratio.id}
-                                  onClick={() => setAspectRatio(ratio.id)}
-                                  className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
-                                    aspectRatio === ratio.id 
-                                      ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                      : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
-                                  }`}
-                                >
-                                  <ratio.icon className="w-4 h-4" />
-                                  <span className="text-[10px]">{ratio.label}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
-                            <Input 
-                              value={negativePrompt}
-                              onChange={(e) => setNegativePrompt(e.target.value)}
-                              placeholder="Things to avoid..."
-                              className="bg-black/20 border-white/10 h-8 text-xs text-white"
-                            />
-                          </div>
-
-                          {currentImage && (
-                            <div className="space-y-3">
-                              <div className="flex justify-between">
-                                <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
-                                <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
-                              </div>
-                              <Slider 
-                                value={[imageStrength]} 
-                                min={0.1} 
-                                max={0.9} 
-                                step={0.1} 
-                                onValueChange={(v) => setImageStrength(v[0])}
-                                className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
-                              />
-                              <p className="text-[10px] text-white/40 leading-tight">
-                                Use current image as reference
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <Button
-                    onClick={() => handleGenerate()}
-                    disabled={!generatePrompt.trim() || isGenerating}
-                    className="w-full btn-gradient text-white rounded-xl h-12 shadow-lg shadow-[#FF6B35]/20"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Generating
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Generate
-                      </>
-                    )}
-                  </Button>
-
-                  <StyleSelector 
-                    selectedStyles={selectedStyles} 
-                    onSelect={setSelectedStyles} 
-                    onClear={() => setSelectedStyles([])} 
-                  />
-
-                  {genError && (
-                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
-                      {genError}
-                    </div>
-                  )}
-
-                  {generatedImages.length > 0 && (
-                    <div className="pt-4 border-t border-white/10">
-                      <ImageGrid 
-                        images={generatedImages} 
-                        onDelete={(id) => setGeneratedImages(prev => prev.filter(i => i.id !== id))} 
-                        onClearAll={() => setGeneratedImages([])}
-                        isGenerating={isGenerating}
-                        stylePresets={stylePresets}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Quick AI Tools</h3>
-                  <ToolPanel 
-                    onToolSelect={handleToolSelect} 
-                    isProcessing={isProcessing}
-                    hasImage={!!currentImage}
-                  />
-                </div>
-              </div>
+              <ToolPanel 
+                onToolSelect={handleToolSelect} 
+                isProcessing={isProcessing}
+                hasImage={!!currentImage}
+              />
             </TabsContent>
 
             <TabsContent value="batch" className="mt-0">
