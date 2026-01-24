@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Eye, EyeOff, Trash2, Image as ImageIcon, Lock, Unlock, ChevronUp, ChevronDown, Edit2, Check, X, Folder, FolderPlus, RotateCcw, RotateCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Eye, EyeOff, Trash2, Image as ImageIcon, Lock, Unlock, ChevronUp, ChevronDown, Edit2, Check, X, Folder, FolderPlus, RotateCcw, RotateCw, Layers as LayersIcon, Blend } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -28,8 +29,43 @@ export default function LayersPanel({
   onLayerUndo,
   onLayerRedo,
   canUndo,
-  canRedo
+  canRedo,
+  onUpdateLayerBlendMode,
+  onUpdateLayerFilter
 }) {
+  const BLEND_MODES = [
+    { value: 'normal', label: 'Normal' },
+    { value: 'multiply', label: 'Multiply' },
+    { value: 'screen', label: 'Screen' },
+    { value: 'overlay', label: 'Overlay' },
+    { value: 'darken', label: 'Darken' },
+    { value: 'lighten', label: 'Lighten' },
+    { value: 'color-dodge', label: 'Color Dodge' },
+    { value: 'color-burn', label: 'Color Burn' },
+    { value: 'hard-light', label: 'Hard Light' },
+    { value: 'soft-light', label: 'Soft Light' },
+    { value: 'difference', label: 'Difference' },
+    { value: 'exclusion', label: 'Exclusion' },
+    { value: 'hue', label: 'Hue' },
+    { value: 'saturation', label: 'Saturation' },
+    { value: 'color', label: 'Color' },
+    { value: 'luminosity', label: 'Luminosity' }
+  ];
+
+  const ADVANCED_FILTERS = [
+    { id: 'none', name: 'None', filter: 'none' },
+    { id: 'vintage', name: 'Vintage', filter: 'sepia(40%) contrast(120%) brightness(90%)' },
+    { id: 'dramatic', name: 'Dramatic', filter: 'contrast(150%) saturate(130%) brightness(90%)' },
+    { id: 'cool', name: 'Cool', filter: 'saturate(120%) hue-rotate(-10deg) brightness(105%)' },
+    { id: 'warm', name: 'Warm', filter: 'saturate(120%) hue-rotate(10deg) brightness(105%)' },
+    { id: 'fade', name: 'Fade', filter: 'brightness(110%) saturate(80%) contrast(90%)' },
+    { id: 'noir', name: 'Noir', filter: 'grayscale(100%) contrast(140%) brightness(95%)' },
+    { id: 'glow', name: 'Glow', filter: 'brightness(115%) saturate(130%) blur(0.5px)' },
+    { id: 'cyberpunk', name: 'Cyberpunk', filter: 'saturate(200%) hue-rotate(-20deg) contrast(120%)' },
+    { id: 'dreamy', name: 'Dreamy', filter: 'saturate(70%) brightness(110%) blur(1px)' },
+    { id: 'sharpen', name: 'Sharpen', filter: 'contrast(120%) brightness(105%)' },
+    { id: 'vignette', name: 'Vignette', filter: 'brightness(95%) contrast(110%)' }
+  ];
   const [editingLayerId, setEditingLayerId] = useState(null);
   const [editingName, setEditingName] = useState("");
   const [groupName, setGroupName] = useState("");
@@ -420,9 +456,12 @@ export default function LayersPanel({
                   </div>
 
                   {isSelected && selectedLayerIds.length === 1 && (
-                    <div className="mt-3 pt-3 border-t border-white/10">
+                    <div className="mt-3 pt-3 border-t border-white/10 space-y-4">
                       <div className="space-y-2">
-                        <label className="text-xs text-white/60">Layer Opacity</label>
+                        <label className="text-xs text-white/60 flex items-center gap-1">
+                          <LayersIcon className="w-3 h-3" />
+                          Opacity
+                        </label>
                         <Slider
                           value={[layer.opacity]}
                           onValueChange={(value) => onUpdateLayerOpacity(layer.id, value[0])}
@@ -433,7 +472,60 @@ export default function LayersPanel({
                         />
                       </div>
 
-                      <div className="flex gap-1 mt-3">
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60 flex items-center gap-1">
+                          <Blend className="w-3 h-3" />
+                          Blend Mode
+                        </label>
+                        <Select 
+                          value={layer.blendMode || 'normal'} 
+                          onValueChange={(value) => {
+                            onUpdateLayerBlendMode(layer.id, value);
+                          }}
+                        >
+                          <SelectTrigger 
+                            className="bg-white/5 border-white/10 text-white h-8 text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#1a1a1a] border-white/10">
+                            {BLEND_MODES.map(mode => (
+                              <SelectItem 
+                                key={mode.value} 
+                                value={mode.value}
+                                className="text-white text-xs hover:bg-white/10 focus:bg-white/10"
+                              >
+                                {mode.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Advanced Filters</label>
+                        <div className="grid grid-cols-3 gap-1">
+                          {ADVANCED_FILTERS.map(filter => (
+                            <button
+                              key={filter.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUpdateLayerFilter(layer.id, filter);
+                              }}
+                              className={`p-2 rounded-lg text-xs transition-all ${
+                                layer.filter?.id === filter.id
+                                  ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
+                                  : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/5'
+                              }`}
+                            >
+                              {filter.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-1 pt-2 border-t border-white/10">
                         <Button
                           size="sm"
                           variant="ghost"

@@ -183,6 +183,7 @@ export default function Editor() {
         visible: true,
         locked: false,
         opacity: 100,
+        blendMode: 'normal',
         x: 0,
         y: 0,
         width: canvasSize.width,
@@ -375,6 +376,18 @@ export default function Editor() {
   const handleUpdateLayerOpacity = useCallback((layerId, opacity) => {
     setLayers(prev => prev.map(l => 
       l.id === layerId ? { ...l, opacity } : l
+    ));
+  }, []);
+
+  const handleUpdateLayerBlendMode = useCallback((layerId, blendMode) => {
+    setLayers(prev => prev.map(l => 
+      l.id === layerId ? { ...l, blendMode } : l
+    ));
+  }, []);
+
+  const handleUpdateLayerFilter = useCallback((layerId, filter) => {
+    setLayers(prev => prev.map(l => 
+      l.id === layerId ? { ...l, filter } : l
     ));
   }, []);
 
@@ -1041,7 +1054,9 @@ export default function Editor() {
                 onLayerRedo={handleLayerRedo}
                 canUndo={layerHistoryIndex > 0}
                 canRedo={layerHistoryIndex < layerHistory.length - 1}
-              />
+                onUpdateLayerBlendMode={handleUpdateLayerBlendMode}
+                onUpdateLayerFilter={handleUpdateLayerFilter}
+                />
             </TabsContent>
 
             <TabsContent value="adjust" className="mt-0">
@@ -1284,6 +1299,7 @@ export default function Editor() {
                           top: 0,
                           left: 0,
                           opacity: layer.opacity / 100,
+                          mixBlendMode: layer.blendMode || 'normal',
                           filter: (() => {
                             const filters = [];
                             if (layer.adjustments?.brightness !== 0) filters.push(`brightness(${100 + layer.adjustments.brightness}%)`);
