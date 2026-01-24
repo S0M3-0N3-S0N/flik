@@ -1133,14 +1133,14 @@ export default function Editor() {
                 }}
               >
                 {layers.length > 0 ? (
-                  <div className="relative" style={{ width: canvasSize.width, height: canvasSize.height, maxWidth: '100%', maxHeight: '100%' }}>
+                  <div className="relative max-w-full max-h-full" style={{ aspectRatio: `${canvasSize.width} / ${canvasSize.height}` }}>
                     {layers.filter(l => l.visible).map(layer => (
                       <img
                         key={layer.id}
                         src={layer.image.preview || layer.image.url}
                         alt={layer.name}
-                        className={`absolute inset-0 w-full h-full object-contain ${
-                          selectedLayerId === layer.id ? 'ring-2 ring-[#FF6B35]' : ''
+                        className={`absolute inset-0 w-full h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
+                          selectedLayerId === layer.id ? 'ring-2 ring-[#FF6B35] ring-offset-2 ring-offset-black' : ''
                         }`}
                         style={{
                           opacity: layer.opacity / 100,
