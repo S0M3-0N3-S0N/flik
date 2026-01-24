@@ -33,6 +33,19 @@ export default function Messages() {
     enabled: !!currentUser?.email,
   });
 
+  // Real-time subscription & auto-mark as read
+  React.useEffect(() => {
+    if (!currentUser?.email) return;
+    const unsubscribe = base44.entities.Message.subscribe((event) => {
+      if (event.type === 'create' && event.data?.recipient_email === currentUser.email) {
+        queryClient.invalidateQueries({ queryKey: ['messages'] });
+        // Auto-mark as read
+        base44.entities.Message.update(event.data.id, { is_read: true });
+      }
+    });
+    return unsubscribe;
+  }, [currentUser?.email, queryClient]);
+
   const sendMessageMutation = useMutation({
     mutationFn: (data) => base44.entities.Message.create(data),
     onSuccess: () => {
