@@ -229,6 +229,11 @@ export default function Generate() {
     setGeneratedImages(generatedImages.filter(img => img.id !== id));
   };
 
+  const addCreationAsReference = (creation) => {
+    setUploadedImages(prev => [...prev, { url: creation.url, id: creation.id }]);
+    setShowGallery(false);
+  };
+
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <section className="relative py-20 px-6 overflow-hidden">
