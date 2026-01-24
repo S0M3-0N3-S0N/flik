@@ -137,9 +137,14 @@ export default function Generate() {
       });
       
       promptsToGenerate = llmAnalysis.prompts || [prompt];
-      
-      // Limit to 5 max to prevent abuse/timeout
-      if (promptsToGenerate.length > 5) promptsToGenerate = promptsToGenerate.slice(0, 5);
+
+      // Ensure we have the correct number of prompts
+      while (promptsToGenerate.length < batchCount) {
+        promptsToGenerate.push(prompt);
+      }
+      if (promptsToGenerate.length > batchCount) {
+        promptsToGenerate = promptsToGenerate.slice(0, batchCount);
+      }
 
       // Step 2: Generate all images
       const promises = promptsToGenerate.map(async (finalPrompt) => {
