@@ -99,8 +99,8 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] py-8 px-4 overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-[#0A0A0A] py-8 px-4 overflow-hidden">
+      <div className="max-w-2xl mx-auto overflow-y-auto h-[calc(100vh-4rem)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <h1 className="text-3xl font-bold gradient-text mb-8 text-center">
           Discover
         </h1>
