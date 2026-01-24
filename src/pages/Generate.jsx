@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wand2, Loader2, Zap, Upload, X, MessageSquare, Settings2, RectangleHorizontal, RectangleVertical, Square, Ban, Image as ImageIcon, Check, AlertCircle } from "lucide-react";
+import { Wand2, Loader2, Zap, Upload, X, MessageSquare, Settings2, RectangleHorizontal, RectangleVertical, Square, Ban, Image as ImageIcon, Check, AlertCircle, Grid3x3 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -403,7 +403,7 @@ export default function Generate() {
                     className="h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors"
                     title="Add from gallery"
                   >
-                    <ImageIcon className="w-3.5 h-3.5" />
+                    <Grid3x3 className="w-3.5 h-3.5" />
                     Gallery
                   </button>
 
