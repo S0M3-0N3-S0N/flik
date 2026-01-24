@@ -874,7 +874,7 @@ export default function Editor() {
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-5 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
@@ -889,9 +889,6 @@ export default function Editor() {
             </TabsTrigger>
             <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <RotateCw className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Wand2 className="w-4 h-4" />
             </TabsTrigger>
           </TabsList>
 
@@ -1107,10 +1104,8 @@ export default function Editor() {
                 <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
                 {currentImage ? (
                   <CropPanel
-                    onStartCrop={handleStartCrop}
                     onApplyCrop={handleApplyCrop}
                     onCancelCrop={handleCancelCrop}
-                    isCropping={isCropping}
                   />
                 ) : (
                   <p className="text-white/40 text-sm">Upload an image to start</p>

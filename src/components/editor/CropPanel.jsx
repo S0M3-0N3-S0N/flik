@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Crop, Check, X } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function CropPanel({ onStartCrop, onApplyCrop, onCancelCrop, isCropping }) {
+export default function CropPanel({ onApplyCrop, onCancelCrop }) {
   return (
     <div className="py-6 px-4 space-y-6">
       <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
@@ -21,37 +21,23 @@ export default function CropPanel({ onStartCrop, onApplyCrop, onCancelCrop, isCr
         </p>
       </div>
       
-      {!isCropping ? (
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={onStartCrop}
-          className="w-full group relative p-4 rounded-2xl border border-dashed border-white/20 hover:border-[#FF6B35]/50 bg-white/[0.02] hover:bg-[#FF6B35]/5 transition-all text-center"
+      <div className="flex flex-col gap-3">
+        <Button 
+          onClick={onApplyCrop} 
+          className="w-full btn-gradient text-white h-12 rounded-xl shadow-lg shadow-[#FF6B35]/20"
         >
-          <div className="w-12 h-12 rounded-full bg-white/5 group-hover:bg-[#FF6B35]/20 flex items-center justify-center mx-auto mb-3 transition-colors">
-            <Crop className="w-6 h-6 text-white/60 group-hover:text-[#FF6B35]" />
-          </div>
-          <span className="text-sm font-medium text-white group-hover:text-[#FF6B35]">Enable Crop Tool</span>
-        </motion.button>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <Button 
-            onClick={onApplyCrop} 
-            className="w-full btn-gradient text-white h-12 rounded-xl shadow-lg shadow-[#FF6B35]/20"
-          >
-            <Check className="w-4 h-4 mr-2" />
-            Apply Crop
-          </Button>
-          <Button 
-            onClick={onCancelCrop} 
-            variant="ghost" 
-            className="w-full text-white/60 hover:text-white hover:bg-white/5 h-12 rounded-xl"
-          >
-            <X className="w-4 h-4 mr-2" />
-            Cancel
-          </Button>
-        </div>
-      )}
+          <Check className="w-4 h-4 mr-2" />
+          Apply Crop
+        </Button>
+        <Button 
+          onClick={onCancelCrop} 
+          variant="ghost" 
+          className="w-full text-white/60 hover:text-white hover:bg-white/5 h-12 rounded-xl"
+        >
+          <X className="w-4 h-4 mr-2" />
+          Cancel
+        </Button>
+      </div>
     </div>
   );
 }
