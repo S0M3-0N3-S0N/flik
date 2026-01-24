@@ -483,7 +483,11 @@ export default function Editor() {
     setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
     setAdjustments(newAdjustments);
     setRedoHistory([]);
-  }, [currentImage, adjustments, selectedFilter, transform, paintStrokes]);
+    // Persist adjustment changes
+    if (activeBatchIndex !== null) {
+      saveCurrentStateToBatch();
+    }
+  }, [currentImage, adjustments, selectedFilter, transform, paintStrokes, activeBatchIndex, saveCurrentStateToBatch]);
 
   const handleFilterSelect = useCallback((filter) => {
     setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
