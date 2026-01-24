@@ -49,7 +49,7 @@ export default function FlikChat() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
   const [isListening, setIsListening] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
@@ -57,6 +57,8 @@ export default function FlikChat() {
   const abortControllerRef = useRef(null);
   const isFetchingUserDataRef = useRef(false);
   const recognitionRef = useRef(null);
+  const speechQueueRef = useRef([]);
+  const isSpeakingRef = useRef(false);
 
   // Memoized ReactMarkdown components configuration
   const markdownComponents = useMemo(() => ({
@@ -159,8 +161,40 @@ export default function FlikChat() {
   const toggleVoiceOutput = () => {
     if (voiceEnabled) {
       window.speechSynthesis?.cancel();
+      isSpeakingRef.current = false;
+      speechQueueRef.current = [];
     }
     setVoiceEnabled(!voiceEnabled);
+  };
+
+  const enqueueSpeech = (text) => {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    speechQueueRef.current.push(text);
+    processSpeechQueue();
+  };
+
+  const processSpeechQueue = () => {
+    if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
+    
+    isSpeakingRef.current = true;
+    const text = speechQueueRef.current.shift();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    utterance.onend = () => {
+      isSpeakingRef.current = false;
+      processSpeechQueue();
+    };
+    
+    utterance.onerror = () => {
+      isSpeakingRef.current = false;
+      processSpeechQueue();
+    };
+    
+    window.speechSynthesis.speak(utterance);
   };
 
   const getCurrentPage = useCallback(() => {
@@ -450,14 +484,15 @@ ${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User'
 
 User: ${currentInput}${contextImages.length > 0 ? `\n📸 IMPORTANT: User has attached ${contextImages.length} image(s) to this message. You can see these images and should analyze them in your response. Reference what you see in the images!` : ''}
 
-YOUR RESPONSE STYLE:
-- Speak as FLIK (use "I", never "the assistant")
-- Be enthusiastic and creative ✨
-- Use emojis naturally but don't overdo it
-- Keep responses concise but complete
+YOUR RESPONSE STYLE (FOR SPOKEN CONVERSATION):
+- Speak as FLIK naturally, like a calm friendly person
+- Keep it conversational and natural, no emojis or markdown
+- Use short sentences with natural pauses
+- Be concise - responses under 30 seconds of speech time
+- Speak clearly without technical jargon
 - Reference their work when relevant
-- Guide to the right tools/pages
-- When images are provided, describe what you see and provide relevant advice
+- Guide to the right tools/pages naturally
+- When images are provided, briefly describe what you see
 
 ACTIONS YOU CAN PERFORM:
 
@@ -531,9 +566,15 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
       };
       setMessages(prev => [...prev, assistantMsg]);
       
-      // Speak response if voice output is enabled
+      // Speak response in natural sentences if voice output is enabled
       if (voiceEnabled) {
-        setTimeout(() => speakResponse(response.message), 500);
+        const sentences = response.message
+          .split(/(?<=[.!?])\s+/)
+          .filter(s => s.trim().length > 0);
+        
+        sentences.forEach(sentence => {
+          enqueueSpeech(sentence.trim());
+        });
       }
     } catch (error) {
       if (error.name === 'AbortError') {
