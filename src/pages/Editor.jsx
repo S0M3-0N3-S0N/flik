@@ -436,27 +436,27 @@ export default function Editor() {
   }, [redoHistory, currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
   const handleDownload = useCallback(async () => {
-    if (!currentImage) return;
-    try {
-      const blob = await getProcessedImageWithPaint();
-      if (!blob) {
-        toast.error("Could not get image data to download.");
-        return;
+      if (!currentImage) return;
+      try {
+        const blob = await getProcessedImageWithPaint();
+        if (!blob) {
+          toast.error("Could not get image data to download.");
+          return;
+        }
+        const url = createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `flik_${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => revokeObjectURL(url), 100);
+        toast.success("Image downloaded successfully!");
+      } catch (e) {
+        console.error("Download failed", e);
+        toast.error("Download failed. Please try again.");
       }
-      const url = createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `flik_${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      revokeObjectURL(url);
-      toast.success("Image downloaded successfully!");
-    } catch (e) {
-      console.error("Download failed", e);
-      toast.error("Download failed. Please try again.");
-    }
-  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL]);
+    }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL, getProcessedImageWithPaint]);
 
   const getProcessedImageWithPaint = useCallback(async () => {
     if (!currentImage) return null;
