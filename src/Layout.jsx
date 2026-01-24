@@ -232,18 +232,16 @@ function LayoutContent({ children, currentPageName }) {
                 <Sparkles className="w-4 h-4" />
                 Discover
               </Link>
-              <Link 
-                to={createPageUrl("Profile")} 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Profile" ? "text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                <User className="w-4 h-4" />
-                {t("nav.profile")}
-              </Link>
             </nav>
             
             <div className="flex items-center gap-4">
+              <Link 
+                to={createPageUrl("Profile")} 
+                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span className="text-sm font-medium">{t("nav.profile")}</span>
+              </Link>
 
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -301,11 +299,13 @@ function LayoutContent({ children, currentPageName }) {
                     Discover
                   </Link>
 
+                  <div className="border-t border-white/10 my-2"></div>
+
                   <Link 
                     to={createPageUrl("Profile")} 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                      currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                    className={`flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 transition-colors ${
+                      currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white hover:bg-white/10"
                     }`}
                   >
                     <User className="w-5 h-5" />
