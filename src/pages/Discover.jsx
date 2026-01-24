@@ -99,7 +99,7 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] py-8 px-4">
+    <div className="min-h-screen bg-[#0A0A0A] py-8 px-4 overflow-x-hidden">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold gradient-text mb-8 text-center">
           Discover
