@@ -592,6 +592,16 @@ export default function Profile() {
                 <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="break-all">{user.email}</span>
               </p>
+              <div className="mt-3 sm:mt-4 flex items-center gap-4 text-xs sm:text-sm text-white/60 justify-center md:justify-start flex-wrap">
+                <div className="flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span><span className="text-white font-medium">{followerCount}</span> followers</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span><span className="text-white font-medium">{followingCount}</span> following</span>
+                </div>
+              </div>
               <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
