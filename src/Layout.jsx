@@ -331,6 +331,30 @@ function LayoutContent({ children, currentPageName }) {
                   <div className="border-t border-white/10 my-2"></div>
 
                   <Link 
+                    to={createPageUrl("Messages")} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                      currentPageName === "Messages" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                    Messages
+                  </Link>
+
+                  <Link 
+                    to={createPageUrl("Notifications")} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                      currentPageName === "Notifications" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Bell className="w-5 h-5" />
+                    Notifications
+                  </Link>
+
+                  <div className="border-t border-white/10 my-2"></div>
+
+                  <Link 
                     to={createPageUrl("Profile")} 
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 transition-colors ${
@@ -340,7 +364,7 @@ function LayoutContent({ children, currentPageName }) {
                     <User className="w-5 h-5" />
                     {t("nav.profile")}
                   </Link>
-                </nav>
+                  </nav>
               </motion.div>
             )}
           </AnimatePresence>
