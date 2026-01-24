@@ -1,19 +1,17 @@
+import Discover from './pages/Discover';
 import Editor from './pages/Editor';
 import Generate from './pages/Generate';
-import Discover from './pages/Discover';
 import Profile from './pages/Profile';
 import Messages from './pages/Messages';
-import Notifications from './pages/Notifications';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Discover": Discover,
     "Editor": Editor,
     "Generate": Generate,
-    "Discover": Discover,
     "Profile": Profile,
     "Messages": Messages,
-    "Notifications": Notifications,
 }
 
 export const pagesConfig = {
