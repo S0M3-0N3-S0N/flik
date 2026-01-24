@@ -109,49 +109,57 @@ export function useMagicBrush() {
 
       // 3. Analyze with LLM
       if (setActiveTool) setActiveTool({ label: "Analyzing Request..." });
-      const instruction = magicBrushPrompt.trim() || "remove this object and fill the background seamlessly";
-      const hasReferences = magicBrushImages.length > 0;
+      const instruction = magicBrushPrompt?.trim() || "remove this object and fill the background seamlessly";
+      const hasReferences = magicBrushImages?.length > 0;
 
-      const llmResponse = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a world-class AI visual director.
+      let llmResponse;
+      try {
+        const response = await base44.integrations.Core.InvokeLLM({
+          prompt: `You are a world-class AI visual director.
 
-        TASK: Inpainting / Image Editing.
-        
-        INPUTS:
-        1. "Visual Reference": Image with the edit area marked in RED.
-        2. "Original": The clean original image.
-        ${hasReferences ? "3. Reference Images: User provided style/object references." : ""}
-        
-        USER INSTRUCTION: "${instruction}"
-        
-        TECHNICAL CONTEXT:
-        - We will send the image to a generator with the RED area made TRANSPARENT (erased).
-        - The generator will fill the transparent pixels.
-        - We need a prompt that describes the FINAL DESIRED IMAGE key elements, ensuring the filled area matches the surroundings.
+          TASK: Inpainting / Image Editing.
+          
+          INPUTS:
+          1. "Visual Reference": Image with the edit area marked in RED.
+          2. "Original": The clean original image.
+          ${hasReferences ? "3. Reference Images: User provided style/object references." : ""}
+          
+          USER INSTRUCTION: "${instruction}"
+          
+          TECHNICAL CONTEXT:
+          - We will send the image to a generator with the RED area made TRANSPARENT (erased).
+          - The generator will fill the transparent pixels.
+          - We need a prompt that describes the FINAL DESIRED IMAGE key elements, ensuring the filled area matches the surroundings.
 
-        YOUR GOAL:
-        Write a robust Stable Diffusion / DALL-E style prompt that describes the SCENE as it should look AFTER the edit.
-        
-        GUIDELINES:
-        - Do NOT mention "red mask" or "remove red" in the final prompt (the generator won't see red, it sees transparency).
-        - FOCUS ON LIGHTING & TEXTURE MATCHING: The generated pixels must match the noise, grain, and lighting of the surrounding "Original" image.
-        - IF REMOVING: "Fill the hole with [specific background details] that continues the surrounding pattern, matching the lighting and texture perfectly."
-        - IF ADDING: "Place [object] in the hole, ensuring it casts correct shadows based on the scene's light source, and matches the camera's focal length and grain."
-        - IF REPLACING: "Replace the object with [new object], blending edges seamlessly."
-        - KEYWORDS to always include: "seamless inpainting, matching noise, invisible edit, photorealistic, 8k, consistent lighting".
-        
-        OUTPUT:
-        Return ONLY the raw prompt string.`,
-        file_urls: [redUpload.file_url, cleanUpload.file_url, ...magicBrushImages]
-      });
+          YOUR GOAL:
+          Write a robust Stable Diffusion / DALL-E style prompt that describes the SCENE as it should look AFTER the edit.
+          
+          GUIDELINES:
+          - Do NOT mention "red mask" or "remove red" in the final prompt (the generator won't see red, it sees transparency).
+          - FOCUS ON LIGHTING & TEXTURE MATCHING: The generated pixels must match the noise, grain, and lighting of the surrounding "Original" image.
+          - IF REMOVING: "Fill the hole with [specific background details] that continues the surrounding pattern, matching the lighting and texture perfectly."
+          - IF ADDING: "Place [object] in the hole, ensuring it casts correct shadows based on the scene's light source, and matches the camera's focal length and grain."
+          - IF REPLACING: "Replace the object with [new object], blending edges seamlessly."
+          - KEYWORDS to always include: "seamless inpainting, matching noise, invisible edit, photorealistic, 8k, consistent lighting".
+          
+          OUTPUT:
+          Return ONLY the raw prompt string.`,
+          file_urls: [redUpload.file_url, cleanUpload.file_url, ...(magicBrushImages || [])]
+        });
+        llmResponse = response || instruction;
+      } catch (e) {
+        console.error("LLM analysis failed:", e);
+        llmResponse = instruction;
+      }
 
       // 4. Generate
       if (setActiveTool) setActiveTool({ label: "Applying Magic..." });
       const result = await base44.integrations.Core.GenerateImage({
         prompt: llmResponse,
-        existing_image_urls: [alphaUpload.file_url, ...magicBrushImages]
+        existing_image_urls: [alphaUpload.file_url, ...(magicBrushImages || [])]
       });
 
+      if (!result?.url) throw new Error('Generation failed - no URL returned');
       return result.url;
     } catch (error) {
       console.error("Error executing magic brush:", error);
