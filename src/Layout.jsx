@@ -436,10 +436,14 @@ function LayoutContent({ children, currentPageName }) {
         );
         }
 
+        import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
+
         export default function Layout({ children, currentPageName }) {
-        return (
-        <FlikProvider>
-        <LayoutContent children={children} currentPageName={currentPageName} />
-        </FlikProvider>
-        );
-        }
+          return (
+          <ErrorBoundaryWrapper>
+            <FlikProvider>
+              <LayoutContent children={children} currentPageName={currentPageName} />
+            </FlikProvider>
+          </ErrorBoundaryWrapper>
+          );
+          }
