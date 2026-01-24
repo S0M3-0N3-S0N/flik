@@ -1059,29 +1059,31 @@ export default function Profile() {
                             )}
                           </div>
                           <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                togglePublishMutation.mutate({ 
-                                  id: item.id, 
-                                  published: !item.published_to_discover 
-                                });
-                              }}
-                              className={`border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2 ${
-                                item.published_to_discover 
-                                  ? 'bg-green-500/30 hover:bg-green-500/40' 
-                                  : 'bg-white/20 hover:bg-white/30'
-                              } text-white`}
-                              title={item.published_to_discover ? 'Unpublish from Discover' : 'Publish to Discover'}
-                            >
-                              {item.published_to_discover ? (
-                                <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              ) : (
-                                <EyeOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              )}
-                              <span className="hidden sm:inline ml-1">Public</span>
-                            </Button>
+                            {currentUser?.role === 'admin' && (
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePublishMutation.mutate({ 
+                                    id: item.id, 
+                                    published: !item.published_to_discover 
+                                  });
+                                }}
+                                className={`border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2 ${
+                                  item.published_to_discover 
+                                    ? 'bg-green-500/30 hover:bg-green-500/40' 
+                                    : 'bg-white/20 hover:bg-white/30'
+                                } text-white`}
+                                title={item.published_to_discover ? 'Unpublish from Discover' : 'Publish to Discover'}
+                              >
+                                {item.published_to_discover ? (
+                                  <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                ) : (
+                                  <EyeOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                )}
+                                <span className="hidden sm:inline ml-1">Public</span>
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               onClick={(e) => {
