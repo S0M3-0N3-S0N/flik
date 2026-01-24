@@ -1454,7 +1454,7 @@ export default function Editor() {
         
         <div 
           ref={containerRef}
-          className="flex-1 relative overflow-hidden bg-[#0A0A0A] flex items-center justify-center"
+          className="flex-1 relative overflow-hidden bg-[#0A0A0A]"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMoveRaw}
           onMouseUp={handleMouseUp}
