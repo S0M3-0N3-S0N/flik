@@ -123,6 +123,29 @@ export default function Profile() {
     queryFn: () => base44.entities.Follow.list(),
   });
 
+  const followMutation = useMutation({
+    mutationFn: async (creatorEmail) => {
+      const existingFollow = follows.find(
+        (f) => f.follower_email === currentUser?.email && f.following_email === creatorEmail
+      );
+      if (existingFollow) {
+        await base44.entities.Follow.delete(existingFollow.id);
+      } else {
+        await base44.entities.Follow.create({
+          follower_email: currentUser?.email,
+          following_email: creatorEmail,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['follows'] });
+    },
+  });
+
+  const isFollowing = viewingUserEmail && follows.some(
+    (f) => f.follower_email === currentUser?.email && f.following_email === viewingUserEmail
+  );
+
   // Debounced search with cleanup
   useEffect(() => {
     const debouncedSearch = debounce((value) => setDebouncedSearchQuery(value), 300);
