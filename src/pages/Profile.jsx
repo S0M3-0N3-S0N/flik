@@ -80,10 +80,33 @@ export default function Profile() {
   const [imageErrors, setImageErrors] = useState({});
 
   // Data Fetching
-  const { data: user } = useQuery({
-    queryKey: ['user'],
+  const [viewingUserEmail, setViewingUserEmail] = useState(null);
+
+  useEffect(() => {
+    const storedEmail = sessionStorage.getItem('profile_email');
+    if (storedEmail) {
+      setViewingUserEmail(storedEmail);
+      sessionStorage.removeItem('profile_email');
+    }
+  }, []);
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
+
+  const { data: viewingUser } = useQuery({
+    queryKey: ['viewingUser', viewingUserEmail],
+    queryFn: async () => {
+      if (!viewingUserEmail) return null;
+      const users = await base44.entities.User.list();
+      return users.find(u => u.email === viewingUserEmail);
+    },
+    enabled: !!viewingUserEmail,
+  });
+
+  const user = viewingUser || currentUser;
+  const isOwnProfile = !viewingUserEmail;
 
   const { data: creations = [], isLoading } = useQuery({
     queryKey: ['creations', user?.email],
