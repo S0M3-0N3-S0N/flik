@@ -2,7 +2,6 @@ import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Grid3x3, Mic } from "lucide-react";
-import { motion } from "framer-motion";
 
 const ChatInput = React.memo(function ChatInput({
   input,
