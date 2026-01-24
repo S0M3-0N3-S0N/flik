@@ -250,46 +250,52 @@ export default function Editor() {
 
   const handleBatchProcess = useCallback(async (tool) => {
     if (batchImages.length === 0) return;
-    
+
     setIsBatchProcessing(true);
     setBatchProgress(0);
     setBatchCancelled(false);
     const results = [];
-    
+    let failedCount = 0;
+
     for (let i = 0; i < batchImages.length; i++) {
       if (batchCancelled) break;
-      
+
       const image = batchImages[i];
       try {
         const uploadResult = await base44.integrations.Core.UploadFile({ file: image.file });
+        if (!uploadResult?.file_url) throw new Error('Upload failed');
+
         const result = await base44.integrations.Core.GenerateImage({
           prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition.`,
           existing_image_urls: [uploadResult.file_url]
         });
-        
-        await base44.entities.Creation.create({
-          title: `Batch ${tool.label} - ${image.name}`,
-          type: 'image',
-          url: result.url,
-          thumbnail_url: result.url,
-          prompt: tool.prompt,
-          metadata: { batch: true, original: image.name }
-        }, { data_env: "dev" });
-        
-        results.push({ original: image, result: result.url });
-        setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
+
+        if (result?.url) {
+          await base44.entities.Creation.create({
+            title: `Batch ${tool.label} - ${image.name}`,
+            type: 'image',
+            url: result.url,
+            thumbnail_url: result.url,
+            prompt: tool.prompt,
+            metadata: { batch: true, original: image.name }
+          });
+          results.push({ original: image, result: result.url });
+        }
       } catch (err) {
+        failedCount++;
         console.error('Batch error:', err);
-        toast.error(`Failed to process ${image.name}`);
       }
+      setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
     }
-    
+
     if (batchCancelled) {
-      toast.info(`Batch processing cancelled. Processed ${results.length} of ${batchImages.length} images.`);
+      toast.info(`Batch cancelled. Processed ${results.length} of ${batchImages.length} images.`);
+    } else if (failedCount > 0) {
+      toast.warning(`Processed ${results.length}/${batchImages.length} (${failedCount} failed)`);
     } else {
-      toast.success(`Successfully processed ${results.length} of ${batchImages.length} images! Saved to Gallery.`);
+      toast.success(`Processed ${results.length} images! Saved to Gallery.`);
     }
-    
+
     setIsBatchProcessing(false);
     setBatchImages([]);
     setBatchProgress(0);
