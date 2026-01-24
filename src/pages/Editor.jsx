@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2 } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -17,6 +17,7 @@ import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
+import ColorWheel from "@/components/editor/ColorWheel";
 import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
@@ -64,6 +65,9 @@ export default function Editor() {
   const [activeBatchIndex, setActiveBatchIndex] = useState(null);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchCancelled, setBatchCancelled] = useState(false);
+  const [brushColor, setBrushColor] = useState("#FF6B35");
+  const [brushPreset, setBrushPreset] = useState({ id: 'round', name: 'Round', icon: '●', opacity: 1, size: 30 });
+  const [showColorWheel, setShowColorWheel] = useState(false);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -1410,6 +1414,37 @@ export default function Editor() {
                 >
                   <CropIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
+
+                <div className="w-px h-4 bg-white/10" />
+
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowColorWheel(!showColorWheel)}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 relative ${
+                      showColorWheel 
+                        ? 'bg-white text-black hover:bg-white/90' 
+                        : 'hover:bg-white/10 text-white'
+                    }`}
+                    title="Color & Brush"
+                  >
+                    <Paintbrush className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <div 
+                      className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a]"
+                      style={{ backgroundColor: brushColor }}
+                    />
+                  </Button>
+
+                  <ColorWheel
+                    color={brushColor}
+                    onColorChange={setBrushColor}
+                    brushPreset={brushPreset}
+                    onBrushChange={setBrushPreset}
+                    isOpen={showColorWheel}
+                    onClose={() => setShowColorWheel(false)}
+                  />
+                </div>
               </div>
             </div>
           )}
