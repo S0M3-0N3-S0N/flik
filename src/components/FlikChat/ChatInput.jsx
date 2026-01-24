@@ -23,8 +23,22 @@ const ChatInput = React.memo(function ChatInput({
     setAttachedImages(prev => prev.filter(i => i.id !== id));
   }, [setAttachedImages]);
 
+  const handleSendClick = useCallback(() => {
+    if (!isTyping && !isUploadingChat && onSend) {
+      onSend();
+    }
+  }, [isTyping, isUploadingChat, onSend]);
+
+  const handleVoiceClick = useCallback(() => {
+    if (onVoiceToggle) onVoiceToggle();
+  }, [onVoiceToggle]);
+
+  const handleGalleryClick = useCallback(() => {
+    if (onGalleryPick && !isTyping) onGalleryPick();
+  }, [onGalleryPick, isTyping]);
+
   return (
-    <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
+    <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3" onClick={(e) => e.stopPropagation()}>
       {uploadError && (
         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,29 +71,22 @@ const ChatInput = React.memo(function ChatInput({
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (!isTyping && !isUploadingChat && onSend) {
-            onSend();
-          }
+          handleSendClick();
         }}
         className="flex items-center gap-2"
       >
-        <motion.button
+        <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (onVoiceToggle) onVoiceToggle();
-          }}
+          onClick={handleVoiceClick}
           className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${
             isListening 
               ? 'bg-red-500/30 text-red-400 animate-pulse scale-110' 
               : 'hover:bg-white/10 text-white/60 hover:text-white'
           }`}
           title={isListening ? "Stop listening" : "Start voice"}
-          whileTap={{ scale: 0.95 }}
         >
           <Mic className="w-5 h-5" />
-        </motion.button>
+        </button>
 
         <Input
           value={input}
@@ -92,11 +99,7 @@ const ChatInput = React.memo(function ChatInput({
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (onGalleryPick && !isTyping) onGalleryPick();
-            }}
+            onClick={handleGalleryClick}
             className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0"
             title="Pick from gallery"
             disabled={isTyping}
@@ -105,11 +108,7 @@ const ChatInput = React.memo(function ChatInput({
           </button>
           <Button 
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!isTyping && !isUploadingChat && onSend) onSend();
-            }}
+            onClick={handleSendClick}
             size="icon"
             disabled={isTyping || isUploadingChat}
             className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg rounded-xl h-10 w-10 p-0"
