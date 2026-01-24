@@ -4,17 +4,18 @@ import { Paintbrush, Droplet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const brushPresets = [
-  { id: 'round', name: 'Round', icon: '●', opacity: 1, size: 30 },
-  { id: 'soft', name: 'Soft Brush', icon: '◉', opacity: 0.7, size: 40 },
-  { id: 'hard', name: 'Hard Brush', icon: '⬤', opacity: 1, size: 25 },
-  { id: 'airbrush', name: 'Airbrush', icon: '◌', opacity: 0.5, size: 50 },
-  { id: 'marker', name: 'Marker', icon: '▮', opacity: 0.8, size: 35 },
+  { id: 'round', name: 'Round', icon: '●', opacity: 1, size: 30, spacing: 25, jitter: 0, flow: 100, wetness: 0 },
+  { id: 'soft', name: 'Soft Brush', icon: '◉', opacity: 0.7, size: 40, spacing: 20, jitter: 5, flow: 80, wetness: 0 },
+  { id: 'hard', name: 'Hard Brush', icon: '⬤', opacity: 1, size: 25, spacing: 25, jitter: 0, flow: 100, wetness: 0 },
+  { id: 'airbrush', name: 'Airbrush', icon: '◌', opacity: 0.5, size: 50, spacing: 15, jitter: 15, flow: 60, wetness: 0 },
+  { id: 'marker', name: 'Marker', icon: '▮', opacity: 0.8, size: 35, spacing: 10, jitter: 2, flow: 90, wetness: 30 },
 ];
 
 export default function ColorWheel({ color, onColorChange, brushPreset, onBrushChange, isOpen, onClose }) {
   const [hue, setHue] = useState(0);
   const [saturation, setSaturation] = useState(100);
   const [lightness, setLightness] = useState(50);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const canvasRef = useRef(null);
   const wheelRef = useRef(null);
 
@@ -102,6 +103,10 @@ export default function ColorWheel({ color, onColorChange, brushPreset, onBrushC
     setSaturation(Math.min((distance / 90) * 100, 100));
   };
 
+  const updateBrushProperty = (property, value) => {
+    onBrushChange({ ...brushPreset, [property]: value });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -110,9 +115,11 @@ export default function ColorWheel({ color, onColorChange, brushPreset, onBrushC
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="absolute bottom-16 right-0 z-50"
+        className="absolute bottom-16 right-0 z-50 max-h-[80vh] overflow-y-auto"
       >
-        <div className="bg-[#1a1a1a]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl w-80">
+        <div className="bg-[#1a1a1a]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl w-80"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Droplet className="w-5 h-5 text-[#FF6B35]" />
@@ -186,18 +193,124 @@ export default function ColorWheel({ color, onColorChange, brushPreset, onBrushC
               ))}
             </div>
             {brushPreset && (
-              <div className="mt-3 p-3 rounded-xl bg-white/5">
-                <div className="text-xs text-white/80">{brushPreset.name}</div>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="flex-1">
-                    <div className="text-xs text-white/40 mb-1">Size</div>
-                    <div className="text-xs text-white/60">{brushPreset.size}px</div>
+              <div className="mt-3 p-4 rounded-xl bg-white/5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-white/80 font-medium">{brushPreset.name}</div>
+                  <button
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="text-xs text-[#FF6B35] hover:text-[#FFB800] transition-colors"
+                  >
+                    {showAdvanced ? 'Basic' : 'Advanced'}
+                  </button>
+                </div>
+
+                {/* Basic Controls */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-white/60">Size</span>
+                      <span className="text-xs text-white/40">{brushPreset.size}px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      value={brushPreset.size}
+                      onChange={(e) => updateBrushProperty('size', Number(e.target.value))}
+                      className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10"
+                    />
                   </div>
-                  <div className="flex-1">
-                    <div className="text-xs text-white/40 mb-1">Opacity</div>
-                    <div className="text-xs text-white/60">{Math.round(brushPreset.opacity * 100)}%</div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-white/60">Opacity</span>
+                      <span className="text-xs text-white/40">{Math.round(brushPreset.opacity * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={brushPreset.opacity}
+                      onChange={(e) => updateBrushProperty('opacity', Number(e.target.value))}
+                      className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10"
+                    />
                   </div>
                 </div>
+
+                {/* Advanced Controls */}
+                {showAdvanced && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-3 pt-3 border-t border-white/5"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-white/60">Spacing</span>
+                        <span className="text-xs text-white/40">{brushPreset.spacing}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="100"
+                        value={brushPreset.spacing}
+                        onChange={(e) => updateBrushProperty('spacing', Number(e.target.value))}
+                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10"
+                      />
+                      <p className="text-[10px] text-white/30 mt-1">Distance between brush stamps</p>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-white/60">Jitter</span>
+                        <span className="text-xs text-white/40">{brushPreset.jitter}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={brushPreset.jitter}
+                        onChange={(e) => updateBrushProperty('jitter', Number(e.target.value))}
+                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10"
+                      />
+                      <p className="text-[10px] text-white/30 mt-1">Random position variance</p>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-white/60">Flow</span>
+                        <span className="text-xs text-white/40">{brushPreset.flow}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="100"
+                        value={brushPreset.flow}
+                        onChange={(e) => updateBrushProperty('flow', Number(e.target.value))}
+                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10"
+                      />
+                      <p className="text-[10px] text-white/30 mt-1">Paint application rate</p>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-white/60">Wetness</span>
+                        <span className="text-xs text-white/40">{brushPreset.wetness}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={brushPreset.wetness}
+                        onChange={(e) => updateBrushProperty('wetness', Number(e.target.value))}
+                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10"
+                      />
+                      <p className="text-[10px] text-white/30 mt-1">Color blending behavior</p>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             )}
           </div>
