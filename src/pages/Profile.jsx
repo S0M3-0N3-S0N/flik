@@ -1001,12 +1001,13 @@ export default function Profile() {
                               <>
                                 {!imageErrors[item.id] ? (
                                   <img
-                                    src={item.thumbnail_url || item.url}
-                                    alt={`${item.title || 'Untitled creation'} - ${item.type === 'video' ? 'Video' : 'Image'} created on ${new Date(item.created_date).toLocaleDateString()}`}
-                                    loading="lazy"
-                                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
-                                    onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
-                                  />
+                                                    src={item.thumbnail_url || item.url}
+                                                    alt={`${item.title || 'Untitled creation'} - ${item.type === 'video' ? 'Video' : 'Image'} created on ${new Date(item.created_date).toLocaleDateString()}`}
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+                                                    onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
+                                                  />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5">
                                     <ImageOff className="w-16 h-16 text-white/20" />
