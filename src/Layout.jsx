@@ -245,8 +245,12 @@ function LayoutContent({ children, currentPageName }) {
                 to={createPageUrl("Profile")} 
                 className="hidden md:block"
               >
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-sm hover:scale-105 transition-transform border border-white/10">
-                  {user?.full_name?.charAt(0).toUpperCase() || <User className="w-5 h-5" />}
+                <div className="w-9 h-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-sm hover:scale-105 transition-transform border border-white/10">
+                  {user?.profile_picture ? (
+                    <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    user?.full_name?.charAt(0).toUpperCase() || <User className="w-5 h-5" />
+                  )}
                 </div>
               </Link>
 
