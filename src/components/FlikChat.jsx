@@ -388,7 +388,8 @@ export default function FlikChat() {
     const messageContent = retryInput || input;
     const messageImages = retryImages || attachedImages;
     
-    if (!messageContent.trim() && messageImages.length === 0) {
+    // Only block if truly nothing to send
+    if (!messageContent && messageImages.length === 0) {
       setIsListening(false);
       return;
     }
