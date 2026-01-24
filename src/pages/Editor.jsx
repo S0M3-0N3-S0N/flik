@@ -1606,18 +1606,18 @@ export default function Editor() {
                  </Button>
 
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveTab('filters')}
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
-                    activeTab === 'filters'
-                      ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
-                      : 'hover:bg-white/10 text-white'
-                  }`}
-                  title="Filters"
-                >
-                  <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </Button>
+                   variant="ghost"
+                   size="icon"
+                   onClick={() => setActiveTab('filters')}
+                   className={`hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
+                     activeTab === 'filters'
+                       ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
+                       : 'hover:bg-white/10 text-white'
+                   }`}
+                   title="Filters"
+                 >
+                   <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                 </Button>
 
                 <Button
                   variant="ghost"
