@@ -1607,7 +1607,7 @@ export default function Editor() {
                 toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
               }}
             >
-              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
+              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5 transition-transform">
                 <Button
                   variant="ghost"
                   size="icon"
