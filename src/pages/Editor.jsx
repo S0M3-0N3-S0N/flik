@@ -493,7 +493,6 @@ export default function Editor() {
 
   const handleCancelCrop = useCallback(() => {
     setIsCropping(false);
-    setActiveTab('ai');
   }, []);
 
   const handleApplyCrop = useCallback(async () => {
@@ -535,7 +534,6 @@ export default function Editor() {
         });
         setSelectedFilter(null);
         setIsCropping(false);
-        setActiveTab('ai');
         setRedoHistory([]);
         setIsProcessing(false);
         toast.success("Image cropped successfully!");
@@ -676,7 +674,7 @@ export default function Editor() {
         setIsDrawing(true);
         setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
       }
-    } else if (activeTab === "crop" && isCropping) {
+    } else if (isCropping) {
       const pos = getRelativePosition(e);
       if (pos) {
         const handleSize = 5;
@@ -737,7 +735,7 @@ export default function Editor() {
           return newStrokes;
         });
       }
-    } else if (activeTab === "crop" && isDragging && dragStart && dragType) {
+    } else if (isCropping && isDragging && dragStart && dragType) {
       const pos = getRelativePosition(e);
       if (pos) {
         const deltaX = pos.x - dragStart.x;
@@ -1130,7 +1128,7 @@ export default function Editor() {
                 Drag to paint
               </div>
             )}
-            {activeTab === "crop" && isCropping && (
+            {isCropping && (
               <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
                 Drag to crop
@@ -1243,7 +1241,7 @@ export default function Editor() {
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                    activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : activeTab === "crop" && isCropping ? "cursor-move" : ""
+                    activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
@@ -1260,7 +1258,7 @@ export default function Editor() {
                   />
                 )}
 
-                {activeTab === "crop" && isCropping && (
+                {isCropping && (
                   <>
                     <div className="absolute inset-0 bg-black/50 pointer-events-none rounded-2xl" />
                     <div
@@ -1396,8 +1394,12 @@ export default function Editor() {
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    setActiveTab('crop');
-                    handleStartCrop();
+                    if (isCropping) {
+                      handleCancelCrop();
+                    } else {
+                      setActiveTab('crop');
+                      handleStartCrop();
+                    }
                   }}
                   className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
                     isCropping 
