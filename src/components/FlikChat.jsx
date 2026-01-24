@@ -108,16 +108,10 @@ export default function FlikChat() {
       recognitionRef.current?.stop();
       setIsListening(false);
     } else {
-      setInput('');
       recognitionRef.current?.start();
-      
-      // Auto-send after user stops speaking (3 second silence)
       const timeoutId = setTimeout(() => {
-        if (isListening && input.trim().length > 0) {
-          recognitionRef.current?.stop();
-        }
-      }, 3000);
-      
+        recognitionRef.current?.stop();
+      }, 10000);
       return () => clearTimeout(timeoutId);
     }
   };
