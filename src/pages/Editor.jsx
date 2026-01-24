@@ -1618,6 +1618,31 @@ export default function Editor() {
         onRegenerate={regenerateAction}
         isRegenerating={isProcessing || isMagicBrushProcessing}
       />
-    </div>
-  );
-}
+
+      <RightPanel
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        currentImage={currentImage}
+        adjustments={adjustments}
+        onAdjustmentChange={handleAdjustmentChange}
+        selectedFilter={selectedFilter}
+        onFilterSelect={handleFilterSelect}
+        brushStrokes={brushStrokes}
+        onBrushStrokesChange={setBrushStrokes}
+        onToolSelect={handleToolSelect}
+        onTransform={handleTransform}
+        isCropping={isCropping}
+        onStartCrop={handleStartCrop}
+        onCancelCrop={handleCancelCrop}
+        onApplyCrop={handleApplyCrop}
+        isProcessing={isProcessing}
+        magicBrushPrompt={magicBrushPrompt}
+        onMagicBrushPromptChange={setMagicBrushPrompt}
+        magicBrushImages={magicBrushImages}
+        onMagicBrushImagesChange={setMagicBrushImages}
+        onMagicBrush={handleMagicBrush}
+        isMagicBrushProcessing={isMagicBrushProcessing}
+      />
+      </div>
+      );
+      }
