@@ -482,9 +482,10 @@ export default function Profile() {
     [follows, user?.email]
   );
 
-  // Reset page and clear selections when filters change
+  // Reset page and clear selections when filters change - fixes issue #85
   useEffect(() => {
     setCurrentPage(1);
+    // Clear selections when filters change to prevent phantom selections
     setSelectedItems([]);
   }, [filterType, dateFilter, debouncedSearchQuery, sortBy]);
 
