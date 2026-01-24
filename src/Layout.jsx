@@ -7,6 +7,7 @@ import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
 import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
+import { base44 } from "@/api/base44Client";
 
 export const LanguageContext = React.createContext();
 
@@ -14,6 +15,7 @@ function LayoutContent({ children, currentPageName }) {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en');
+  const [user, setUser] = useState(null);
   const { isOpen, setIsOpen, messages } = useFlik();
   const [flikPosition, setFlikPosition] = useState(() => {
     try {
@@ -31,6 +33,10 @@ function LayoutContent({ children, currentPageName }) {
   useEffect(() => {
     localStorage.setItem('app_language', language);
   }, [language]);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
 
   // Global keyboard shortcut for FLIK
   useEffect(() => {
@@ -237,10 +243,11 @@ function LayoutContent({ children, currentPageName }) {
             <div className="flex items-center gap-4">
               <Link 
                 to={createPageUrl("Profile")} 
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                className="hidden md:block"
               >
-                <User className="w-4 h-4" />
-                <span className="text-sm font-medium">{t("nav.profile")}</span>
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-sm hover:scale-105 transition-transform border border-white/10">
+                  {user?.full_name?.charAt(0).toUpperCase() || <User className="w-5 h-5" />}
+                </div>
               </Link>
 
               <button
