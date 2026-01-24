@@ -115,10 +115,9 @@ export default function ColorWheel({ color, onColorChange, brushPreset, onBrushC
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="absolute bottom-16 right-0 z-50 max-h-[80vh] overflow-y-auto"
+        className="absolute bottom-16 right-0 z-50 max-h-[80vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <div className="bg-[#1a1a1a]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl w-80"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
