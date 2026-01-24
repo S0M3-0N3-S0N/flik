@@ -300,7 +300,6 @@ export default function Editor() {
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
-      setRegenerateAction(null);
     }
   }, [currentImage, handleGetProcessedBlob, createObjectURL]);
 
