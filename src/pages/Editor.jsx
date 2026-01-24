@@ -1490,7 +1490,7 @@ export default function Editor() {
                 toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
               }}
             >
-              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1 sm:p-1.5 flex items-center gap-0.5 sm:gap-1 lg:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5 transition-transform overflow-x-auto max-h-16 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="bg-gradient-to-r from-black/40 via-black/30 to-black/40 backdrop-blur-xl border border-white/10 rounded-3xl px-2 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1 sm:gap-1.5 shadow-2xl ring-1 ring-white/10 transition-all overflow-x-auto max-h-16 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <Button
                    variant="ghost"
                    size="icon"
