@@ -224,6 +224,15 @@ function LayoutContent({ children, currentPageName }) {
                 {t("nav.imagine_ai")}
                 </Link>
               <Link 
+                to={createPageUrl("Discover")} 
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  currentPageName === "Discover" ? "text-white" : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                Discover
+              </Link>
+              <Link 
                 to={createPageUrl("Profile")} 
                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${
                   currentPageName === "Profile" ? "text-white" : "text-white/60 hover:text-white"
@@ -279,6 +288,17 @@ function LayoutContent({ children, currentPageName }) {
                   >
                     <Wand2 className="w-5 h-5" />
                     {t("nav.imagine_ai")}
+                  </Link>
+
+                  <Link 
+                    to={createPageUrl("Discover")} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                      currentPageName === "Discover" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Discover
                   </Link>
 
                   <Link 
