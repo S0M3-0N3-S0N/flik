@@ -1503,7 +1503,7 @@ export default function Editor() {
                   <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-16 sm:w-20 lg:w-32 px-1.5 sm:px-2">
+                <div className="hidden sm:block w-16 lg:w-32 px-1 sm:px-2">
                   <Slider 
                     value={[zoom]} 
                     min={0.1} 
