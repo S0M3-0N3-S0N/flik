@@ -7,20 +7,15 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
-import { useCanvas } from "@/components/hooks/useCanvas";
-import { useMagicBrush } from "@/components/hooks/useMagicBrush";
-import ToolPanel from "@/components/editor/ToolPanel";
-import AdjustmentsPanel from "@/components/editor/AdjustmentsPanel";
-import FiltersPanel from "@/components/editor/FiltersPanel";
-import TransformPanel from "@/components/editor/TransformPanel";
-import SpotRemoval from "@/components/editor/SpotRemoval";
-import CropPanel from "@/components/editor/CropPanel";
-import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
-import ResultModal from "@/components/editor/ResultModal";
-import ColorWheel from "@/components/editor/ColorWheel";
-import BatchPanel from "@/components/editor/BatchPanel";
+      import { useCanvas } from "@/components/hooks/useCanvas";
+      import { useMagicBrush } from "@/components/hooks/useMagicBrush";
+      import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
+      import ResultModal from "@/components/editor/ResultModal";
+      import ColorWheel from "@/components/editor/ColorWheel";
+      import BatchPanel from "@/components/editor/BatchPanel";
+      import RightPanel from "@/components/editor/RightPanel";
 
-import { useFlikActions } from "@/components/useFlikActions";
+      import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
