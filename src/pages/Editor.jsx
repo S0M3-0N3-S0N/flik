@@ -435,6 +435,65 @@ export default function Editor() {
     }
   }, [redoHistory, currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
+  const getProcessedImageWithPaint = useCallback(async () => {
+    if (!currentImage) return null;
+
+    const baseCanvas = await handleGenerateCanvas();
+    if (!baseCanvas) return null;
+
+    // If no paint strokes, just return the base canvas
+    if (paintStrokes.length === 0 || !paintLayerVisible) {
+      return new Promise(resolve => baseCanvas.toBlob(resolve, 'image/png'));
+    }
+
+    // Create final canvas with paint merged
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = baseCanvas.width;
+    finalCanvas.height = baseCanvas.height;
+    const ctx = finalCanvas.getContext('2d');
+
+    // Draw base image
+    ctx.drawImage(baseCanvas, 0, 0);
+
+    // Draw paint strokes
+    ctx.globalAlpha = paintLayerOpacity;
+    paintStrokes.forEach(stroke => {
+      const points = stroke.points;
+      if (!points || points.length === 0) return;
+
+      const isErase = stroke.type === 'erase';
+      const size = stroke.size || brushSize;
+      const color = stroke.color || brushColor;
+      const opacity = stroke.opacity || 1;
+      const flow = stroke.flow || 100;
+
+      ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
+
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
+
+      points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(
+          (point.x / 100) * finalCanvas.width,
+          (point.y / 100) * finalCanvas.height,
+          size / 2,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      });
+    });
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+
+    return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+  }, [currentImage, paintStrokes, handleGenerateCanvas, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
+
   const handleDownload = useCallback(async () => {
       if (!currentImage) return;
       try {
