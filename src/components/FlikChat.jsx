@@ -48,12 +48,15 @@ export default function FlikChat() {
   const [galleryHasMore, setGalleryHasMore] = useState(true);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
+  const [isListening, setIsListening] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const abortControllerRef = useRef(null);
   const isFetchingUserDataRef = useRef(false);
+  const recognitionRef = useRef(null);
 
   // Memoized ReactMarkdown components configuration
   const markdownComponents = useMemo(() => ({
@@ -104,6 +107,61 @@ export default function FlikChat() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition && !recognitionRef.current) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (event.results[event.results.length - 1].isFinal) {
+          setInput(prev => prev + (prev ? ' ' : '') + transcript);
+        }
+      };
+      recognition.onerror = () => {
+        setIsListening(false);
+        toast.error('Voice recognition failed');
+      };
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      setInput('');
+      recognitionRef.current?.start();
+    }
+  };
+
+  const speakResponse = (text) => {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const toggleVoiceOutput = () => {
+    if (voiceEnabled) {
+      window.speechSynthesis?.cancel();
+    }
+    setVoiceEnabled(!voiceEnabled);
+  };
 
   const getCurrentPage = useCallback(() => {
     const path = location.pathname;
@@ -472,6 +530,11 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         id: `msg-${Date.now()}-${Math.random()}`
       };
       setMessages(prev => [...prev, assistantMsg]);
+      
+      // Speak response if voice output is enabled
+      if (voiceEnabled) {
+        setTimeout(() => speakResponse(response.message), 500);
+      }
     } catch (error) {
       if (error.name === 'AbortError') {
         console.log('Request aborted');
@@ -591,6 +654,15 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               </div>
             </div>
             <div className="flex items-center gap-2 relative z-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={toggleVoiceOutput}
+                className={voiceEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}
+                title={voiceEnabled ? "Disable voice output" : "Enable voice output"}
+              >
+                {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </Button>
               {messages.length > 0 && (
                 <Button 
                   variant="ghost" 
@@ -901,6 +973,18 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 title="Pick from gallery"
               >
                 <Grid3x3 className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={toggleVoiceInput}
+                className={`p-2 rounded-lg transition-colors ${
+                  isListening 
+                    ? 'bg-red-500/30 text-red-400 animate-pulse' 
+                    : 'hover:bg-white/10 text-white/60 hover:text-white'
+                }`}
+                title={isListening ? "Stop listening" : "Start voice input"}
+              >
+                {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
               <input
                 ref={chatFileRef}
