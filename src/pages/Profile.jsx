@@ -970,6 +970,7 @@ export default function Profile() {
                 <AnimatePresence mode="popLayout">
                   {paginatedCreations.map((item, index) => (
                     <motion.div
+                      key={item.id}
                       layoutId={item.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
