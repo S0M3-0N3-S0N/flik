@@ -301,15 +301,15 @@ export default function Editor() {
     setBatchProgress(0);
   }, [batchImages, batchCancelled]);
 
-  const handleGenerateCanvas = useCallback(async () => {
-    try {
-      return await generateCanvas(currentImage, adjustments, transform, selectedFilter);
-    } catch (e) {
-      console.error('Canvas generation failed:', e);
-      toast.error('Failed to process image');
-      return null;
-    }
-  }, [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
+  const handleGenerateCanvas = async () => {
+      try {
+        return await generateCanvas(currentImage, adjustments, transform, selectedFilter);
+      } catch (e) {
+        console.error('Canvas generation failed:', e);
+        toast.error('Failed to process image');
+        return null;
+      }
+    };
 
   const handleGetProcessedBlob = async () => {
       try {
