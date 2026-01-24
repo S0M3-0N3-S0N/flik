@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paintbrush, Droplet, X } from "lucide-react";
+import { Paintbrush, X, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 
 const brushPresets = [
   { id: 'round', name: 'Round', icon: '●', opacity: 1, size: 30, spacing: 25, jitter: 0, flow: 100, wetness: 0 },
@@ -11,7 +12,26 @@ const brushPresets = [
   { id: 'marker', name: 'Marker', icon: '▮', opacity: 0.8, size: 35, spacing: 10, jitter: 2, flow: 90, wetness: 30 },
 ];
 
-export default function ColorWheel({ color, onColorChange, brushPreset, onBrushChange, isOpen, onClose }) {
+export default function ColorWheel({ 
+  color, 
+  onColorChange, 
+  brushPreset, 
+  onBrushChange, 
+  isOpen, 
+  onClose,
+  paintBrushMode,
+  onPaintBrushModeChange,
+  paintLayerOpacity,
+  onPaintLayerOpacityChange,
+  paintLayerVisible,
+  onPaintLayerVisibleChange,
+  blendMode,
+  onBlendModeChange,
+  paintStrokes,
+  onClearPaint,
+  onBakePaint,
+  isBaking
+}) {
   const [hue, setHue] = useState(0);
   const [saturation, setSaturation] = useState(100);
   const [lightness, setLightness] = useState(50);
@@ -316,6 +336,93 @@ export default function ColorWheel({ color, onColorChange, brushPreset, onBrushC
                     </div>
                   </motion.div>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Paint Layer Controls */}
+          <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
+            <div className="text-xs text-white/60 mb-3">Paint Layer</div>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={() => onPaintBrushModeChange?.('draw')}
+                className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  paintBrushMode === 'draw' ? 'bg-[#FF6B35] text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'
+                }`}
+              >
+                Draw
+              </button>
+              <button
+                onClick={() => onPaintBrushModeChange?.('erase')}
+                className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  paintBrushMode === 'erase' ? 'bg-[#FF6B35] text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'
+                }`}
+              >
+                Erase
+              </button>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-white/60">Layer Opacity</span>
+                <span className="text-xs text-white/40">{Math.round(paintLayerOpacity * 100)}%</span>
+              </div>
+              <Slider
+                value={[paintLayerOpacity]}
+                min={0}
+                max={1}
+                step={0.01}
+                onValueChange={(v) => onPaintLayerOpacityChange?.(v[0])}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-white/60 mb-2 block">Blend Mode</label>
+              <select
+                value={blendMode}
+                onChange={(e) => onBlendModeChange?.(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-[#FF6B35]"
+              >
+                <option value="source-over">Normal</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+              </select>
+            </div>
+
+            {paintStrokes?.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/60">{paintStrokes.length} stroke(s)</span>
+                  <button
+                    onClick={() => onPaintLayerVisibleChange?.(!paintLayerVisible)}
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
+                    {paintLayerVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={onBakePaint}
+                    disabled={isBaking}
+                    className="flex-1 bg-[#FF6B35] hover:bg-[#F72C25] text-white h-8 text-xs"
+                  >
+                    {isBaking ? "Baking..." : "Bake"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={onClearPaint}
+                    className="text-white/60 hover:text-white h-8 px-3 hover:bg-white/10 text-xs"
+                  >
+                    Clear
+                  </Button>
+                </div>
               </div>
             )}
           </div>

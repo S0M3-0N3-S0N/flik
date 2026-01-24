@@ -781,10 +781,12 @@ export default function Editor() {
         setIsDrawing(true);
         setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
       }
-    } else if (showColorWheel && currentImage) {
+    } else if (showColorWheel && currentImage && !isCropping) {
       const pos = getRelativePosition(e);
       if (pos) {
+        e.preventDefault();
         setIsPaintMode(true);
+        setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
         const pressure = e.pressure || (e.touches && e.touches[0].force) || 1;
         setPaintStrokes(prev => [...prev, { 
           points: [{ ...pos, pressure }], 
@@ -798,6 +800,7 @@ export default function Editor() {
           wetness: brushPreset?.wetness || 0,
           pressure
         }]);
+        setRedoHistory([]);
       }
     } else if (isCropping) {
       const pos = getRelativePosition(e);
@@ -842,7 +845,7 @@ export default function Editor() {
       return;
     }
 
-    if ((activeTab === "remove" || showColorWheel) && cursorRef.current && containerRef.current && clientX !== undefined) {
+    if ((activeTab === "remove" || (showColorWheel && !isCropping)) && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
@@ -860,9 +863,10 @@ export default function Editor() {
           return newStrokes;
         });
       }
-    } else if (showColorWheel && isPaintMode && currentImage) {
+    } else if (showColorWheel && isPaintMode && currentImage && !isCropping) {
       const pos = getRelativePosition(e);
       if (pos && paintStrokes.length > 0) {
+        e.preventDefault();
         const pressure = e.pressure || (e.touches && e.touches[0].force) || 1;
         setPaintStrokes(prev => {
           const newStrokes = [...prev];
@@ -1343,7 +1347,7 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: 'none' }}
         >
-          {(activeTab === "remove" || showColorWheel) && !isSpacePressed && !isPanning && !isPanToolActive && (
+          {(activeTab === "remove" || (showColorWheel && !isCropping)) && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
@@ -1352,8 +1356,8 @@ export default function Editor() {
                 height: (brushPreset?.size || brushSize) * zoom,
                 transform: 'translate(-50%, -50%)',
                 display: 'none',
-                borderColor: showColorWheel && activeTab !== "remove" ? brushColor : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)'),
-                backgroundColor: showColorWheel && activeTab !== "remove" ? `${brushColor}40` : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)')
+                borderColor: showColorWheel && activeTab !== "remove" ? (paintBrushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : brushColor) : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)'),
+                backgroundColor: showColorWheel && activeTab !== "remove" ? (paintBrushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : `${brushColor}40`) : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)')
               }}
             />
           )}
@@ -1384,7 +1388,7 @@ export default function Editor() {
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                    (activeTab === "remove" || showColorWheel) && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
+                    (activeTab === "remove" || (showColorWheel && !isCropping)) && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
@@ -1401,7 +1405,7 @@ export default function Editor() {
                   />
                 )}
 
-                {currentImage && paintLayerVisible && paintStrokes.length > 0 && (
+                {currentImage && paintLayerVisible && (
                   <PaintCanvas
                     imageRef={imageRef}
                     paintStrokes={paintStrokes}
@@ -1596,6 +1600,21 @@ export default function Editor() {
                     onBrushChange={setBrushPreset}
                     isOpen={showColorWheel}
                     onClose={() => setShowColorWheel(false)}
+                    paintBrushMode={paintBrushMode}
+                    onPaintBrushModeChange={setPaintBrushMode}
+                    paintLayerOpacity={paintLayerOpacity}
+                    onPaintLayerOpacityChange={setPaintLayerOpacity}
+                    paintLayerVisible={paintLayerVisible}
+                    onPaintLayerVisibleChange={setPaintLayerVisible}
+                    blendMode={blendMode}
+                    onBlendModeChange={setBlendMode}
+                    paintStrokes={paintStrokes}
+                    onClearPaint={() => {
+                      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+                      setPaintStrokes([]);
+                    }}
+                    onBakePaint={handleBakePaint}
+                    isBaking={isProcessing}
                   />
                 </div>
               </div>
