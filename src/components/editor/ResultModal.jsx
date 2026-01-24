@@ -230,11 +230,16 @@ export default function ResultModal({
                 className="flex-1 sm:flex-none text-[#FF6B35] hover:text-[#F72C25] hover:bg-[#FF6B35]/10 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isRegenerating ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Regenerating...
+                  </>
                 ) : (
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Regenerate
+                  </>
                 )}
-                {isRegenerating ? "Regenerating..." : "Regenerate"}
               </Button>
               )}
             </div>
