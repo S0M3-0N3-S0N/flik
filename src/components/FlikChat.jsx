@@ -1112,7 +1112,6 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
         </motion.div>
       )}
     </AnimatePresence>
