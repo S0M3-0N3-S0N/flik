@@ -109,9 +109,12 @@ export default function Profile() {
   const isOwnProfile = !viewingUserEmail;
 
   const { data: creations = [], isLoading } = useQuery({
-    queryKey: ['creations', user?.email],
-    queryFn: () => user ? base44.entities.Creation.filter({ created_by: user.email }, '-created_date', MAX_CREATIONS_FETCH) : [],
-    enabled: !!user?.email,
+    queryKey: ['creations', viewingUserEmail || currentUser?.email],
+    queryFn: () => {
+      const email = viewingUserEmail || currentUser?.email;
+      return email ? base44.entities.Creation.filter({ created_by: email }, '-created_date', MAX_CREATIONS_FETCH) : [];
+    },
+    enabled: !!(viewingUserEmail || currentUser?.email),
     initialData: [],
   });
 
