@@ -407,6 +407,16 @@ export default function Profile() {
     ...getTimeframeStats(creations)
   }), [creations]);
 
+  const followerCount = useMemo(() => 
+    follows.filter(f => f.following_email === user?.email).length,
+    [follows, user?.email]
+  );
+
+  const followingCount = useMemo(() => 
+    follows.filter(f => f.follower_email === user?.email).length,
+    [follows, user?.email]
+  );
+
   // Reset page and clear selections when filters change
   useEffect(() => {
     setCurrentPage(1);
