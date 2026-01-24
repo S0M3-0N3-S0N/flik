@@ -18,8 +18,6 @@ import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import { useFlikActions } from "@/components/useFlikActions";
-import LayersPanel from "@/components/editor/LayersPanel";
-import { useLayersComposite } from "@/components/hooks/useLayersComposite";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
@@ -61,17 +59,14 @@ export default function Editor() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragType, setDragType] = useState(null);
-  const [layers, setLayers] = useState([]);
-  const [selectedLayerId, setSelectedLayerId] = useState(null);
-  const [selectedLayerIds, setSelectedLayerIds] = useState([]);
-  const [layerGroups, setLayerGroups] = useState([]);
-  const [canvasSize] = useState({ width: 1920, height: 1080 });
-  const [layerHistory, setLayerHistory] = useState([]);
-  const [layerHistoryIndex, setLayerHistoryIndex] = useState(-1);
+  const [batchImages, setBatchImages] = useState([]);
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [activeBatchIndex, setActiveBatchIndex] = useState(null);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchCancelled, setBatchCancelled] = useState(false);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
-  const { generateCompositeCanvas, getCompositeBlob } = useLayersComposite();
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
@@ -168,261 +163,114 @@ export default function Editor() {
     }
   }, []);
 
-  // Layer management functions
-  const handleAddImageLayer = useCallback((e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    files.forEach((file, index) => {
-      const preview = createObjectURL(file);
-      const newLayer = {
-        id: Date.now() + Math.random() + index,
-        name: `Layer ${layers.length + index + 1}`,
-        image: { file, preview, url: preview },
-        thumbnail: preview,
-        visible: true,
-        locked: false,
-        opacity: 100,
-        blendMode: 'normal',
-        x: 0,
-        y: 0,
-        width: canvasSize.width,
-        height: canvasSize.height,
-        adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
-        transform: { rotate: 0, flipH: false, flipV: false },
-        filter: null
-      };
-
-      setLayers(prev => [...prev, newLayer]);
-      setSelectedLayerId(newLayer.id);
-      
-      // Set as current image for editing
-      setCurrentImage(newLayer.image);
-      setAdjustments(newLayer.adjustments);
-      setTransform(newLayer.transform);
-      setSelectedFilter(newLayer.filter);
-    });
-
-    toast.success(`${files.length} layer${files.length > 1 ? 's' : ''} added!`);
-    e.target.value = ''; // Reset input
-  }, [layers, canvasSize, createObjectURL]);
-
-  const saveLayerState = useCallback(() => {
-    const newHistory = layerHistory.slice(0, layerHistoryIndex + 1);
-    newHistory.push(JSON.parse(JSON.stringify({ layers, groups: layerGroups })));
-    setLayerHistory(newHistory);
-    setLayerHistoryIndex(newHistory.length - 1);
-  }, [layers, layerGroups, layerHistory, layerHistoryIndex]);
-
-  const handleLayerUndo = useCallback(() => {
-    if (layerHistoryIndex > 0) {
-      const prevState = layerHistory[layerHistoryIndex - 1];
-      setLayers(prevState.layers);
-      setLayerGroups(prevState.groups);
-      setLayerHistoryIndex(layerHistoryIndex - 1);
-      toast.success('Layer action undone');
-    }
-  }, [layerHistory, layerHistoryIndex]);
-
-  const handleLayerRedo = useCallback(() => {
-    if (layerHistoryIndex < layerHistory.length - 1) {
-      const nextState = layerHistory[layerHistoryIndex + 1];
-      setLayers(nextState.layers);
-      setLayerGroups(nextState.groups);
-      setLayerHistoryIndex(layerHistoryIndex + 1);
-      toast.success('Layer action redone');
-    }
-  }, [layerHistory, layerHistoryIndex]);
-
-  const handleSelectLayer = useCallback((layerId, multiSelect = false) => {
-    const layer = layers.find(l => l.id === layerId);
-    if (!layer || layer.locked) return;
-
-    if (multiSelect) {
-      setSelectedLayerIds(prev => 
-        prev.includes(layerId) ? prev.filter(id => id !== layerId) : [...prev, layerId]
-      );
-    } else {
-      setSelectedLayerId(layerId);
-      setSelectedLayerIds([layerId]);
-      setCurrentImage(layer.image);
-      setAdjustments(layer.adjustments);
-      setTransform(layer.transform);
-      setSelectedFilter(layer.filter);
-    }
-  }, [layers]);
-
-  const handleToggleVisibility = useCallback((layerId) => {
-    saveLayerState();
-    setLayers(prev => prev.map(l => 
-      l.id === layerId ? { ...l, visible: !l.visible } : l
-    ));
-  }, [saveLayerState]);
-
-  const handleBulkToggleVisibility = useCallback((visible) => {
-    if (selectedLayerIds.length === 0) return;
-    saveLayerState();
-    setLayers(prev => prev.map(l => 
-      selectedLayerIds.includes(l.id) ? { ...l, visible } : l
-    ));
-    toast.success(`${selectedLayerIds.length} layers ${visible ? 'shown' : 'hidden'}`);
-  }, [selectedLayerIds, saveLayerState]);
-
-  const handleBulkToggleLock = useCallback((locked) => {
-    if (selectedLayerIds.length === 0) return;
-    saveLayerState();
-    setLayers(prev => prev.map(l => 
-      selectedLayerIds.includes(l.id) ? { ...l, locked } : l
-    ));
-    toast.success(`${selectedLayerIds.length} layers ${locked ? 'locked' : 'unlocked'}`);
-  }, [selectedLayerIds, saveLayerState]);
-
-  const handleBulkUpdateOpacity = useCallback((opacity) => {
-    if (selectedLayerIds.length === 0) return;
-    saveLayerState();
-    setLayers(prev => prev.map(l => 
-      selectedLayerIds.includes(l.id) ? { ...l, opacity } : l
-    ));
-  }, [selectedLayerIds, saveLayerState]);
-
-  const handleDeleteLayer = useCallback((layerId) => {
-    saveLayerState();
-    const layer = layers.find(l => l.id === layerId);
-    if (layer?.image?.preview) {
-      revokeObjectURL(layer.image.preview);
-    }
-
-    setLayers(prev => prev.filter(l => l.id !== layerId));
-    
-    if (selectedLayerId === layerId) {
-      const remaining = layers.filter(l => l.id !== layerId);
-      if (remaining.length > 0) {
-        handleSelectLayer(remaining[0].id);
-      } else {
-        setSelectedLayerId(null);
-        setCurrentImage(null);
-      }
-    }
-  }, [layers, selectedLayerId, handleSelectLayer, revokeObjectURL, saveLayerState]);
-
-  const handleBulkDeleteLayers = useCallback(() => {
-    if (selectedLayerIds.length === 0) return;
-    saveLayerState();
-    
-    selectedLayerIds.forEach(layerId => {
-      const layer = layers.find(l => l.id === layerId);
-      if (layer?.image?.preview) {
-        revokeObjectURL(layer.image.preview);
-      }
-    });
-
-    setLayers(prev => prev.filter(l => !selectedLayerIds.includes(l.id)));
-    setSelectedLayerIds([]);
-    setSelectedLayerId(null);
-    setCurrentImage(null);
-    toast.success(`${selectedLayerIds.length} layers deleted`);
-  }, [selectedLayerIds, layers, revokeObjectURL, saveLayerState]);
-
-  const handleToggleLock = useCallback((layerId) => {
-    saveLayerState();
-    setLayers(prev => prev.map(l => 
-      l.id === layerId ? { ...l, locked: !l.locked } : l
-    ));
-  }, [saveLayerState]);
-
-  const handleRenameLayer = useCallback((layerId, newName) => {
-    saveLayerState();
-    setLayers(prev => prev.map(l => 
-      l.id === layerId ? { ...l, name: newName } : l
-    ));
-    toast.success('Layer renamed');
-  }, [saveLayerState]);
-
-  const handleReorderLayer = useCallback((layerId, direction) => {
-    saveLayerState();
-    setLayers(prev => {
-      const idx = prev.findIndex(l => l.id === layerId);
-      if (idx === -1) return prev;
-
-      const newLayers = [...prev];
-      const targetIdx = direction === 'up' ? idx + 1 : idx - 1;
-      
-      if (targetIdx < 0 || targetIdx >= newLayers.length) return prev;
-
-      [newLayers[idx], newLayers[targetIdx]] = [newLayers[targetIdx], newLayers[idx]];
-      return newLayers;
-    });
-  }, [saveLayerState]);
-
-  const handleCreateGroup = useCallback((name, layerIds) => {
-    saveLayerState();
-    const newGroup = {
+  const handleBatchUpload = useCallback((e) => {
+    const files = Array.from(e.target.files);
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    const images = imageFiles.map(file => ({
       id: Date.now() + Math.random(),
-      name,
-      layerIds,
-      visible: true,
-      locked: false
+      file,
+      preview: createObjectURL(file),
+      name: file.name,
+      adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
+      transform: { rotate: 0, flipH: false, flipV: false },
+      filter: null,
+      brushStrokes: []
+    }));
+    
+    const newBatch = [...batchImages, ...images];
+    setBatchImages(newBatch);
+    
+    if (activeBatchIndex === null && newBatch.length > 0) {
+      switchToBatchImage(0, newBatch);
+    }
+  }, [batchImages, activeBatchIndex, createObjectURL]);
+
+  const saveCurrentStateToBatch = useCallback(() => {
+    if (activeBatchIndex === null || !batchImages[activeBatchIndex]) return;
+    
+    const updatedBatch = [...batchImages];
+    updatedBatch[activeBatchIndex] = {
+      ...updatedBatch[activeBatchIndex],
+      adjustments,
+      filter: selectedFilter,
+      transform,
+      brushStrokes,
     };
-    setLayerGroups(prev => [...prev, newGroup]);
-    toast.success('Group created');
-  }, [saveLayerState]);
+    setBatchImages(updatedBatch);
+  }, [activeBatchIndex, batchImages, adjustments, selectedFilter, transform, brushStrokes]);
 
-  const handleDeleteGroup = useCallback((groupId) => {
-    saveLayerState();
-    setLayerGroups(prev => prev.filter(g => g.id !== groupId));
-    toast.success('Group deleted');
-  }, [saveLayerState]);
-
-  const handleUpdateLayerOpacity = useCallback((layerId, opacity) => {
-    setLayers(prev => prev.map(l => 
-      l.id === layerId ? { ...l, opacity } : l
-    ));
-  }, []);
-
-  const handleUpdateLayerBlendMode = useCallback((layerId, blendMode) => {
-    setLayers(prev => prev.map(l => 
-      l.id === layerId ? { ...l, blendMode } : l
-    ));
-  }, []);
-
-  const handleUpdateLayerFilter = useCallback((layerId, filter) => {
-    setLayers(prev => prev.map(l => 
-      l.id === layerId ? { ...l, filter } : l
-    ));
-  }, []);
-
-  // Save initial layer state
-  useEffect(() => {
-    if (layers.length > 0 && layerHistory.length === 0) {
-      setLayerHistory([JSON.parse(JSON.stringify({ layers, groups: layerGroups }))]);
-      setLayerHistoryIndex(0);
+  const switchToBatchImage = useCallback((index, currentBatch = batchImages) => {
+    if (activeBatchIndex !== null && activeBatchIndex !== index && batchImages[activeBatchIndex]) {
+      saveCurrentStateToBatch();
     }
-  }, [layers.length]);
 
-  // Update selected layer when adjustments/transforms change
-  useEffect(() => {
-    if (selectedLayerId && currentImage) {
-      setLayers(prev => prev.map(l => 
-        l.id === selectedLayerId 
-          ? { ...l, adjustments, transform, filter: selectedFilter }
-          : l
-      ));
-    }
-  }, [selectedLayerId, adjustments, transform, selectedFilter]);
+    const targetImage = currentBatch[index];
+    if (!targetImage) return;
+    
+    setActiveBatchIndex(index);
+    setCurrentImage(targetImage);
 
-  const handleGenerateCanvas = useCallback(() => {
-    if (layers.length > 0) {
-      return generateCompositeCanvas(layers, canvasSize.width, canvasSize.height);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setAdjustments(targetImage.adjustments || {
+      brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0
+    });
+    setSelectedFilter(targetImage.filter || null);
+    setTransform(targetImage.transform || { rotate: 0, flipH: false, flipV: false });
+    setBrushStrokes(targetImage.brushStrokes || []);
+    setUndoHistory([]);
+    setRedoHistory([]);
+  }, [activeBatchIndex, batchImages, saveCurrentStateToBatch]);
+
+  const handleBatchProcess = useCallback(async (tool) => {
+    if (batchImages.length === 0) return;
+    
+    setIsBatchProcessing(true);
+    setBatchProgress(0);
+    setBatchCancelled(false);
+    const results = [];
+    
+    for (let i = 0; i < batchImages.length; i++) {
+      if (batchCancelled) break;
+      
+      const image = batchImages[i];
+      try {
+        const uploadResult = await base44.integrations.Core.UploadFile({ file: image.file });
+        const result = await base44.integrations.Core.GenerateImage({
+          prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition.`,
+          existing_image_urls: [uploadResult.file_url]
+        });
+        
+        await base44.entities.Creation.create({
+          title: `Batch ${tool.label} - ${image.name}`,
+          type: 'image',
+          url: result.url,
+          thumbnail_url: result.url,
+          prompt: tool.prompt,
+          metadata: { batch: true, original: image.name }
+        }, { data_env: "dev" });
+        
+        results.push({ original: image, result: result.url });
+        setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
+      } catch (err) {
+        console.error('Batch error:', err);
+        toast.error(`Failed to process ${image.name}`);
+      }
     }
-    return generateCanvas(currentImage, adjustments, transform, selectedFilter);
-  }, [layers, currentImage, adjustments, transform, selectedFilter, generateCanvas, generateCompositeCanvas, canvasSize]);
-  
-  const handleGetProcessedBlob = useCallback(async () => {
-    if (layers.length > 0) {
-      return getCompositeBlob(layers, canvasSize.width, canvasSize.height);
+    
+    if (batchCancelled) {
+      toast.info(`Batch processing cancelled. Processed ${results.length} of ${batchImages.length} images.`);
+    } else {
+      toast.success(`Successfully processed ${results.length} of ${batchImages.length} images! Saved to Gallery.`);
     }
-    return getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
-  }, [layers, currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob, getCompositeBlob, canvasSize]);
+    
+    setIsBatchProcessing(false);
+    setBatchImages([]);
+    setBatchProgress(0);
+  }, [batchImages, batchCancelled]);
+
+  const handleGenerateCanvas = useCallback(() => generateCanvas(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
+  const handleGetProcessedBlob = useCallback(() => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
   const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) return;
@@ -723,7 +571,31 @@ export default function Editor() {
     }
   }, [currentImage, handleGetProcessedBlob]);
 
+  const handleClearBatch = useCallback(() => {
+    batchImages.forEach(img => revokeObjectURL(img.preview));
+    setBatchImages([]);
+    setCurrentImage(null);
+    setActiveBatchIndex(null);
+  }, [batchImages, revokeObjectURL]);
 
+  const handleRemoveBatchImage = useCallback((idx) => {
+    const removedImage = batchImages[idx];
+    revokeObjectURL(removedImage.preview);
+    
+    const newBatch = batchImages.filter((_, i) => i !== idx);
+    setBatchImages(newBatch);
+    
+    if (activeBatchIndex === idx) {
+      if (newBatch.length > 0) {
+        switchToBatchImage(0, newBatch);
+      } else {
+        setCurrentImage(null);
+        setActiveBatchIndex(null);
+      }
+    } else if (activeBatchIndex > idx) {
+      setActiveBatchIndex(prev => prev - 1);
+    }
+  }, [batchImages, activeBatchIndex, revokeObjectURL, switchToBatchImage]);
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -1004,7 +876,7 @@ export default function Editor() {
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="layers" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+            <TabsTrigger value="batch" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Layers className="w-4 h-4" />
             </TabsTrigger>
             <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
@@ -1030,33 +902,113 @@ export default function Editor() {
               />
             </TabsContent>
 
-            <TabsContent value="layers" className="mt-0">
-              <LayersPanel
-                layers={layers}
-                selectedLayerId={selectedLayerId}
-                selectedLayerIds={selectedLayerIds}
-                layerGroups={layerGroups}
-                onSelectLayer={handleSelectLayer}
-                onToggleVisibility={handleToggleVisibility}
-                onDeleteLayer={handleDeleteLayer}
-                onToggleLock={handleToggleLock}
-                onReorderLayer={handleReorderLayer}
-                onAddImageLayer={handleAddImageLayer}
-                onUpdateLayerOpacity={handleUpdateLayerOpacity}
-                onRenameLayer={handleRenameLayer}
-                onBulkToggleVisibility={handleBulkToggleVisibility}
-                onBulkToggleLock={handleBulkToggleLock}
-                onBulkUpdateOpacity={handleBulkUpdateOpacity}
-                onBulkDeleteLayers={handleBulkDeleteLayers}
-                onCreateGroup={handleCreateGroup}
-                onDeleteGroup={handleDeleteGroup}
-                onLayerUndo={handleLayerUndo}
-                onLayerRedo={handleLayerRedo}
-                canUndo={layerHistoryIndex > 0}
-                canRedo={layerHistoryIndex < layerHistory.length - 1}
-                onUpdateLayerBlendMode={handleUpdateLayerBlendMode}
-                onUpdateLayerFilter={handleUpdateLayerFilter}
-                />
+            <TabsContent value="batch" className="mt-0">
+              <div className="py-6 px-4 space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
+                    Batch Workspace
+                  </h3>
+                  
+                  <label className="block cursor-pointer group">
+                    <div className="relative overflow-hidden border border-dashed border-white/20 rounded-2xl p-8 hover:border-[#FF6B35]/50 hover:bg-[#FF6B35]/5 transition-all">
+                      <div className="flex flex-col items-center gap-3 text-center relative z-10">
+                        <div className="w-12 h-12 rounded-full bg-[#FF6B35]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Layers className="w-6 h-6 text-[#FF6B35]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white group-hover:text-[#FF6B35] transition-colors">Import Images</p>
+                          <p className="text-xs text-white/40 mt-1">Select multiple files to process</p>
+                        </div>
+                      </div>
+                    </div>
+                    <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
+                  </label>
+                </div>
+
+                {batchImages.length > 0 && (
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
+                        Workflow
+                      </h3>
+                      
+                      <button 
+                        onClick={() => {
+                          const updatedBatch = batchImages.map(img => ({
+                            ...img,
+                            adjustments: { ...adjustments },
+                            filter: selectedFilter,
+                            transform: { ...transform }
+                          }));
+                          setBatchImages(updatedBatch);
+                          toast.success('Synced current edits to all images!');
+                        }}
+                        className="w-full p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition-all text-left flex items-center gap-3 group"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                          <Settings2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">Sync Edits</p>
+                          <p className="text-xs text-white/40">Apply current adjustments to all</p>
+                        </div>
+                      </button>
+
+                      <button 
+                        onClick={handleClearBatch}
+                        className="w-full p-4 rounded-xl bg-white/[0.03] hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 transition-all text-left flex items-center gap-3 group"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center">
+                          <X className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white group-hover:text-red-400 transition-colors">Clear All</p>
+                          <p className="text-xs text-white/40">Remove all images</p>
+                        </div>
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
+                        AI Batch Actions
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[
+                          { label: "Auto Enhance", icon: Sparkles, prompt: "Enhance this image with better colors, improved clarity, professional quality" },
+                          { label: "Upscale 4x", icon: Wand2, prompt: "Upscale to higher resolution, enhance details" },
+                          { label: "Fix Lighting", icon: Sun, prompt: "Fix lighting and exposure, balance highlights and shadows" },
+                        ].map(tool => (
+                          <Button
+                            key={tool.label}
+                            onClick={() => handleBatchProcess(tool)}
+                            disabled={isBatchProcessing}
+                            className="w-full h-12 bg-white/[0.03] hover:bg-[#FF6B35] border border-white/5 hover:border-[#FF6B35] text-white justify-start px-4 gap-3 group transition-all rounded-xl"
+                          >
+                            <tool.icon className="w-4 h-4 text-[#FF6B35] group-hover:text-white transition-colors" />
+                            <span className="flex-1 text-left">
+                              {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
+                            </span>
+                            {isBatchProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
+                          </Button>
+                        ))}
+                      </div>
+                      
+                      {isBatchProcessing && (
+                        <Button
+                          onClick={() => setBatchCancelled(true)}
+                          variant="outline"
+                          className="w-full border-red-500/20 text-red-400 hover:bg-red-500/10 mt-2"
+                        >
+                          Stop Processing
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="adjust" className="mt-0">
@@ -1273,7 +1225,7 @@ export default function Editor() {
           <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#FF6B35]/5 blur-[100px] pointer-events-none" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
-          {(currentImage || layers.length > 0) ? (
+          {currentImage ? (
             <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
               <div 
                 className={`relative inline-flex max-w-full max-h-full no-invert transition-transform duration-75 ease-out ${
@@ -1284,60 +1236,19 @@ export default function Editor() {
                   cursor: (isPanning || isSpacePressed || isPanToolActive) ? (isPanning ? 'grabbing' : 'grab') : undefined
                 }}
               >
-                {layers.length > 0 ? (
-                  <div className="relative max-w-full max-h-full">
-                    {layers.filter(l => l.visible).map(layer => (
-                      <img
-                        key={layer.id}
-                        src={layer.image.preview || layer.image.url}
-                        alt={layer.name}
-                        className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                          selectedLayerId === layer.id ? 'ring-2 ring-[#FF6B35] ring-offset-2 ring-offset-black' : ''
-                        }`}
-                        style={{
-                          position: layers.indexOf(layer) === 0 ? 'relative' : 'absolute',
-                          top: 0,
-                          left: 0,
-                          opacity: layer.opacity / 100,
-                          mixBlendMode: layer.blendMode || 'normal',
-                          filter: (() => {
-                            const filters = [];
-                            if (layer.adjustments?.brightness !== 0) filters.push(`brightness(${100 + layer.adjustments.brightness}%)`);
-                            if (layer.adjustments?.contrast !== 0) filters.push(`contrast(${100 + layer.adjustments.contrast}%)`);
-                            if (layer.adjustments?.saturation !== 0) filters.push(`saturate(${100 + layer.adjustments.saturation}%)`);
-                            if (layer.adjustments?.blur > 0) filters.push(`blur(${layer.adjustments.blur}px)`);
-                            if (layer.adjustments?.hue !== 0) filters.push(`hue-rotate(${layer.adjustments.hue}deg)`);
-                            if (layer.adjustments?.sepia > 0) filters.push(`sepia(${layer.adjustments.sepia}%)`);
-                            if (layer.adjustments?.grayscale > 0) filters.push(`grayscale(${layer.adjustments.grayscale}%)`);
-                            if (layer.filter && layer.filter.id !== 'none') filters.push(layer.filter.filter);
-                            return filters.length > 0 ? filters.join(' ') : 'none';
-                          })(),
-                          transform: (() => {
-                            const transforms = [];
-                            if (layer.transform?.rotate !== 0) transforms.push(`rotate(${layer.transform.rotate}deg)`);
-                            if (layer.transform?.flipH) transforms.push(`scaleX(-1)`);
-                            if (layer.transform?.flipV) transforms.push(`scaleY(-1)`);
-                            return transforms.length > 0 ? transforms.join(' ') : 'none';
-                          })()
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <img
-                    ref={imageRef}
-                    src={currentImage.preview || currentImage.url}
-                    alt="Editor"
-                    className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                      activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
-                    }`}
-                    style={{
-                      filter: getFilterStyle(),
-                      transform: getTransformStyle(),
-                    }}
-                    draggable={false}
-                  />
-                )}
+                <img
+                  ref={imageRef}
+                  src={currentImage.preview || currentImage.url}
+                  alt="Editor"
+                  className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
+                    activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
+                  }`}
+                  style={{
+                    filter: getFilterStyle(),
+                    transform: getTransformStyle(),
+                  }}
+                  draggable={false}
+                />
                 
                 {activeTab === "remove" && currentImage && (
                   <canvas
@@ -1387,9 +1298,35 @@ export default function Editor() {
             {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
           </AnimatePresence>
 
-          {layers.length > 0 && (
-            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg px-3 py-2 text-xs text-white/60 z-20">
-              {layers.filter(l => l.visible).length} / {layers.length} layers visible
+          {batchImages.length > 0 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#1a1a1a]/90 backdrop-blur-md border border-white/10 rounded-2xl p-2 flex items-center gap-2 max-w-[80%] overflow-x-auto shadow-2xl z-20 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {batchImages.map((img, idx) => (
+                <div 
+                  key={img.id}
+                  onClick={() => {
+                    saveCurrentStateToBatch();
+                    switchToBatchImage(idx);
+                  }}
+                  className={`relative w-16 h-16 rounded-lg overflow-hidden cursor-pointer border-2 transition-all flex-shrink-0 group ${
+                    activeBatchIndex === idx ? 'border-[#FF6B35]' : 'border-transparent hover:border-white/20'
+                  }`}
+                >
+                  <img src={img.preview} alt={img.name} className="w-full h-full object-cover" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveBatchImage(idx);
+                    }}
+                    className="absolute top-0 right-0 p-0.5 bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <label className="w-16 h-16 rounded-lg border-2 border-dashed border-white/10 flex items-center justify-center cursor-pointer hover:bg-white/5 hover:border-white/20 transition-all flex-shrink-0">
+                <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
+                <span className="text-2xl text-white/20">+</span>
+              </label>
             </div>
           )}
           
