@@ -334,17 +334,20 @@ export default function Generate() {
                         {uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0 bg-[#141414] border border-white/10" align="start">
-                      <div className="p-4">
-                        <h4 className="text-sm font-medium text-white mb-2">Reference Images</h4>
-                        <div className="h-40">
-                          <ImageUploader 
-                            onImageSelect={handleImageUpload} 
-                            multiple={true} 
-                          />
-                        </div>
-                      </div>
-                    </PopoverContent>
+                    <PopoverContent className="w-80 bg-[#141414] border border-white/10" align="start">
+                       <div className="space-y-3">
+                         <div>
+                           <h4 className="text-sm font-medium text-white">Reference Images</h4>
+                           <p className="text-xs text-white/40 mt-1">Upload images as reference for generation</p>
+                         </div>
+                         <div className="h-40">
+                           <ImageUploader 
+                             onImageSelect={handleImageUpload} 
+                             multiple={true} 
+                           />
+                         </div>
+                       </div>
+                     </PopoverContent>
                   </Popover>
 
                   <Popover>
