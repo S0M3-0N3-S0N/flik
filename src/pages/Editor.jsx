@@ -676,7 +676,17 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsDrawing(true);
-        setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
+        setBrushStrokes(prev => [...prev, { 
+          points: [pos], 
+          type: brushMode, 
+          size: brushPreset?.size || brushSize,
+          color: brushColor,
+          opacity: brushPreset?.opacity || 1,
+          spacing: brushPreset?.spacing || 25,
+          jitter: brushPreset?.jitter || 0,
+          flow: brushPreset?.flow || 100,
+          wetness: brushPreset?.wetness || 0
+        }]);
       }
     } else if (isCropping) {
       const pos = getRelativePosition(e);
@@ -814,31 +824,64 @@ export default function Editor() {
       
       const isErase = stroke.type === 'erase';
       const size = stroke.size || brushSize;
+      const color = stroke.color || brushColor;
+      const opacity = stroke.opacity !== undefined ? stroke.opacity : (brushPreset?.opacity || 1);
+      const spacing = stroke.spacing || (brushPreset?.spacing || 25);
+      const jitter = stroke.jitter || (brushPreset?.jitter || 0);
+      const flow = stroke.flow || (brushPreset?.flow || 100);
       
       ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
-      ctx.strokeStyle = `rgba(255, 107, 53, ${brushOpacity})`;
-      ctx.fillStyle = `rgba(255, 107, 53, ${brushOpacity})`;
+      
+      // Convert hex color to rgba
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      const finalOpacity = opacity * (flow / 100);
+      
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`;
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`;
       ctx.lineWidth = size;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       
       if (points.length === 1) {
         ctx.beginPath();
-        ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
+        const jitterX = jitter > 0 ? (Math.random() - 0.5) * jitter * 0.1 : 0;
+        const jitterY = jitter > 0 ? (Math.random() - 0.5) * jitter * 0.1 : 0;
+        ctx.arc(
+          ((points[0].x + jitterX) / 100) * canvas.width, 
+          ((points[0].y + jitterY) / 100) * canvas.height, 
+          ctx.lineWidth / 2, 
+          0, 
+          Math.PI * 2
+        );
         ctx.fill();
       } else {
-        ctx.beginPath();
-        ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
+        // Apply spacing - skip points based on spacing value
+        const spacingFactor = Math.max(1, Math.floor(spacing / 10));
+        const filteredPoints = points.filter((_, i) => i % spacingFactor === 0);
         
-        for (let i = 1; i < points.length; i++) {
-          ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
+        if (filteredPoints.length > 0) {
+          ctx.beginPath();
+          const firstPoint = filteredPoints[0];
+          ctx.moveTo((firstPoint.x / 100) * canvas.width, (firstPoint.y / 100) * canvas.height);
+          
+          for (let i = 1; i < filteredPoints.length; i++) {
+            const point = filteredPoints[i];
+            const jitterX = jitter > 0 ? (Math.random() - 0.5) * jitter * 0.1 : 0;
+            const jitterY = jitter > 0 ? (Math.random() - 0.5) * jitter * 0.1 : 0;
+            ctx.lineTo(
+              ((point.x + jitterX) / 100) * canvas.width, 
+              ((point.y + jitterY) / 100) * canvas.height
+            );
+          }
+          
+          ctx.stroke();
         }
-        
-        ctx.stroke();
       }
     });
     ctx.globalCompositeOperation = 'source-over';
-  }, [brushStrokes, brushSize, brushOpacity, activeTab]);
+  }, [brushStrokes, brushSize, brushOpacity, activeTab, brushColor, brushPreset]);
 
   const getFilterStyle = useCallback(() => {
     const filters = [];
@@ -1208,13 +1251,14 @@ export default function Editor() {
           {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
-              className="absolute pointer-events-none rounded-full border-2 border-white/80 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
+              className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
               style={{
-                width: brushSize * zoom,
-                height: brushSize * zoom,
+                width: (brushPreset?.size || brushSize) * zoom,
+                height: (brushPreset?.size || brushSize) * zoom,
                 transform: 'translate(-50%, -50%)',
                 display: 'none',
-                backgroundColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)'
+                borderColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : brushColor,
+                backgroundColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : `${brushColor}40`
               }}
             />
           )}
