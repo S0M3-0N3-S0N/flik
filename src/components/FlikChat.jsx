@@ -317,8 +317,8 @@ export default function FlikChat() {
   }, [selectedGalleryImages, setAttachedImages]);
 
   const handleLoadMoreGallery = useCallback(async () => {
-    if (isLoadingMore || !galleryHasMore) return;
-    
+    if (isLoadingMore || !galleryHasMore || !abortControllerRef.current) return;
+
     setIsLoadingMore(true);
     try {
       const user = await base44.auth.me();
@@ -328,14 +328,18 @@ export default function FlikChat() {
         GALLERY_FETCH_LIMIT,
         galleryCreations.length
       );
-      
-      const updatedCreations = [...galleryCreations, ...newCreations];
-      setGalleryCreations(updatedCreations);
-      setGalleryCachedData(updatedCreations);
-      setGalleryHasMore(newCreations.length >= GALLERY_FETCH_LIMIT);
+
+      if (newCreations && newCreations.length > 0) {
+        const updatedCreations = [...galleryCreations, ...newCreations];
+        setGalleryCreations(updatedCreations);
+        setGalleryCachedData(updatedCreations);
+        setGalleryHasMore(newCreations.length >= GALLERY_FETCH_LIMIT);
+      }
     } catch (e) {
-      console.error("Failed to load more gallery items:", e);
-      toast.error("Failed to load more images");
+      if (e.name !== 'AbortError') {
+        console.error("Failed to load more gallery items:", e);
+        toast.error("Failed to load more images");
+      }
     } finally {
        setIsLoadingMore(false);
      }
