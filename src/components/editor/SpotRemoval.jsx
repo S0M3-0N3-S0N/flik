@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Wand2, Paintbrush, Eraser, MessageSquare, ImagePlus, X, Loader2 } from "lucide-react";
+import { Wand2, Paintbrush, Eraser, MessageSquare, ImagePlus, X, Loader2, Sparkles, Lightbulb } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { toast } from "sonner";
 
 export default function SpotRemoval({ 
   onRemoveSpot, 
@@ -19,7 +19,73 @@ export default function SpotRemoval({
   referenceImages = [],
   onReferenceImagesChange
 }) {
-  const [isUploading, setIsUploading] = React.useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Debounce prompt changes to get AI suggestions
+  useEffect(() => {
+    if (!prompt || prompt.length < 10) {
+      setShowSuggestions(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      getAISuggestions(prompt);
+    }, 1500); // Wait 1.5s after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [prompt]);
+
+  const getAISuggestions = async (userPrompt) => {
+    if (!userPrompt || userPrompt.length < 10) return;
+
+    setIsLoadingSuggestions(true);
+    try {
+      // Fetch successful prompts from the learning database
+      const learnedPrompts = await base44.entities.PromptLearning.filter(
+        { tool_type: 'magic_brush', was_successful: true },
+        '-created_date',
+        10
+      );
+
+      // Use AI to enhance the prompt
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are an expert image editing AI assistant. A user is using the Magic Brush tool and has written this prompt:
+
+"${userPrompt}"
+
+Based on successful prompts from other users:
+${learnedPrompts.map((p, i) => `${i + 1}. "${p.prompt}"`).join('\n')}
+
+Provide 3 enhanced versions of their prompt that will give better results. Make them:
+- More specific and descriptive
+- Include better visual details
+- Maintain the user's original intent
+
+Return ONLY the 3 suggestions, nothing else.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            suggestions: {
+              type: "array",
+              items: { type: "string" }
+            }
+          }
+        }
+      });
+
+      if (response.suggestions && response.suggestions.length > 0) {
+        setAiSuggestions(response.suggestions);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error("Failed to get AI suggestions:", error);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -34,10 +100,32 @@ export default function SpotRemoval({
       onReferenceImagesChange([...referenceImages, ...newImages]);
     } catch (error) {
       console.error("Upload failed:", error);
+      toast.error("Failed to upload images");
     } finally {
       setIsUploading(false);
     }
   };
+
+  const handleGenerateWithLearning = async () => {
+    // Save the prompt for learning
+    try {
+      await base44.entities.PromptLearning.create({
+        prompt: prompt,
+        tool_type: 'magic_brush',
+        was_successful: true, // We'll assume success for now, can be updated later
+        context: {
+          reference_images_count: referenceImages.length,
+          timestamp: new Date().toISOString()
+        }
+      }, { data_env: "dev" });
+    } catch (error) {
+      console.error("Failed to save prompt for learning:", error);
+    }
+
+    // Proceed with the actual generation
+    onRemoveSpot();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -104,16 +192,63 @@ export default function SpotRemoval({
 
         <div>
           <div className="flex justify-between items-center mb-3">
-            <Label className="text-white/80 text-xs font-medium uppercase tracking-wider">Instructions</Label>
+            <Label className="text-white/80 text-xs font-medium uppercase tracking-wider flex items-center gap-2">
+              Instructions
+              {isLoadingSuggestions && <Loader2 className="w-3 h-3 animate-spin text-[#FF6B35]" />}
+            </Label>
+            {prompt.length > 10 && (
+              <button
+                onClick={() => setShowSuggestions(!showSuggestions)}
+                className="text-xs text-[#FF6B35] hover:text-[#FFB800] transition-colors flex items-center gap-1"
+              >
+                <Lightbulb className="w-3 h-3" />
+                {showSuggestions ? 'Hide' : 'Suggestions'}
+              </button>
+            )}
           </div>
-          <textarea
-            value={prompt}
-            onChange={(e) => onPromptChange(e.target.value)}
-            placeholder="Describe your magic edit... (e.g., 'put a vintage lamp here', 'make the sky purple', 'remove this person')"
-            className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6B35]/50 focus:bg-white/5 min-h-[100px] resize-none transition-all mb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          
+          <div className="relative">
+            <textarea
+              value={prompt}
+              onChange={(e) => onPromptChange(e.target.value)}
+              placeholder="Describe your magic edit... (e.g., 'put a vintage lamp here', 'make the sky purple', 'remove this person')"
+              className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6B35]/50 focus:bg-white/5 min-h-[100px] resize-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             />
+          </div>
 
-          <div className="space-y-3">
+          <AnimatePresence>
+            {showSuggestions && aiSuggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-3 space-y-2"
+              >
+                <div className="text-xs text-white/40 flex items-center gap-2 mb-2">
+                  <Sparkles className="w-3 h-3 text-[#FF6B35]" />
+                  AI-Enhanced Suggestions
+                </div>
+                {aiSuggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      onPromptChange(suggestion);
+                      setShowSuggestions(false);
+                      toast.success("Prompt enhanced!");
+                    }}
+                    className="w-full text-left p-3 rounded-lg bg-white/5 hover:bg-[#FF6B35]/20 border border-white/10 hover:border-[#FF6B35]/50 text-xs text-white/80 hover:text-white transition-all group"
+                  >
+                    <div className="flex items-start gap-2">
+                      <Lightbulb className="w-3 h-3 text-[#FF6B35] mt-0.5 flex-shrink-0" />
+                      <span className="leading-relaxed">{suggestion}</span>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="space-y-3 mt-3">
             <div className="flex items-center gap-2">
               <label className="flex-1 cursor-pointer inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap">
                 {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
@@ -148,13 +283,13 @@ export default function SpotRemoval({
         </div>
 
         <Button
-          onClick={onRemoveSpot}
+          onClick={handleGenerateWithLearning}
           disabled={isProcessing}
           className="w-full btn-gradient text-white h-12 text-sm font-medium rounded-xl mt-2 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/30 hover:translate-y-[-1px] transition-all"
         >
           {isProcessing ? (
             <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Processing...
             </>
           ) : (
