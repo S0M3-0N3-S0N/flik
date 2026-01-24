@@ -14,11 +14,11 @@ export function FlikProvider({ children }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(() => {
     try {
-      const saved = localStorage.getItem('flik_messages');
+      const saved = localStorage?.getItem('flik_messages');
       const parsed = saved ? JSON.parse(saved) : [];
-      // Limit to last 50 messages to prevent bloat
       return parsed.slice(-50);
-    } catch {
+    } catch (e) {
+      console.error('Failed to load messages:', e);
       return [];
     }
   });
@@ -26,8 +26,12 @@ export function FlikProvider({ children }) {
 
   // Persist messages with limit
   useEffect(() => {
-    const limited = messages.slice(-50); // Keep only last 50
-    localStorage.setItem('flik_messages', JSON.stringify(limited));
+    try {
+      const limited = messages.slice(-50);
+      localStorage?.setItem('flik_messages', JSON.stringify(limited));
+    } catch (e) {
+      console.error('Failed to save messages:', e);
+    }
   }, [messages]);
 
   const clearHistory = () => {
