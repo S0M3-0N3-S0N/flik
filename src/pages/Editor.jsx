@@ -535,6 +535,7 @@ export default function Editor() {
         });
         setSelectedFilter(null);
         setIsCropping(false);
+        setActiveTab('ai');
         setRedoHistory([]);
         setIsProcessing(false);
         toast.success("Image cropped successfully!");
