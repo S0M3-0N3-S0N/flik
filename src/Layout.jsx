@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, Compass } from "lucide-react";
@@ -8,7 +8,6 @@ import { FlikProvider, useFlik } from "@/components/FlikContext";
 import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
 import { base44 } from "@/api/base44Client";
-import { FLIK_AVATAR_URL } from "@/components/constants/appConstants";
 
 export const LanguageContext = React.createContext();
 
@@ -36,16 +35,7 @@ function LayoutContent({ children, currentPageName }) {
   }, [language]);
 
   useEffect(() => {
-    base44.auth.me()
-      .then(user => {
-        if (!user) {
-          base44.auth.redirectToLogin(window.location.pathname);
-        }
-        setUser(user);
-      })
-      .catch(() => {
-        base44.auth.redirectToLogin(window.location.pathname);
-      });
+    base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
   // Global keyboard shortcut for FLIK
@@ -376,7 +366,7 @@ function LayoutContent({ children, currentPageName }) {
         >
           <div className="w-full h-full rounded-[14px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden relative">
             <img 
-              src={FLIK_AVATAR_URL} 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
               alt="Chat with FLIK" 
               className="w-full h-full object-cover pointer-events-none"
             />

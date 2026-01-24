@@ -1,31 +1,28 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Trash2, RefreshCw, Grid3x3, AlertCircle, Mic, Volume2, VolumeX, Check } from "lucide-react";
+import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import { base44 } from "@/api/base44Client";
+import ReactMarkdown from 'react-markdown';
 import { useFlik } from "./FlikContext";
 import { getFlikActions } from "./useFlikActions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import MessageBubble from "./FlikChat/MessageBubble";
-import ChatInput from "./FlikChat/ChatInput";
-import GalleryPicker from "./FlikChat/GalleryPicker";
-import {
-  FLIK_AVATAR_URL,
-  CACHE_DURATION,
-  GALLERY_CACHE_DURATION,
-  MAX_RECENT_CREATIONS,
-  CONTEXT_MESSAGES_LIMIT,
-  SHOWN_CREATIONS_LIMIT,
-  GALLERY_FETCH_LIMIT,
-  MAX_FILE_SIZE,
-  NAVIGATION_DELAY,
-  MAX_IN_MEMORY_MESSAGES,
-  generateUniqueId,
-  splitIntoSentences
-} from "./constants/appConstants";
+import { formatDistanceToNow } from 'date-fns';
+
+// Constants
+const CACHE_DURATION = 30000; // 30 seconds
+const GALLERY_CACHE_DURATION = 60000; // 1 minute
+const MAX_RECENT_CREATIONS = 30;
+const CONTEXT_MESSAGES_LIMIT = 15;
+const SHOWN_CREATIONS_LIMIT = 20;
+const GALLERY_FETCH_LIMIT = 50;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const NAVIGATION_DELAY = 800; // ms
+const MAX_IN_MEMORY_MESSAGES = 100;
 
 export default function FlikChat() {
   const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages } = useFlik();
@@ -63,7 +60,49 @@ export default function FlikChat() {
   const speechQueueRef = useRef([]);
   const isSpeakingRef = useRef(false);
 
-
+  // Memoized ReactMarkdown components configuration
+  const markdownComponents = useMemo(() => ({
+    code: ({ inline, className, children, ...props }) => {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline && match ? (
+        <div className="relative group/code">
+          <pre className="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto my-2">
+            <code className={className} {...props}>{children}</code>
+          </pre>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover/code:opacity-100 bg-slate-800 hover:bg-slate-700"
+            onClick={() => {
+              navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+              toast.success('Code copied');
+            }}
+          >
+            <Copy className="h-3 w-3 text-slate-400" />
+          </Button>
+        </div>
+      ) : (
+        <code className="px-1 py-0.5 rounded bg-slate-100 text-slate-700 text-xs">
+          {children}
+        </code>
+      );
+    },
+    a: ({ children, ...props }) => (
+      <a {...props} target="_blank" rel="noopener noreferrer">{children}</a>
+    ),
+    p: ({ children }) => <p className="my-1 leading-relaxed">{children}</p>,
+    ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
+    ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
+    li: ({ children }) => <li className="my-0.5">{children}</li>,
+    h1: ({ children }) => <h1 className="text-lg font-semibold my-2">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-base font-semibold my-2">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-sm font-semibold my-2">{children}</h3>,
+    blockquote: ({ children }) => (
+      <blockquote className="border-l-2 border-slate-300 pl-3 my-2 text-slate-600">
+        {children}
+      </blockquote>
+    ),
+  }), []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -71,7 +110,7 @@ export default function FlikChat() {
     }
   }, [messages, isOpen]);
 
-  // Initialize speech recognition - Fixed issue #1 (duplicate setInput)
+  // Initialize speech recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition && !recognitionRef.current) {
@@ -91,7 +130,10 @@ export default function FlikChat() {
           const finalInput = transcript.trim();
           if (finalInput.length > 0) {
             setInput(finalInput);
-            // Removed duplicate setInput call - was issue #1
+            // Auto-send after a short delay
+            setTimeout(() => {
+              setInput(finalInput);
+            }, 100);
           }
         }
       };
@@ -101,18 +143,6 @@ export default function FlikChat() {
       };
       recognitionRef.current = recognition;
     }
-    
-    // Cleanup speech recognition on unmount - fixes issue #9
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
-        recognitionRef.current = null;
-      }
-    };
   }, []);
 
   const toggleVoiceInput = () => {
@@ -120,10 +150,16 @@ export default function FlikChat() {
       recognitionRef.current?.stop();
       setIsListening(false);
     } else {
+      setInput('');
       recognitionRef.current?.start();
+      
+      // Auto-send after user stops speaking (3 second silence)
       const timeoutId = setTimeout(() => {
-        recognitionRef.current?.stop();
-      }, 10000);
+        if (isListening && input.trim().length > 0) {
+          recognitionRef.current?.stop();
+        }
+      }, 3000);
+      
       return () => clearTimeout(timeoutId);
     }
   };
@@ -147,51 +183,47 @@ export default function FlikChat() {
     setVoiceEnabled(!voiceEnabled);
   };
 
-  const processSpeechQueue = useCallback(() => {
-   if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
+  const enqueueSpeech = (text) => {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    speechQueueRef.current.push(text);
+    processSpeechQueue();
+  };
 
-   isSpeakingRef.current = true;
-   const text = speechQueueRef.current.shift();
-   if (!text) {
-     isSpeakingRef.current = false;
-     return;
-   }
-
-   const utterance = new SpeechSynthesisUtterance(text);
-   utterance.rate = 0.9;
-   utterance.pitch = 1.05;
-   utterance.volume = 1;
-
-   // Get best available voice
-   const voices = window.speechSynthesis?.getVoices?.() || [];
-   const preferredVoice = voices.find(v => v.name.includes('Google US English')) || 
-                         voices.find(v => v.name.includes('Samantha')) ||
-                         voices.find(v => v.lang.includes('en-US')) ||
-                         voices[0];
-
-   if (preferredVoice) {
-     utterance.voice = preferredVoice;
-   }
-
-   utterance.onend = () => {
-     isSpeakingRef.current = false;
-     processSpeechQueue();
-   };
-
-   utterance.onerror = () => {
-     isSpeakingRef.current = false;
-     processSpeechQueue();
-   };
-
-   window.speechSynthesis?.cancel();
-   window.speechSynthesis?.speak(utterance);
-  }, []);
-
-  const enqueueSpeech = useCallback((text) => {
-   if (!voiceEnabled || !window.speechSynthesis) return;
-   speechQueueRef.current.push(text);
-   processSpeechQueue();
-  }, [voiceEnabled, processSpeechQueue]);
+  const processSpeechQueue = () => {
+    if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
+    
+    isSpeakingRef.current = true;
+    const text = speechQueueRef.current.shift();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1.05;
+    utterance.volume = 1;
+    
+    // Get best available voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v => v.name.includes('Google US English')) || 
+                          voices.find(v => v.name.includes('Samantha')) ||
+                          voices.find(v => v.lang.includes('en-US')) ||
+                          voices[0];
+    
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+    
+    utterance.onend = () => {
+      isSpeakingRef.current = false;
+      processSpeechQueue();
+    };
+    
+    utterance.onerror = () => {
+      isSpeakingRef.current = false;
+      processSpeechQueue();
+    };
+    
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
 
   const getCurrentPage = useCallback(() => {
     const path = location.pathname;
@@ -212,19 +244,11 @@ export default function FlikChat() {
     }
   }, [isOpen, cachedUserData, lastFetchTime]);
 
-  // Cleanup on unmount - Enhanced fixes issues #9, #10
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Abort any pending requests
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
-      }
-      // Clear speech queue
-      speechQueueRef.current = [];
-      isSpeakingRef.current = false;
-      // Cancel any ongoing speech
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
       }
     };
   }, []);
@@ -253,8 +277,8 @@ export default function FlikChat() {
     }
   }, []);
 
-  const handleChatImageUpload = useCallback(async (e) => {
-    const files = Array.from(e.target.files || []);
+  const handleChatImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
     const validFiles = files.filter(f => {
       if (!f.type.startsWith('image/')) return false;
       if (f.size > MAX_FILE_SIZE) {
@@ -270,20 +294,19 @@ export default function FlikChat() {
     try {
       const newImages = await Promise.all(validFiles.map(async (file, idx) => {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
-        return { url: uploadResult.file_url, name: file.name, id: generateUniqueId(`upload_${idx}`) };
+        return { url: uploadResult.file_url, name: file.name, id: `${Date.now()}-${idx}-${Math.random()}` };
       }));
       setAttachedImages(prev => [...prev, ...newImages]);
     } catch (err) {
       console.error("Chat upload error:", err);
       setUploadError("Failed to upload images. Please try again.");
-      toast.error("Upload failed");
     } finally {
       setIsUploadingChat(false);
       if (chatFileRef.current) chatFileRef.current.value = '';
     }
-  }, []);
+  };
 
-  const handleGalleryPick = useCallback(async () => {
+  const handleGalleryPick = async () => {
     setShowGalleryPicker(true);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
@@ -314,11 +337,11 @@ export default function FlikChat() {
       setGalleryCreations([]);
       setGalleryHasMore(false);
     } finally {
-       setIsLoadingGallery(false);
-     }
-    }, [galleryCachedData, galleryLastFetch]);
+      setIsLoadingGallery(false);
+    }
+  };
 
-  const toggleGallerySelection = useCallback((creation) => {
+  const toggleGallerySelection = (creation) => {
     const imageUrl = creation.thumbnail_url || creation.url;
     const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
     
@@ -331,18 +354,18 @@ export default function FlikChat() {
         id: `creation-${creation.id}-${Date.now()}`
       }]);
     }
-  }, [selectedGalleryImages]);
+  };
 
-  const confirmGallerySelection = useCallback(() => {
+  const confirmGallerySelection = () => {
     setAttachedImages(prev => [...prev, ...selectedGalleryImages]);
     setShowGalleryPicker(false);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
-  }, [selectedGalleryImages, setAttachedImages]);
+  };
 
-  const handleLoadMoreGallery = useCallback(async () => {
-    if (isLoadingMore || !galleryHasMore || !abortControllerRef.current) return;
-
+  const handleLoadMoreGallery = async () => {
+    if (isLoadingMore || !galleryHasMore) return;
+    
     setIsLoadingMore(true);
     try {
       const user = await base44.auth.me();
@@ -352,28 +375,24 @@ export default function FlikChat() {
         GALLERY_FETCH_LIMIT,
         galleryCreations.length
       );
-
-      if (newCreations && newCreations.length > 0) {
-        const updatedCreations = [...galleryCreations, ...newCreations];
-        setGalleryCreations(updatedCreations);
-        setGalleryCachedData(updatedCreations);
-        setGalleryHasMore(newCreations.length >= GALLERY_FETCH_LIMIT);
-      }
+      
+      const updatedCreations = [...galleryCreations, ...newCreations];
+      setGalleryCreations(updatedCreations);
+      setGalleryCachedData(updatedCreations);
+      setGalleryHasMore(newCreations.length >= GALLERY_FETCH_LIMIT);
     } catch (e) {
-      if (e.name !== 'AbortError') {
-        console.error("Failed to load more gallery items:", e);
-        toast.error("Failed to load more images");
-      }
+      console.error("Failed to load more gallery items:", e);
+      toast.error("Failed to load more images");
     } finally {
-       setIsLoadingMore(false);
-     }
-    }, [isLoadingMore, galleryHasMore, galleryCreations]);
+      setIsLoadingMore(false);
+    }
+  };
 
   const handleImageError = useCallback((creationId) => {
     setImageErrors(prev => ({ ...prev, [creationId]: true }));
   }, []);
 
-  // Memoized filtered gallery creations - Fixed issue #2 & #21 (removed redundant useMemo)
+  // Memoized filtered and sliced gallery creations
   const filteredGalleryCreations = useMemo(() => {
     if (!gallerySearchTerm.trim()) return galleryCreations;
     const term = gallerySearchTerm.toLowerCase();
@@ -382,14 +401,16 @@ export default function FlikChat() {
       (c.prompt?.toLowerCase().includes(term))
     );
   }, [galleryCreations, gallerySearchTerm]);
-  // Removed redundant displayedGalleryCreations - was identical to filteredGalleryCreations
 
-  const handleSend = useCallback(async (retryInput = null, retryImages = null, retryMsgId = null) => {
+  const displayedGalleryCreations = useMemo(() => {
+    return filteredGalleryCreations;
+  }, [filteredGalleryCreations]);
+
+  const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
     const messageImages = retryImages || attachedImages;
     
-    // Only block if truly nothing to send
-    if (!messageContent && messageImages.length === 0) {
+    if (!messageContent.trim() && messageImages.length === 0) {
       setIsListening(false);
       return;
     }
@@ -399,7 +420,7 @@ export default function FlikChat() {
       content: messageContent,
       images: messageImages.map(img => img.url),
       timestamp: new Date().toISOString(),
-      id: generateUniqueId('msg')
+      id: `msg-${Date.now()}-${Math.random()}`
     };
     
     if (!retryInput) {
@@ -565,22 +586,23 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         }
       });
 
-      if (!response?.message) throw new Error('Invalid LLM response format');
-
       const assistantMsg = { 
         role: 'assistant', 
-        content: response.message || "",
-        image_urls: response.image_urls || [],
-        suggested_prompt: response.suggested_prompt || null,
-        suggested_actions: Array.isArray(response.suggested_actions) ? response.suggested_actions : [],
+        content: response.message,
+        image_urls: response.image_urls,
+        suggested_prompt: response.suggested_prompt,
+        suggested_actions: response.suggested_actions,
         timestamp: new Date().toISOString(),
-        id: generateUniqueId('msg')
+        id: `msg-${Date.now()}-${Math.random()}`
       };
       setMessages(prev => [...prev, assistantMsg]);
       
-      // Speak response in natural sentences if voice output is enabled - Fixed issue #7 (browser compat)
+      // Speak response in natural sentences if voice output is enabled
       if (voiceEnabled) {
-        const sentences = splitIntoSentences(response.message);
+        const sentences = response.message
+          .split(/(?<=[.!?])\s+/)
+          .filter(s => s.trim().length > 0);
+        
         sentences.forEach(sentence => {
           enqueueSpeech(sentence.trim());
         });
@@ -595,7 +617,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         role: 'assistant', 
         content: "Oops! I'm having trouble connecting right now. Try again in a moment? 🔌",
         timestamp: new Date().toISOString(),
-        id: generateUniqueId('error'),
+        id: `error-${Date.now()}-${Math.random()}`,
         isError: true
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -604,9 +626,9 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
       setIsTyping(false);
       abortControllerRef.current = null;
     }
-  }, [messages, setMessages, attachedImages, setAttachedImages, cachedUserData, lastFetchTime, fetchUserData, getCurrentPage, voiceEnabled, navigate, location]);
+  };
 
-  const handleAction = useCallback(async (action, actionIdx) => {
+  const handleAction = async (action, actionIdx) => {
     const actionKey = `${actionIdx}`;
     setActionLoadingStates(prev => ({ ...prev, [actionKey]: true }));
     
@@ -629,9 +651,9 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
     } catch (error) {
       console.error('Action execution failed:', error);
     } finally {
-       setActionLoadingStates(prev => ({ ...prev, [actionKey]: false }));
-     }
-    }, [navigate, setIsOpen, location, getCurrentPage]);
+      setActionLoadingStates(prev => ({ ...prev, [actionKey]: false }));
+    }
+  };
 
   const handleCopyMessage = useCallback((messageId, content) => {
     navigator.clipboard.writeText(content);
@@ -648,36 +670,27 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
     setEditInput(message.content);
   }, []);
 
-  const handleRetryMessage = useCallback((errorMsgId) => {
-    if (retryMessage) {
-      handleSend(retryMessage.input, retryMessage.images, errorMsgId);
-    }
-  }, [retryMessage]);
-
   const handleSaveEdit = useCallback(() => {
-     if (!editInput.trim()) return;
-
-     // Find the index of the edited message
-     const editedMsgIndex = messages.findIndex(m => m.id === editingMessageId);
-     if (editedMsgIndex === -1) return;
-
-     const editedMessage = messages[editedMsgIndex];
-
-     // Keep user message, remove assistant responses after it
-     setMessages(prev => {
-       const filtered = prev.slice(0, editedMsgIndex + 1);
-       return filtered.map((m, i) => i === editedMsgIndex ? { ...m, content: editInput } : m);
-     });
-
-     // Clear edit state
-     setEditingMessageId(null);
-     setEditInput("");
-
-     // Resend with the edited content and original images
-     setTimeout(() => {
-       handleSend(editInput, editedMessage.images?.map(url => ({ url, id: `retry-${Date.now()}-${Math.random()}` })) || []);
-     }, 100);
-   }, [editingMessageId, editInput, messages, setMessages, handleSend]);
+    if (!editInput.trim()) return;
+    
+    // Find the index of the edited message
+    const editedMsgIndex = messages.findIndex(m => m.id === editingMessageId);
+    if (editedMsgIndex === -1) return;
+    
+    const editedMessage = messages[editedMsgIndex];
+    
+    // Remove all messages after the edited one
+    setMessages(prev => prev.slice(0, editedMsgIndex));
+    
+    // Clear edit state
+    setEditingMessageId(null);
+    setEditInput("");
+    
+    // Resend with the edited content and original images
+    setTimeout(() => {
+      handleSend(editInput, editedMessage.images?.map(url => ({ url, id: `retry-${Date.now()}-${Math.random()}` })) || []);
+    }, 100);
+  }, [editingMessageId, editInput, messages, setMessages, handleSend]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingMessageId(null);
@@ -704,7 +717,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/30">
                 <div className="w-full h-full rounded-[14px] bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
                   <img 
-                    src={FLIK_AVATAR_URL} 
+                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
                     alt="FLIK" 
                     className="w-full h-full object-cover"
                   />
@@ -745,54 +758,231 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
           <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent" ref={scrollRef}>
             {messages.length === 0 && (
               <div className="text-center py-16 px-4 space-y-6 flex flex-col items-center justify-center h-full">
-                <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[3px] shadow-2xl shadow-[#FF6B35]/40">
-                  <div className="w-full h-full rounded-[21px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-                    <img 
-                      src={FLIK_AVATAR_URL} 
-                      alt="FLIK" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </motion.div>
-                <div>
-                  <h4 className="text-white font-bold text-xl gradient-text mb-2">I'm FLIK</h4>
-                  <p className="text-white/50 text-sm leading-relaxed max-w-xs">
-                    Your creative voice. Ask me to help design, edit, generate, or just chat about your ideas.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 w-full max-w-xs mt-4">
-                  <button onClick={() => setInput("Show me my recent creations")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                    <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> My Creations
-                  </button>
-                  <button onClick={() => setInput("Help me create something amazing")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                    <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Create Something
-                  </button>
-                  <button onClick={() => setInput("What can you do?")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                    <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Capabilities
-                  </button>
-                </div>
+              <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[3px] shadow-2xl shadow-[#FF6B35]/40">
+              <div className="w-full h-full rounded-[21px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
+                <img 
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                  alt="FLIK" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              </motion.div>
+              <div>
+              <h4 className="text-white font-bold text-xl gradient-text mb-2">I'm FLIK</h4>
+              <p className="text-white/50 text-sm leading-relaxed max-w-xs">
+                Your creative voice. Ask me to help design, edit, generate, or just chat about your ideas.
+              </p>
+              </div>
+              <div className="flex flex-col gap-2 w-full max-w-xs mt-4">
+              <button onClick={() => setInput("Show me my recent creations")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> My Creations
+              </button>
+              <button onClick={() => setInput("Help me create something amazing")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Create Something
+              </button>
+              <button onClick={() => setInput("What can you do?")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Capabilities
+              </button>
+              </div>
               </div>
             )}
 
-            {messages.map((msg) => (
-              <MessageBubble
+            {messages.map((msg) => {
+              const isEditing = editingMessageId === msg.id;
+
+              return (
+              <div
                 key={msg.id || msg.timestamp}
-                message={msg}
-                onCopy={handleCopyMessage}
-                onDelete={handleDeleteMessage}
-                onEdit={handleEditMessage}
-                onAction={handleAction}
-                onRetry={handleRetryMessage}
-                copiedMessageId={copiedMessageId}
-                actionLoadingStates={actionLoadingStates}
-              />
-            ))}
+                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}
+              >
+                {msg.role === 'assistant' && (
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] flex-shrink-0 shadow-lg shadow-[#FF6B35]/20">
+                    <div className="w-full h-full rounded-[10px] bg-[#141414] flex items-center justify-center overflow-hidden">
+                      <img 
+                        src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                        alt="FLIK" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col gap-1 max-w-[80%]">
+                  {msg.role === 'user' && (
+                    <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity mb-1">
+                      <button
+                        onClick={() => handleEditMessage(msg)}
+                        className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white/80"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleCopyMessage(msg.id, msg.content)}
+                        className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white/80"
+                        title="Copy"
+                      >
+                        {copiedMessageId === msg.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="p-1 rounded hover:bg-red-500/20 text-white/50 hover:text-red-400"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  {isEditing ? (
+                    <div className="flex gap-2 bg-gradient-to-br from-white/10 to-white/5 p-3 rounded-2xl border border-[#FF6B35]/30 shadow-lg backdrop-blur-sm">
+                      <Input
+                        value={editInput}
+                        onChange={(e) => setEditInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSaveEdit();
+                          }
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        className="bg-black/30 border-white/20 text-white focus-visible:ring-[#FF6B35]/50 placeholder:text-white/30"
+                        autoFocus
+                      />
+                      <Button size="icon" onClick={handleSaveEdit} className="bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-md">
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="hover:bg-red-500/10 hover:text-red-400">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                  <div
+                    className={`px-4 py-3 rounded-2xl text-sm space-y-2 ${
+                      msg.role === 'user'
+                        ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white rounded-tr-none shadow-lg'
+                        : 'bg-white/8 text-white/90 rounded-tl-none backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors'
+                    }`}
+                  >
+                    {msg.role === 'user' && msg.images && msg.images.length > 0 && (
+                      <div className={`grid gap-2 mb-2 ${msg.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {msg.images.map((imgUrl, idx) => (
+                          <div 
+                            key={idx} 
+                            className="rounded-lg overflow-hidden border border-white/20 aspect-square cursor-pointer hover:border-[#FF6B35] transition-colors"
+                            onClick={() => setFullImageView(imgUrl)}
+                          >
+                            <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {msg.role === 'assistant' && msg.image_urls && msg.image_urls.length > 0 && (
+                      <div className={`grid gap-2 mb-2 ${msg.image_urls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {msg.image_urls.map((imgUrl, idx) => (
+                          <div 
+                            key={idx} 
+                            className="rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35]/50 transition-colors cursor-pointer"
+                            onClick={() => setFullImageView(imgUrl)}
+                          >
+                            <img 
+                              src={imgUrl} 
+                              alt={`Response ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="prose prose-invert prose-sm max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 last:[&>*]:mb-0 [&>p]:leading-relaxed">
+                      <ReactMarkdown components={markdownComponents}>
+                        {msg.content}
+                      </ReactMarkdown>
+                      </div>
+                      {msg.timestamp && (
+                      <div className="text-[10px] text-white/30 mt-1 flex items-center gap-1">
+                        {formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}
+                        {msg.edited && <span className="italic">(edited)</span>}
+                      </div>
+                      )}
+                      </div>
+                      )}
+
+                  {msg.role === 'assistant' && (
+                    <div className="flex flex-col gap-2 mt-2">
+                      {msg.suggested_prompt && (
+                        <button
+                          onClick={() => {
+                            setInput(msg.suggested_prompt);
+                          }}
+                          className="bg-[#1a1a1a] hover:bg-[#252525] border border-white/10 hover:border-[#FF6B35]/50 rounded-lg p-2 text-xs text-white/60 hover:text-white/80 italic border-l-2 border-l-[#FF6B35] transition-all text-left group"
+                        >
+                          <span className="block mb-1 text-[10px] text-white/40 group-hover:text-[#FF6B35]">💡 Click to use this prompt</span>
+                          "{msg.suggested_prompt}"
+                        </button>
+                      )}
+                      
+                      {msg.isError && retryMessage && (
+                        <button
+                          onClick={() => handleSend(retryMessage.input, retryMessage.images, retryMessage.errorMsgId)}
+                          className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          Retry Message
+                        </button>
+                      )}
+                      
+                      {msg.suggested_actions && msg.suggested_actions.length > 0 && (
+                         <div className="flex flex-wrap gap-2">
+                           {msg.suggested_actions.map((action, idx) => {
+                             const getIcon = () => {
+                               if (action.type === 'navigate') return ExternalLink;
+                               if (action.type === 'tool') return Wand2;
+                               if (action.type === 'adjustment') return SlidersHorizontal;
+                               if (action.type === 'filter') return Layers;
+                               if (action.type === 'crop') return Crop;
+                               if (action.type === 'apply_prompt') return ArrowLeft;
+                               return Play;
+                             };
+                             const Icon = getIcon();
+                             const actionKey = `${idx}`;
+                             const isLoading = actionLoadingStates[actionKey];
+
+                             return (
+                               <button
+                                 key={idx}
+                                 onClick={() => handleAction(action, idx)}
+                                 disabled={isLoading}
+                                 className="flex items-center gap-2 bg-gradient-to-r from-white/5 to-white/10 hover:from-[#FF6B35]/20 hover:to-[#FFB800]/20 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                               >
+                                 {isLoading ? (
+                                   <Loader2 className="w-3 h-3 text-[#FF6B35] animate-spin" />
+                                 ) : (
+                                   <Icon className="w-3 h-3 text-[#FF6B35]" />
+                                 )}
+                                 <span>{action.label}</span>
+                                 {!isLoading && <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35] transition-all" />}
+                               </button>
+                             );
+                           })}
+                         </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {msg.role === 'user' && (
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                )}
+              </div>
+            );
+            })}
             {isTyping && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/20">
                   <div className="w-full h-full rounded-[10px] bg-[#141414] flex items-center justify-center overflow-hidden">
                     <img 
-                      src={FLIK_AVATAR_URL} 
+                      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
                       alt="FLIK" 
                       className="w-full h-full object-cover"
                     />
@@ -808,42 +998,290 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
             )}
           </div>
 
-          <ChatInput
-            input={input}
-            setInput={setInput}
-            attachedImages={attachedImages}
-            setAttachedImages={setAttachedImages}
-            isTyping={isTyping}
-            isUploadingChat={isUploadingChat}
-            isListening={isListening}
-            onSend={handleSend}
-            onGalleryPick={handleGalleryPick}
-            onVoiceToggle={toggleVoiceInput}
-            onFileUpload={handleChatImageUpload}
-            chatFileRef={chatFileRef}
-            uploadError={uploadError}
-          />
+          <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
+            {uploadError && (
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {uploadError}
+              </div>
+            )}
+            {attachedImages.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                {attachedImages.map((img) => (
+                  <div key={img.id} className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 group">
+                    <img src={img.url} alt={img.name || 'Attached'} className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => setAttachedImages(prev => prev.filter(i => i.id !== img.id))} 
+                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                      title="Remove image"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!isTyping && !isUploadingChat) {
+                  handleSend();
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              <button
+                type="button"
+                onClick={toggleVoiceInput}
+                className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${
+                  isListening 
+                    ? 'bg-red-500/30 text-red-400 animate-pulse scale-110' 
+                    : 'hover:bg-white/10 text-white/60 hover:text-white'
+                }`}
+                title={isListening ? "Stop listening" : "Start voice"}
+              >
+                {isListening ? <Mic className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
+
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="What's on your mind?"
+                className="bg-black/20 border-white/10 text-white focus-visible:ring-[#FF6B35] placeholder:text-white/40 flex-1"
+              />
+
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={handleGalleryPick}
+                  className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0"
+                  title="Pick from gallery"
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                </button>
+                <Button 
+                  type="submit" 
+                  size="icon"
+                  disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
+                  className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg rounded-xl h-10 w-10 p-0"
+                >
+                  {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
+
+              <input
+                ref={chatFileRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleChatImageUpload}
+                className="hidden"
+              />
+            </form>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
       
-    <GalleryPicker
-      isOpen={showGalleryPicker}
-      onClose={() => setShowGalleryPicker(false)}
-      galleryCreations={galleryCreations}
-      isLoadingGallery={isLoadingGallery}
-      isLoadingMore={isLoadingMore}
-      galleryHasMore={galleryHasMore}
-      selectedGalleryImages={selectedGalleryImages}
-      gallerySearchTerm={gallerySearchTerm}
-      onToggleSelection={toggleGallerySelection}
-      onLoadMore={handleLoadMoreGallery}
-      onConfirm={confirmGallerySelection}
-      onSearchChange={setGallerySearchTerm}
-      imageErrors={imageErrors}
-      onImageError={handleImageError}
-      displayedCount={displayedCount}
-    />
+    <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
+      <DialogContent className="max-w-7xl w-[96vw] h-[92vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col shadow-2xl p-0 rounded-3xl overflow-hidden">
+        <DialogHeader className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4 border-b border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] flex-shrink-0 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
+          <div className="relative z-10">
+            <DialogTitle className="text-2xl sm:text-3xl font-bold gradient-text flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
+                <div className="w-full h-full rounded-[10px] bg-[#0a0a0a] flex items-center justify-center">
+                  <Grid3x3 className="w-5 h-5 text-[#FF6B35]" />
+                </div>
+              </div>
+              Gallery Picker
+            </DialogTitle>
+            <p className="text-sm text-white/60 mb-4 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-xs font-medium">
+                <ImageIcon className="w-3.5 h-3.5" />
+                {filteredGalleryCreations.length} image{filteredGalleryCreations.length !== 1 ? 's' : ''}
+              </span>
+              {selectedGalleryImages.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium animate-pulse">
+                  ✓ {selectedGalleryImages.length} selected
+                </span>
+              )}
+            </p>
+            <div className="relative">
+              <Input
+                value={gallerySearchTerm}
+                onChange={(e) => setGallerySearchTerm(e.target.value)}
+                placeholder="🔍 Search by title or prompt..."
+                className="bg-black/40 border-white/20 text-white text-sm focus-visible:ring-2 focus-visible:ring-[#FF6B35] placeholder:text-white/40 h-11 pl-4 pr-4 rounded-xl shadow-lg backdrop-blur-sm"
+              />
+            </div>
+          </div>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#FF6B35]/40 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-[#FF6B35]/60 [&::-webkit-scrollbar-track]:bg-white/5 [&::-webkit-scrollbar-track]:rounded-full"
+          style={{ 
+            willChange: 'scroll-position',
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden'
+          }}
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+          {isLoadingGallery ? (
+            <>
+              {Array.from({ length: 18 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-white/5 to-white/10 border border-white/10 shadow-lg"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/10 via-transparent to-[#FFB800]/10 animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-8 h-8 border-3 border-white/20 border-t-[#FF6B35] rounded-full animate-spin" />
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : displayedGalleryCreations.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-16 sm:py-20 text-center px-4">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center mb-5 border border-white/10 shadow-lg">
+                <ImageIcon className="w-12 h-12 text-white/20" />
+              </div>
+              <h3 className="text-lg font-semibold text-white/80 mb-2">
+                {gallerySearchTerm ? 'No Matching Images' : 'No Creations Yet'}
+              </h3>
+              <p className="text-sm text-white/40 mb-4">
+                {gallerySearchTerm ? 'Try a different search term' : 'Start creating amazing images to see them here'}
+              </p>
+              {gallerySearchTerm && (
+                <button
+                  onClick={() => setGallerySearchTerm("")}
+                  className="px-4 py-2 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-sm rounded-xl transition-all shadow-lg"
+                >
+                  Clear Search
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              {displayedGalleryCreations.map((creation) => {
+                const imageUrl = creation.thumbnail_url || creation.url;
+                const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
+                const hasError = imageErrors[creation.id];
+
+                return (
+                  <button
+                    key={creation.id}
+                    onClick={() => !hasError && toggleGallerySelection(creation)}
+                    disabled={hasError}
+                    className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 group active:scale-95 bg-gradient-to-br from-black/40 to-black/60 focus:outline-none shadow-lg hover:shadow-2xl ${
+                      isSelected 
+                        ? 'border-[#FF6B35] shadow-[0_0_30px_rgba(255,107,53,0.5)] scale-105' 
+                        : hasError
+                        ? 'border-red-500/30 opacity-50 cursor-not-allowed'
+                        : 'border-white/10 hover:border-[#FF6B35]/50 hover:scale-105'
+                    }`}
+                    aria-label={`${isSelected ? 'Remove' : 'Add'} ${creation.title || 'Untitled'}`}
+                    style={{ 
+                      willChange: 'transform',
+                      transform: 'translateZ(0)'
+                    }}
+                  >
+                    {hasError ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-red-400">
+                        <AlertCircle className="w-8 h-8" />
+                        <span className="text-xs">Failed to load</span>
+                      </div>
+                    ) : (
+                      <>
+                        <img 
+                          src={imageUrl}
+                          alt={creation.title || 'Creation'}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
+                          decoding="async"
+                          onError={() => handleImageError(creation.id)}
+                        />
+                        <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${
+                          isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                        }`} />
+                        <div className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-300 shadow-lg ${
+                          isSelected 
+                            ? 'bg-[#FF6B35] opacity-100 scale-100 ring-2 ring-white/30' 
+                            : 'bg-white/20 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100'
+                        }`}>
+                          <Check className="w-4 h-4 text-white font-bold" />
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/90 to-transparent">
+                          <p className="text-xs text-white font-semibold truncate drop-shadow-lg">
+                            {creation.title || 'Untitled'}
+                          </p>
+                          {creation.prompt && (
+                            <p className="text-[10px] text-white/60 truncate mt-0.5">
+                              {creation.prompt}
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+              {galleryHasMore && (
+                <div className="col-span-full flex justify-center py-6">
+                  <Button
+                    onClick={handleLoadMoreGallery}
+                    disabled={isLoadingMore}
+                    className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white px-8 py-3 rounded-xl text-sm font-semibold shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        Load More Images
+                        <span className="ml-2 opacity-70">↓</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+          </div>
+          </div>
+        {selectedGalleryImages.length > 0 && (
+          <div className="px-5 sm:px-7 py-4 sm:py-5 border-t-2 border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 flex-shrink-0 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center">
+                <Check className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">
+                  {selectedGalleryImages.length} Image{selectedGalleryImages.length !== 1 ? 's' : ''} Selected
+                </p>
+                <p className="text-white/50 text-xs">Ready to add to conversation</p>
+              </div>
+            </div>
+            <div className="flex gap-2 sm:gap-3 relative z-10">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedGalleryImages([])}
+                className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 hover:border-white/40 text-sm px-6 py-2.5 rounded-xl transition-all"
+              >
+                Clear Selection
+              </Button>
+              <Button
+                onClick={confirmGallerySelection}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-sm px-8 py-2.5 rounded-xl shadow-xl hover:shadow-2xl transition-all font-semibold"
+              >
+                Add to Chat →
+              </Button>
+            </div>
+          </div>
+        )}
+        </DialogContent>
+        </Dialog>
 
         {/* Full Image Viewer */}
         <Dialog open={!!fullImageView} onOpenChange={() => setFullImageView(null)}>

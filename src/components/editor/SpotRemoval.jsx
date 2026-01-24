@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Wand2, Paintbrush, Eraser, MessageSquare, ImagePlus, X, Loader2, Sparkles, Lightbulb } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { validateBrushSize } from "@/components/constants/appConstants";
 
 export default function SpotRemoval({ 
   onRemoveSpot, 
@@ -24,37 +23,19 @@ export default function SpotRemoval({
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const suggestionTimerRef = useRef(null);
-  
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (suggestionTimerRef.current) {
-        clearTimeout(suggestionTimerRef.current);
-      }
-    };
-  }, []);
 
-  // Debounce prompt changes to get AI suggestions - with proper cleanup
+  // Debounce prompt changes to get AI suggestions
   useEffect(() => {
     if (!prompt || prompt.length < 10) {
       setShowSuggestions(false);
       return;
     }
 
-    if (suggestionTimerRef.current) {
-      clearTimeout(suggestionTimerRef.current);
-    }
-
-    suggestionTimerRef.current = setTimeout(() => {
+    const timer = setTimeout(() => {
       getAISuggestions(prompt);
     }, 1500); // Wait 1.5s after user stops typing
 
-    return () => {
-      if (suggestionTimerRef.current) {
-        clearTimeout(suggestionTimerRef.current);
-      }
-    };
+    return () => clearTimeout(timer);
   }, [prompt]);
 
   const getAISuggestions = async (userPrompt) => {
@@ -200,8 +181,8 @@ Return ONLY the 3 suggestions, nothing else.`,
             <span className="text-xs font-mono text-white/50 bg-white/5 px-2 py-1 rounded">{brushSize}px</span>
           </div>
           <Slider
-            value={[validateBrushSize(brushSize, 10, 100)]}
-            onValueChange={(value) => onBrushSizeChange(validateBrushSize(value[0], 10, 100))}
+            value={[brushSize]}
+            onValueChange={(value) => onBrushSizeChange(value[0])}
             min={10}
             max={100}
             step={5}

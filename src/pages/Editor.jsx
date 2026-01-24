@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Menu, ChevronDown } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -18,16 +18,8 @@ import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import ColorWheel from "@/components/editor/ColorWheel";
-import BatchPanel from "@/components/editor/BatchPanel";
+
 import { useFlikActions } from "@/components/useFlikActions";
-import { 
-  generateUniqueId, 
-  validateCropArea, 
-  validateBrushSize, 
-  MAX_UNDO_HISTORY,
-  MAX_BATCH_FILE_SIZE,
-  throttle 
-} from "@/components/constants/appConstants";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
@@ -83,10 +75,6 @@ export default function Editor() {
   const [paintLayerVisible, setPaintLayerVisible] = useState(true);
   const [blendMode, setBlendMode] = useState('source-over');
   const [paintBrushMode, setPaintBrushMode] = useState('draw');
-  const [toolbarVisible, setToolbarVisible] = useState(true);
-  const [showBatchPanel, setShowBatchPanel] = useState(false);
-  const toolbarHideTimeoutRef = useRef(null);
-  const isProcessingRef = useRef(false); // Fix issue #71
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -132,10 +120,9 @@ export default function Editor() {
     }
   }, []);
 
-  // Cleanup all object URLs and timeouts on unmount - Fixed issues #8, #88
+  // Cleanup all object URLs on unmount
   useEffect(() => {
     return () => {
-      // Cleanup object URLs
       objectURLsRef.current.forEach(url => {
         try {
           URL.revokeObjectURL(url);
@@ -144,12 +131,6 @@ export default function Editor() {
         }
       });
       objectURLsRef.current.clear();
-      
-      // Cleanup toolbar timeout - fix issue #8
-      if (toolbarHideTimeoutRef.current) {
-        clearTimeout(toolbarHideTimeoutRef.current);
-        toolbarHideTimeoutRef.current = null;
-      }
     };
   }, []);
 
@@ -195,20 +176,11 @@ export default function Editor() {
     }
   }, []);
 
-  // Fixed issues #35, #92 - use constants and unique IDs
   const handleBatchUpload = useCallback((e) => {
-    const files = Array.from(e.target.files || []);
-    const imageFiles = files.filter(f => {
-      if (!f.type.startsWith('image/')) return false;
-      if (f.size > MAX_BATCH_FILE_SIZE) {
-        toast.error(`${f.name} exceeds 100MB limit`);
-        return false;
-      }
-      return true;
-    });
-
-    const images = imageFiles.map((file, idx) => ({
-      id: generateUniqueId(`batch_${idx}`),
+    const files = Array.from(e.target.files);
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    const images = imageFiles.map(file => ({
+      id: Date.now() + Math.random(),
       file,
       preview: createObjectURL(file),
       name: file.name,
@@ -217,10 +189,10 @@ export default function Editor() {
       filter: null,
       brushStrokes: []
     }));
-
+    
     const newBatch = [...batchImages, ...images];
     setBatchImages(newBatch);
-
+    
     if (activeBatchIndex === null && newBatch.length > 0) {
       switchToBatchImage(0, newBatch);
     }
@@ -265,125 +237,94 @@ export default function Editor() {
 
   const handleBatchProcess = useCallback(async (tool) => {
     if (batchImages.length === 0) return;
-
+    
     setIsBatchProcessing(true);
     setBatchProgress(0);
     setBatchCancelled(false);
     const results = [];
-    let failedCount = 0;
-
+    
     for (let i = 0; i < batchImages.length; i++) {
       if (batchCancelled) break;
-
+      
       const image = batchImages[i];
       try {
         const uploadResult = await base44.integrations.Core.UploadFile({ file: image.file });
-        if (!uploadResult?.file_url) throw new Error('Upload failed');
-
         const result = await base44.integrations.Core.GenerateImage({
           prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition.`,
           existing_image_urls: [uploadResult.file_url]
         });
-
-        if (result?.url) {
-          await base44.entities.Creation.create({
-            title: `Batch ${tool.label} - ${image.name}`,
-            type: 'image',
-            url: result.url,
-            thumbnail_url: result.url,
-            prompt: tool.prompt,
-            metadata: { batch: true, original: image.name }
-          });
-          results.push({ original: image, result: result.url });
-        }
+        
+        await base44.entities.Creation.create({
+          title: `Batch ${tool.label} - ${image.name}`,
+          type: 'image',
+          url: result.url,
+          thumbnail_url: result.url,
+          prompt: tool.prompt,
+          metadata: { batch: true, original: image.name }
+        }, { data_env: "dev" });
+        
+        results.push({ original: image, result: result.url });
+        setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
       } catch (err) {
-        failedCount++;
         console.error('Batch error:', err);
+        toast.error(`Failed to process ${image.name}`);
       }
-      setBatchProgress(Math.round(((i + 1) / batchImages.length) * 100));
     }
-
+    
     if (batchCancelled) {
-      toast.info(`Batch cancelled. Processed ${results.length} of ${batchImages.length} images.`);
-    } else if (failedCount > 0) {
-      toast.warning(`Processed ${results.length}/${batchImages.length} (${failedCount} failed)`);
+      toast.info(`Batch processing cancelled. Processed ${results.length} of ${batchImages.length} images.`);
     } else {
-      toast.success(`Processed ${results.length} images! Saved to Gallery.`);
+      toast.success(`Successfully processed ${results.length} of ${batchImages.length} images! Saved to Gallery.`);
     }
-
+    
     setIsBatchProcessing(false);
     setBatchImages([]);
     setBatchProgress(0);
   }, [batchImages, batchCancelled]);
 
-  const handleGenerateCanvas = useCallback(async () => {
-      try {
-        return await generateCanvas(currentImage, adjustments, transform, selectedFilter);
-      } catch (e) {
-        console.error('Canvas generation failed:', e);
-        toast.error('Failed to process image');
-        return null;
-      }
-    }, [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
-
-  const handleGetProcessedBlob = useCallback(async () => {
-      try {
-        return await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
-      } catch (e) {
-        console.error('Blob generation failed:', e);
-        toast.error('Failed to process image');
-        return null;
-      }
-    }, [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
+  const handleGenerateCanvas = useCallback(() => generateCanvas(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
+  const handleGetProcessedBlob = useCallback(() => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
   const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) return;
-    if (isProcessingRef.current) return;
-
-    isProcessingRef.current = true;
+    
     setActiveTool(tool);
     setIsProcessing(true);
     setRegenerateAction(() => () => handleToolSelect(tool));
-
+    
     try {
       const blob = await handleGetProcessedBlob();
-      if (!blob) throw new Error('Failed to process image');
-
       const processedUrl = createObjectURL(blob);
       setProcessedImage(processedUrl);
-
+      
       const file = new File([blob], "processed_input.png", { type: "image/png" });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
-      if (!uploadResult?.file_url) throw new Error('Upload failed');
-
+      
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
         existing_image_urls: [uploadResult.file_url]
       });
-
-      if (!result?.url) throw new Error('Generation failed');
+      
       setResultImage(result.url);
       setShowResult(true);
     } catch (error) {
       console.error("Error processing image:", error);
       toast.error("Error processing image. Please try again.");
-      if (processedImage) revokeObjectURL(processedImage);
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
-      isProcessingRef.current = false;
     }
-  }, [currentImage, handleGetProcessedBlob, createObjectURL, processedImage, revokeObjectURL]);
+  }, [currentImage, handleGetProcessedBlob, createObjectURL]);
 
   const handleApplyResult = useCallback(() => {
     if (resultImage) {
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
       setCurrentImage({ 
         url: resultImage, 
         preview: resultImage, 
         name: "enhanced_image.png" 
       });
-
+      
       setAdjustments({
         brightness: 0,
         contrast: 0,
@@ -396,7 +337,6 @@ export default function Editor() {
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
       setBrushStrokes([]);
-      setPaintStrokes([]);
       setRedoHistory([]);
     }
     setShowResult(false);
@@ -405,7 +345,7 @@ export default function Editor() {
       revokeObjectURL(processedImage);
       setProcessedImage(null);
     }
-  }, [resultImage, currentImage, adjustments, selectedFilter, transform, paintStrokes, processedImage, revokeObjectURL]);
+  }, [resultImage, currentImage, adjustments, selectedFilter, transform, processedImage, revokeObjectURL]);
 
   const handleCloseResult = useCallback(() => {
     setShowResult(false);
@@ -453,74 +393,8 @@ export default function Editor() {
     }
   }, [redoHistory, currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
-  const getProcessedImageWithPaint = useCallback(async () => {
-    if (!currentImage) return null;
-
-    const baseCanvas = await handleGenerateCanvas();
-    if (!baseCanvas) return null;
-
-    // If no paint strokes, just return the base canvas
-    if (paintStrokes.length === 0 || !paintLayerVisible) {
-      return new Promise(resolve => baseCanvas.toBlob(resolve, 'image/png'));
-    }
-
-    // Create final canvas with paint merged
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = baseCanvas.width;
-    finalCanvas.height = baseCanvas.height;
-    const ctx = finalCanvas.getContext('2d');
-
-    // Draw base image
-    ctx.drawImage(baseCanvas, 0, 0);
-
-    // Draw paint strokes
-    ctx.globalAlpha = paintLayerOpacity;
-    paintStrokes.forEach(stroke => {
-      const points = stroke.points;
-      if (!points || points.length === 0) return;
-
-      const isErase = stroke.type === 'erase';
-      const size = stroke.size || brushSize;
-      const color = stroke.color || brushColor;
-      const opacity = stroke.opacity || 1;
-      const flow = stroke.flow || 100;
-
-      ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
-
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
-
-      points.forEach(point => {
-        ctx.beginPath();
-        ctx.arc(
-          (point.x / 100) * finalCanvas.width,
-          (point.y / 100) * finalCanvas.height,
-          size / 2,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      });
-    });
-
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-
-    return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
-  }, [currentImage, paintStrokes, handleGenerateCanvas, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
-
-  // Fixed issue #37 - prevent concurrent download/bake operations
   const handleDownload = useCallback(async () => {
     if (!currentImage) return;
-    if (isProcessingRef.current) {
-      toast.info("Please wait for current operation to complete.");
-      return;
-    }
-
-    isProcessingRef.current = true;
     try {
       const blob = await getProcessedImageWithPaint();
       if (!blob) {
@@ -534,48 +408,89 @@ export default function Editor() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setTimeout(() => revokeObjectURL(url), 100);
+      revokeObjectURL(url);
       toast.success("Image downloaded successfully!");
     } catch (e) {
       console.error("Download failed", e);
       toast.error("Download failed. Please try again.");
-    } finally {
-      isProcessingRef.current = false;
     }
-  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL, getProcessedImageWithPaint]);
+  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL]);
 
-  // Fixed issue #100 - limit undo history size
-  const handleAdjustmentChange = useCallback((newAdjustments) => {
-    setUndoHistory(prev => {
-      const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }];
-      return newHistory.slice(-MAX_UNDO_HISTORY);
+  const getProcessedImageWithPaint = useCallback(async () => {
+    if (!currentImage) return null;
+    
+    const baseCanvas = await handleGenerateCanvas();
+    if (!baseCanvas) return null;
+    
+    // If no paint strokes, just return the base canvas
+    if (paintStrokes.length === 0 || !paintLayerVisible) {
+      return new Promise(resolve => baseCanvas.toBlob(resolve, 'image/png'));
+    }
+    
+    // Create final canvas with paint merged
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = baseCanvas.width;
+    finalCanvas.height = baseCanvas.height;
+    const ctx = finalCanvas.getContext('2d');
+    
+    // Draw base image
+    ctx.drawImage(baseCanvas, 0, 0);
+    
+    // Draw paint strokes
+    ctx.globalAlpha = paintLayerOpacity;
+    paintStrokes.forEach(stroke => {
+      const points = stroke.points;
+      if (!points || points.length === 0) return;
+      
+      const isErase = stroke.type === 'erase';
+      const size = stroke.size || brushSize;
+      const color = stroke.color || brushColor;
+      const opacity = stroke.opacity || 1;
+      const flow = stroke.flow || 100;
+      
+      ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
+      
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
+      
+      points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(
+          (point.x / 100) * finalCanvas.width,
+          (point.y / 100) * finalCanvas.height,
+          size / 2,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      });
     });
+    
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    
+    return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+  }, [currentImage, paintStrokes, handleGenerateCanvas, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
+
+  const handleAdjustmentChange = useCallback((newAdjustments) => {
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
     setAdjustments(newAdjustments);
     setRedoHistory([]);
-    // Persist adjustment changes
-    if (activeBatchIndex !== null) {
-      saveCurrentStateToBatch();
-    }
-  }, [currentImage, adjustments, selectedFilter, transform, paintStrokes, activeBatchIndex, saveCurrentStateToBatch]);
+  }, [currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
   const handleFilterSelect = useCallback((filter) => {
-    setUndoHistory(prev => {
-      const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }];
-      return newHistory.slice(-MAX_UNDO_HISTORY);
-    });
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
     setSelectedFilter(filter);
     setRedoHistory([]);
   }, [currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
   const handleTransform = useCallback(async (type) => {
     if (!currentImage) return;
-    if (isProcessingRef.current) return;
 
-    isProcessingRef.current = true;
-    setUndoHistory(prev => {
-      const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }];
-      return newHistory.slice(-MAX_UNDO_HISTORY);
-    });
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     setIsProcessing(true);
 
     try {
@@ -609,12 +524,10 @@ export default function Editor() {
         setBrushStrokes([]);
         setRedoHistory([]);
         setIsProcessing(false);
-        isProcessingRef.current = false;
       }, 'image/png');
     } catch (error) {
       console.error("Transform error:", error);
       setIsProcessing(false);
-      isProcessingRef.current = false;
       toast.error("Transform failed. Please try again.");
     }
   }, [currentImage, adjustments, selectedFilter, transform, generateCanvas, createObjectURL]);
@@ -656,18 +569,11 @@ export default function Editor() {
     setIsCropping(false);
   }, []);
 
-  // Fixed issue #61 - validate crop coordinates, issue #71 - prevent race condition
   const handleApplyCrop = useCallback(async () => {
     if (!currentImage) return;
-    if (isProcessingRef.current) return;
 
-    isProcessingRef.current = true;
     setIsProcessing(true);
-    setUndoHistory(prev => {
-      const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }];
-      // Limit undo history - fix issue #100
-      return newHistory.slice(-MAX_UNDO_HISTORY);
-    });
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
 
     try {
       const bakeCanvas = await handleGenerateCanvas();
@@ -676,12 +582,10 @@ export default function Editor() {
         throw new Error("Failed to generate canvas");
       }
 
-      // Validate crop area - fix issue #61
-      const validatedCrop = validateCropArea(cropArea);
-      const cropX = Math.max(0, Math.min((validatedCrop.x / 100) * bakeCanvas.width, bakeCanvas.width));
-      const cropY = Math.max(0, Math.min((validatedCrop.y / 100) * bakeCanvas.height, bakeCanvas.height));
-      const cropWidth = Math.max(1, Math.min((validatedCrop.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
-      const cropHeight = Math.max(1, Math.min((validatedCrop.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
+      const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width));
+      const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height));
+      const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
+      const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
 
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = cropWidth;
@@ -706,26 +610,17 @@ export default function Editor() {
         setIsCropping(false);
         setRedoHistory([]);
         setIsProcessing(false);
-        isProcessingRef.current = false;
         toast.success("Image cropped successfully!");
       }, 'image/png', 1.0);
     } catch (error) {
       console.error("Error cropping:", error);
       setIsProcessing(false);
-      isProcessingRef.current = false;
       toast.error("Crop failed. Please try again.");
     }
   }, [currentImage, adjustments, selectedFilter, transform, cropArea, handleGenerateCanvas, createObjectURL]);
 
-  // Fixed issue #99 - added metadata tracking for better user experience
   const handleSaveToGallery = useCallback(async () => {
     if (!currentImage) return;
-    if (isProcessingRef.current) {
-      toast.info("Please wait for current operation to complete.");
-      return;
-    }
-    
-    isProcessingRef.current = true;
     setIsSaving(true);
     try {
       const blob = await getProcessedImageWithPaint();
@@ -739,14 +634,7 @@ export default function Editor() {
         title: `Edited Image (${new Date().toLocaleString()})`,
         type: 'image',
         url: uploadResult.file_url,
-        thumbnail_url: uploadResult.file_url,
-        metadata: {
-          tool: 'photo_studio',
-          hasAdjustments: Object.values(adjustments).some(v => v !== 0),
-          hasFilter: !!selectedFilter,
-          hasPaintStrokes: paintStrokes.length > 0,
-          editedAt: new Date().toISOString()
-        }
+        thumbnail_url: uploadResult.file_url
       }, { data_env: "dev" });
       toast.success('Saved to Gallery!');
     } catch (err) {
@@ -754,16 +642,12 @@ export default function Editor() {
       toast.error('Error saving to gallery. Please try again.');
     } finally {
       setIsSaving(false);
-      isProcessingRef.current = false;
     }
-  }, [currentImage, getProcessedImageWithPaint, adjustments, selectedFilter, paintStrokes]);
+  }, [currentImage, getProcessedImageWithPaint]);
 
-  // Fixed issue #37 - prevent race condition with isProcessingRef
   const handleBakePaint = useCallback(async () => {
     if (!currentImage || paintStrokes.length === 0) return;
-    if (isProcessingRef.current) return; // Prevent concurrent operations
     
-    isProcessingRef.current = true;
     setIsProcessing(true);
     try {
       const blob = await getProcessedImageWithPaint();
@@ -773,10 +657,7 @@ export default function Editor() {
       }
       
       const url = createObjectURL(blob);
-      setUndoHistory(prev => {
-        const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }];
-        return newHistory.slice(-MAX_UNDO_HISTORY);
-      });
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
       setCurrentImage({
         url: url,
         preview: url,
@@ -795,7 +676,6 @@ export default function Editor() {
       toast.error("Failed to bake paint layer.");
     } finally {
       setIsProcessing(false);
-      isProcessingRef.current = false;
     }
   }, [currentImage, paintStrokes, getProcessedImageWithPaint, createObjectURL, adjustments, selectedFilter, transform]);
 
@@ -950,8 +830,7 @@ export default function Editor() {
     }
   }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea]);
 
-  // Fixed issue #69 - throttled mouse move for better performance
-  const handleMouseMoveRaw = useCallback((e) => {
+  const handleMouseMove = useCallback((e) => {
     if (e.cancelable && (isDrawing || isDragging || isPanning)) {
       e.preventDefault();
     }
@@ -1081,12 +960,6 @@ export default function Editor() {
     }
   }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, isDragging, dragStart, dragType, cropArea, isPanning, pan]);
 
-  // Throttle the mouse move handler for better performance
-  const handleMouseMove = useMemo(
-    () => throttle(handleMouseMoveRaw, 16), // ~60fps
-    [handleMouseMoveRaw]
-  );
-
   const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
     setIsPaintMode(false);
@@ -1208,8 +1081,7 @@ export default function Editor() {
     ctx.globalCompositeOperation = 'source-over';
   }, [paintStrokes, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
 
-  // Fixed issue #55 - memoize filter style calculation
-  const filterStyle = useMemo(() => {
+  const getFilterStyle = useCallback(() => {
     const filters = [];
     
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
@@ -1226,11 +1098,8 @@ export default function Editor() {
     
     return filters.length > 0 ? filters.join(" ") : "none";
   }, [adjustments, selectedFilter]);
-  
-  const getFilterStyle = useCallback(() => filterStyle, [filterStyle]);
 
-  // Memoize transform style calculation
-  const transformStyle = useMemo(() => {
+  const getTransformStyle = useCallback(() => {
     const transforms = [];
     
     if (transform.rotate !== 0) transforms.push(`rotate(${transform.rotate}deg)`);
@@ -1239,27 +1108,36 @@ export default function Editor() {
     
     return transforms.length > 0 ? transforms.join(" ") : "none";
   }, [transform]);
-  
-  const getTransformStyle = useCallback(() => transformStyle, [transformStyle]);
-
-  const [showToolsDrawer, setShowToolsDrawer] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
-    <div className="h-[calc(100dvh-4rem)] flex flex-col overflow-hidden lg:overflow-visible lg:flex-row">
-      {/* Desktop Sidebar */}
+    <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex w-80 flex-col flex-shrink-0 border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]/80 backdrop-blur-xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+            <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Sparkles className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="batch" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Layers className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Settings2 className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="filters" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Filter className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <RotateCw className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Wand2 className="w-4 h-4" />
+            </TabsTrigger>
+          </TabsList>
+
           <div className="px-4 pb-4">
             <TabsContent value="ai" className="mt-0">
               <ToolPanel 
@@ -1267,6 +1145,115 @@ export default function Editor() {
                 isProcessing={isProcessing}
                 hasImage={!!currentImage}
               />
+            </TabsContent>
+
+            <TabsContent value="batch" className="mt-0">
+              <div className="py-6 px-4 space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
+                    Batch Workspace
+                  </h3>
+                  
+                  <label className="block cursor-pointer group">
+                    <div className="relative overflow-hidden border border-dashed border-white/20 rounded-2xl p-8 hover:border-[#FF6B35]/50 hover:bg-[#FF6B35]/5 transition-all">
+                      <div className="flex flex-col items-center gap-3 text-center relative z-10">
+                        <div className="w-12 h-12 rounded-full bg-[#FF6B35]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Layers className="w-6 h-6 text-[#FF6B35]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white group-hover:text-[#FF6B35] transition-colors">Import Images</p>
+                          <p className="text-xs text-white/40 mt-1">Select multiple files to process</p>
+                        </div>
+                      </div>
+                    </div>
+                    <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
+                  </label>
+                </div>
+
+                {batchImages.length > 0 && (
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
+                        Workflow
+                      </h3>
+                      
+                      <button 
+                        onClick={() => {
+                          const updatedBatch = batchImages.map(img => ({
+                            ...img,
+                            adjustments: { ...adjustments },
+                            filter: selectedFilter,
+                            transform: { ...transform }
+                          }));
+                          setBatchImages(updatedBatch);
+                          toast.success('Synced current edits to all images!');
+                        }}
+                        className="w-full p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition-all text-left flex items-center gap-3 group"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                          <Settings2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">Sync Edits</p>
+                          <p className="text-xs text-white/40">Apply current adjustments to all</p>
+                        </div>
+                      </button>
+
+                      <button 
+                        onClick={handleClearBatch}
+                        className="w-full p-4 rounded-xl bg-white/[0.03] hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 transition-all text-left flex items-center gap-3 group"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center">
+                          <X className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white group-hover:text-red-400 transition-colors">Clear All</p>
+                          <p className="text-xs text-white/40">Remove all images</p>
+                        </div>
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
+                        AI Batch Actions
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[
+                          { label: "Auto Enhance", icon: Sparkles, prompt: "Enhance this image with better colors, improved clarity, professional quality" },
+                          { label: "Upscale 4x", icon: Wand2, prompt: "Upscale to higher resolution, enhance details" },
+                          { label: "Fix Lighting", icon: Sun, prompt: "Fix lighting and exposure, balance highlights and shadows" },
+                        ].map(tool => (
+                          <Button
+                            key={tool.label}
+                            onClick={() => handleBatchProcess(tool)}
+                            disabled={isBatchProcessing}
+                            className="w-full h-12 bg-white/[0.03] hover:bg-[#FF6B35] border border-white/5 hover:border-[#FF6B35] text-white justify-start px-4 gap-3 group transition-all rounded-xl"
+                          >
+                            <tool.icon className="w-4 h-4 text-[#FF6B35] group-hover:text-white transition-colors" />
+                            <span className="flex-1 text-left">
+                              {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
+                            </span>
+                            {isBatchProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
+                          </Button>
+                        ))}
+                      </div>
+                      
+                      {isBatchProcessing && (
+                        <Button
+                          onClick={() => setBatchCancelled(true)}
+                          variant="outline"
+                          className="w-full border-red-500/20 text-red-400 hover:bg-red-500/10 mt-2"
+                        >
+                          Stop Processing
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="adjust" className="mt-0">
@@ -1373,7 +1360,7 @@ export default function Editor() {
         </Tabs>
       </motion.aside>
       
-      <main className="flex-1 flex flex-col relative min-h-0 h-full">
+      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1456,14 +1443,14 @@ export default function Editor() {
           ref={containerRef}
           className="flex-1 relative overflow-hidden bg-[#0A0A0A]"
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMoveRaw}
+          onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
           onTouchStart={handleMouseDown}
-          onTouchMove={handleMouseMoveRaw}
+          onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
           onWheel={handleWheel}
-          style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
+          style={{ touchAction: 'none' }}
         >
           {(activeTab === "remove" || (showColorWheel && !isCropping)) && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
@@ -1509,8 +1496,8 @@ export default function Editor() {
                     (activeTab === "remove" || (showColorWheel && !isCropping)) && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
                   }`}
                   style={{
-                    filter: filterStyle,
-                    transform: transformStyle,
+                    filter: getFilterStyle(),
+                    transform: getTransformStyle(),
                   }}
                   draggable={false}
                 />
@@ -1604,44 +1591,64 @@ export default function Editor() {
           )}
           
           {currentImage && (
-            <>
-            <motion.div 
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30 max-w-[calc(100vw-2rem)]"
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: toolbarVisible ? 1 : 0, scale: toolbarVisible ? 1 : 0.8 }}
-              transition={{ duration: 0.3 }}
-              onMouseEnter={() => {
-                setToolbarVisible(true);
-                if (toolbarHideTimeoutRef.current) clearTimeout(toolbarHideTimeoutRef.current);
-              }}
-              onMouseLeave={() => {
-                if (toolbarHideTimeoutRef.current) clearTimeout(toolbarHideTimeoutRef.current);
-                toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
-              }}
-            >
-              <div className="bg-gradient-to-r from-black/40 via-black/30 to-black/40 backdrop-blur-xl border border-white/10 rounded-3xl px-2 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1 sm:gap-1.5 shadow-2xl ring-1 ring-white/10 transition-all overflow-x-auto max-h-16 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30">
+              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
                 <Button
-                   variant="ghost"
-                   size="icon"
-                   onClick={() => setIsPanToolActive(!isPanToolActive)}
-                   className={`hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'hover:bg-white/10 text-white'}`}
-                   title="Pan Tool (Space)"
-                 >
-                   <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                 </Button>
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsPanToolActive(!isPanToolActive)}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'hover:bg-white/10 text-white'}`}
+                  title="Pan Tool (Space)"
+                >
+                  <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
 
-                {/* Mobile Tools Menu */}
-                <div className="lg:hidden">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowToolsDrawer(!showToolsDrawer)}
-                    className={`w-7 h-7 rounded-lg transition-all flex-shrink-0 ${showToolsDrawer ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/10 text-white'}`}
-                    title="More tools"
-                  >
-                    <Menu className="w-4 h-4" />
-                  </Button>
+                <div className="w-px h-4 bg-white/10" />
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+
+                <div className="w-16 sm:w-20 lg:w-32 px-1.5 sm:px-2">
+                  <Slider 
+                    value={[zoom]} 
+                    min={0.1} 
+                    max={5} 
+                    step={0.1} 
+                    onValueChange={(v) => setZoom(v[0])}
+                    className="[&_.relative]:bg-white/10 [&_.absolute]:bg-white [&_.absolute]:shadow-[0_0_10px_rgba(255,255,255,0.5)] [&_span]:border-white/50 [&_span]:shadow-lg"
+                  />
                 </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+
+                <div className="w-px h-4 bg-white/10" />
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  title="Reset View"
+                >
+                  <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+
+                <div className="w-px h-4 bg-white/10" />
 
                 <Button
                   variant="ghost"
@@ -1664,231 +1671,53 @@ export default function Editor() {
                   <CropIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
+                <div className="w-px h-4 bg-white/10" />
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveTab('ai')}
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
-                    activeTab === 'ai'
-                      ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
-                      : 'hover:bg-white/10 text-white'
-                  }`}
-                  title="AI Tools"
-                >
-                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </Button>
-
-
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveTab('remove')}
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
-                    activeTab === 'remove'
-                      ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
-                      : 'hover:bg-white/10 text-white'
-                  }`}
-                  title="Magic Brush"
-                >
-                  <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </Button>
-
-                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowBatchPanel(!showBatchPanel)}
-                  className={`w-7 h-7 rounded-lg transition-all flex-shrink-0 relative ${
-                    showBatchPanel
-                      ? 'bg-[#FF6B35] text-white' 
-                      : 'hover:bg-white/10 text-white'
-                  }`}
-                  title="Batch"
-                >
-                  <Layers className="w-4 h-4" />
-                  {batchImages.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF6B35] text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-                      {batchImages.length}
-                    </span>
-                  )}
-                </Button>
-
-                <div className="relative w-7 h-7">
-                   <Button
-                     variant="ghost"
-                     size="icon"
-                     onClick={() => setShowColorWheel(!showColorWheel)}
-                     className={`w-7 h-7 rounded-lg transition-all flex-shrink-0 relative ${
-                       showColorWheel 
-                         ? 'bg-[#FF6B35] text-white' 
-                         : 'hover:bg-white/10 text-white'
-                     }`}
-                     title="Color & Brush"
-                   >
-                     <Paintbrush className="w-4 h-4" />
-                     <div 
-                       className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-gray-900"
-                       style={{ backgroundColor: brushColor }}
-                     />
-                   </Button>
-
-                   {showColorWheel && (
-                    <ColorWheel
-                      color={brushColor}
-                      onColorChange={setBrushColor}
-                      brushPreset={brushPreset}
-                      onBrushChange={setBrushPreset}
-                      isOpen={showColorWheel}
-                      onClose={() => setShowColorWheel(false)}
-                      paintBrushMode={paintBrushMode}
-                      onPaintBrushModeChange={setPaintBrushMode}
-                      paintLayerOpacity={paintLayerOpacity}
-                      onPaintLayerOpacityChange={setPaintLayerOpacity}
-                      paintLayerVisible={paintLayerVisible}
-                      onPaintLayerVisibleChange={setPaintLayerVisible}
-                      blendMode={blendMode}
-                      onBlendModeChange={setBlendMode}
-                      paintStrokes={paintStrokes}
-                      onClearPaint={() => {
-                        setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
-                        setPaintStrokes([]);
-                      }}
-                      onBakePaint={handleBakePaint}
-                      isBaking={isProcessing}
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowColorWheel(!showColorWheel)}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 relative ${
+                      showColorWheel 
+                        ? 'bg-white text-black hover:bg-white/90' 
+                        : 'hover:bg-white/10 text-white'
+                    }`}
+                    title="Color & Brush"
+                  >
+                    <Paintbrush className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <div 
+                      className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a]"
+                      style={{ backgroundColor: brushColor }}
                     />
-                  )}
-                 </div>
+                  </Button>
+
+                  <ColorWheel
+                    color={brushColor}
+                    onColorChange={setBrushColor}
+                    brushPreset={brushPreset}
+                    onBrushChange={setBrushPreset}
+                    isOpen={showColorWheel}
+                    onClose={() => setShowColorWheel(false)}
+                    paintBrushMode={paintBrushMode}
+                    onPaintBrushModeChange={setPaintBrushMode}
+                    paintLayerOpacity={paintLayerOpacity}
+                    onPaintLayerOpacityChange={setPaintLayerOpacity}
+                    paintLayerVisible={paintLayerVisible}
+                    onPaintLayerVisibleChange={setPaintLayerVisible}
+                    blendMode={blendMode}
+                    onBlendModeChange={setBlendMode}
+                    paintStrokes={paintStrokes}
+                    onClearPaint={() => {
+                      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+                      setPaintStrokes([]);
+                    }}
+                    onBakePaint={handleBakePaint}
+                    isBaking={isProcessing}
+                  />
+                </div>
               </div>
-            </motion.div>
-
-            <BatchPanel
-              isOpen={showBatchPanel}
-              onClose={() => setShowBatchPanel(false)}
-              batchImages={batchImages}
-              onUpload={handleBatchUpload}
-              onClearAll={handleClearBatch}
-              onSyncEdits={() => {
-                const updatedBatch = batchImages.map(img => ({
-                  ...img,
-                  adjustments: { ...adjustments },
-                  filter: selectedFilter,
-                  transform: { ...transform }
-                }));
-                setBatchImages(updatedBatch);
-              }}
-              onBatchProcess={handleBatchProcess}
-              isBatchProcessing={isBatchProcessing}
-              batchProgress={batchProgress}
-              adjustments={adjustments}
-              selectedFilter={selectedFilter}
-              transform={transform}
-            />
-
-            {/* Mobile Tools Drawer */}
-            <AnimatePresence>
-              {showToolsDrawer && isMobile && (
-                <motion.div
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%' }}
-                  transition={{ duration: 0.3 }}
-                  className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black via-black/95 to-black/80 border-t border-white/10 backdrop-blur-xl rounded-t-3xl max-h-[80vh] overflow-y-auto"
-                >
-                  <div className="sticky top-0 bg-black/50 backdrop-blur-lg border-b border-white/10 p-4 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-white">Tools & Settings</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowToolsDrawer(false)}
-                      className="w-8 h-8 hover:bg-white/10 text-white"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  <div className="p-4 space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      <Button
-                        onClick={() => {
-                          setActiveTab('transform');
-                          setShowToolsDrawer(false);
-                        }}
-                        className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
-                          activeTab === 'transform'
-                            ? 'bg-[#FF6B35] text-white'
-                            : 'bg-white/5 hover:bg-white/10 text-white'
-                        }`}
-                      >
-                        <RotateCw className="w-5 h-5" />
-                        <span className="text-xs">Transform</span>
-                      </Button>
-
-                      <Button
-                        onClick={() => {
-                          setActiveTab('adjust');
-                          setShowToolsDrawer(false);
-                        }}
-                        className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
-                          activeTab === 'adjust'
-                            ? 'bg-[#FF6B35] text-white'
-                            : 'bg-white/5 hover:bg-white/10 text-white'
-                        }`}
-                      >
-                        <Settings2 className="w-5 h-5" />
-                        <span className="text-xs">Adjust</span>
-                      </Button>
-
-                      <Button
-                        onClick={() => {
-                          setActiveTab('filters');
-                          setShowToolsDrawer(false);
-                        }}
-                        className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
-                          activeTab === 'filters'
-                            ? 'bg-[#FF6B35] text-white'
-                            : 'bg-white/5 hover:bg-white/10 text-white'
-                        }`}
-                      >
-                        <Filter className="w-5 h-5" />
-                        <span className="text-xs">Filters</span>
-                      </Button>
-                    </div>
-
-                    <div className="border-t border-white/10 pt-3">
-                      <p className="text-xs font-semibold text-white/60 mb-3 uppercase">Quick Actions</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          onClick={() => {
-                            setZoom(1);
-                            setPan({ x: 0, y: 0 });
-                            setIsPanToolActive(false);
-                            setShowToolsDrawer(false);
-                          }}
-                          className="bg-white/5 hover:bg-white/10 text-white rounded-lg py-2"
-                        >
-                          <Maximize2 className="w-4 h-4 mr-1" /> Reset
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            handleUndo();
-                            setShowToolsDrawer(false);
-                          }}
-                          disabled={undoHistory.length === 0}
-                          className="bg-white/5 hover:bg-white/10 text-white disabled:opacity-50 rounded-lg py-2"
-                        >
-                          <RotateCw className="w-4 h-4 mr-1" /> Undo
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            </>
+            </div>
           )}
         </div>
       </main>

@@ -39,7 +39,6 @@ import {
   highlightText,
   getTimeframeStats
 } from "@/components/profile/ProfileHelpers";
-import { validateUrlParam, formatDate } from "@/components/constants/appConstants";
 
 export default function Profile() {
   const { t, language, setLanguage } = useContext(LanguageContext);
@@ -56,27 +55,14 @@ export default function Profile() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const fileInputRef = useRef(null);
   
-  // Gallery State - Initialize from URL with validation (fixes issue #63)
-  const [searchQuery, setSearchQuery] = useState(
-    validateUrlParam(searchParams.get('q')) || ""
-  );
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(
-    validateUrlParam(searchParams.get('q')) || ""
-  );
+  // Gallery State - Initialize from URL
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParams.get('q') || "");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [filterType, setFilterType] = useState(
-    validateUrlParam(searchParams.get('type'), ['all', 'image', 'video']) || "all"
-  );
-  const [sortBy, setSortBy] = useState(
-    validateUrlParam(searchParams.get('sort'), ['newest', 'oldest', 'title', 'prompt_length']) || "newest"
-  );
-  const [dateFilter, setDateFilter] = useState(
-    validateUrlParam(searchParams.get('date'), ['all', 'today', 'week', 'month']) || "all"
-  );
-  const pageParam = parseInt(searchParams.get('page'));
-  const [currentPage, setCurrentPage] = useState(
-    !isNaN(pageParam) && pageParam > 0 ? pageParam : 1
-  );
+  const [filterType, setFilterType] = useState(searchParams.get('type') || "all");
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || "newest");
+  const [dateFilter, setDateFilter] = useState(searchParams.get('date') || "all");
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
   const [selectedItems, setSelectedItems] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editingTitle, setEditingTitle] = useState(null);
@@ -309,44 +295,42 @@ export default function Profile() {
   };
 
   const confirmDelete = () => {
-  if (deleteConfirm) {
-   const itemToDelete = creations.find(c => c.id === deleteConfirm);
-   deleteMutation.mutate(deleteConfirm);
-   setSelectedItem(null);
-   setDeleteConfirm(null);
-
-   // Real undo
-   toast((t) => (
-     <div className="flex items-center gap-3">
-       <span>Creation deleted</span>
-       <Button
-         size="sm"
-         onClick={async () => {
-           try {
-             const { id, created_date, updated_date, created_by, ...restData } = itemToDelete;
-             const dataToRestore = {
-               title: restData.title,
-               type: restData.type,
-               url: restData.url,
-               thumbnail_url: restData.thumbnail_url,
-               prompt: restData.prompt,
-               metadata: restData.metadata,
-               published_to_discover: restData.published_to_discover
-             };
-             await base44.entities.Creation.create(dataToRestore);
-             await queryClient.invalidateQueries({ queryKey: ['creations'] });
-             toast.success('Creation restored!', { id: t.id });
-           } catch (error) {
-             toast.error('Failed to restore', { id: t.id });
-           }
-         }}
-         className="h-7 px-3 bg-white/10 hover:bg-white/20 text-white text-xs"
-       >
-         Undo
-       </Button>
-     </div>
-   ), { duration: 5000 });
-  }
+    if (deleteConfirm) {
+      const itemToDelete = creations.find(c => c.id === deleteConfirm);
+      deleteMutation.mutate(deleteConfirm);
+      setSelectedItem(null);
+      setDeleteConfirm(null);
+      
+      // Real undo with duplicate check
+      toast((t) => (
+        <div className="flex items-center gap-3">
+          <span>Creation deleted</span>
+          <Button
+            size="sm"
+            onClick={async () => {
+              try {
+                // Check if item still exists
+                const exists = await base44.entities.Creation.filter({ id: itemToDelete.id });
+                if (exists.length > 0) {
+                  toast.error('Item already exists', { id: t.id });
+                  return;
+                }
+                
+                const { id, created_date, updated_date, created_by, ...dataWithoutMeta } = itemToDelete;
+                await base44.entities.Creation.create(dataWithoutMeta);
+                await queryClient.invalidateQueries({ queryKey: ['creations'] });
+                toast.success('Creation restored!', { id: t.id });
+              } catch (error) {
+                toast.error('Failed to restore', { id: t.id });
+              }
+            }}
+            className="h-7 px-3 bg-white/10 hover:bg-white/20 text-white text-xs"
+          >
+            Undo
+          </Button>
+        </div>
+      ), { duration: 5000 });
+    }
   };
 
   const handleBatchDelete = () => {
@@ -482,10 +466,9 @@ export default function Profile() {
     [follows, user?.email]
   );
 
-  // Reset page and clear selections when filters change - fixes issue #85
+  // Reset page and clear selections when filters change
   useEffect(() => {
     setCurrentPage(1);
-    // Clear selections when filters change to prevent phantom selections
     setSelectedItems([]);
   }, [filterType, dateFilter, debouncedSearchQuery, sortBy]);
 
@@ -671,7 +654,7 @@ export default function Profile() {
               <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
-                  Joined {formatDate(user.created_date)}
+                  Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </span>
               </div>
             </div>
@@ -987,7 +970,6 @@ export default function Profile() {
                 <AnimatePresence mode="popLayout">
                   {paginatedCreations.map((item, index) => (
                     <motion.div
-                      key={item.id}
                       layoutId={item.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -1016,13 +998,12 @@ export default function Profile() {
                               <>
                                 {!imageErrors[item.id] ? (
                                   <img
-                                                    src={item.thumbnail_url || item.url}
-                                                    alt={`${item.title || 'Untitled creation'} - ${item.type === 'video' ? 'Video' : 'Image'} created on ${new Date(item.created_date).toLocaleDateString()}`}
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
-                                                    onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
-                                                  />
+                                    src={item.thumbnail_url || item.url}
+                                    alt={`${item.title || 'Untitled creation'} - ${item.type === 'video' ? 'Video' : 'Image'} created on ${new Date(item.created_date).toLocaleDateString()}`}
+                                    loading="lazy"
+                                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+                                    onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
+                                  />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5">
                                     <ImageOff className="w-16 h-16 text-white/20" />
@@ -1077,32 +1058,30 @@ export default function Profile() {
                               />
                             )}
                           </div>
-                           <div className={`grid ${currentUser?.role === 'admin' ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:gap-2`}>
-                             {currentUser?.role === 'admin' && (
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  togglePublishMutation.mutate({ 
-                                    id: item.id, 
-                                    published: !item.published_to_discover 
-                                  });
-                                }}
-                                className={`border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2 ${
-                                  item.published_to_discover 
-                                    ? 'bg-green-500/30 hover:bg-green-500/40' 
-                                    : 'bg-white/20 hover:bg-white/30'
-                                } text-white`}
-                                title={item.published_to_discover ? 'Unpublish from Discover' : 'Publish to Discover'}
-                              >
-                                {item.published_to_discover ? (
-                                  <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                ) : (
-                                  <EyeOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                )}
-                                <span className="hidden sm:inline ml-1">Public</span>
-                              </Button>
-                            )}
+                          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                togglePublishMutation.mutate({ 
+                                  id: item.id, 
+                                  published: !item.published_to_discover 
+                                });
+                              }}
+                              className={`border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2 ${
+                                item.published_to_discover 
+                                  ? 'bg-green-500/30 hover:bg-green-500/40' 
+                                  : 'bg-white/20 hover:bg-white/30'
+                              } text-white`}
+                              title={item.published_to_discover ? 'Unpublish from Discover' : 'Publish to Discover'}
+                            >
+                              {item.published_to_discover ? (
+                                <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              ) : (
+                                <EyeOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              )}
+                              <span className="hidden sm:inline ml-1">Public</span>
+                            </Button>
                             <Button
                               size="sm"
                               onClick={(e) => {

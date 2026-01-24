@@ -18,7 +18,7 @@ export default function ResultModal({
 }) {
   const [mode, setMode] = useState("compare");
   const [sliderPos, setSliderPos] = useState(50);
-  // Removed unused userFeedback state - was issue #14
+  const [userFeedback, setUserFeedback] = useState(null);
 
   if (!isOpen) return null;
 
@@ -28,7 +28,6 @@ export default function ResultModal({
     transform: `rotate(${transform.rotate}deg) scaleX(${transform.flipH ? -1 : 1}) scaleY(${transform.flipV ? -1 : 1})`
   } : {};
 
-  // Fixed - added error boundary for feedback operations
   const handleApplyWithFeedback = async () => {
     // Mark the result as successful in the learning database
     try {
@@ -38,13 +37,12 @@ export default function ResultModal({
         1
       );
       
-      if (recentPrompts && recentPrompts.length > 0 && recentPrompts[0]?.id) {
+      if (recentPrompts.length > 0) {
         await base44.entities.PromptLearning.update(recentPrompts[0].id, {
           was_successful: true
         });
       }
     } catch (error) {
-      // Silent fail - don't block main operation
       console.error("Failed to update learning data:", error);
     }
 
@@ -60,13 +58,12 @@ export default function ResultModal({
         1
       );
       
-      if (recentPrompts && recentPrompts.length > 0 && recentPrompts[0]?.id) {
+      if (recentPrompts.length > 0) {
         await base44.entities.PromptLearning.update(recentPrompts[0].id, {
           was_successful: false
         });
       }
     } catch (error) {
-      // Silent fail - don't block main operation
       console.error("Failed to update learning data:", error);
     }
 

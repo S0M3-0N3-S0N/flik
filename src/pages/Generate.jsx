@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wand2, Loader2, Zap, Upload, X, MessageSquare, Settings2, RectangleHorizontal, RectangleVertical, Square, Ban, Image as ImageIcon, Check, AlertCircle, Grid3x3 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -15,14 +15,13 @@ import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector
 import ImageGrid from "@/components/generate/ImageGrid";
 import ImageUploader from "@/components/editor/ImageUploader";
 import { useFlikActions } from "@/components/useFlikActions";
-import { generateUniqueId, sanitizePrompt, BATCH_COUNT_OPTIONS } from "@/components/constants/appConstants";
 
 export default function Generate() {
   const [prompt, setPrompt] = useState("");
   const [selectedStyles, setSelectedStyles] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState([]);
-  // Removed unused copiedId state - was issue #16
+  const [copiedId, setCopiedId] = useState(null);
   const [error, setError] = useState(null);
   const [aiModel, setAiModel] = useState("default");
   const [uploadedImages, setUploadedImages] = useState([]);
@@ -38,20 +37,8 @@ export default function Generate() {
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
   const [imageErrors, setImageErrors] = useState({});
-  const [batchCount, setBatchCount] = useState(1);
-  const [isGeneratingLock, setIsGeneratingLock] = useState(false); // Fix issue #39
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
-  
-  // Memoized gallery filter - fixes issues #3, #67
-  const filteredGalleryForDisplay = useMemo(() => {
-    if (!gallerySearchTerm.trim()) return galleryCreations;
-    const term = gallerySearchTerm.toLowerCase();
-    return galleryCreations.filter(c => 
-      (c.title?.toLowerCase().includes(term)) || 
-      (c.prompt?.toLowerCase().includes(term))
-    );
-  }, [galleryCreations, gallerySearchTerm]);
 
   // Register actions for FLIK
   useFlikActions('Generate', {
@@ -89,9 +76,9 @@ export default function Generate() {
     
     setIsUploading(true);
     try {
-      const newUploads = await Promise.all(validFiles.map(async (file, idx) => {
+      const newUploads = await Promise.all(validFiles.map(async (file) => {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
-        return { url: uploadResult.file_url, file, id: generateUniqueId(`upload_${idx}`) };
+        return { url: uploadResult.file_url, file, id: Date.now() + Math.random() };
       }));
       setUploadedImages(prev => [...prev, ...newUploads]);
       setIsUploading(false);
@@ -102,16 +89,12 @@ export default function Generate() {
   };
 
   const handleGenerate = async () => {
-    // Fix issue #39 - prevent double-click race condition
-    if (isGeneratingLock) return;
-    
     if (!prompt.trim() && uploadedImages.length === 0) {
       setError("Please enter a prompt or upload an image");
       setTimeout(() => setError(null), 3000);
       return;
     }
     
-    setIsGeneratingLock(true);
     setIsGenerating(true);
     setError(null);
     
@@ -125,14 +108,14 @@ export default function Generate() {
       
       const llmAnalysis = await base44.integrations.Core.InvokeLLM({
         prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
-
+        
         ${uploadedImages.length > 0 ? `IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates ${imageStrength > 0.7 ? "EXTREMELY STRICTLY (maintain exact composition and forms)" : imageStrength < 0.4 ? "loosely (use as vague inspiration)" : "strongly"} to them, while applying the user's text prompt as a modification or style.` : ""}
         ${aiModel === 'gemini' ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
 
         CRITICAL RULES:
-        1. Generate EXACTLY ${batchCount} DIFFERENT prompt${batchCount > 1 ? 's' : ''} with variations.
-        2. Each prompt should be unique and offer a different interpretation or perspective of the user's request.
-        3. Return exactly ${batchCount} prompt${batchCount > 1 ? 's' : ''} - no more, no less.
+        1. DEFAULT to generating EXACTLY ONE prompt. 
+        2. ONLY generate multiple prompts if the user EXPLICITLY specifies a quantity (e.g., "3 images", "5 variations") or explicitly asks for "variations" or "different angles".
+        3. If no quantity/variation is requested, return an array with ONLY ONE prompt.
 
         Enhancement Tasks:
         1. Greatly improve the prompt quality. Add professional details: lighting (e.g., volumetric, cinematic, studio), camera parameters (e.g., 85mm, f/1.8, 4k, 8k), composition, and textures.
@@ -152,25 +135,10 @@ export default function Generate() {
         }
       });
       
-      // Fixed issue #6 & #47 - better validation of LLM response
-      const rawPrompts = llmAnalysis?.prompts;
-      if (Array.isArray(rawPrompts) && rawPrompts.length > 0) {
-        promptsToGenerate = rawPrompts.filter(p => typeof p === 'string' && p.trim().length > 0);
-      }
+      promptsToGenerate = llmAnalysis.prompts || [prompt];
       
-      // Fallback if no valid prompts returned
-      if (promptsToGenerate.length === 0) {
-        promptsToGenerate = [prompt];
-      }
-
-      // Ensure we have the correct number of prompts (with bounds check to prevent infinite loop)
-      const maxIterations = batchCount;
-      let iterations = 0;
-      while (promptsToGenerate.length < batchCount && iterations < maxIterations) {
-        promptsToGenerate.push(prompt);
-        iterations++;
-      }
-      promptsToGenerate = promptsToGenerate.slice(0, batchCount);
+      // Limit to 5 max to prevent abuse/timeout
+      if (promptsToGenerate.length > 5) promptsToGenerate = promptsToGenerate.slice(0, 5);
 
       // Step 2: Generate all images
       const promises = promptsToGenerate.map(async (finalPrompt) => {
@@ -212,7 +180,7 @@ export default function Generate() {
           });
 
           return {
-            id: generateUniqueId('gen'),
+            id: Date.now() + Math.random(),
             url: imageResult.url,
             prompt: prompt,
             enhancedPrompt: finalPrompt,
@@ -250,7 +218,6 @@ export default function Generate() {
       setError("Failed to generate. " + (err.message || "Please try again."));
     } finally {
       setIsGenerating(false);
-      setIsGeneratingLock(false);
     }
   };
 
@@ -281,25 +248,20 @@ export default function Generate() {
     }
   };
 
-  // Fixed issue #29 - prevent duplicate selections
-  const toggleGallerySelection = useCallback((creation) => {
+  const toggleGallerySelection = (creation) => {
     const imageUrl = creation.thumbnail_url || creation.url;
+    const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
     
-    setSelectedGalleryImages(prev => {
-      const isSelected = prev.some(img => img.url === imageUrl);
-      if (isSelected) {
-        return prev.filter(img => img.url !== imageUrl);
-      } else {
-        // Check for duplicates before adding
-        if (prev.some(img => img.url === imageUrl)) return prev;
-        return [...prev, {
-          url: imageUrl,
-          name: creation.title || 'Creation',
-          id: generateUniqueId(`creation_${creation.id}`)
-        }];
-      }
-    });
-  }, []);
+    if (isSelected) {
+      setSelectedGalleryImages(prev => prev.filter(img => img.url !== imageUrl));
+    } else {
+      setSelectedGalleryImages(prev => [...prev, {
+        url: imageUrl,
+        name: creation.title || 'Creation',
+        id: `creation-${creation.id}-${Date.now()}`
+      }]);
+    }
+  };
 
   const confirmGallerySelection = () => {
     setUploadedImages(prev => [...prev, ...selectedGalleryImages]);
@@ -449,7 +411,7 @@ export default function Generate() {
                     <PopoverTrigger asChild>
                       <button 
                         className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
-                          (aspectRatio !== "1:1" || negativePrompt || batchCount !== 1) 
+                          (aspectRatio !== "1:1" || negativePrompt) 
                             ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                             : 'text-white/60 hover:bg-white/5 hover:text-white'
                         }`}
@@ -460,31 +422,6 @@ export default function Generate() {
                     </PopoverTrigger>
                     <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl">
                       <div className="space-y-4">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Batch Count</Label>
-                            <span className="text-xs text-[#FF6B35] font-semibold">{batchCount}</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            {BATCH_COUNT_OPTIONS.map((count) => (
-                              <button
-                                key={count}
-                                onClick={() => setBatchCount(count)}
-                                type="button"
-                                className={`w-full py-2 rounded-lg border transition-all text-sm font-medium cursor-pointer relative z-50 ${
-                                  batchCount === count 
-                                    ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                    : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40'
-                                }`}
-                              >
-                                {count}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="w-px h-0 bg-white/10" />
-
                         <div className="space-y-2">
                           <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
                           <div className="grid grid-cols-3 gap-2">
@@ -641,7 +578,10 @@ export default function Generate() {
                     </div>
                   ))}
                 </>
-              ) : filteredGalleryForDisplay.length === 0 ? (
+              ) : galleryCreations.filter(c => {
+                const term = gallerySearchTerm.toLowerCase();
+                return !term || (c.title?.toLowerCase().includes(term)) || (c.prompt?.toLowerCase().includes(term));
+              }).length === 0 ? (
                 <div className="col-span-full flex flex-col items-center justify-center py-16 sm:py-20 text-center px-4">
                   <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center mb-5 border border-white/10 shadow-lg">
                     <ImageIcon className="w-12 h-12 text-white/20" />
@@ -655,7 +595,10 @@ export default function Generate() {
                 </div>
               ) : (
                 <>
-                  {filteredGalleryForDisplay.map((creation) => {
+                  {galleryCreations.filter(c => {
+                    const term = gallerySearchTerm.toLowerCase();
+                    return !term || (c.title?.toLowerCase().includes(term)) || (c.prompt?.toLowerCase().includes(term));
+                  }).map((creation) => {
                     const imageUrl = creation.thumbnail_url || creation.url;
                     const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
                     const hasError = imageErrors[creation.id];
