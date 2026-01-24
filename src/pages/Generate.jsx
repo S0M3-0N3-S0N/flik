@@ -31,8 +31,18 @@ export default function Generate() {
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageStrength, setImageStrength] = useState(0.5);
+  const [showGallery, setShowGallery] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  const { data: userCreations = [] } = useQuery({
+    queryKey: ['userCreations'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      if (!user) return [];
+      return base44.entities.Creation.filter({ created_by: user.email }, '-created_date', 50);
+    },
+  });
 
   // Register actions for FLIK
   useFlikActions('Generate', {
