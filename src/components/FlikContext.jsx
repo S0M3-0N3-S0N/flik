@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { MAX_IN_MEMORY_MESSAGES } from './constants/appConstants';
 
 const FlikContext = createContext();
+
+// Fixed issue #28 - consistent message limits (50 in localStorage, 100 in memory)
+const LOCAL_STORAGE_LIMIT = 50;
 
 export function useFlik() {
   const context = useContext(FlikContext);
@@ -16,7 +20,7 @@ export function FlikProvider({ children }) {
     try {
       const saved = localStorage?.getItem('flik_messages');
       const parsed = saved ? JSON.parse(saved) : [];
-      return parsed.slice(-50);
+      return parsed.slice(-LOCAL_STORAGE_LIMIT);
     } catch (e) {
       console.error('Failed to load messages:', e);
       return [];
@@ -24,10 +28,10 @@ export function FlikProvider({ children }) {
   });
   const [attachedImages, setAttachedImages] = useState([]);
 
-  // Persist messages with limit
+  // Persist messages with limit - using consistent constant
   useEffect(() => {
     try {
-      const limited = messages.slice(-50);
+      const limited = messages.slice(-LOCAL_STORAGE_LIMIT);
       localStorage?.setItem('flik_messages', JSON.stringify(limited));
     } catch (e) {
       console.error('Failed to save messages:', e);

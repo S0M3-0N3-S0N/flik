@@ -908,7 +908,8 @@ export default function Editor() {
     }
   }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea]);
 
-  const handleMouseMove = useCallback((e) => {
+  // Fixed issue #69 - throttled mouse move for better performance
+  const handleMouseMoveRaw = useCallback((e) => {
     if (e.cancelable && (isDrawing || isDragging || isPanning)) {
       e.preventDefault();
     }
@@ -1037,6 +1038,12 @@ export default function Editor() {
       }
     }
   }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, isDragging, dragStart, dragType, cropArea, isPanning, pan]);
+
+  // Throttle the mouse move handler for better performance
+  const handleMouseMove = useMemo(
+    () => throttle(handleMouseMoveRaw, 16), // ~60fps
+    [handleMouseMoveRaw]
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
@@ -1407,11 +1414,11 @@ export default function Editor() {
           ref={containerRef}
           className="flex-1 relative overflow-hidden bg-[#0A0A0A]"
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
+          onMouseMove={handleMouseMoveRaw}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
           onTouchStart={handleMouseDown}
-          onTouchMove={handleMouseMove}
+          onTouchMove={handleMouseMoveRaw}
           onTouchEnd={handleMouseUp}
           onWheel={handleWheel}
           style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
