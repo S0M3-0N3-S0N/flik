@@ -321,31 +321,13 @@ export default function Generate() {
 
                   <div className="w-px h-4 bg-white/10 mx-1" />
 
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button 
-                        className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
-                          uploadedImages.length > 0
-                            ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                            : 'text-white/60 hover:bg-white/5 hover:text-white'
-                        }`}
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        {uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0 bg-[#141414] border border-white/10" align="start">
-                      <div className="p-4">
-                        <h4 className="text-sm font-medium text-white mb-2">Reference Images</h4>
-                        <div className="h-40">
-                          <ImageUploader 
-                            onImageSelect={handleImageUpload} 
-                            multiple={true} 
-                          />
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <div className="inline-block">
+                    <ImageUploader 
+                      onImageSelect={handleImageUpload} 
+                      multiple={true} 
+                      className="inline-block"
+                    />
+                  </div>
 
                   <Popover>
                     <PopoverTrigger asChild>
