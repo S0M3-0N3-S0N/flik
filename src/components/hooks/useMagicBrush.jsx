@@ -17,7 +17,7 @@ export function useMagicBrush() {
     selectedFilter,
     setActiveTool
   }) => {
-    if (brushStrokes.length === 0 || !currentImage) return null;
+    if (!brushStrokes?.length || !currentImage) return null;
     
     setIsProcessing(true);
     if (setActiveTool) setActiveTool({ label: "Magic Brush" });
