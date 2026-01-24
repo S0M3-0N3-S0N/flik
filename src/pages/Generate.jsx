@@ -399,7 +399,7 @@ export default function Generate() {
                   />
 
                   <button
-                    onClick={() => setShowGallery(true)}
+                    onClick={handleGalleryPick}
                     className="h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors"
                     title="Add from gallery"
                   >
