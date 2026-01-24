@@ -42,7 +42,7 @@ export default function FlikChat() {
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
   const [displayedCount, setDisplayedCount] = useState(20);
-  // Removed unused fullImageView state - was issue #15 (still needed for dialog)
+  const [fullImageView, setFullImageView] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editInput, setEditInput] = useState("");
   const [copiedMessageId, setCopiedMessageId] = useState(null);
