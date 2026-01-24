@@ -1392,6 +1392,25 @@ export default function Editor() {
                 >
                   <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
+
+                <div className="w-px h-4 bg-white/10" />
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setActiveTab('crop');
+                    handleStartCrop();
+                  }}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
+                    isCropping 
+                      ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
+                      : 'hover:bg-white/10 text-white'
+                  }`}
+                  title="Crop & Resize"
+                >
+                  <CropIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
               </div>
             </div>
           )}
