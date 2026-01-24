@@ -75,6 +75,8 @@ export default function Editor() {
   const [paintLayerVisible, setPaintLayerVisible] = useState(true);
   const [blendMode, setBlendMode] = useState('source-over');
   const [paintBrushMode, setPaintBrushMode] = useState('draw');
+  const [isToolbarActive, setIsToolbarActive] = useState(true);
+  const toolbarTimeoutRef = useRef(null);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -975,6 +977,18 @@ export default function Editor() {
     }
   }, [handleMouseUp]);
 
+  const resetToolbarTimer = useCallback(() => {
+    setIsToolbarActive(true);
+    if (toolbarTimeoutRef.current) clearTimeout(toolbarTimeoutRef.current);
+    toolbarTimeoutRef.current = setTimeout(() => {
+      setIsToolbarActive(false);
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    resetToolbarTimer();
+  }, [isPanToolActive, zoom, isPanning, showColorWheel, isCropping, resetToolbarTimer]);
+
   useEffect(() => {
     if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
 
@@ -1591,7 +1605,19 @@ export default function Editor() {
           )}
           
           {currentImage && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30">
+            <motion.div 
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30"
+              onMouseEnter={resetToolbarTimer}
+              onMouseLeave={() => {
+                if (toolbarTimeoutRef.current) clearTimeout(toolbarTimeoutRef.current);
+                toolbarTimeoutRef.current = setTimeout(() => setIsToolbarActive(false), 5000);
+              }}
+              animate={{ 
+                scale: isToolbarActive ? 1 : 0.5,
+                opacity: isToolbarActive ? 1 : 0.3
+              }}
+              transition={{ duration: 0.3 }}
+            >
               <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
                 <Button
                   variant="ghost"
@@ -1717,7 +1743,7 @@ export default function Editor() {
                   />
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </main>
