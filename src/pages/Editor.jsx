@@ -874,6 +874,51 @@ export default function Editor() {
           newStrokes[newStrokes.length - 1].points.push({ ...pos, pressure });
           return newStrokes;
         });
+
+        // Draw immediately for real-time feedback
+        if (paintCanvasRef.current && imageRef.current) {
+          const canvas = paintCanvasRef.current;
+          const img = imageRef.current;
+          const rect = img.getBoundingClientRect();
+          const ctx = canvas.getContext('2d');
+          
+          const currentStroke = paintStrokes[paintStrokes.length - 1];
+          const lastPoint = currentStroke.points[currentStroke.points.length - 1];
+          
+          const isErase = paintBrushMode === 'erase';
+          const size = brushPreset?.size || brushSize;
+          const color = brushColor;
+          const opacity = brushPreset?.opacity || 1;
+          const flow = brushPreset?.flow || 100;
+          
+          ctx.globalAlpha = paintLayerOpacity;
+          ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
+          
+          const r = parseInt(color.slice(1, 3), 16);
+          const g = parseInt(color.slice(3, 5), 16);
+          const b = parseInt(color.slice(5, 7), 16);
+          
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
+          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
+          ctx.lineWidth = size;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          
+          if (lastPoint && currentStroke.points.length > 1) {
+            const prevPoint = currentStroke.points[currentStroke.points.length - 2];
+            ctx.beginPath();
+            ctx.moveTo((prevPoint.x / 100) * rect.width, (prevPoint.y / 100) * rect.height);
+            ctx.lineTo((pos.x / 100) * rect.width, (pos.y / 100) * rect.height);
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            ctx.arc((pos.x / 100) * rect.width, (pos.y / 100) * rect.height, size / 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          ctx.globalAlpha = 1;
+          ctx.globalCompositeOperation = 'source-over';
+        }
       }
     } else if (isCropping && isDragging && dragStart && dragType) {
       const pos = getRelativePosition(e);
