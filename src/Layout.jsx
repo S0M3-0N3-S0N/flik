@@ -229,15 +229,17 @@ function LayoutContent({ children, currentPageName }) {
                 <Wand2 className="w-4 h-4" />
                 {t("nav.imagine_ai")}
                 </Link>
-              <Link 
-                to={createPageUrl("Discover")} 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Discover" ? "text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Compass className="w-4 h-4" />
-                Discover
-              </Link>
+              {user?.role === 'admin' && (
+                <Link 
+                  to={createPageUrl("Discover")} 
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                    currentPageName === "Discover" ? "text-white" : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  <Compass className="w-4 h-4" />
+                  Discover
+                </Link>
+              )}
 
 
 

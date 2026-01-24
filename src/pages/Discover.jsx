@@ -143,6 +143,30 @@ export default function DiscoverPage() {
     );
   }
 
+  // Show coming soon for non-admins
+  if (user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] relative overflow-hidden flex items-center justify-center">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="relative text-center space-y-6 px-4">
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px] mx-auto shadow-2xl shadow-[#FF6B35]/40">
+            <div className="w-full h-full rounded-[22px] bg-[#0a0a0a] flex items-center justify-center">
+              <Sparkles className="w-12 h-12 text-[#FF6B35]" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-3">Coming Soon</h1>
+            <p className="text-white/50 text-lg max-w-md">
+              The community discover page is coming to FLIK. Stay tuned! 🚀
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] relative overflow-hidden">
       {/* Background effects */}
