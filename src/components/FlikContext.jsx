@@ -37,7 +37,11 @@ export function FlikProvider({ children }) {
   const clearHistory = () => {
     setMessages([]);
     setAttachedImages([]);
-    localStorage.removeItem('flik_messages');
+    try {
+      localStorage?.removeItem('flik_messages');
+    } catch (e) {
+      console.error('Failed to clear history:', e);
+    }
   };
 
   return (
