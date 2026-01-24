@@ -37,6 +37,11 @@ export default function DiscoverPage() {
     queryFn: () => base44.entities.Comment.list("-created_date"),
   });
 
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => base44.entities.User.list(),
+  });
+
   const likeMutation = useMutation({
     mutationFn: async (creationId) => {
       const existingLike = allLikes.find(
@@ -90,6 +95,9 @@ export default function DiscoverPage() {
   const getComments = (creationId) =>
     allComments.filter((c) => c.creation_id === creationId);
 
+  const getUserByEmail = (email) =>
+    allUsers.find((u) => u.email === email);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -110,6 +118,7 @@ export default function DiscoverPage() {
             <CreationCard
               key={creation.id}
               creation={creation}
+              creator={getUserByEmail(creation.created_by)}
               user={user}
               likesCount={getLikesCount(creation.id)}
               isLiked={isLikedByUser(creation.id)}
@@ -143,6 +152,7 @@ export default function DiscoverPage() {
 
 function CreationCard({
   creation,
+  creator,
   user,
   likesCount,
   isLiked,
@@ -172,12 +182,16 @@ function CreationCard({
       {/* Header */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold">
-            {creation.created_by?.charAt(0).toUpperCase()}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold overflow-hidden">
+            {creator?.profile_picture ? (
+              <img src={creator.profile_picture} alt={creator.full_name} className="w-full h-full object-cover" />
+            ) : (
+              creation.created_by?.charAt(0).toUpperCase()
+            )}
           </div>
           <div>
             <p className="text-white font-medium">
-              {creation.created_by?.split("@")[0]}
+              {creator?.full_name || creation.created_by?.split("@")[0]}
             </p>
             <p className="text-xs text-white/40">
               {new Date(creation.created_date).toLocaleDateString()}
