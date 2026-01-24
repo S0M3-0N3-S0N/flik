@@ -28,6 +28,17 @@ export default function Notifications() {
     enabled: !!currentUser?.email,
   });
 
+  // Real-time subscription
+  React.useEffect(() => {
+    if (!currentUser?.email) return;
+    const unsubscribe = base44.entities.Notification.subscribe((event) => {
+      if (event.data?.recipient_email === currentUser.email) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      }
+    });
+    return unsubscribe;
+  }, [currentUser?.email, queryClient]);
+
   const markAsReadMutation = useMutation({
     mutationFn: ({ id, is_read }) => base44.entities.Notification.update(id, { is_read }),
     onSuccess: () => {
