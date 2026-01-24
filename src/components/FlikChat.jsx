@@ -196,8 +196,8 @@ export default function FlikChat() {
     const text = speechQueueRef.current.shift();
     
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1.05;
+    utterance.rate = 1.2;
+    utterance.pitch = 1.4;
     utterance.volume = 1;
     
     // Get best available voice
@@ -998,38 +998,45 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
             )}
           </div>
 
-          <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
-            {uploadError && (
-              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                {uploadError}
-              </div>
-            )}
-            {attachedImages.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                {attachedImages.map((img) => (
-                  <div key={img.id} className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 group">
-                    <img src={img.url} alt={img.name || 'Attached'} className="w-full h-full object-cover" />
-                    <button 
-                      onClick={() => setAttachedImages(prev => prev.filter(i => i.id !== img.id))} 
-                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                      title="Remove image"
-                    >
-                      <X className="w-3 h-3 text-white" />
-                    </button>
+          <AnimatePresence>
+            {!isListening && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3"
+              >
+                {uploadError && (
+                  <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    {uploadError}
                   </div>
-                ))}
-              </div>
-            )}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!isTyping && !isUploadingChat) {
-                  handleSend();
-                }
-              }}
-              className="flex items-center gap-2"
-            >
+                )}
+                {attachedImages.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                    {attachedImages.map((img) => (
+                      <div key={img.id} className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 group">
+                        <img src={img.url} alt={img.name || 'Attached'} className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => setAttachedImages(prev => prev.filter(i => i.id !== img.id))} 
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                          title="Remove image"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!isTyping && !isUploadingChat) {
+                      handleSend();
+                    }
+                  }}
+                  className="flex items-center gap-2"
+                >
               <button
                 type="button"
                 onClick={toggleVoiceInput}
@@ -1078,7 +1085,35 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 className="hidden"
               />
             </form>
-          </div>
+            </motion.div>
+            )}
+            </AnimatePresence>
+
+            {isListening && (
+            <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="p-6 border-t border-white/10 bg-gradient-to-t from-[#FF6B35]/10 to-[#1a1a1a] flex flex-col items-center justify-center space-y-4"
+            >
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-white/70 text-sm font-medium">Listening...</span>
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
+            </div>
+            <p className="text-white/50 text-xs text-center">Speak naturally. I'll respond when you're done.</p>
+            <Button
+              onClick={() => {
+                recognitionRef.current?.stop();
+                setIsListening(false);
+              }}
+              className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border-0 h-9 text-xs mt-2"
+            >
+              Stop Listening
+            </Button>
+            </motion.div>
+            )}
+            </div>
         </motion.div>
       )}
     </AnimatePresence>
