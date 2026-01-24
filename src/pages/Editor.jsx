@@ -1113,12 +1113,22 @@ export default function Editor() {
     return transforms.length > 0 ? transforms.join(" ") : "none";
   }, [transform]);
 
+  const [showToolsDrawer, setShowToolsDrawer] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-[calc(100dvh-4rem)] flex flex-col overflow-hidden lg:overflow-visible lg:flex-row">
+      {/* Desktop Sidebar */}
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="hidden lg:flex lg:w-80 flex-col flex-shrink-0 border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]/80 backdrop-blur-xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="px-4 pb-4">
