@@ -891,9 +891,6 @@ export default function Editor() {
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="crop" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <CropIcon className="w-4 h-4" />
-            </TabsTrigger>
           </TabsList>
 
           <div className="px-4 pb-4">
