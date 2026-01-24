@@ -1656,6 +1656,107 @@ export default function Editor() {
               selectedFilter={selectedFilter}
               transform={transform}
             />
+
+            {/* Mobile Tools Drawer */}
+            <AnimatePresence>
+              {showToolsDrawer && isMobile && (
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ duration: 0.3 }}
+                  className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black via-black/95 to-black/80 border-t border-white/10 backdrop-blur-xl rounded-t-3xl max-h-[80vh] overflow-y-auto"
+                >
+                  <div className="sticky top-0 bg-black/50 backdrop-blur-lg border-b border-white/10 p-4 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white">Tools & Settings</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowToolsDrawer(false)}
+                      className="w-8 h-8 hover:bg-white/10 text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        onClick={() => {
+                          setActiveTab('transform');
+                          setShowToolsDrawer(false);
+                        }}
+                        className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                          activeTab === 'transform'
+                            ? 'bg-[#FF6B35] text-white'
+                            : 'bg-white/5 hover:bg-white/10 text-white'
+                        }`}
+                      >
+                        <RotateCw className="w-5 h-5" />
+                        <span className="text-xs">Transform</span>
+                      </Button>
+
+                      <Button
+                        onClick={() => {
+                          setActiveTab('adjust');
+                          setShowToolsDrawer(false);
+                        }}
+                        className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                          activeTab === 'adjust'
+                            ? 'bg-[#FF6B35] text-white'
+                            : 'bg-white/5 hover:bg-white/10 text-white'
+                        }`}
+                      >
+                        <Settings2 className="w-5 h-5" />
+                        <span className="text-xs">Adjust</span>
+                      </Button>
+
+                      <Button
+                        onClick={() => {
+                          setActiveTab('filters');
+                          setShowToolsDrawer(false);
+                        }}
+                        className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                          activeTab === 'filters'
+                            ? 'bg-[#FF6B35] text-white'
+                            : 'bg-white/5 hover:bg-white/10 text-white'
+                        }`}
+                      >
+                        <Filter className="w-5 h-5" />
+                        <span className="text-xs">Filters</span>
+                      </Button>
+                    </div>
+
+                    <div className="border-t border-white/10 pt-3">
+                      <p className="text-xs font-semibold text-white/60 mb-3 uppercase">Quick Actions</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          onClick={() => {
+                            setZoom(1);
+                            setPan({ x: 0, y: 0 });
+                            setIsPanToolActive(false);
+                            setShowToolsDrawer(false);
+                          }}
+                          className="bg-white/5 hover:bg-white/10 text-white rounded-lg py-2"
+                        >
+                          <Maximize2 className="w-4 h-4 mr-1" /> Reset
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            handleUndo();
+                            setShowToolsDrawer(false);
+                          }}
+                          disabled={undoHistory.length === 0}
+                          className="bg-white/5 hover:bg-white/10 text-white disabled:opacity-50 rounded-lg py-2"
+                        >
+                          <RotateCw className="w-4 h-4 mr-1" /> Undo
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             </>
           )}
         </div>
