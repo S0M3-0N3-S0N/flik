@@ -1015,73 +1015,54 @@ export default function Profile() {
                         </div>
 
                         {/* Bottom Info */}
-                         <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-3">
-                           <div className="min-h-0">
-                             <h3 
-                               className="font-bold text-white text-base sm:text-lg line-clamp-2 mb-1 drop-shadow-lg"
-                               dangerouslySetInnerHTML={{ __html: highlightText(item.title || 'Untitled', searchQuery) }}
-                             />
-                             {item.prompt && (
-                               <p 
-                                 className="text-xs text-white/60 line-clamp-2"
-                                 dangerouslySetInnerHTML={{ __html: highlightText(item.prompt, searchQuery) }}
-                               />
-                             )}
-                           </div>
-                           <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                             <Button
-                               size="sm"
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 togglePublishMutation.mutate({ 
-                                   id: item.id, 
-                                   published: !item.published_to_discover 
-                                 });
-                               }}
-                               className={`border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1.5 sm:px-2 rounded-lg ${
-                                 item.published_to_discover 
-                                   ? 'bg-green-500/30 hover:bg-green-500/40' 
-                                   : 'bg-white/20 hover:bg-white/30'
-                               } text-white`}
-                             >
-                               {item.published_to_discover ? (
-                                 <><Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" /></>
-                               ) : (
-                                 <><EyeOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" /></>
-                               )}
-                             </Button>
-                             <Button
-                               size="sm"
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
-                               }}
-                               className="bg-white/20 hover:bg-white/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1.5 sm:px-2 rounded-lg"
-                             >
-                               <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                             </Button>
-                             <Button
-                               size="sm"
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 navigate(createPageUrl('Generate') + '?prompt=' + encodeURIComponent(item.prompt || item.title || ''));
-                               }}
-                               className="bg-[#FF6B35]/30 hover:bg-[#FF6B35]/40 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1.5 sm:px-2 rounded-lg"
-                             >
-                               <Wand2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                             </Button>
-                             <Button
-                               size="sm"
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 handleDownload(item.url, item.title || item.prompt, item.type);
-                               }}
-                               className="bg-white/20 hover:bg-white/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1.5 sm:px-2 rounded-lg"
-                             >
-                               <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                             </Button>
-                           </div>
-                         </div>
+                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-3">
+                          <div>
+                            <h3 
+                              className="font-bold text-white text-base sm:text-lg line-clamp-2 mb-1 drop-shadow-lg"
+                              dangerouslySetInnerHTML={{ __html: highlightText(item.title || 'Untitled', searchQuery) }}
+                            />
+                            {item.prompt && (
+                              <p 
+                                className="text-xs text-white/60 line-clamp-1"
+                                dangerouslySetInnerHTML={{ __html: highlightText(item.prompt, searchQuery) }}
+                              />
+                            )}
+                          </div>
+                          <div className="flex gap-1.5 sm:gap-2">
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                togglePublishMutation.mutate({ 
+                                  id: item.id, 
+                                  published: !item.published_to_discover 
+                                });
+                              }}
+                              className={`flex-1 border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3 ${
+                                item.published_to_discover 
+                                  ? 'bg-green-500/30 hover:bg-green-500/40' 
+                                  : 'bg-white/20 hover:bg-white/30'
+                              } text-white`}
+                            >
+                              {item.published_to_discover ? (
+                                <><Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" /><span className="hidden xs:inline sm:inline">Public</span></>
+                              ) : (
+                                <><EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" /><span className="hidden xs:inline sm:inline">Publish</span></>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
+                              }}
+                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3"
+                            >
+                              <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
+                              <span className="hidden xs:inline sm:inline">Edit</span>
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
