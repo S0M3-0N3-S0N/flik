@@ -1334,7 +1334,7 @@ export default function Editor() {
           onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
           onWheel={handleWheel}
-          style={{ touchAction: 'none' }}
+          style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
         >
           {(activeTab === "remove" || (showColorWheel && !isCropping)) && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
