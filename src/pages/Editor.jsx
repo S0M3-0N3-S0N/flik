@@ -18,6 +18,7 @@ import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import ColorWheel from "@/components/editor/ColorWheel";
+import BatchPanel from "@/components/editor/BatchPanel";
 
 import { useFlikActions } from "@/components/useFlikActions";
 
@@ -1479,6 +1480,7 @@ export default function Editor() {
           )}
           
           {currentImage && (
+            <>
             <motion.div 
               className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30"
               initial={{ opacity: 1, scale: 1 }}
@@ -1656,6 +1658,30 @@ export default function Editor() {
                 </div>
               </div>
             </motion.div>
+
+            <BatchPanel
+              isOpen={showBatchPanel}
+              onClose={() => setShowBatchPanel(false)}
+              batchImages={batchImages}
+              onUpload={handleBatchUpload}
+              onClearAll={handleClearBatch}
+              onSyncEdits={() => {
+                const updatedBatch = batchImages.map(img => ({
+                  ...img,
+                  adjustments: { ...adjustments },
+                  filter: selectedFilter,
+                  transform: { ...transform }
+                }));
+                setBatchImages(updatedBatch);
+              }}
+              onBatchProcess={handleBatchProcess}
+              isBatchProcessing={isBatchProcessing}
+              batchProgress={batchProgress}
+              adjustments={adjustments}
+              selectedFilter={selectedFilter}
+              transform={transform}
+            />
+            </>
           )}
         </div>
       </main>
