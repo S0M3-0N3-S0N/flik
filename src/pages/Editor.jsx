@@ -359,13 +359,13 @@ export default function Editor() {
 
   const handleApplyResult = useCallback(() => {
     if (resultImage) {
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
       setCurrentImage({ 
         url: resultImage, 
         preview: resultImage, 
         name: "enhanced_image.png" 
       });
-      
+
       setAdjustments({
         brightness: 0,
         contrast: 0,
@@ -378,6 +378,7 @@ export default function Editor() {
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
       setBrushStrokes([]);
+      setPaintStrokes([]);
       setRedoHistory([]);
     }
     setShowResult(false);
@@ -386,7 +387,7 @@ export default function Editor() {
       revokeObjectURL(processedImage);
       setProcessedImage(null);
     }
-  }, [resultImage, currentImage, adjustments, selectedFilter, transform, processedImage, revokeObjectURL]);
+  }, [resultImage, currentImage, adjustments, selectedFilter, transform, paintStrokes, processedImage, revokeObjectURL]);
 
   const handleCloseResult = useCallback(() => {
     setShowResult(false);
