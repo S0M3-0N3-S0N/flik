@@ -706,10 +706,13 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: "100%", opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="fixed inset-y-0 right-0 w-full md:w-[420px] bg-[#0a0a0a] border-l border-white/10 shadow-2xl z-50 flex flex-col"
+          className="fixed inset-y-0 right-0 w-full md:w-[440px] bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a] border-l border-white/5 shadow-2xl z-50 flex flex-col"
+          style={{
+            boxShadow: 'inset 1px 0 rgba(255,255,255,0.05), 0 0 120px rgba(255,107,53,0.1)'
+          }}
         >
-          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#1a1a1a] to-[#1a1a1a] relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
+          <div className="flex items-center justify-between p-5 border-b border-white/5 bg-gradient-to-r from-[#141414] via-[#0f0f0f] to-[#1a1a1a] relative overflow-hidden backdrop-blur-xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/8 via-transparent to-[#FFB800]/8" />
             <div className="flex items-center gap-3 relative z-10">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/30">
                 <div className="w-full h-full rounded-[14px] bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
@@ -752,35 +755,35 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full" ref={scrollRef}>
+          <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent" ref={scrollRef}>
             {messages.length === 0 && (
-              <div className="text-center py-12 space-y-4">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[3px] mx-auto shadow-lg shadow-[#FF6B35]/30">
-                  <div className="w-full h-full rounded-[21px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-                    <img 
-                      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
-                      alt="FLIK" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-white font-bold text-lg gradient-text mb-2">Hey! I'm FLIK ✨</h4>
-                  <p className="text-white/60 text-sm max-w-xs mx-auto">
-                    I'm here to help you create, edit, and explore. I can navigate the app, suggest ideas, and guide you through any creative journey!
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2 justify-center mt-6">
-                  <button onClick={() => setInput("Show me my recent creations")} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs text-white/80 transition-colors">
-                    My Creations
-                  </button>
-                  <button onClick={() => setInput("Help me create something amazing")} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs text-white/80 transition-colors">
-                    Create Something
-                  </button>
-                  <button onClick={() => setInput("What can you do?")} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs text-white/80 transition-colors">
-                    What can you do?
-                  </button>
-                </div>
+              <div className="text-center py-16 px-4 space-y-6 flex flex-col items-center justify-center h-full">
+              <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[3px] shadow-2xl shadow-[#FF6B35]/40">
+              <div className="w-full h-full rounded-[21px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
+                <img 
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                  alt="FLIK" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              </motion.div>
+              <div>
+              <h4 className="text-white font-bold text-xl gradient-text mb-2">I'm FLIK</h4>
+              <p className="text-white/50 text-sm leading-relaxed max-w-xs">
+                Your creative voice. Ask me to help design, edit, generate, or just chat about your ideas.
+              </p>
+              </div>
+              <div className="flex flex-col gap-2 w-full max-w-xs mt-4">
+              <button onClick={() => setInput("Show me my recent creations")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> My Creations
+              </button>
+              <button onClick={() => setInput("Help me create something amazing")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Create Something
+              </button>
+              <button onClick={() => setInput("What can you do?")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Capabilities
+              </button>
+              </div>
               </div>
             )}
 
@@ -854,10 +857,10 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                     </div>
                   ) : (
                   <div
-                    className={`p-3 rounded-2xl text-sm space-y-2 ${
+                    className={`px-4 py-3 rounded-2xl text-sm space-y-2 ${
                       msg.role === 'user'
                         ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white rounded-tr-none shadow-lg'
-                        : 'bg-white/10 text-white/90 rounded-tl-none backdrop-blur-sm border border-white/5'
+                        : 'bg-white/8 text-white/90 rounded-tl-none backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors'
                     }`}
                   >
                     {msg.role === 'user' && msg.images && msg.images.length > 0 && (
