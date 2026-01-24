@@ -57,6 +57,14 @@ export default function FlikChat() {
 
   // Memoized ReactMarkdown components configuration
   const markdownComponents = useMemo(() => ({
+    img: ({ src, alt }) => (
+      <img 
+        src={src} 
+        alt={alt} 
+        className="max-w-full h-auto rounded-lg my-2 cursor-pointer hover:opacity-90 transition-opacity"
+        onClick={() => setFullImageView(src)}
+      />
+    ),
     code: ({ inline, className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || '');
       return !inline && match ? (
@@ -97,7 +105,7 @@ export default function FlikChat() {
         {children}
       </blockquote>
     ),
-  }), []);
+  }), [setFullImageView]);
 
   useEffect(() => {
     if (scrollRef.current) {
