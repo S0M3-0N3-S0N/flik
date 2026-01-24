@@ -225,9 +225,53 @@ export default function Generate() {
     setGeneratedImages(generatedImages.filter(img => img.id !== id));
   };
 
-  const addCreationAsReference = (creation) => {
-    setUploadedImages(prev => [...prev, { url: creation.url, id: creation.id }]);
+  const handleGalleryPick = async () => {
+    setShowGallery(true);
+    setSelectedGalleryImages([]);
+    setGallerySearchTerm("");
+    setImageErrors({});
+    
+    setIsLoadingGallery(true);
+    try {
+      const user = await base44.auth.me();
+      const creations = await base44.entities.Creation.filter(
+        { created_by: user.email },
+        '-created_date',
+        50
+      );
+      setGalleryCreations(creations);
+    } catch (e) {
+      console.error("Failed to load gallery:", e);
+      setGalleryCreations([]);
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  };
+
+  const toggleGallerySelection = (creation) => {
+    const imageUrl = creation.thumbnail_url || creation.url;
+    const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
+    
+    if (isSelected) {
+      setSelectedGalleryImages(prev => prev.filter(img => img.url !== imageUrl));
+    } else {
+      setSelectedGalleryImages(prev => [...prev, {
+        url: imageUrl,
+        name: creation.title || 'Creation',
+        id: `creation-${creation.id}-${Date.now()}`
+      }]);
+    }
+  };
+
+  const confirmGallerySelection = () => {
+    setUploadedImages(prev => [...prev, ...selectedGalleryImages]);
     setShowGallery(false);
+    setSelectedGalleryImages([]);
+    setGallerySearchTerm("");
+  };
+
+  const handleImageError = (creationId) => {
+    setImageErrors(prev => ({ ...prev, [creationId]: true }));
   };
 
   return (
