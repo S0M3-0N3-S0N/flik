@@ -301,7 +301,7 @@ export default function Editor() {
     setBatchProgress(0);
   }, [batchImages, batchCancelled]);
 
-  const handleGenerateCanvas = async () => {
+  const handleGenerateCanvas = useCallback(async () => {
       try {
         return await generateCanvas(currentImage, adjustments, transform, selectedFilter);
       } catch (e) {
@@ -309,9 +309,9 @@ export default function Editor() {
         toast.error('Failed to process image');
         return null;
       }
-    };
+    }, [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
 
-  const handleGetProcessedBlob = async () => {
+  const handleGetProcessedBlob = useCallback(async () => {
       try {
         return await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
       } catch (e) {
@@ -319,7 +319,7 @@ export default function Editor() {
         toast.error('Failed to process image');
         return null;
       }
-    };
+    }, [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
   const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) return;
