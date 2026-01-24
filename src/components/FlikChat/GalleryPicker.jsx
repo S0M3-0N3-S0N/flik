@@ -195,7 +195,8 @@ const GalleryPicker = React.memo(function GalleryPicker({
               <Button
                 variant="outline"
                 onClick={() => {
-                  onToggleSelection(null);
+                  // Clear all selected images properly
+                  onSearchChange("");
                 }}
                 className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 hover:border-white/40 text-sm px-6 py-2.5 rounded-xl transition-all"
               >

@@ -39,6 +39,7 @@ import {
   highlightText,
   getTimeframeStats
 } from "@/components/profile/ProfileHelpers";
+import { validateUrlParam, formatDate } from "@/components/constants/appConstants";
 
 export default function Profile() {
   const { t, language, setLanguage } = useContext(LanguageContext);
@@ -55,14 +56,27 @@ export default function Profile() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const fileInputRef = useRef(null);
   
-  // Gallery State - Initialize from URL
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParams.get('q') || "");
+  // Gallery State - Initialize from URL with validation (fixes issue #63)
+  const [searchQuery, setSearchQuery] = useState(
+    validateUrlParam(searchParams.get('q')) || ""
+  );
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(
+    validateUrlParam(searchParams.get('q')) || ""
+  );
   const [selectedItem, setSelectedItem] = useState(null);
-  const [filterType, setFilterType] = useState(searchParams.get('type') || "all");
-  const [sortBy, setSortBy] = useState(searchParams.get('sort') || "newest");
-  const [dateFilter, setDateFilter] = useState(searchParams.get('date') || "all");
-  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [filterType, setFilterType] = useState(
+    validateUrlParam(searchParams.get('type'), ['all', 'image', 'video']) || "all"
+  );
+  const [sortBy, setSortBy] = useState(
+    validateUrlParam(searchParams.get('sort'), ['newest', 'oldest', 'title', 'prompt_length']) || "newest"
+  );
+  const [dateFilter, setDateFilter] = useState(
+    validateUrlParam(searchParams.get('date'), ['all', 'today', 'week', 'month']) || "all"
+  );
+  const pageParam = parseInt(searchParams.get('page'));
+  const [currentPage, setCurrentPage] = useState(
+    !isNaN(pageParam) && pageParam > 0 ? pageParam : 1
+  );
   const [selectedItems, setSelectedItems] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editingTitle, setEditingTitle] = useState(null);
@@ -656,7 +670,7 @@ export default function Profile() {
               <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
-                  Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  Joined {formatDate(user.created_date)}
                 </span>
               </div>
             </div>
