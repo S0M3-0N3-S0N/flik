@@ -361,6 +361,17 @@ function LayoutContent({ children, currentPageName }) {
                     Notifications
                   </Link>
 
+                  <Link 
+                    to={createPageUrl("FollowFeed")} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                      currentPageName === "FollowFeed" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Compass className="w-5 h-5" />
+                    Feed
+                  </Link>
+
                   <div className="border-t border-white/10 my-2"></div>
 
                   <Link 
