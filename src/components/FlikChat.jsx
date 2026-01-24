@@ -1,17 +1,17 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { X, Send, User, Loader2, Trash2, RefreshCw, Grid3x3, AlertCircle, Mic, Volume2, VolumeX, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import { base44 } from "@/api/base44Client";
-import ReactMarkdown from 'react-markdown';
 import { useFlik } from "./FlikContext";
 import { getFlikActions } from "./useFlikActions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatDistanceToNow } from 'date-fns';
+import MessageBubble from "./FlikChat/MessageBubble";
+import ChatInput from "./FlikChat/ChatInput";
+import GalleryPicker from "./FlikChat/GalleryPicker";
 
 // Constants
 const CACHE_DURATION = 30000; // 30 seconds
@@ -60,49 +60,7 @@ export default function FlikChat() {
   const speechQueueRef = useRef([]);
   const isSpeakingRef = useRef(false);
 
-  // Memoized ReactMarkdown components configuration
-  const markdownComponents = useMemo(() => ({
-    code: ({ inline, className, children, ...props }) => {
-      const match = /language-(\w+)/.exec(className || '');
-      return !inline && match ? (
-        <div className="relative group/code">
-          <pre className="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto my-2">
-            <code className={className} {...props}>{children}</code>
-          </pre>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover/code:opacity-100 bg-slate-800 hover:bg-slate-700"
-            onClick={() => {
-              navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
-              toast.success('Code copied');
-            }}
-          >
-            <Copy className="h-3 w-3 text-slate-400" />
-          </Button>
-        </div>
-      ) : (
-        <code className="px-1 py-0.5 rounded bg-slate-100 text-slate-700 text-xs">
-          {children}
-        </code>
-      );
-    },
-    a: ({ children, ...props }) => (
-      <a {...props} target="_blank" rel="noopener noreferrer">{children}</a>
-    ),
-    p: ({ children }) => <p className="my-1 leading-relaxed">{children}</p>,
-    ul: ({ children }) => <ul className="my-1 ml-4 list-disc">{children}</ul>,
-    ol: ({ children }) => <ol className="my-1 ml-4 list-decimal">{children}</ol>,
-    li: ({ children }) => <li className="my-0.5">{children}</li>,
-    h1: ({ children }) => <h1 className="text-lg font-semibold my-2">{children}</h1>,
-    h2: ({ children }) => <h2 className="text-base font-semibold my-2">{children}</h2>,
-    h3: ({ children }) => <h3 className="text-sm font-semibold my-2">{children}</h3>,
-    blockquote: ({ children }) => (
-      <blockquote className="border-l-2 border-slate-300 pl-3 my-2 text-slate-600">
-        {children}
-      </blockquote>
-    ),
-  }), []);
+
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -670,6 +628,12 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
     setEditInput(message.content);
   }, []);
 
+  const handleRetryMessage = useCallback((errorMsgId) => {
+    if (retryMessage) {
+      handleSend(retryMessage.input, retryMessage.images, errorMsgId);
+    }
+  }, [retryMessage]);
+
   const handleSaveEdit = useCallback(() => {
     if (!editInput.trim()) return;
     
@@ -758,225 +722,48 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
           <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent" ref={scrollRef}>
             {messages.length === 0 && (
               <div className="text-center py-16 px-4 space-y-6 flex flex-col items-center justify-center h-full">
-              <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[3px] shadow-2xl shadow-[#FF6B35]/40">
-              <div className="w-full h-full rounded-[21px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-                <img 
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
-                  alt="FLIK" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              </motion.div>
-              <div>
-              <h4 className="text-white font-bold text-xl gradient-text mb-2">I'm FLIK</h4>
-              <p className="text-white/50 text-sm leading-relaxed max-w-xs">
-                Your creative voice. Ask me to help design, edit, generate, or just chat about your ideas.
-              </p>
-              </div>
-              <div className="flex flex-col gap-2 w-full max-w-xs mt-4">
-              <button onClick={() => setInput("Show me my recent creations")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> My Creations
-              </button>
-              <button onClick={() => setInput("Help me create something amazing")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Create Something
-              </button>
-              <button onClick={() => setInput("What can you do?")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Capabilities
-              </button>
-              </div>
+                <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[3px] shadow-2xl shadow-[#FF6B35]/40">
+                  <div className="w-full h-full rounded-[21px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                      alt="FLIK" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </motion.div>
+                <div>
+                  <h4 className="text-white font-bold text-xl gradient-text mb-2">I'm FLIK</h4>
+                  <p className="text-white/50 text-sm leading-relaxed max-w-xs">
+                    Your creative voice. Ask me to help design, edit, generate, or just chat about your ideas.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 w-full max-w-xs mt-4">
+                  <button onClick={() => setInput("Show me my recent creations")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                    <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> My Creations
+                  </button>
+                  <button onClick={() => setInput("Help me create something amazing")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                    <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Create Something
+                  </button>
+                  <button onClick={() => setInput("What can you do?")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
+                    <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Capabilities
+                  </button>
+                </div>
               </div>
             )}
 
-            {messages.map((msg) => {
-              const isEditing = editingMessageId === msg.id;
-
-              return (
-              <div
+            {messages.map((msg) => (
+              <MessageBubble
                 key={msg.id || msg.timestamp}
-                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}
-              >
-                {msg.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] flex-shrink-0 shadow-lg shadow-[#FF6B35]/20">
-                    <div className="w-full h-full rounded-[10px] bg-[#141414] flex items-center justify-center overflow-hidden">
-                      <img 
-                        src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
-                        alt="FLIK" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="flex flex-col gap-1 max-w-[80%]">
-                  {msg.role === 'user' && (
-                    <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity mb-1">
-                      <button
-                        onClick={() => handleEditMessage(msg)}
-                        className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white/80"
-                        title="Edit"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => handleCopyMessage(msg.id, msg.content)}
-                        className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white/80"
-                        title="Copy"
-                      >
-                        {copiedMessageId === msg.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMessage(msg.id)}
-                        className="p-1 rounded hover:bg-red-500/20 text-white/50 hover:text-red-400"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-
-                  {isEditing ? (
-                    <div className="flex gap-2 bg-gradient-to-br from-white/10 to-white/5 p-3 rounded-2xl border border-[#FF6B35]/30 shadow-lg backdrop-blur-sm">
-                      <Input
-                        value={editInput}
-                        onChange={(e) => setEditInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSaveEdit();
-                          }
-                          if (e.key === 'Escape') handleCancelEdit();
-                        }}
-                        className="bg-black/30 border-white/20 text-white focus-visible:ring-[#FF6B35]/50 placeholder:text-white/30"
-                        autoFocus
-                      />
-                      <Button size="icon" onClick={handleSaveEdit} className="bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-md">
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="hover:bg-red-500/10 hover:text-red-400">
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                  <div
-                    className={`px-4 py-3 rounded-2xl text-sm space-y-2 ${
-                      msg.role === 'user'
-                        ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white rounded-tr-none shadow-lg'
-                        : 'bg-white/8 text-white/90 rounded-tl-none backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors'
-                    }`}
-                  >
-                    {msg.role === 'user' && msg.images && msg.images.length > 0 && (
-                      <div className={`grid gap-2 mb-2 ${msg.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                        {msg.images.map((imgUrl, idx) => (
-                          <div 
-                            key={idx} 
-                            className="rounded-lg overflow-hidden border border-white/20 aspect-square cursor-pointer hover:border-[#FF6B35] transition-colors"
-                            onClick={() => setFullImageView(imgUrl)}
-                          >
-                            <img src={imgUrl} alt="Uploaded" className="w-full h-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {msg.role === 'assistant' && msg.image_urls && msg.image_urls.length > 0 && (
-                      <div className={`grid gap-2 mb-2 ${msg.image_urls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                        {msg.image_urls.map((imgUrl, idx) => (
-                          <div 
-                            key={idx} 
-                            className="rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35]/50 transition-colors cursor-pointer"
-                            onClick={() => setFullImageView(imgUrl)}
-                          >
-                            <img 
-                              src={imgUrl} 
-                              alt={`Response ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="prose prose-invert prose-sm max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 last:[&>*]:mb-0 [&>p]:leading-relaxed">
-                      <ReactMarkdown components={markdownComponents}>
-                        {msg.content}
-                      </ReactMarkdown>
-                      </div>
-                      {msg.timestamp && (
-                      <div className="text-[10px] text-white/30 mt-1 flex items-center gap-1">
-                        {formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}
-                        {msg.edited && <span className="italic">(edited)</span>}
-                      </div>
-                      )}
-                      </div>
-                      )}
-
-                  {msg.role === 'assistant' && (
-                    <div className="flex flex-col gap-2 mt-2">
-                      {msg.suggested_prompt && (
-                        <button
-                          onClick={() => {
-                            setInput(msg.suggested_prompt);
-                          }}
-                          className="bg-[#1a1a1a] hover:bg-[#252525] border border-white/10 hover:border-[#FF6B35]/50 rounded-lg p-2 text-xs text-white/60 hover:text-white/80 italic border-l-2 border-l-[#FF6B35] transition-all text-left group"
-                        >
-                          <span className="block mb-1 text-[10px] text-white/40 group-hover:text-[#FF6B35]">💡 Click to use this prompt</span>
-                          "{msg.suggested_prompt}"
-                        </button>
-                      )}
-                      
-                      {msg.isError && retryMessage && (
-                        <button
-                          onClick={() => handleSend(retryMessage.input, retryMessage.images, retryMessage.errorMsgId)}
-                          className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          Retry Message
-                        </button>
-                      )}
-                      
-                      {msg.suggested_actions && msg.suggested_actions.length > 0 && (
-                         <div className="flex flex-wrap gap-2">
-                           {msg.suggested_actions.map((action, idx) => {
-                             const getIcon = () => {
-                               if (action.type === 'navigate') return ExternalLink;
-                               if (action.type === 'tool') return Wand2;
-                               if (action.type === 'adjustment') return SlidersHorizontal;
-                               if (action.type === 'filter') return Layers;
-                               if (action.type === 'crop') return Crop;
-                               if (action.type === 'apply_prompt') return ArrowLeft;
-                               return Play;
-                             };
-                             const Icon = getIcon();
-                             const actionKey = `${idx}`;
-                             const isLoading = actionLoadingStates[actionKey];
-
-                             return (
-                               <button
-                                 key={idx}
-                                 onClick={() => handleAction(action, idx)}
-                                 disabled={isLoading}
-                                 className="flex items-center gap-2 bg-gradient-to-r from-white/5 to-white/10 hover:from-[#FF6B35]/20 hover:to-[#FFB800]/20 border border-white/10 hover:border-[#FF6B35]/50 text-white/90 text-[11px] px-3 py-1.5 rounded-lg transition-all group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                               >
-                                 {isLoading ? (
-                                   <Loader2 className="w-3 h-3 text-[#FF6B35] animate-spin" />
-                                 ) : (
-                                   <Icon className="w-3 h-3 text-[#FF6B35]" />
-                                 )}
-                                 <span>{action.label}</span>
-                                 {!isLoading && <Play className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100 group-hover:text-[#FF6B35] transition-all" />}
-                               </button>
-                             );
-                           })}
-                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {msg.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
-                )}
-              </div>
-            );
-            })}
+                message={msg}
+                onCopy={handleCopyMessage}
+                onDelete={handleDeleteMessage}
+                onEdit={handleEditMessage}
+                onAction={handleAction}
+                onRetry={handleRetryMessage}
+                copiedMessageId={copiedMessageId}
+                actionLoadingStates={actionLoadingStates}
+              />
+            ))}
             {isTyping && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/20">
@@ -998,87 +785,20 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
             )}
           </div>
 
-          <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
-            {uploadError && (
-              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                {uploadError}
-              </div>
-            )}
-            {attachedImages.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                {attachedImages.map((img) => (
-                  <div key={img.id} className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 group">
-                    <img src={img.url} alt={img.name || 'Attached'} className="w-full h-full object-cover" />
-                    <button 
-                      onClick={() => setAttachedImages(prev => prev.filter(i => i.id !== img.id))} 
-                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                      title="Remove image"
-                    >
-                      <X className="w-3 h-3 text-white" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!isTyping && !isUploadingChat) {
-                  handleSend();
-                }
-              }}
-              className="flex items-center gap-2"
-            >
-              <button
-                type="button"
-                onClick={toggleVoiceInput}
-                className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${
-                  isListening 
-                    ? 'bg-red-500/30 text-red-400 animate-pulse scale-110' 
-                    : 'hover:bg-white/10 text-white/60 hover:text-white'
-                }`}
-                title={isListening ? "Stop listening" : "Start voice"}
-              >
-                {isListening ? <Mic className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-              </button>
-
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="What's on your mind?"
-                className="bg-black/20 border-white/10 text-white focus-visible:ring-[#FF6B35] placeholder:text-white/40 flex-1"
-              />
-
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={handleGalleryPick}
-                  className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0"
-                  title="Pick from gallery"
-                >
-                  <Grid3x3 className="w-4 h-4" />
-                </button>
-                <Button 
-                  type="submit" 
-                  size="icon"
-                  disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
-                  className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg rounded-xl h-10 w-10 p-0"
-                >
-                  {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
-              </div>
-
-              <input
-                ref={chatFileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleChatImageUpload}
-                className="hidden"
-              />
-            </form>
-          </div>
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            attachedImages={attachedImages}
+            setAttachedImages={setAttachedImages}
+            isTyping={isTyping}
+            isUploadingChat={isUploadingChat}
+            isListening={isListening}
+            onSend={handleSend}
+            onGalleryPick={handleGalleryPick}
+            onVoiceToggle={toggleVoiceInput}
+            chatFileRef={chatFileRef}
+            uploadError={uploadError}
+          />
         </motion.div>
       )}
     </AnimatePresence>
