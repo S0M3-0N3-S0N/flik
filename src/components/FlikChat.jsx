@@ -365,8 +365,15 @@ FLIK APP STRUCTURE:
    - Multiple generations
 
 3. 👤 **Profile & Gallery**
-   - All creations with search/filter
-   - Download & organize
+    - All creations with search/filter
+    - Download & organize
+    - Follow/unfollow other creators
+    - View follower & following count
+
+4. 🔗 **Community & Discovery**
+    - Discover page with published creations
+    - Like & comment on community work
+    - Follow creators to see their work
 
 USER CONTEXT:
 - Name: ${userProfile?.display_name || userProfile?.full_name || 'User'}
