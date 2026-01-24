@@ -539,12 +539,14 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         }
       });
 
+      if (!response?.message) throw new Error('Invalid LLM response format');
+
       const assistantMsg = { 
         role: 'assistant', 
-        content: response.message,
-        image_urls: response.image_urls,
-        suggested_prompt: response.suggested_prompt,
-        suggested_actions: response.suggested_actions,
+        content: response.message || "",
+        image_urls: response.image_urls || [],
+        suggested_prompt: response.suggested_prompt || null,
+        suggested_actions: Array.isArray(response.suggested_actions) ? response.suggested_actions : [],
         timestamp: new Date().toISOString(),
         id: `msg-${Date.now()}-${Math.random()}`
       };
