@@ -109,14 +109,14 @@ export default function Generate() {
       
       const llmAnalysis = await base44.integrations.Core.InvokeLLM({
         prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
-        
+
         ${uploadedImages.length > 0 ? `IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates ${imageStrength > 0.7 ? "EXTREMELY STRICTLY (maintain exact composition and forms)" : imageStrength < 0.4 ? "loosely (use as vague inspiration)" : "strongly"} to them, while applying the user's text prompt as a modification or style.` : ""}
         ${aiModel === 'gemini' ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
 
         CRITICAL RULES:
-        1. DEFAULT to generating EXACTLY ONE prompt. 
-        2. ONLY generate multiple prompts if the user EXPLICITLY specifies a quantity (e.g., "3 images", "5 variations") or explicitly asks for "variations" or "different angles".
-        3. If no quantity/variation is requested, return an array with ONLY ONE prompt.
+        1. Generate EXACTLY ${batchCount} DIFFERENT prompt${batchCount > 1 ? 's' : ''} with variations.
+        2. Each prompt should be unique and offer a different interpretation or perspective of the user's request.
+        3. Return exactly ${batchCount} prompt${batchCount > 1 ? 's' : ''} - no more, no less.
 
         Enhancement Tasks:
         1. Greatly improve the prompt quality. Add professional details: lighting (e.g., volumetric, cinematic, studio), camera parameters (e.g., 85mm, f/1.8, 4k, 8k), composition, and textures.
