@@ -417,7 +417,7 @@ export default function Generate() {
                     <PopoverTrigger asChild>
                       <button 
                         className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
-                          (aspectRatio !== "1:1" || negativePrompt) 
+                          (aspectRatio !== "1:1" || negativePrompt || batchCount !== 1) 
                             ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                             : 'text-white/60 hover:bg-white/5 hover:text-white'
                         }`}
@@ -428,6 +428,30 @@ export default function Generate() {
                     </PopoverTrigger>
                     <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl">
                       <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Batch Count</Label>
+                            <span className="text-xs text-[#FF6B35] font-semibold">{batchCount}</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[1, 3, 5].map((count) => (
+                              <button
+                                key={count}
+                                onClick={() => setBatchCount(count)}
+                                className={`py-2 rounded-lg border transition-all text-sm font-medium ${
+                                  batchCount === count 
+                                    ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                    : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                                }`}
+                              >
+                                {count}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="w-px h-0 bg-white/10" />
+
                         <div className="space-y-2">
                           <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
                           <div className="grid grid-cols-3 gap-2">
