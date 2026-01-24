@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, MessageCircle, Send, MoreVertical, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreVertical, Trash2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,12 +154,15 @@ export default function DiscoverPage() {
           ))}
         </div>
 
-          {creations.length === 0 && (
-            <div className="text-center py-16">
-              <p className="text-white/40">No creations yet</p>
+        {creations.length === 0 && !isLoading && (
+          <div className="text-center py-20">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-10 h-10 text-[#FF6B35]" />
             </div>
-          )}
-        </div>
+            <h3 className="text-white text-xl font-semibold mb-2">No public creations yet</h3>
+            <p className="text-white/40">Be the first to share your amazing work!</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -342,6 +345,7 @@ function CreationCard({
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </motion.div>
   );
