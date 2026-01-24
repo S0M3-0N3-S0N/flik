@@ -487,6 +487,38 @@ export default function Generate() {
           />
         </div>
       </section>
+
+      <Dialog open={showGallery} onOpenChange={setShowGallery}>
+        <DialogContent className="max-w-3xl bg-[#1a1a1a] border-white/10 text-white p-6">
+          <DialogHeader>
+            <DialogTitle>Select from Gallery</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto">
+            {userCreations.length === 0 ? (
+              <div className="col-span-3 text-center py-8 text-white/50">
+                No creations yet
+              </div>
+            ) : (
+              userCreations.map((creation) => (
+                <button
+                  key={creation.id}
+                  onClick={() => addCreationAsReference(creation)}
+                  className="group relative aspect-square rounded-xl overflow-hidden hover:ring-2 ring-[#FF6B35] transition-all"
+                >
+                  <img 
+                    src={creation.thumbnail_url || creation.url} 
+                    alt={creation.title}
+                    className="w-full h-full object-cover group-hover:brightness-75 transition-all"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-all">
+                    <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">Add</span>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
