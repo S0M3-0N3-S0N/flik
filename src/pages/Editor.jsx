@@ -76,6 +76,7 @@ export default function Editor() {
   const [blendMode, setBlendMode] = useState('source-over');
   const [paintBrushMode, setPaintBrushMode] = useState('draw');
   const [toolbarVisible, setToolbarVisible] = useState(true);
+  const [showBatchPanel, setShowBatchPanel] = useState(false);
   const toolbarHideTimeoutRef = useRef(null);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
@@ -1123,9 +1124,6 @@ export default function Editor() {
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="batch" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Layers className="w-4 h-4" />
-            </TabsTrigger>
             <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Settings2 className="w-4 h-4" />
             </TabsTrigger>
@@ -1144,115 +1142,6 @@ export default function Editor() {
                 isProcessing={isProcessing}
                 hasImage={!!currentImage}
               />
-            </TabsContent>
-
-            <TabsContent value="batch" className="mt-0">
-              <div className="py-6 px-4 space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
-                    Batch Workspace
-                  </h3>
-                  
-                  <label className="block cursor-pointer group">
-                    <div className="relative overflow-hidden border border-dashed border-white/20 rounded-2xl p-8 hover:border-[#FF6B35]/50 hover:bg-[#FF6B35]/5 transition-all">
-                      <div className="flex flex-col items-center gap-3 text-center relative z-10">
-                        <div className="w-12 h-12 rounded-full bg-[#FF6B35]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Layers className="w-6 h-6 text-[#FF6B35]" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white group-hover:text-[#FF6B35] transition-colors">Import Images</p>
-                          <p className="text-xs text-white/40 mt-1">Select multiple files to process</p>
-                        </div>
-                      </div>
-                    </div>
-                    <input type="file" accept="image/*" multiple onChange={handleBatchUpload} className="hidden" />
-                  </label>
-                </div>
-
-                {batchImages.length > 0 && (
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
-                        <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
-                        Workflow
-                      </h3>
-                      
-                      <button 
-                        onClick={() => {
-                          const updatedBatch = batchImages.map(img => ({
-                            ...img,
-                            adjustments: { ...adjustments },
-                            filter: selectedFilter,
-                            transform: { ...transform }
-                          }));
-                          setBatchImages(updatedBatch);
-                          toast.success('Synced current edits to all images!');
-                        }}
-                        className="w-full p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition-all text-left flex items-center gap-3 group"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                          <Settings2 className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">Sync Edits</p>
-                          <p className="text-xs text-white/40">Apply current adjustments to all</p>
-                        </div>
-                      </button>
-
-                      <button 
-                        onClick={handleClearBatch}
-                        className="w-full p-4 rounded-xl bg-white/[0.03] hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 transition-all text-left flex items-center gap-3 group"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center">
-                          <X className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white group-hover:text-red-400 transition-colors">Clear All</p>
-                          <p className="text-xs text-white/40">Remove all images</p>
-                        </div>
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
-                        <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
-                        AI Batch Actions
-                      </h3>
-                      <div className="grid grid-cols-1 gap-2">
-                        {[
-                          { label: "Auto Enhance", icon: Sparkles, prompt: "Enhance this image with better colors, improved clarity, professional quality" },
-                          { label: "Upscale 4x", icon: Wand2, prompt: "Upscale to higher resolution, enhance details" },
-                          { label: "Fix Lighting", icon: Sun, prompt: "Fix lighting and exposure, balance highlights and shadows" },
-                        ].map(tool => (
-                          <Button
-                            key={tool.label}
-                            onClick={() => handleBatchProcess(tool)}
-                            disabled={isBatchProcessing}
-                            className="w-full h-12 bg-white/[0.03] hover:bg-[#FF6B35] border border-white/5 hover:border-[#FF6B35] text-white justify-start px-4 gap-3 group transition-all rounded-xl"
-                          >
-                            <tool.icon className="w-4 h-4 text-[#FF6B35] group-hover:text-white transition-colors" />
-                            <span className="flex-1 text-left">
-                              {isBatchProcessing ? `Processing ${batchProgress}%` : tool.label}
-                            </span>
-                            {isBatchProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
-                          </Button>
-                        ))}
-                      </div>
-                      
-                      {isBatchProcessing && (
-                        <Button
-                          onClick={() => setBatchCancelled(true)}
-                          variant="outline"
-                          className="w-full border-red-500/20 text-red-400 hover:bg-red-500/10 mt-2"
-                        >
-                          Stop Processing
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
             </TabsContent>
 
             <TabsContent value="adjust" className="mt-0">
@@ -1697,6 +1586,27 @@ export default function Editor() {
                   title="Crop & Resize"
                 >
                   <CropIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+
+                <div className="w-px h-4 bg-white/10" />
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowBatchPanel(!showBatchPanel)}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 relative ${
+                    showBatchPanel
+                      ? 'bg-white text-black hover:bg-white/90' 
+                      : 'hover:bg-white/10 text-white'
+                  }`}
+                  title="Batch"
+                >
+                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  {batchImages.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF6B35] text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                      {batchImages.length}
+                    </span>
+                  )}
                 </Button>
 
                 <div className="w-px h-4 bg-white/10" />
