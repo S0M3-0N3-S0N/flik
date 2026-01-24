@@ -1015,10 +1015,10 @@ export default function Profile() {
                         </div>
 
                         {/* Bottom Info */}
-                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-3">
+                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-2.5 sm:space-y-3">
                           <div>
                             <h3 
-                              className="font-bold text-white text-base sm:text-lg line-clamp-2 mb-1 drop-shadow-lg"
+                              className="font-bold text-white text-sm sm:text-base lg:text-lg line-clamp-2 mb-1 drop-shadow-lg"
                               dangerouslySetInnerHTML={{ __html: highlightText(item.title || 'Untitled', searchQuery) }}
                             />
                             {item.prompt && (
@@ -1028,7 +1028,7 @@ export default function Profile() {
                               />
                             )}
                           </div>
-                          <div className="flex gap-1.5 sm:gap-2">
+                          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                             <Button
                               size="sm"
                               onClick={(e) => {
@@ -1038,17 +1038,19 @@ export default function Profile() {
                                   published: !item.published_to_discover 
                                 });
                               }}
-                              className={`flex-1 border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3 ${
+                              className={`border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2 ${
                                 item.published_to_discover 
                                   ? 'bg-green-500/30 hover:bg-green-500/40' 
                                   : 'bg-white/20 hover:bg-white/30'
                               } text-white`}
+                              title={item.published_to_discover ? 'Unpublish from Discover' : 'Publish to Discover'}
                             >
                               {item.published_to_discover ? (
-                                <><Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" /><span className="hidden xs:inline sm:inline">Public</span></>
+                                <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               ) : (
-                                <><EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" /><span className="hidden xs:inline sm:inline">Publish</span></>
+                                <EyeOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               )}
+                              <span className="hidden sm:inline ml-1">Public</span>
                             </Button>
                             <Button
                               size="sm"
@@ -1056,10 +1058,23 @@ export default function Profile() {
                                 e.stopPropagation();
                                 navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                               }}
-                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3"
+                              className="bg-white/20 hover:bg-white/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2"
+                              title="Edit in Photo Studio"
                             >
-                              <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                              <span className="hidden xs:inline sm:inline">Edit</span>
+                              <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <span className="hidden sm:inline ml-1">Edit</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(createPageUrl('Generate') + '?prompt=' + encodeURIComponent(item.prompt || ''));
+                              }}
+                              className="bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2"
+                              title="Imagine similar image"
+                            >
+                              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <span className="hidden sm:inline ml-1">Imagine</span>
                             </Button>
                           </div>
                         </div>
