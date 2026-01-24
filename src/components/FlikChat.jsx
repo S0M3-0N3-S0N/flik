@@ -135,12 +135,6 @@ export default function FlikChat() {
     setVoiceEnabled(!voiceEnabled);
   };
 
-  const enqueueSpeech = useCallback((text) => {
-   if (!voiceEnabled || !window.speechSynthesis) return;
-   speechQueueRef.current.push(text);
-   processSpeechQueue();
-  }, [voiceEnabled, processSpeechQueue]);
-
   const processSpeechQueue = useCallback(() => {
    if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
 
@@ -180,6 +174,12 @@ export default function FlikChat() {
    window.speechSynthesis?.cancel();
    window.speechSynthesis?.speak(utterance);
   }, []);
+
+  const enqueueSpeech = useCallback((text) => {
+   if (!voiceEnabled || !window.speechSynthesis) return;
+   speechQueueRef.current.push(text);
+   processSpeechQueue();
+  }, [voiceEnabled, processSpeechQueue]);
 
   const getCurrentPage = useCallback(() => {
     const path = location.pathname;
