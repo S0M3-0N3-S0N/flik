@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -18,6 +18,7 @@ import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import ColorWheel from "@/components/editor/ColorWheel";
+import PaintCanvas from "@/components/editor/PaintCanvas";
 import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
@@ -66,8 +67,10 @@ export default function Editor() {
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchCancelled, setBatchCancelled] = useState(false);
   const [brushColor, setBrushColor] = useState("#FF6B35");
-  const [brushPreset, setBrushPreset] = useState({ id: 'round', name: 'Round', icon: '●', opacity: 1, size: 30 });
+  const [brushPreset, setBrushPreset] = useState({ id: 'round', name: 'Round', icon: '●', opacity: 1, size: 30, spacing: 25, jitter: 0, flow: 100, wetness: 0 });
   const [showColorWheel, setShowColorWheel] = useState(false);
+  const [paintStrokes, setPaintStrokes] = useState([]);
+  const [isPaintMode, setIsPaintMode] = useState(false);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -676,9 +679,14 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsDrawing(true);
-        setBrushStrokes(prev => [...prev, { 
+        setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
+      }
+    } else if (activeTab === "paint" && currentImage) {
+      const pos = getRelativePosition(e);
+      if (pos) {
+        setIsPaintMode(true);
+        setPaintStrokes(prev => [...prev, { 
           points: [pos], 
-          type: brushMode, 
           size: brushPreset?.size || brushSize,
           color: brushColor,
           opacity: brushPreset?.opacity || 1,
@@ -731,7 +739,7 @@ export default function Editor() {
       return;
     }
 
-    if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
+    if ((activeTab === "remove" || activeTab === "paint") && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
@@ -744,6 +752,15 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos && brushStrokes.length > 0) {
         setBrushStrokes(prev => {
+          const newStrokes = [...prev];
+          newStrokes[newStrokes.length - 1].points.push(pos);
+          return newStrokes;
+        });
+      }
+    } else if (activeTab === "paint" && isPaintMode && currentImage) {
+      const pos = getRelativePosition(e);
+      if (pos && paintStrokes.length > 0) {
+        setPaintStrokes(prev => {
           const newStrokes = [...prev];
           newStrokes[newStrokes.length - 1].points.push(pos);
           return newStrokes;
@@ -791,6 +808,7 @@ export default function Editor() {
 
   const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
+    setIsPaintMode(false);
     setIsDragging(false);
     setIsPanning(false);
     setDragType(null);
@@ -824,64 +842,31 @@ export default function Editor() {
       
       const isErase = stroke.type === 'erase';
       const size = stroke.size || brushSize;
-      const color = stroke.color || brushColor;
-      const opacity = stroke.opacity !== undefined ? stroke.opacity : (brushPreset?.opacity || 1);
-      const spacing = stroke.spacing || (brushPreset?.spacing || 25);
-      const jitter = stroke.jitter || (brushPreset?.jitter || 0);
-      const flow = stroke.flow || (brushPreset?.flow || 100);
       
       ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
-      
-      // Convert hex color to rgba
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-      const finalOpacity = opacity * (flow / 100);
-      
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`;
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`;
+      ctx.strokeStyle = `rgba(255, 107, 53, ${brushOpacity})`;
+      ctx.fillStyle = `rgba(255, 107, 53, ${brushOpacity})`;
       ctx.lineWidth = size;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       
       if (points.length === 1) {
         ctx.beginPath();
-        const jitterX = jitter > 0 ? (Math.random() - 0.5) * jitter * 0.1 : 0;
-        const jitterY = jitter > 0 ? (Math.random() - 0.5) * jitter * 0.1 : 0;
-        ctx.arc(
-          ((points[0].x + jitterX) / 100) * canvas.width, 
-          ((points[0].y + jitterY) / 100) * canvas.height, 
-          ctx.lineWidth / 2, 
-          0, 
-          Math.PI * 2
-        );
+        ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // Apply spacing - skip points based on spacing value
-        const spacingFactor = Math.max(1, Math.floor(spacing / 10));
-        const filteredPoints = points.filter((_, i) => i % spacingFactor === 0);
+        ctx.beginPath();
+        ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
         
-        if (filteredPoints.length > 0) {
-          ctx.beginPath();
-          const firstPoint = filteredPoints[0];
-          ctx.moveTo((firstPoint.x / 100) * canvas.width, (firstPoint.y / 100) * canvas.height);
-          
-          for (let i = 1; i < filteredPoints.length; i++) {
-            const point = filteredPoints[i];
-            const jitterX = jitter > 0 ? (Math.random() - 0.5) * jitter * 0.1 : 0;
-            const jitterY = jitter > 0 ? (Math.random() - 0.5) * jitter * 0.1 : 0;
-            ctx.lineTo(
-              ((point.x + jitterX) / 100) * canvas.width, 
-              ((point.y + jitterY) / 100) * canvas.height
-            );
-          }
-          
-          ctx.stroke();
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
         }
+        
+        ctx.stroke();
       }
     });
     ctx.globalCompositeOperation = 'source-over';
-  }, [brushStrokes, brushSize, brushOpacity, activeTab, brushColor, brushPreset]);
+  }, [brushStrokes, brushSize, brushOpacity, activeTab]);
 
   const getFilterStyle = useCallback(() => {
     const filters = [];
@@ -919,7 +904,7 @@ export default function Editor() {
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
@@ -937,6 +922,9 @@ export default function Editor() {
             </TabsTrigger>
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Palette className="w-4 h-4" />
             </TabsTrigger>
           </TabsList>
 
@@ -1158,6 +1146,66 @@ export default function Editor() {
                 <p className="text-white/40 text-sm">Upload an image to start</p>
               )}
             </TabsContent>
+
+            <TabsContent value="paint" className="mt-0">
+              <div className="py-6 px-4 space-y-6">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0 text-[#FF6B35]">
+                      <Palette className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-medium text-sm mb-1">Paint Tool</h4>
+                      <p className="text-xs text-white/60 leading-relaxed">
+                        Draw directly on your image with customizable brushes and colors. Use the color wheel in the toolbar to adjust brush settings.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {currentImage ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-10 h-10 rounded-lg border-2 border-white/20"
+                          style={{ backgroundColor: brushColor }}
+                        />
+                        <div>
+                          <div className="text-xs text-white/80 font-medium">{brushPreset.name}</div>
+                          <div className="text-xs text-white/40">{brushPreset.size}px • {Math.round(brushPreset.opacity * 100)}%</div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowColorWheel(true)}
+                        className="px-3 py-2 rounded-lg bg-[#FF6B35] hover:bg-[#F72C25] text-white text-xs font-medium transition-colors"
+                      >
+                        Edit Brush
+                      </button>
+                    </div>
+
+                    {paintStrokes.length > 0 && (
+                      <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-white/80">{paintStrokes.length} stroke(s)</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setPaintStrokes([])}
+                            className="text-white/60 hover:text-white h-8 px-3 hover:bg-white/10"
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Clear All
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-white/40 text-sm">Upload an image to start</p>
+                )}
+              </div>
+            </TabsContent>
           </div>
         </Tabs>
       </motion.aside>
@@ -1170,6 +1218,12 @@ export default function Editor() {
         >
           <div className="flex items-center gap-2">
             {activeTab === "remove" && currentImage && (
+              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
+                <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
+                Drag to mask
+              </div>
+            )}
+            {activeTab === "paint" && currentImage && (
               <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
                 Drag to paint
@@ -1248,7 +1302,7 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: 'none' }}
         >
-          {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
+          {(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
@@ -1257,8 +1311,8 @@ export default function Editor() {
                 height: (brushPreset?.size || brushSize) * zoom,
                 transform: 'translate(-50%, -50%)',
                 display: 'none',
-                borderColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : brushColor,
-                backgroundColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : `${brushColor}40`
+                borderColor: activeTab === "paint" ? brushColor : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)'),
+                backgroundColor: activeTab === "paint" ? `${brushColor}40` : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)')
               }}
             />
           )}
@@ -1289,7 +1343,7 @@ export default function Editor() {
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                    activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
+                    (activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
@@ -1303,6 +1357,18 @@ export default function Editor() {
                     ref={canvasRef}
                     className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full"
                     style={{ filter: 'none' }}
+                  />
+                )}
+
+                {activeTab === "paint" && currentImage && (
+                  <PaintCanvas
+                    imageRef={imageRef}
+                    paintStrokes={paintStrokes}
+                    brushSize={brushSize}
+                    brushColor={brushColor}
+                    brushPreset={brushPreset}
+                    isPainting={isPaintMode}
+                    zoom={zoom}
                   />
                 )}
 
