@@ -19,6 +19,7 @@ import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import ColorWheel from "@/components/editor/ColorWheel";
 import BatchPanel from "@/components/editor/BatchPanel";
+import SharePanel from "@/components/editor/SharePanel";
 
 import { useFlikActions } from "@/components/useFlikActions";
 
@@ -78,6 +79,7 @@ export default function Editor() {
   const [paintBrushMode, setPaintBrushMode] = useState('draw');
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [showBatchPanel, setShowBatchPanel] = useState(false);
+  const [showSharePanel, setShowSharePanel] = useState(false);
   const toolbarHideTimeoutRef = useRef(null);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
@@ -1680,6 +1682,13 @@ export default function Editor() {
               adjustments={adjustments}
               selectedFilter={selectedFilter}
               transform={transform}
+            />
+
+            <SharePanel
+              isOpen={showSharePanel}
+              onClose={() => setShowSharePanel(false)}
+              currentImage={currentImage}
+              creationId={currentImage?.id}
             />
             </>
           )}
