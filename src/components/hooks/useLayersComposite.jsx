@@ -32,8 +32,9 @@ export const useLayersComposite = () => {
         // Save context
         ctx.save();
 
-        // Apply layer opacity
+        // Apply layer opacity and blend mode
         ctx.globalAlpha = (layer.opacity || 100) / 100;
+        ctx.globalCompositeOperation = layer.blendMode || 'source-over';
 
         // Calculate dimensions
         const layerWidth = layer.width || canvas.width;
