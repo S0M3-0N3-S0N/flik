@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Menu, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
@@ -19,8 +19,15 @@ import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import ColorWheel from "@/components/editor/ColorWheel";
 import BatchPanel from "@/components/editor/BatchPanel";
-
 import { useFlikActions } from "@/components/useFlikActions";
+import { 
+  generateUniqueId, 
+  validateCropArea, 
+  validateBrushSize, 
+  MAX_UNDO_HISTORY,
+  MAX_BATCH_FILE_SIZE,
+  throttle 
+} from "@/components/constants/appConstants";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
@@ -79,6 +86,7 @@ export default function Editor() {
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [showBatchPanel, setShowBatchPanel] = useState(false);
   const toolbarHideTimeoutRef = useRef(null);
+  const isProcessingRef = useRef(false); // Fix issue #71
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -124,9 +132,10 @@ export default function Editor() {
     }
   }, []);
 
-  // Cleanup all object URLs on unmount
+  // Cleanup all object URLs and timeouts on unmount - Fixed issues #8, #88
   useEffect(() => {
     return () => {
+      // Cleanup object URLs
       objectURLsRef.current.forEach(url => {
         try {
           URL.revokeObjectURL(url);
@@ -135,6 +144,12 @@ export default function Editor() {
         }
       });
       objectURLsRef.current.clear();
+      
+      // Cleanup toolbar timeout - fix issue #8
+      if (toolbarHideTimeoutRef.current) {
+        clearTimeout(toolbarHideTimeoutRef.current);
+        toolbarHideTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -180,36 +195,36 @@ export default function Editor() {
     }
   }, []);
 
+  // Fixed issues #35, #92 - use constants and unique IDs
   const handleBatchUpload = useCallback((e) => {
-      const files = Array.from(e.target.files || []);
-      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB per file
-      const imageFiles = files.filter(f => {
-        if (!f.type.startsWith('image/')) return false;
-        if (f.size > MAX_FILE_SIZE) {
-          toast.error(`${f.name} exceeds 100MB limit`);
-          return false;
-        }
-        return true;
-      });
-
-      const images = imageFiles.map(file => ({
-        id: Date.now() + Math.random(),
-        file,
-        preview: createObjectURL(file),
-        name: file.name,
-        adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
-        transform: { rotate: 0, flipH: false, flipV: false },
-        filter: null,
-        brushStrokes: []
-      }));
-
-      const newBatch = [...batchImages, ...images];
-      setBatchImages(newBatch);
-
-      if (activeBatchIndex === null && newBatch.length > 0) {
-        switchToBatchImage(0, newBatch);
+    const files = Array.from(e.target.files || []);
+    const imageFiles = files.filter(f => {
+      if (!f.type.startsWith('image/')) return false;
+      if (f.size > MAX_BATCH_FILE_SIZE) {
+        toast.error(`${f.name} exceeds 100MB limit`);
+        return false;
       }
-    }, [batchImages, activeBatchIndex, createObjectURL]);
+      return true;
+    });
+
+    const images = imageFiles.map((file, idx) => ({
+      id: generateUniqueId(`batch_${idx}`),
+      file,
+      preview: createObjectURL(file),
+      name: file.name,
+      adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
+      transform: { rotate: 0, flipH: false, flipV: false },
+      filter: null,
+      brushStrokes: []
+    }));
+
+    const newBatch = [...batchImages, ...images];
+    setBatchImages(newBatch);
+
+    if (activeBatchIndex === null && newBatch.length > 0) {
+      switchToBatchImage(0, newBatch);
+    }
+  }, [batchImages, activeBatchIndex, createObjectURL]);
 
   const saveCurrentStateToBatch = useCallback(() => {
     if (activeBatchIndex === null || !batchImages[activeBatchIndex]) return;
@@ -517,8 +532,12 @@ export default function Editor() {
       }
     }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL, getProcessedImageWithPaint]);
 
+  // Fixed issue #100 - limit undo history size
   const handleAdjustmentChange = useCallback((newAdjustments) => {
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+    setUndoHistory(prev => {
+      const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }];
+      return newHistory.slice(-MAX_UNDO_HISTORY);
+    });
     setAdjustments(newAdjustments);
     setRedoHistory([]);
     // Persist adjustment changes
@@ -528,7 +547,10 @@ export default function Editor() {
   }, [currentImage, adjustments, selectedFilter, transform, paintStrokes, activeBatchIndex, saveCurrentStateToBatch]);
 
   const handleFilterSelect = useCallback((filter) => {
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+    setUndoHistory(prev => {
+      const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }];
+      return newHistory.slice(-MAX_UNDO_HISTORY);
+    });
     setSelectedFilter(filter);
     setRedoHistory([]);
   }, [currentImage, adjustments, selectedFilter, transform, paintStrokes]);
@@ -536,7 +558,10 @@ export default function Editor() {
   const handleTransform = useCallback(async (type) => {
     if (!currentImage) return;
 
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setUndoHistory(prev => {
+      const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }];
+      return newHistory.slice(-MAX_UNDO_HISTORY);
+    });
     setIsProcessing(true);
 
     try {
@@ -615,11 +640,16 @@ export default function Editor() {
     setIsCropping(false);
   }, []);
 
+  // Fixed issue #61 - validate crop coordinates
   const handleApplyCrop = useCallback(async () => {
     if (!currentImage) return;
 
     setIsProcessing(true);
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setUndoHistory(prev => {
+      const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }];
+      // Limit undo history - fix issue #100
+      return newHistory.slice(-MAX_UNDO_HISTORY);
+    });
 
     try {
       const bakeCanvas = await handleGenerateCanvas();
@@ -628,11 +658,12 @@ export default function Editor() {
         throw new Error("Failed to generate canvas");
       }
 
-      const zoomScale = currentImage && imageRef.current ? imageRef.current.offsetWidth / imageRef.current.naturalWidth : 1;
-          const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width));
-          const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height));
-          const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
-          const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
+      // Validate crop area - fix issue #61
+      const validatedCrop = validateCropArea(cropArea);
+      const cropX = Math.max(0, Math.min((validatedCrop.x / 100) * bakeCanvas.width, bakeCanvas.width));
+      const cropY = Math.max(0, Math.min((validatedCrop.y / 100) * bakeCanvas.height, bakeCanvas.height));
+      const cropWidth = Math.max(1, Math.min((validatedCrop.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
+      const cropHeight = Math.max(1, Math.min((validatedCrop.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
 
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = cropWidth;
@@ -1128,7 +1159,8 @@ export default function Editor() {
     ctx.globalCompositeOperation = 'source-over';
   }, [paintStrokes, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
 
-  const getFilterStyle = useCallback(() => {
+  // Fixed issue #55 - memoize filter style calculation
+  const filterStyle = useMemo(() => {
     const filters = [];
     
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
@@ -1145,8 +1177,11 @@ export default function Editor() {
     
     return filters.length > 0 ? filters.join(" ") : "none";
   }, [adjustments, selectedFilter]);
+  
+  const getFilterStyle = useCallback(() => filterStyle, [filterStyle]);
 
-  const getTransformStyle = useCallback(() => {
+  // Memoize transform style calculation
+  const transformStyle = useMemo(() => {
     const transforms = [];
     
     if (transform.rotate !== 0) transforms.push(`rotate(${transform.rotate}deg)`);
@@ -1155,6 +1190,8 @@ export default function Editor() {
     
     return transforms.length > 0 ? transforms.join(" ") : "none";
   }, [transform]);
+  
+  const getTransformStyle = useCallback(() => transformStyle, [transformStyle]);
 
   const [showToolsDrawer, setShowToolsDrawer] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -1423,8 +1460,8 @@ export default function Editor() {
                     (activeTab === "remove" || (showColorWheel && !isCropping)) && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
                   }`}
                   style={{
-                    filter: getFilterStyle(),
-                    transform: getTransformStyle(),
+                    filter: filterStyle,
+                    transform: transformStyle,
                   }}
                   draggable={false}
                 />
