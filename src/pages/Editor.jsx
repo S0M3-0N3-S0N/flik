@@ -18,7 +18,7 @@ import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import ColorWheel from "@/components/editor/ColorWheel";
-import PaintCanvas from "@/components/editor/PaintCanvas";
+
 import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
@@ -81,6 +81,7 @@ export default function Editor() {
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
+  const paintCanvasRef = useRef(null);
   const containerRef = useRef(null);
   const cursorRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
@@ -976,6 +977,65 @@ export default function Editor() {
     ctx.globalCompositeOperation = 'source-over';
   }, [brushStrokes, brushSize, brushOpacity, activeTab]);
 
+  useEffect(() => {
+    if (!paintCanvasRef.current || !imageRef.current || !paintLayerVisible) return;
+
+    const canvas = paintCanvasRef.current;
+    const img = imageRef.current;
+    const rect = img.getBoundingClientRect();
+    
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (paintStrokes.length === 0) return;
+
+    ctx.globalAlpha = paintLayerOpacity;
+
+    paintStrokes.forEach(stroke => {
+      const points = stroke.points;
+      if (!points || points.length === 0) return;
+      
+      const isErase = stroke.type === 'erase';
+      const size = stroke.size || brushSize;
+      const color = stroke.color || brushColor;
+      const opacity = stroke.opacity || 1;
+      const flow = stroke.flow || 100;
+      
+      ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
+      
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
+      ctx.lineWidth = size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (points.length === 1) {
+        ctx.beginPath();
+        ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
+        
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
+        }
+        
+        ctx.stroke();
+      }
+    });
+    
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }, [paintStrokes, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
+
   const getFilterStyle = useCallback(() => {
     const filters = [];
     
@@ -1405,17 +1465,11 @@ export default function Editor() {
                   />
                 )}
 
-                {currentImage && paintLayerVisible && (
-                  <PaintCanvas
-                    imageRef={imageRef}
-                    paintStrokes={paintStrokes}
-                    brushSize={brushSize}
-                    brushColor={brushColor}
-                    brushPreset={brushPreset}
-                    isPainting={isPaintMode}
-                    zoom={zoom}
-                    layerOpacity={paintLayerOpacity}
-                    blendMode={blendMode}
+                {currentImage && (
+                  <canvas
+                    ref={paintCanvasRef}
+                    className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full"
+                    style={{ filter: 'none' }}
                   />
                 )}
 
