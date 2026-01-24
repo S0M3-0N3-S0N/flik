@@ -4,7 +4,13 @@ import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as Crop
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
+import ImageGrid from "@/components/generate/ImageGrid";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
 import { useCanvas } from "@/components/hooks/useCanvas";
