@@ -301,8 +301,25 @@ export default function Editor() {
     setBatchProgress(0);
   }, [batchImages, batchCancelled]);
 
-  const handleGenerateCanvas = useCallback(() => generateCanvas(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
-  const handleGetProcessedBlob = useCallback(() => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
+  const handleGenerateCanvas = useCallback(async () => {
+    try {
+      return await generateCanvas(currentImage, adjustments, transform, selectedFilter);
+    } catch (e) {
+      console.error('Canvas generation failed:', e);
+      toast.error('Failed to process image');
+      return null;
+    }
+  }, [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
+
+  const handleGetProcessedBlob = useCallback(async () => {
+    try {
+      return await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
+    } catch (e) {
+      console.error('Blob generation failed:', e);
+      toast.error('Failed to process image');
+      return null;
+    }
+  }, [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
   const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) return;
