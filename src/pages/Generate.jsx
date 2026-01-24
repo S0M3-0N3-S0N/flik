@@ -321,7 +321,25 @@ export default function Generate() {
 
                   <div className="w-px h-4 bg-white/10 mx-1" />
 
-
+                  <button 
+                   onClick={() => fileInputRef.current?.click()}
+                   className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
+                     uploadedImages.length > 0
+                       ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
+                       : 'text-white/60 hover:bg-white/5 hover:text-white'
+                   }`}
+                  >
+                   <Upload className="w-3.5 h-3.5" />
+                   {uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}
+                  </button>
+                  <input
+                   ref={fileInputRef}
+                   type="file"
+                   multiple
+                   accept="image/*"
+                   onChange={handleImageUpload}
+                   className="hidden"
+                  />
 
                   <Popover>
                     <PopoverTrigger asChild>
