@@ -71,6 +71,10 @@ export default function Editor() {
   const [showColorWheel, setShowColorWheel] = useState(false);
   const [paintStrokes, setPaintStrokes] = useState([]);
   const [isPaintMode, setIsPaintMode] = useState(false);
+  const [paintLayerOpacity, setPaintLayerOpacity] = useState(1);
+  const [paintLayerVisible, setPaintLayerVisible] = useState(true);
+  const [blendMode, setBlendMode] = useState('source-over');
+  const [paintBrushMode, setPaintBrushMode] = useState('draw');
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -163,6 +167,7 @@ export default function Editor() {
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
       setBrushStrokes([]);
+      setPaintStrokes([]);
       setIsCropping(false);
       setCropArea({ x: 10, y: 10, width: 80, height: 80 });
       setUndoHistory([]);
@@ -352,43 +357,45 @@ export default function Editor() {
   const handleUndo = useCallback(() => {
     if (undoHistory.length > 0) {
       const previous = undoHistory[undoHistory.length - 1];
-      setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+      setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
       
       if (previous.image) {
         setCurrentImage(previous.image);
         if (previous.adjustments) setAdjustments(previous.adjustments);
         if (previous.filter !== undefined) setSelectedFilter(previous.filter);
         if (previous.transform) setTransform(previous.transform);
+        if (previous.paintStrokes) setPaintStrokes(previous.paintStrokes);
       } else {
         setCurrentImage(previous);
       }
       
       setUndoHistory(prev => prev.slice(0, -1));
     }
-  }, [undoHistory, currentImage, adjustments, selectedFilter, transform]);
+  }, [undoHistory, currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
   const handleRedo = useCallback(() => {
     if (redoHistory.length > 0) {
       const next = redoHistory[redoHistory.length - 1];
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
 
       if (next.image) {
         setCurrentImage(next.image);
         if (next.adjustments) setAdjustments(next.adjustments);
         if (next.filter !== undefined) setSelectedFilter(next.filter);
         if (next.transform) setTransform(next.transform);
+        if (next.paintStrokes) setPaintStrokes(next.paintStrokes);
       } else {
         setCurrentImage(next);
       }
       
       setRedoHistory(prev => prev.slice(0, -1));
     }
-  }, [redoHistory, currentImage, adjustments, selectedFilter, transform]);
+  }, [redoHistory, currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
   const handleDownload = useCallback(async () => {
     if (!currentImage) return;
     try {
-      const blob = await handleGetProcessedBlob();
+      const blob = await getProcessedImageWithPaint();
       if (!blob) {
         toast.error("Could not get image data to download.");
         return;
@@ -406,19 +413,78 @@ export default function Editor() {
       console.error("Download failed", e);
       toast.error("Download failed. Please try again.");
     }
-  }, [currentImage, handleGetProcessedBlob, createObjectURL, revokeObjectURL]);
+  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL]);
+
+  const getProcessedImageWithPaint = useCallback(async () => {
+    if (!currentImage) return null;
+    
+    const baseCanvas = await handleGenerateCanvas();
+    if (!baseCanvas) return null;
+    
+    // If no paint strokes, just return the base canvas
+    if (paintStrokes.length === 0 || !paintLayerVisible) {
+      return new Promise(resolve => baseCanvas.toBlob(resolve, 'image/png'));
+    }
+    
+    // Create final canvas with paint merged
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = baseCanvas.width;
+    finalCanvas.height = baseCanvas.height;
+    const ctx = finalCanvas.getContext('2d');
+    
+    // Draw base image
+    ctx.drawImage(baseCanvas, 0, 0);
+    
+    // Draw paint strokes
+    ctx.globalAlpha = paintLayerOpacity;
+    paintStrokes.forEach(stroke => {
+      const points = stroke.points;
+      if (!points || points.length === 0) return;
+      
+      const isErase = stroke.type === 'erase';
+      const size = stroke.size || brushSize;
+      const color = stroke.color || brushColor;
+      const opacity = stroke.opacity || 1;
+      const flow = stroke.flow || 100;
+      
+      ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
+      
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
+      
+      points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(
+          (point.x / 100) * finalCanvas.width,
+          (point.y / 100) * finalCanvas.height,
+          size / 2,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      });
+    });
+    
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    
+    return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+  }, [currentImage, paintStrokes, handleGenerateCanvas, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
 
   const handleAdjustmentChange = useCallback((newAdjustments) => {
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
     setAdjustments(newAdjustments);
     setRedoHistory([]);
-  }, [currentImage, adjustments, selectedFilter, transform]);
+  }, [currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
   const handleFilterSelect = useCallback((filter) => {
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
     setSelectedFilter(filter);
     setRedoHistory([]);
-  }, [currentImage, adjustments, selectedFilter, transform]);
+  }, [currentImage, adjustments, selectedFilter, transform, paintStrokes]);
 
   const handleTransform = useCallback(async (type) => {
     if (!currentImage) return;
@@ -556,7 +622,7 @@ export default function Editor() {
     if (!currentImage) return;
     setIsSaving(true);
     try {
-      const blob = await handleGetProcessedBlob();
+      const blob = await getProcessedImageWithPaint();
       if (!blob) {
         toast.error("Could not get image data to save.");
         return;
@@ -576,7 +642,41 @@ export default function Editor() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentImage, handleGetProcessedBlob]);
+  }, [currentImage, getProcessedImageWithPaint]);
+
+  const handleBakePaint = useCallback(async () => {
+    if (!currentImage || paintStrokes.length === 0) return;
+    
+    setIsProcessing(true);
+    try {
+      const blob = await getProcessedImageWithPaint();
+      if (!blob) {
+        toast.error("Could not bake paint layer.");
+        return;
+      }
+      
+      const url = createObjectURL(blob);
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+      setCurrentImage({
+        url: url,
+        preview: url,
+        name: "baked_image.png"
+      });
+      
+      setPaintStrokes([]);
+      setAdjustments({ brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 });
+      setSelectedFilter(null);
+      setTransform({ rotate: 0, flipH: false, flipV: false });
+      setRedoHistory([]);
+      
+      toast.success("Paint layer baked into image!");
+    } catch (error) {
+      console.error("Error baking paint:", error);
+      toast.error("Failed to bake paint layer.");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [currentImage, paintStrokes, getProcessedImageWithPaint, createObjectURL, adjustments, selectedFilter, transform]);
 
   const handleClearBatch = useCallback(() => {
     batchImages.forEach(img => revokeObjectURL(img.preview));
@@ -685,15 +785,18 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsPaintMode(true);
+        const pressure = e.pressure || (e.touches && e.touches[0].force) || 1;
         setPaintStrokes(prev => [...prev, { 
-          points: [pos], 
+          points: [{ ...pos, pressure }], 
+          type: paintBrushMode,
           size: brushPreset?.size || brushSize,
           color: brushColor,
           opacity: brushPreset?.opacity || 1,
           spacing: brushPreset?.spacing || 25,
           jitter: brushPreset?.jitter || 0,
           flow: brushPreset?.flow || 100,
-          wetness: brushPreset?.wetness || 0
+          wetness: brushPreset?.wetness || 0,
+          pressure
         }]);
       }
     } else if (isCropping) {
@@ -760,9 +863,10 @@ export default function Editor() {
     } else if (activeTab === "paint" && isPaintMode && currentImage) {
       const pos = getRelativePosition(e);
       if (pos && paintStrokes.length > 0) {
+        const pressure = e.pressure || (e.touches && e.touches[0].force) || 1;
         setPaintStrokes(prev => {
           const newStrokes = [...prev];
-          newStrokes[newStrokes.length - 1].points.push(pos);
+          newStrokes[newStrokes.length - 1].points.push({ ...pos, pressure });
           return newStrokes;
         });
       }
@@ -1184,18 +1288,95 @@ export default function Editor() {
                       </button>
                     </div>
 
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setPaintBrushMode('draw')}
+                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                            paintBrushMode === 'draw' ? 'bg-[#FF6B35] text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'
+                          }`}
+                        >
+                          Draw
+                        </button>
+                        <button
+                          onClick={() => setPaintBrushMode('erase')}
+                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                            paintBrushMode === 'erase' ? 'bg-[#FF6B35] text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'
+                          }`}
+                        >
+                          Erase
+                        </button>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-white/60">Layer Opacity</span>
+                          <span className="text-xs text-white/40">{Math.round(paintLayerOpacity * 100)}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={paintLayerOpacity}
+                          onChange={(e) => setPaintLayerOpacity(Number(e.target.value))}
+                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-white/60 mb-2 block">Blend Mode</label>
+                        <select
+                          value={blendMode}
+                          onChange={(e) => setBlendMode(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-[#FF6B35]"
+                        >
+                          <option value="source-over">Normal</option>
+                          <option value="multiply">Multiply</option>
+                          <option value="screen">Screen</option>
+                          <option value="overlay">Overlay</option>
+                          <option value="darken">Darken</option>
+                          <option value="lighten">Lighten</option>
+                          <option value="color-dodge">Color Dodge</option>
+                          <option value="color-burn">Color Burn</option>
+                        </select>
+                      </div>
+                    </div>
+
                     {paintStrokes.length > 0 && (
-                      <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5 space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-white/80">{paintStrokes.length} stroke(s)</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setPaintLayerVisible(!paintLayerVisible)}
+                              className="text-white/60 hover:text-white transition-colors"
+                              title={paintLayerVisible ? "Hide Layer" : "Show Layer"}
+                            >
+                              {paintLayerVisible ? "👁" : "👁‍🗨"}
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={handleBakePaint}
+                            disabled={isProcessing}
+                            className="flex-1 bg-[#FF6B35] hover:bg-[#F72C25] text-white h-8"
+                          >
+                            {isProcessing ? "Baking..." : "Bake Layer"}
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => setPaintStrokes([])}
+                            onClick={() => {
+                              setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+                              setPaintStrokes([]);
+                            }}
                             className="text-white/60 hover:text-white h-8 px-3 hover:bg-white/10"
                           >
                             <X className="w-3 h-3 mr-1" />
-                            Clear All
+                            Clear
                           </Button>
                         </div>
                       </div>
@@ -1360,7 +1541,7 @@ export default function Editor() {
                   />
                 )}
 
-                {activeTab === "paint" && currentImage && (
+                {activeTab === "paint" && currentImage && paintLayerVisible && (
                   <PaintCanvas
                     imageRef={imageRef}
                     paintStrokes={paintStrokes}
@@ -1369,6 +1550,8 @@ export default function Editor() {
                     brushPreset={brushPreset}
                     isPainting={isPaintMode}
                     zoom={zoom}
+                    layerOpacity={paintLayerOpacity}
+                    blendMode={blendMode}
                   />
                 )}
 
