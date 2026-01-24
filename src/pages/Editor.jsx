@@ -1257,7 +1257,7 @@ export default function Editor() {
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="hidden lg:flex lg:w-80 flex-col flex-shrink-0 border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]/80 backdrop-blur-xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex w-80 flex-col flex-shrink-0 border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A]/80 backdrop-blur-xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="px-4 pb-4">
