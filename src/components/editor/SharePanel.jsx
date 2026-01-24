@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { Share2, Twitter, Download, Link as LinkIcon, Loader2, X } from "lucide-react";
+import { Share2, Twitter, Download, Link as LinkIcon, Loader2, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 
 export default function SharePanel({ isOpen, onClose, currentImage, creationId }) {
-  const [shareMode, setShareMode] = useState("image"); // "image" or "link"
+  const [shareMode, setShareMode] = useState("image");
   const [isSharing, setIsSharing] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState({
     twitter: true,
@@ -20,6 +20,78 @@ export default function SharePanel({ isOpen, onClose, currentImage, creationId }
     }));
   };
 
+  const getCanvasImage = () => {
+    const canvas = document.querySelector("canvas[style*='filter: none']");
+    return canvas || document.querySelector("canvas");
+  };
+
+  const shareToTwitter = async (imageUrl = null) => {
+    const text = "Check out what I created with FLIK - AI Creative Suite! 🎨✨";
+    let twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    
+    if (imageUrl) {
+      twitterUrl += `&url=${encodeURIComponent(imageUrl)}`;
+    }
+    
+    window.open(twitterUrl, "_blank", "width=550,height=420");
+    toast.success("Opening Twitter...");
+  };
+
+  const shareToTikTok = async () => {
+    const canvas = getCanvasImage();
+    if (!canvas) {
+      toast.error("No image to share");
+      return;
+    }
+
+    canvas.toBlob(async (blob) => {
+      try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "flik-creation-tiktok.mp4";
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        toast.success("Image downloaded! Open TikTok and upload it as a new post.");
+      } catch (err) {
+        toast.error("Failed to download image");
+      }
+    });
+  };
+
+  const shareToInstagram = async () => {
+    const canvas = getCanvasImage();
+    if (!canvas) {
+      toast.error("No image to share");
+      return;
+    }
+
+    canvas.toBlob(async (blob) => {
+      try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "flik-creation-instagram.png";
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        toast.success("Image downloaded! Open Instagram and share it from your camera roll.");
+      } catch (err) {
+        toast.error("Failed to download image");
+      }
+    });
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard!");
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
+
   const handleShare = async () => {
     if (!selectedPlatforms.twitter && !selectedPlatforms.tiktok && !selectedPlatforms.instagram) {
       toast.error("Select at least one platform");
@@ -28,76 +100,47 @@ export default function SharePanel({ isOpen, onClose, currentImage, creationId }
 
     setIsSharing(true);
     try {
-      if (shareMode === "image") {
-        // For image sharing, use native share API or download
-        const canvas = document.querySelector("canvas");
-        if (!canvas) {
-          toast.error("No image to share");
-          setIsSharing(false);
-          return;
-        }
-
-        canvas.toBlob(async (blob) => {
-          const file = new File([blob], "creation.png", { type: "image/png" });
-          
-          // Share via Web Share API if available
-          if (navigator.share) {
-            try {
-              await navigator.share({
-                title: "Check out my creation",
-                text: "I made this with FLIK",
-                files: [file]
-              });
-              toast.success("Shared successfully!");
-            } catch (err) {
-              if (err.name !== "AbortError") {
-                downloadImage(blob);
-              }
-            }
-          } else {
-            // Fallback: download and show instructions
-            downloadImage(blob);
-            showPlatformLinks();
-          }
-          setIsSharing(false);
-        });
-      } else {
-        // Share creation link
+      if (shareMode === "link") {
         const shareUrl = `${window.location.origin}/creation/${creationId}`;
-        showPlatformLinks(shareUrl);
-        setIsSharing(false);
+        
+        if (selectedPlatforms.twitter) {
+          await shareToTwitter(shareUrl);
+        }
+        if (selectedPlatforms.tiktok) {
+          await copyToClipboard(shareUrl);
+          toast.info("Link copied! Paste it in your TikTok bio or comments.");
+        }
+        if (selectedPlatforms.instagram) {
+          await copyToClipboard(shareUrl);
+          toast.info("Link copied! Paste it in your Instagram bio or comments.");
+        }
+      } else {
+        // Share images
+        if (selectedPlatforms.twitter) {
+          const canvas = getCanvasImage();
+          if (canvas) {
+            canvas.toBlob(async (blob) => {
+              const uploadResult = await base44.integrations.Core.UploadFile({ file: new File([blob], "flik.png", { type: "image/png" }) });
+              await shareToTwitter(uploadResult.file_url);
+            });
+          }
+        }
+        
+        if (selectedPlatforms.tiktok) {
+          await shareToTikTok();
+        }
+        
+        if (selectedPlatforms.instagram) {
+          await shareToInstagram();
+        }
       }
+      
+      onClose();
     } catch (error) {
       console.error("Share error:", error);
-      toast.error("Failed to share");
+      toast.error("Failed to share. Try again.");
+    } finally {
       setIsSharing(false);
-    }
-  };
-
-  const downloadImage = (blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "flik-creation.png";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Image downloaded! Now share it on your preferred platform.");
-  };
-
-  const showPlatformLinks = (shareUrl = null) => {
-    const baseText = "Check out what I created with FLIK - AI Creative Suite";
-    
-    if (selectedPlatforms.twitter) {
-      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(baseText)}${shareUrl ? `&url=${encodeURIComponent(shareUrl)}` : ""}`;
-      window.open(twitterUrl, "_blank", "width=550,height=420");
-    }
-    
-    if (selectedPlatforms.tiktok) {
-      toast.info("TikTok doesn't support direct URL sharing. Please upload the image manually on TikTok.");
-    }
-    
-    if (selectedPlatforms.instagram) {
-      toast.info("Instagram doesn't support direct URL sharing. Please upload the image manually on Instagram.");
     }
   };
 
@@ -146,7 +189,7 @@ export default function SharePanel({ isOpen, onClose, currentImage, creationId }
         <p className="text-xs text-white/60 font-medium">Select platforms:</p>
         
         {[
-          { id: "twitter", label: "Twitter", icon: Twitter },
+          { id: "twitter", label: "Twitter/X", icon: Twitter },
           { id: "tiktok", label: "TikTok", icon: "🎵" },
           { id: "instagram", label: "Instagram", icon: "📸" }
         ].map(platform => (
@@ -161,12 +204,11 @@ export default function SharePanel({ isOpen, onClose, currentImage, creationId }
           >
             <div className="w-5 h-5 rounded border-2 border-current flex items-center justify-center">
               {selectedPlatforms[platform.id] && (
-                <div className="w-2 h-2 bg-current rounded-full" />
+                <Check className="w-3 h-3" />
               )}
             </div>
             <span className="text-sm flex-1 text-left">
-              {typeof platform.icon === "string" ? platform.icon : <platform.icon className="w-4 h-4 inline" />}
-              {" " + platform.label}
+              {typeof platform.icon === "string" ? platform.icon + " " : ""}{platform.label}
             </span>
           </button>
         ))}
@@ -176,7 +218,7 @@ export default function SharePanel({ isOpen, onClose, currentImage, creationId }
       <Button
         onClick={handleShare}
         disabled={isSharing}
-        className="w-full h-10 bg-gradient-to-r from-[#FF6B35] to-[#FFB800] hover:opacity-90 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2"
+        className="w-full h-10 bg-gradient-to-r from-[#FF6B35] to-[#FFB800] hover:opacity-90 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
       >
         {isSharing ? (
           <>
