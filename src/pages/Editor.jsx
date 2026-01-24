@@ -323,34 +323,39 @@ export default function Editor() {
 
   const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) return;
-    
+
     setActiveTool(tool);
     setIsProcessing(true);
     setRegenerateAction(() => () => handleToolSelect(tool));
-    
+
     try {
       const blob = await handleGetProcessedBlob();
+      if (!blob) throw new Error('Failed to process image');
+
       const processedUrl = createObjectURL(blob);
       setProcessedImage(processedUrl);
-      
+
       const file = new File([blob], "processed_input.png", { type: "image/png" });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
-      
+      if (!uploadResult?.file_url) throw new Error('Upload failed');
+
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
         existing_image_urls: [uploadResult.file_url]
       });
-      
+
+      if (!result?.url) throw new Error('Generation failed');
       setResultImage(result.url);
       setShowResult(true);
     } catch (error) {
       console.error("Error processing image:", error);
       toast.error("Error processing image. Please try again.");
+      if (processedImage) revokeObjectURL(processedImage);
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
     }
-  }, [currentImage, handleGetProcessedBlob, createObjectURL]);
+  }, [currentImage, handleGetProcessedBlob, createObjectURL, processedImage, revokeObjectURL]);
 
   const handleApplyResult = useCallback(() => {
     if (resultImage) {
