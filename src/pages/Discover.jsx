@@ -47,6 +47,11 @@ export default function DiscoverPage() {
     queryFn: () => base44.entities.User.list(),
   });
 
+  const { data: allFollows = [] } = useQuery({
+    queryKey: ["follows"],
+    queryFn: () => base44.entities.Follow.list(),
+  });
+
   const likeMutation = useMutation({
     mutationFn: async (creationId) => {
       const existingLike = allLikes.find(
