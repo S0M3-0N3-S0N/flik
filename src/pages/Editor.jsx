@@ -1132,9 +1132,6 @@ export default function Editor() {
             <TabsTrigger value="filters" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Filter className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <RotateCw className="w-4 h-4" />
-            </TabsTrigger>
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
             </TabsTrigger>
@@ -1661,6 +1658,22 @@ export default function Editor() {
                   title="Reset View"
                 >
                   <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Button>
+
+                <div className="w-px h-4 bg-white/10" />
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveTab('transform')}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
+                    activeTab === 'transform'
+                      ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
+                      : 'hover:bg-white/10 text-white'
+                  }`}
+                  title="Transform"
+                >
+                  <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
                 <div className="w-px h-4 bg-white/10" />
