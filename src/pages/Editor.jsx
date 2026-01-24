@@ -1100,19 +1100,21 @@ export default function Editor() {
               )}
             </TabsContent>
 
-            <TabsContent value="crop" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
-              {currentImage ? (
-                <CropPanel
-                  onStartCrop={handleStartCrop}
-                  onApplyCrop={handleApplyCrop}
-                  onCancelCrop={handleCancelCrop}
-                  isCropping={isCropping}
-                />
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
-            </TabsContent>
+            {activeTab === "crop" && (
+              <div className="mt-0 px-4 pb-4">
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
+                {currentImage ? (
+                  <CropPanel
+                    onStartCrop={handleStartCrop}
+                    onApplyCrop={handleApplyCrop}
+                    onCancelCrop={handleCancelCrop}
+                    isCropping={isCropping}
+                  />
+                ) : (
+                  <p className="text-white/40 text-sm">Upload an image to start</p>
+                )}
+              </div>
+            )}
           </div>
         </Tabs>
       </motion.aside>
