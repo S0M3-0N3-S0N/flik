@@ -127,7 +127,14 @@ export default function FlikChat() {
           transcript += event.results[i][0].transcript;
         }
         if (event.results[event.results.length - 1].isFinal) {
-          setInput(prev => prev + (prev ? ' ' : '') + transcript);
+          const finalInput = transcript.trim();
+          if (finalInput.length > 0) {
+            setInput(finalInput);
+            // Auto-send after a short delay
+            setTimeout(() => {
+              setInput(finalInput);
+            }, 100);
+          }
         }
       };
       recognition.onerror = () => {
@@ -145,6 +152,15 @@ export default function FlikChat() {
     } else {
       setInput('');
       recognitionRef.current?.start();
+      
+      // Auto-send after user stops speaking (3 second silence)
+      const timeoutId = setTimeout(() => {
+        if (isListening && input.trim().length > 0) {
+          recognitionRef.current?.stop();
+        }
+      }, 3000);
+      
+      return () => clearTimeout(timeoutId);
     }
   };
 
@@ -180,9 +196,20 @@ export default function FlikChat() {
     const text = speechQueueRef.current.shift();
     
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 1;
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
     utterance.volume = 1;
+    
+    // Get best available voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v => v.name.includes('Google US English')) || 
+                          voices.find(v => v.name.includes('Samantha')) ||
+                          voices.find(v => v.lang.includes('en-US')) ||
+                          voices[0];
+    
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
     
     utterance.onend = () => {
       isSpeakingRef.current = false;
@@ -194,6 +221,7 @@ export default function FlikChat() {
       processSpeechQueue();
     };
     
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   };
 
@@ -382,7 +410,10 @@ export default function FlikChat() {
     const messageContent = retryInput || input;
     const messageImages = retryImages || attachedImages;
     
-    if (!messageContent.trim() && messageImages.length === 0) return;
+    if (!messageContent.trim() && messageImages.length === 0) {
+      setIsListening(false);
+      return;
+    }
     
     const userMsg = { 
       role: 'user', 
