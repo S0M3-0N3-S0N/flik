@@ -92,6 +92,11 @@ export default function Profile() {
     initialData: [],
   });
 
+  const { data: follows = [] } = useQuery({
+    queryKey: ['follows'],
+    queryFn: () => base44.entities.Follow.list(),
+  });
+
   // Debounced search with cleanup
   useEffect(() => {
     const debouncedSearch = debounce((value) => setDebouncedSearchQuery(value), 300);
