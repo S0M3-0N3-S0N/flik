@@ -12,17 +12,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import MessageBubble from "./FlikChat/MessageBubble";
 import ChatInput from "./FlikChat/ChatInput";
 import GalleryPicker from "./FlikChat/GalleryPicker";
-
-// Constants
-const CACHE_DURATION = 30000; // 30 seconds
-const GALLERY_CACHE_DURATION = 60000; // 1 minute
-const MAX_RECENT_CREATIONS = 30;
-const CONTEXT_MESSAGES_LIMIT = 15;
-const SHOWN_CREATIONS_LIMIT = 20;
-const GALLERY_FETCH_LIMIT = 50;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const NAVIGATION_DELAY = 800; // ms
-const MAX_IN_MEMORY_MESSAGES = 100;
+import {
+  FLIK_AVATAR_URL,
+  CACHE_DURATION,
+  GALLERY_CACHE_DURATION,
+  MAX_RECENT_CREATIONS,
+  CONTEXT_MESSAGES_LIMIT,
+  SHOWN_CREATIONS_LIMIT,
+  GALLERY_FETCH_LIMIT,
+  MAX_FILE_SIZE,
+  NAVIGATION_DELAY,
+  MAX_IN_MEMORY_MESSAGES,
+  generateUniqueId,
+  splitIntoSentences
+} from "./constants/appConstants";
 
 export default function FlikChat() {
   const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages } = useFlik();
@@ -68,7 +71,7 @@ export default function FlikChat() {
     }
   }, [messages, isOpen]);
 
-  // Initialize speech recognition
+  // Initialize speech recognition - Fixed issue #1 (duplicate setInput)
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition && !recognitionRef.current) {
@@ -88,10 +91,7 @@ export default function FlikChat() {
           const finalInput = transcript.trim();
           if (finalInput.length > 0) {
             setInput(finalInput);
-            // Auto-send after a short delay
-            setTimeout(() => {
-              setInput(finalInput);
-            }, 100);
+            // Removed duplicate setInput call - was issue #1
           }
         }
       };
@@ -101,6 +101,18 @@ export default function FlikChat() {
       };
       recognitionRef.current = recognition;
     }
+    
+    // Cleanup speech recognition on unmount - fixes issue #9
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+        recognitionRef.current = null;
+      }
+    };
   }, []);
 
   const toggleVoiceInput = () => {
@@ -200,11 +212,19 @@ export default function FlikChat() {
     }
   }, [isOpen, cachedUserData, lastFetchTime]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount - Enhanced fixes issues #9, #10
   useEffect(() => {
     return () => {
+      // Abort any pending requests
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+      }
+      // Clear speech queue
+      speechQueueRef.current = [];
+      isSpeakingRef.current = false;
+      // Cancel any ongoing speech
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
       }
     };
   }, []);
@@ -250,7 +270,7 @@ export default function FlikChat() {
     try {
       const newImages = await Promise.all(validFiles.map(async (file, idx) => {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
-        return { url: uploadResult.file_url, name: file.name, id: `${Date.now()}-${idx}-${Math.random()}` };
+        return { url: uploadResult.file_url, name: file.name, id: generateUniqueId(`upload_${idx}`) };
       }));
       setAttachedImages(prev => [...prev, ...newImages]);
     } catch (err) {
@@ -353,7 +373,7 @@ export default function FlikChat() {
     setImageErrors(prev => ({ ...prev, [creationId]: true }));
   }, []);
 
-  // Memoized filtered and sliced gallery creations
+  // Memoized filtered gallery creations - Fixed issue #2 & #21 (removed redundant useMemo)
   const filteredGalleryCreations = useMemo(() => {
     if (!gallerySearchTerm.trim()) return galleryCreations;
     const term = gallerySearchTerm.toLowerCase();
@@ -362,10 +382,7 @@ export default function FlikChat() {
       (c.prompt?.toLowerCase().includes(term))
     );
   }, [galleryCreations, gallerySearchTerm]);
-
-  const displayedGalleryCreations = useMemo(() => {
-    return filteredGalleryCreations;
-  }, [filteredGalleryCreations]);
+  // Removed redundant displayedGalleryCreations - was identical to filteredGalleryCreations
 
   const handleSend = useCallback(async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
@@ -381,7 +398,7 @@ export default function FlikChat() {
       content: messageContent,
       images: messageImages.map(img => img.url),
       timestamp: new Date().toISOString(),
-      id: `msg-${Date.now()}-${Math.random()}`
+      id: generateUniqueId('msg')
     };
     
     if (!retryInput) {
@@ -556,16 +573,13 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         suggested_prompt: response.suggested_prompt || null,
         suggested_actions: Array.isArray(response.suggested_actions) ? response.suggested_actions : [],
         timestamp: new Date().toISOString(),
-        id: `msg-${Date.now()}-${Math.random()}`
+        id: generateUniqueId('msg')
       };
       setMessages(prev => [...prev, assistantMsg]);
       
-      // Speak response in natural sentences if voice output is enabled
+      // Speak response in natural sentences if voice output is enabled - Fixed issue #7 (browser compat)
       if (voiceEnabled) {
-        const sentences = response.message
-          .split(/(?<=[.!?])\s+/)
-          .filter(s => s.trim().length > 0);
-        
+        const sentences = splitIntoSentences(response.message);
         sentences.forEach(sentence => {
           enqueueSpeech(sentence.trim());
         });
@@ -580,7 +594,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         role: 'assistant', 
         content: "Oops! I'm having trouble connecting right now. Try again in a moment? 🔌",
         timestamp: new Date().toISOString(),
-        id: `error-${Date.now()}-${Math.random()}`,
+        id: generateUniqueId('error'),
         isError: true
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -689,7 +703,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/30">
                 <div className="w-full h-full rounded-[14px] bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
                   <img 
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                    src={FLIK_AVATAR_URL} 
                     alt="FLIK" 
                     className="w-full h-full object-cover"
                   />
@@ -733,7 +747,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[3px] shadow-2xl shadow-[#FF6B35]/40">
                   <div className="w-full h-full rounded-[21px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
                     <img 
-                      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                      src={FLIK_AVATAR_URL} 
                       alt="FLIK" 
                       className="w-full h-full object-cover"
                     />
@@ -777,7 +791,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/20">
                   <div className="w-full h-full rounded-[10px] bg-[#141414] flex items-center justify-center overflow-hidden">
                     <img 
-                      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                      src={FLIK_AVATAR_URL} 
                       alt="FLIK" 
                       className="w-full h-full object-cover"
                     />
