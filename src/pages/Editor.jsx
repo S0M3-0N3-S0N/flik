@@ -1650,29 +1650,31 @@ export default function Editor() {
                      />
                    </Button>
 
-                   <ColorWheel
-                     color={brushColor}
-                     onColorChange={setBrushColor}
-                     brushPreset={brushPreset}
-                     onBrushChange={setBrushPreset}
-                     isOpen={showColorWheel}
-                     onClose={() => setShowColorWheel(false)}
-                     paintBrushMode={paintBrushMode}
-                     onPaintBrushModeChange={setPaintBrushMode}
-                     paintLayerOpacity={paintLayerOpacity}
-                     onPaintLayerOpacityChange={setPaintLayerOpacity}
-                     paintLayerVisible={paintLayerVisible}
-                     onPaintLayerVisibleChange={setPaintLayerVisible}
-                     blendMode={blendMode}
-                     onBlendModeChange={setBlendMode}
-                     paintStrokes={paintStrokes}
-                     onClearPaint={() => {
-                       setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
-                       setPaintStrokes([]);
-                     }}
-                     onBakePaint={handleBakePaint}
-                     isBaking={isProcessing}
-                   />
+                   {showColorWheel && (
+                    <ColorWheel
+                      color={brushColor}
+                      onColorChange={setBrushColor}
+                      brushPreset={brushPreset}
+                      onBrushChange={setBrushPreset}
+                      isOpen={showColorWheel}
+                      onClose={() => setShowColorWheel(false)}
+                      paintBrushMode={paintBrushMode}
+                      onPaintBrushModeChange={setPaintBrushMode}
+                      paintLayerOpacity={paintLayerOpacity}
+                      onPaintLayerOpacityChange={setPaintLayerOpacity}
+                      paintLayerVisible={paintLayerVisible}
+                      onPaintLayerVisibleChange={setPaintLayerVisible}
+                      blendMode={blendMode}
+                      onBlendModeChange={setBlendMode}
+                      paintStrokes={paintStrokes}
+                      onClearPaint={() => {
+                        setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+                        setPaintStrokes([]);
+                      }}
+                      onBakePaint={handleBakePaint}
+                      isBaking={isProcessing}
+                    />
+                  )}
                  </div>
               </div>
             </motion.div>
