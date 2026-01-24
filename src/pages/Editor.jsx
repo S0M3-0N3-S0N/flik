@@ -7,15 +7,20 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
-      import { useCanvas } from "@/components/hooks/useCanvas";
-      import { useMagicBrush } from "@/components/hooks/useMagicBrush";
-      import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
-      import ResultModal from "@/components/editor/ResultModal";
-      import ColorWheel from "@/components/editor/ColorWheel";
-      import BatchPanel from "@/components/editor/BatchPanel";
-      import RightPanel from "@/components/editor/RightPanel";
+import { useCanvas } from "@/components/hooks/useCanvas";
+import { useMagicBrush } from "@/components/hooks/useMagicBrush";
+import ToolPanel from "@/components/editor/ToolPanel";
+import AdjustmentsPanel from "@/components/editor/AdjustmentsPanel";
+import FiltersPanel from "@/components/editor/FiltersPanel";
+import TransformPanel from "@/components/editor/TransformPanel";
+import SpotRemoval from "@/components/editor/SpotRemoval";
+import CropPanel from "@/components/editor/CropPanel";
+import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
+import ResultModal from "@/components/editor/ResultModal";
+import ColorWheel from "@/components/editor/ColorWheel";
+import BatchPanel from "@/components/editor/BatchPanel";
 
-      import { useFlikActions } from "@/components/useFlikActions";
+import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
@@ -1109,10 +1114,142 @@ export default function Editor() {
   }, [transform]);
 
   return (
-    <div className="h-[calc(100dvh-4rem)] flex flex-col overflow-hidden relative">
-      <Tabs value={activeTab || ""} onValueChange={setActiveTab} className="hidden" />
+    <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
+      <motion.aside
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+            <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Sparkles className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Settings2 className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="filters" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Filter className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Wand2 className="w-4 h-4" />
+            </TabsTrigger>
+          </TabsList>
 
-      <main className="flex-1 flex flex-col w-full h-full relative min-h-0">
+          <div className="px-4 pb-4">
+            <TabsContent value="ai" className="mt-0">
+              <ToolPanel 
+                onToolSelect={handleToolSelect} 
+                isProcessing={isProcessing}
+                hasImage={!!currentImage}
+              />
+            </TabsContent>
+
+            <TabsContent value="adjust" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Adjustments</h3>
+              {currentImage ? (
+                <AdjustmentsPanel 
+                  adjustments={adjustments} 
+                  onChange={handleAdjustmentChange}
+                />
+              ) : (
+                <p className="text-white/40 text-sm">Upload an image to start</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="filters" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Filters</h3>
+              {currentImage ? (
+                <FiltersPanel 
+                  selectedFilter={selectedFilter}
+                  onFilterSelect={handleFilterSelect}
+                  previewImage={currentImage?.preview || currentImage?.url}
+                />
+              ) : (
+                <p className="text-white/40 text-sm">Upload an image to start</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="transform" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Transform</h3>
+              {currentImage ? (
+                <TransformPanel onTransform={handleTransform} />
+              ) : (
+                <p className="text-white/40 text-sm">Upload an image to start</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="remove" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Magic Brush</h3>
+              {currentImage ? (
+                <>
+                  <SpotRemoval 
+                    onRemoveSpot={handleMagicBrush}
+                    isProcessing={isMagicBrushProcessing}
+                    brushSize={brushSize}
+                    onBrushSizeChange={setBrushSize}
+                    brushOpacity={brushOpacity}
+                    onBrushOpacityChange={setBrushOpacity}
+                    brushMode={brushMode}
+                    onBrushModeChange={setBrushMode}
+                    prompt={magicBrushPrompt}
+                    onPromptChange={setMagicBrushPrompt}
+                    referenceImages={magicBrushImages}
+                    onReferenceImagesChange={setMagicBrushImages}
+                  />
+                  {brushStrokes.length > 0 && (
+                    <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white/80">{brushStrokes.length} stroke(s)</span>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              if (brushStrokes.length > 0) {
+                                setBrushStrokes(prev => prev.slice(0, -1));
+                              }
+                            }}
+                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
+                            title="Undo last stroke"
+                          >
+                            <RotateCw className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setBrushStrokes([])}
+                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Clear
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-white/40 text-sm">Upload an image to start</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="crop" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
+              {currentImage ? (
+                <CropPanel
+                  onApplyCrop={handleApplyCrop}
+                  onCancelCrop={handleCancelCrop}
+                />
+              ) : (
+                <p className="text-white/40 text-sm">Upload an image to start</p>
+              )}
+            </TabsContent>
+          </div>
+        </Tabs>
+      </motion.aside>
+      
+      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1618,31 +1755,6 @@ export default function Editor() {
         onRegenerate={regenerateAction}
         isRegenerating={isProcessing || isMagicBrushProcessing}
       />
-
-      <RightPanel
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        currentImage={currentImage}
-        adjustments={adjustments}
-        onAdjustmentChange={handleAdjustmentChange}
-        selectedFilter={selectedFilter}
-        onFilterSelect={handleFilterSelect}
-        brushStrokes={brushStrokes}
-        onBrushStrokesChange={setBrushStrokes}
-        onToolSelect={handleToolSelect}
-        onTransform={handleTransform}
-        isCropping={isCropping}
-        onStartCrop={handleStartCrop}
-        onCancelCrop={handleCancelCrop}
-        onApplyCrop={handleApplyCrop}
-        isProcessing={isProcessing}
-        magicBrushPrompt={magicBrushPrompt}
-        onMagicBrushPromptChange={setMagicBrushPrompt}
-        magicBrushImages={magicBrushImages}
-        onMagicBrushImagesChange={setMagicBrushImages}
-        onMagicBrush={handleMagicBrush}
-        isMagicBrushProcessing={isMagicBrushProcessing}
-      />
-      </div>
-      );
-      }
+    </div>
+  );
+}
