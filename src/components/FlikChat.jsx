@@ -640,8 +640,11 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
 
      const editedMessage = messages[editedMsgIndex];
 
-     // Remove all messages after the edited one
-     setMessages(prev => prev.slice(0, editedMsgIndex));
+     // Keep user message, remove assistant responses after it
+     setMessages(prev => {
+       const filtered = prev.slice(0, editedMsgIndex + 1);
+       return filtered.map((m, i) => i === editedMsgIndex ? { ...m, content: editInput } : m);
+     });
 
      // Clear edit state
      setEditingMessageId(null);
@@ -651,7 +654,7 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
      setTimeout(() => {
        handleSend(editInput, editedMessage.images?.map(url => ({ url, id: `retry-${Date.now()}-${Math.random()}` })) || []);
      }, 100);
-   }, [editingMessageId, editInput, messages, setMessages]);
+   }, [editingMessageId, editInput, messages, setMessages, handleSend]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingMessageId(null);
