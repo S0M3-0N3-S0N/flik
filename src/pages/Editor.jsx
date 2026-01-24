@@ -781,7 +781,7 @@ export default function Editor() {
         setIsDrawing(true);
         setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
       }
-    } else if (activeTab === "paint" && currentImage) {
+    } else if (showColorWheel && currentImage) {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsPaintMode(true);
@@ -842,7 +842,7 @@ export default function Editor() {
       return;
     }
 
-    if ((activeTab === "remove" || activeTab === "paint") && cursorRef.current && containerRef.current && clientX !== undefined) {
+    if ((activeTab === "remove" || showColorWheel) && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
@@ -860,7 +860,7 @@ export default function Editor() {
           return newStrokes;
         });
       }
-    } else if (activeTab === "paint" && isPaintMode && currentImage) {
+    } else if (showColorWheel && isPaintMode && currentImage) {
       const pos = getRelativePosition(e);
       if (pos && paintStrokes.length > 0) {
         const pressure = e.pressure || (e.touches && e.touches[0].force) || 1;
@@ -1008,7 +1008,7 @@ export default function Editor() {
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
@@ -1026,9 +1026,6 @@ export default function Editor() {
             </TabsTrigger>
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Palette className="w-4 h-4" />
             </TabsTrigger>
           </TabsList>
 
@@ -1250,143 +1247,6 @@ export default function Editor() {
                 <p className="text-white/40 text-sm">Upload an image to start</p>
               )}
             </TabsContent>
-
-            <TabsContent value="paint" className="mt-0">
-              <div className="py-6 px-4 space-y-6">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0 text-[#FF6B35]">
-                      <Palette className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-white font-medium text-sm mb-1">Paint Tool</h4>
-                      <p className="text-xs text-white/60 leading-relaxed">
-                        Draw directly on your image with customizable brushes and colors. Use the color wheel in the toolbar to adjust brush settings.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {currentImage ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/5">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-10 h-10 rounded-lg border-2 border-white/20"
-                          style={{ backgroundColor: brushColor }}
-                        />
-                        <div>
-                          <div className="text-xs text-white/80 font-medium">{brushPreset.name}</div>
-                          <div className="text-xs text-white/40">{brushPreset.size}px • {Math.round(brushPreset.opacity * 100)}%</div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowColorWheel(true)}
-                        className="px-3 py-2 rounded-lg bg-[#FF6B35] hover:bg-[#F72C25] text-white text-xs font-medium transition-colors"
-                      >
-                        Edit Brush
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setPaintBrushMode('draw')}
-                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                            paintBrushMode === 'draw' ? 'bg-[#FF6B35] text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'
-                          }`}
-                        >
-                          Draw
-                        </button>
-                        <button
-                          onClick={() => setPaintBrushMode('erase')}
-                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                            paintBrushMode === 'erase' ? 'bg-[#FF6B35] text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'
-                          }`}
-                        >
-                          Erase
-                        </button>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-white/60">Layer Opacity</span>
-                          <span className="text-xs text-white/40">{Math.round(paintLayerOpacity * 100)}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={paintLayerOpacity}
-                          onChange={(e) => setPaintLayerOpacity(Number(e.target.value))}
-                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-white/60 mb-2 block">Blend Mode</label>
-                        <select
-                          value={blendMode}
-                          onChange={(e) => setBlendMode(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-[#FF6B35]"
-                        >
-                          <option value="source-over">Normal</option>
-                          <option value="multiply">Multiply</option>
-                          <option value="screen">Screen</option>
-                          <option value="overlay">Overlay</option>
-                          <option value="darken">Darken</option>
-                          <option value="lighten">Lighten</option>
-                          <option value="color-dodge">Color Dodge</option>
-                          <option value="color-burn">Color Burn</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {paintStrokes.length > 0 && (
-                      <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-white/80">{paintStrokes.length} stroke(s)</span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setPaintLayerVisible(!paintLayerVisible)}
-                              className="text-white/60 hover:text-white transition-colors"
-                              title={paintLayerVisible ? "Hide Layer" : "Show Layer"}
-                            >
-                              {paintLayerVisible ? "👁" : "👁‍🗨"}
-                            </button>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={handleBakePaint}
-                            disabled={isProcessing}
-                            className="flex-1 bg-[#FF6B35] hover:bg-[#F72C25] text-white h-8"
-                          >
-                            {isProcessing ? "Baking..." : "Bake Layer"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
-                              setPaintStrokes([]);
-                            }}
-                            className="text-white/60 hover:text-white h-8 px-3 hover:bg-white/10"
-                          >
-                            <X className="w-3 h-3 mr-1" />
-                            Clear
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-white/40 text-sm">Upload an image to start</p>
-                )}
-              </div>
-            </TabsContent>
           </div>
         </Tabs>
       </motion.aside>
@@ -1404,10 +1264,10 @@ export default function Editor() {
                 Drag to mask
               </div>
             )}
-            {activeTab === "paint" && currentImage && (
+            {showColorWheel && activeTab !== "remove" && currentImage && (
               <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-                Drag to paint
+                Painting enabled
               </div>
             )}
             {isCropping && (
@@ -1483,7 +1343,7 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: 'none' }}
         >
-          {(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanning && !isPanToolActive && (
+          {(activeTab === "remove" || showColorWheel) && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
@@ -1492,8 +1352,8 @@ export default function Editor() {
                 height: (brushPreset?.size || brushSize) * zoom,
                 transform: 'translate(-50%, -50%)',
                 display: 'none',
-                borderColor: activeTab === "paint" ? brushColor : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)'),
-                backgroundColor: activeTab === "paint" ? `${brushColor}40` : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)')
+                borderColor: showColorWheel && activeTab !== "remove" ? brushColor : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)'),
+                backgroundColor: showColorWheel && activeTab !== "remove" ? `${brushColor}40` : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)')
               }}
             />
           )}
@@ -1524,7 +1384,7 @@ export default function Editor() {
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                    (activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
+                    (activeTab === "remove" || showColorWheel) && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
@@ -1541,7 +1401,7 @@ export default function Editor() {
                   />
                 )}
 
-                {activeTab === "paint" && currentImage && paintLayerVisible && (
+                {currentImage && paintLayerVisible && paintStrokes.length > 0 && (
                   <PaintCanvas
                     imageRef={imageRef}
                     paintStrokes={paintStrokes}

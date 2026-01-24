@@ -121,8 +121,8 @@ export default function ColorWheel({ color, onColorChange, brushPreset, onBrushC
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Droplet className="w-5 h-5 text-[#FF6B35]" />
-              <h3 className="text-white font-semibold">Color & Brush</h3>
+              <Paintbrush className="w-5 h-5 text-[#FF6B35]" />
+              <h3 className="text-white font-semibold">Paint Tool</h3>
             </div>
             <button
               onClick={onClose}
@@ -130,6 +130,12 @@ export default function ColorWheel({ color, onColorChange, brushPreset, onBrushC
             >
               <X className="w-4 h-4 text-white/60" />
             </button>
+          </div>
+
+          <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10">
+            <p className="text-xs text-white/60 leading-relaxed">
+              Paint on your image while using any tool. Click to toggle painting mode on/off.
+            </p>
           </div>
 
           {/* Color Wheel */}
