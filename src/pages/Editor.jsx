@@ -338,7 +338,9 @@ export default function Editor() {
 
   const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) return;
+    if (isProcessingRef.current) return;
 
+    isProcessingRef.current = true;
     setActiveTool(tool);
     setIsProcessing(true);
     setRegenerateAction(() => () => handleToolSelect(tool));
@@ -369,6 +371,7 @@ export default function Editor() {
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
+      isProcessingRef.current = false;
     }
   }, [currentImage, handleGetProcessedBlob, createObjectURL, processedImage, revokeObjectURL]);
 
@@ -509,28 +512,37 @@ export default function Editor() {
     return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
   }, [currentImage, paintStrokes, handleGenerateCanvas, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
 
+  // Fixed issue #37 - prevent concurrent download/bake operations
   const handleDownload = useCallback(async () => {
-      if (!currentImage) return;
-      try {
-        const blob = await getProcessedImageWithPaint();
-        if (!blob) {
-          toast.error("Could not get image data to download.");
-          return;
-        }
-        const url = createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `flik_${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => revokeObjectURL(url), 100);
-        toast.success("Image downloaded successfully!");
-      } catch (e) {
-        console.error("Download failed", e);
-        toast.error("Download failed. Please try again.");
+    if (!currentImage) return;
+    if (isProcessingRef.current) {
+      toast.info("Please wait for current operation to complete.");
+      return;
+    }
+
+    isProcessingRef.current = true;
+    try {
+      const blob = await getProcessedImageWithPaint();
+      if (!blob) {
+        toast.error("Could not get image data to download.");
+        return;
       }
-    }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL, getProcessedImageWithPaint]);
+      const url = createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `flik_${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => revokeObjectURL(url), 100);
+      toast.success("Image downloaded successfully!");
+    } catch (e) {
+      console.error("Download failed", e);
+      toast.error("Download failed. Please try again.");
+    } finally {
+      isProcessingRef.current = false;
+    }
+  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL, getProcessedImageWithPaint]);
 
   // Fixed issue #100 - limit undo history size
   const handleAdjustmentChange = useCallback((newAdjustments) => {
@@ -557,7 +569,9 @@ export default function Editor() {
 
   const handleTransform = useCallback(async (type) => {
     if (!currentImage) return;
+    if (isProcessingRef.current) return;
 
+    isProcessingRef.current = true;
     setUndoHistory(prev => {
       const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }];
       return newHistory.slice(-MAX_UNDO_HISTORY);
@@ -595,10 +609,12 @@ export default function Editor() {
         setBrushStrokes([]);
         setRedoHistory([]);
         setIsProcessing(false);
+        isProcessingRef.current = false;
       }, 'image/png');
     } catch (error) {
       console.error("Transform error:", error);
       setIsProcessing(false);
+      isProcessingRef.current = false;
       toast.error("Transform failed. Please try again.");
     }
   }, [currentImage, adjustments, selectedFilter, transform, generateCanvas, createObjectURL]);
@@ -640,10 +656,12 @@ export default function Editor() {
     setIsCropping(false);
   }, []);
 
-  // Fixed issue #61 - validate crop coordinates
+  // Fixed issue #61 - validate crop coordinates, issue #71 - prevent race condition
   const handleApplyCrop = useCallback(async () => {
     if (!currentImage) return;
+    if (isProcessingRef.current) return;
 
+    isProcessingRef.current = true;
     setIsProcessing(true);
     setUndoHistory(prev => {
       const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }];
@@ -688,17 +706,26 @@ export default function Editor() {
         setIsCropping(false);
         setRedoHistory([]);
         setIsProcessing(false);
+        isProcessingRef.current = false;
         toast.success("Image cropped successfully!");
       }, 'image/png', 1.0);
     } catch (error) {
       console.error("Error cropping:", error);
       setIsProcessing(false);
+      isProcessingRef.current = false;
       toast.error("Crop failed. Please try again.");
     }
   }, [currentImage, adjustments, selectedFilter, transform, cropArea, handleGenerateCanvas, createObjectURL]);
 
+  // Fixed issue #99 - added metadata tracking for better user experience
   const handleSaveToGallery = useCallback(async () => {
     if (!currentImage) return;
+    if (isProcessingRef.current) {
+      toast.info("Please wait for current operation to complete.");
+      return;
+    }
+    
+    isProcessingRef.current = true;
     setIsSaving(true);
     try {
       const blob = await getProcessedImageWithPaint();
@@ -712,7 +739,14 @@ export default function Editor() {
         title: `Edited Image (${new Date().toLocaleString()})`,
         type: 'image',
         url: uploadResult.file_url,
-        thumbnail_url: uploadResult.file_url
+        thumbnail_url: uploadResult.file_url,
+        metadata: {
+          tool: 'photo_studio',
+          hasAdjustments: Object.values(adjustments).some(v => v !== 0),
+          hasFilter: !!selectedFilter,
+          hasPaintStrokes: paintStrokes.length > 0,
+          editedAt: new Date().toISOString()
+        }
       }, { data_env: "dev" });
       toast.success('Saved to Gallery!');
     } catch (err) {
@@ -720,12 +754,16 @@ export default function Editor() {
       toast.error('Error saving to gallery. Please try again.');
     } finally {
       setIsSaving(false);
+      isProcessingRef.current = false;
     }
-  }, [currentImage, getProcessedImageWithPaint]);
+  }, [currentImage, getProcessedImageWithPaint, adjustments, selectedFilter, paintStrokes]);
 
+  // Fixed issue #37 - prevent race condition with isProcessingRef
   const handleBakePaint = useCallback(async () => {
     if (!currentImage || paintStrokes.length === 0) return;
+    if (isProcessingRef.current) return; // Prevent concurrent operations
     
+    isProcessingRef.current = true;
     setIsProcessing(true);
     try {
       const blob = await getProcessedImageWithPaint();
@@ -735,7 +773,10 @@ export default function Editor() {
       }
       
       const url = createObjectURL(blob);
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+      setUndoHistory(prev => {
+        const newHistory = [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }];
+        return newHistory.slice(-MAX_UNDO_HISTORY);
+      });
       setCurrentImage({
         url: url,
         preview: url,
@@ -754,6 +795,7 @@ export default function Editor() {
       toast.error("Failed to bake paint layer.");
     } finally {
       setIsProcessing(false);
+      isProcessingRef.current = false;
     }
   }, [currentImage, paintStrokes, getProcessedImageWithPaint, createObjectURL, adjustments, selectedFilter, transform]);
 
