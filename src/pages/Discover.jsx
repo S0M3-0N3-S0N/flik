@@ -94,6 +94,25 @@ export default function DiscoverPage() {
     },
   });
 
+  const followMutation = useMutation({
+    mutationFn: async (creatorEmail) => {
+      const existingFollow = allFollows.find(
+        (f) => f.follower_email === user?.email && f.following_email === creatorEmail
+      );
+      if (existingFollow) {
+        await base44.entities.Follow.delete(existingFollow.id);
+      } else {
+        await base44.entities.Follow.create({
+          follower_email: user?.email,
+          following_email: creatorEmail,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["follows"]);
+    },
+  });
+
   const getLikesCount = (creationId) =>
     allLikes.filter((l) => l.creation_id === creationId).length;
 
