@@ -1120,21 +1120,7 @@ export default function Editor() {
         animate={{ opacity: 1 }}
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-4 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
-            <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Sparkles className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Settings2 className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="filters" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Filter className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Wand2 className="w-4 h-4" />
-            </TabsTrigger>
-          </TabsList>
+
 
           <div className="px-4 pb-4">
             <TabsContent value="ai" className="mt-0">
