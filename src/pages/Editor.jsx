@@ -1491,7 +1491,7 @@ export default function Editor() {
                   <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
@@ -1524,7 +1524,7 @@ export default function Editor() {
                   <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
@@ -1536,7 +1536,7 @@ export default function Editor() {
                   <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
@@ -1552,7 +1552,7 @@ export default function Editor() {
                   <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
@@ -1575,7 +1575,7 @@ export default function Editor() {
                   <CropIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
@@ -1633,7 +1633,7 @@ export default function Editor() {
                   <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
@@ -1654,7 +1654,7 @@ export default function Editor() {
                   )}
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <div className="relative">
                   <Button
