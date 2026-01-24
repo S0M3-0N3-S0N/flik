@@ -368,11 +368,7 @@ function LayoutContent({ children, currentPageName }) {
               alt="Chat with FLIK" 
               className="w-full h-full object-cover pointer-events-none"
             />
-            {messages.length > 0 && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B35] rounded-full border-2 border-[#0a0a0a] flex items-center justify-center animate-pulse pointer-events-none">
-                <span className="text-white text-[10px] font-bold">{Math.min(messages.length, 99)}</span>
-              </div>
-            )}
+
           </div>
         </motion.button>
 
