@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, MessageSquare, Compass } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, Compass } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
@@ -238,15 +238,7 @@ function LayoutContent({ children, currentPageName }) {
                 <Compass className="w-4 h-4" />
                 Discover
               </Link>
-              <Link 
-                to={createPageUrl("Messages")} 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Messages" ? "text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                <MessageSquare className="w-4 h-4" />
-                Messages
-              </Link>
+
 
 
               </nav>
@@ -323,16 +315,7 @@ function LayoutContent({ children, currentPageName }) {
 
                   <div className="border-t border-white/10 my-2"></div>
 
-                  <Link 
-                    to={createPageUrl("Messages")} 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                      currentPageName === "Messages" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                    }`}
-                  >
-                    <MessageSquare className="w-5 h-5" />
-                    Messages
-                  </Link>
+
 
 
 
