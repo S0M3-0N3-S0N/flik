@@ -37,6 +37,7 @@ export default function Generate() {
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
   const [imageErrors, setImageErrors] = useState({});
+  const [batchCount, setBatchCount] = useState(1);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
