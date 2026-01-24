@@ -295,42 +295,44 @@ export default function Profile() {
   };
 
   const confirmDelete = () => {
-    if (deleteConfirm) {
-      const itemToDelete = creations.find(c => c.id === deleteConfirm);
-      deleteMutation.mutate(deleteConfirm);
-      setSelectedItem(null);
-      setDeleteConfirm(null);
-      
-      // Real undo with duplicate check
-      toast((t) => (
-        <div className="flex items-center gap-3">
-          <span>Creation deleted</span>
-          <Button
-            size="sm"
-            onClick={async () => {
-              try {
-                // Check if item still exists
-                const exists = await base44.entities.Creation.filter({ id: itemToDelete.id });
-                if (exists.length > 0) {
-                  toast.error('Item already exists', { id: t.id });
-                  return;
-                }
-                
-                const { id, created_date, updated_date, created_by, ...dataWithoutMeta } = itemToDelete;
-                await base44.entities.Creation.create(dataWithoutMeta);
-                await queryClient.invalidateQueries({ queryKey: ['creations'] });
-                toast.success('Creation restored!', { id: t.id });
-              } catch (error) {
-                toast.error('Failed to restore', { id: t.id });
-              }
-            }}
-            className="h-7 px-3 bg-white/10 hover:bg-white/20 text-white text-xs"
-          >
-            Undo
-          </Button>
-        </div>
-      ), { duration: 5000 });
-    }
+  if (deleteConfirm) {
+   const itemToDelete = creations.find(c => c.id === deleteConfirm);
+   deleteMutation.mutate(deleteConfirm);
+   setSelectedItem(null);
+   setDeleteConfirm(null);
+
+   // Real undo
+   toast((t) => (
+     <div className="flex items-center gap-3">
+       <span>Creation deleted</span>
+       <Button
+         size="sm"
+         onClick={async () => {
+           try {
+             const { id, created_date, updated_date, created_by, ...restData } = itemToDelete;
+             const dataToRestore = {
+               title: restData.title,
+               type: restData.type,
+               url: restData.url,
+               thumbnail_url: restData.thumbnail_url,
+               prompt: restData.prompt,
+               metadata: restData.metadata,
+               published_to_discover: restData.published_to_discover
+             };
+             await base44.entities.Creation.create(dataToRestore);
+             await queryClient.invalidateQueries({ queryKey: ['creations'] });
+             toast.success('Creation restored!', { id: t.id });
+           } catch (error) {
+             toast.error('Failed to restore', { id: t.id });
+           }
+         }}
+         className="h-7 px-3 bg-white/10 hover:bg-white/20 text-white text-xs"
+       >
+         Undo
+       </Button>
+     </div>
+   ), { duration: 5000 });
+  }
   };
 
   const handleBatchDelete = () => {
