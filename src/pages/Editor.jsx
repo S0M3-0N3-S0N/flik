@@ -1588,49 +1588,49 @@ export default function Editor() {
                   )}
                 </Button>
 
-                <div className="relative">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowColorWheel(!showColorWheel)}
-                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 relative ${
-                      showColorWheel 
-                        ? 'bg-white text-black hover:bg-white/90' 
-                        : 'hover:bg-white/10 text-white'
-                    }`}
-                    title="Color & Brush"
-                  >
-                    <Paintbrush className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <div 
-                      className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a]"
-                      style={{ backgroundColor: brushColor }}
-                    />
-                  </Button>
+                <div className="relative w-7 h-7">
+                   <Button
+                     variant="ghost"
+                     size="icon"
+                     onClick={() => setShowColorWheel(!showColorWheel)}
+                     className={`w-7 h-7 rounded-lg transition-all flex-shrink-0 relative ${
+                       showColorWheel 
+                         ? 'bg-[#FF6B35] text-white' 
+                         : 'hover:bg-white/10 text-white'
+                     }`}
+                     title="Color & Brush"
+                   >
+                     <Paintbrush className="w-4 h-4" />
+                     <div 
+                       className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-gray-900"
+                       style={{ backgroundColor: brushColor }}
+                     />
+                   </Button>
 
-                  <ColorWheel
-                    color={brushColor}
-                    onColorChange={setBrushColor}
-                    brushPreset={brushPreset}
-                    onBrushChange={setBrushPreset}
-                    isOpen={showColorWheel}
-                    onClose={() => setShowColorWheel(false)}
-                    paintBrushMode={paintBrushMode}
-                    onPaintBrushModeChange={setPaintBrushMode}
-                    paintLayerOpacity={paintLayerOpacity}
-                    onPaintLayerOpacityChange={setPaintLayerOpacity}
-                    paintLayerVisible={paintLayerVisible}
-                    onPaintLayerVisibleChange={setPaintLayerVisible}
-                    blendMode={blendMode}
-                    onBlendModeChange={setBlendMode}
-                    paintStrokes={paintStrokes}
-                    onClearPaint={() => {
-                      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
-                      setPaintStrokes([]);
-                    }}
-                    onBakePaint={handleBakePaint}
-                    isBaking={isProcessing}
-                  />
-                </div>
+                   <ColorWheel
+                     color={brushColor}
+                     onColorChange={setBrushColor}
+                     brushPreset={brushPreset}
+                     onBrushChange={setBrushPreset}
+                     isOpen={showColorWheel}
+                     onClose={() => setShowColorWheel(false)}
+                     paintBrushMode={paintBrushMode}
+                     onPaintBrushModeChange={setPaintBrushMode}
+                     paintLayerOpacity={paintLayerOpacity}
+                     onPaintLayerOpacityChange={setPaintLayerOpacity}
+                     paintLayerVisible={paintLayerVisible}
+                     onPaintLayerVisibleChange={setPaintLayerVisible}
+                     blendMode={blendMode}
+                     onBlendModeChange={setBlendMode}
+                     paintStrokes={paintStrokes}
+                     onClearPaint={() => {
+                       setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+                       setPaintStrokes([]);
+                     }}
+                     onBakePaint={handleBakePaint}
+                     isBaking={isProcessing}
+                   />
+                 </div>
               </div>
             </motion.div>
 
