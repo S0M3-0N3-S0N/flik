@@ -141,41 +141,45 @@ export default function FlikChat() {
     processSpeechQueue();
   };
 
-  const processSpeechQueue = () => {
-    if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
-    
-    isSpeakingRef.current = true;
-    const text = speechQueueRef.current.shift();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1.05;
-    utterance.volume = 1;
-    
-    // Get best available voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.name.includes('Google US English')) || 
-                          voices.find(v => v.name.includes('Samantha')) ||
-                          voices.find(v => v.lang.includes('en-US')) ||
-                          voices[0];
-    
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
-    
-    utterance.onend = () => {
-      isSpeakingRef.current = false;
-      processSpeechQueue();
-    };
-    
-    utterance.onerror = () => {
-      isSpeakingRef.current = false;
-      processSpeechQueue();
-    };
-    
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  };
+  const processSpeechQueue = useCallback(() => {
+   if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
+
+   isSpeakingRef.current = true;
+   const text = speechQueueRef.current.shift();
+   if (!text) {
+     isSpeakingRef.current = false;
+     return;
+   }
+
+   const utterance = new SpeechSynthesisUtterance(text);
+   utterance.rate = 0.9;
+   utterance.pitch = 1.05;
+   utterance.volume = 1;
+
+   // Get best available voice
+   const voices = window.speechSynthesis?.getVoices?.() || [];
+   const preferredVoice = voices.find(v => v.name.includes('Google US English')) || 
+                         voices.find(v => v.name.includes('Samantha')) ||
+                         voices.find(v => v.lang.includes('en-US')) ||
+                         voices[0];
+
+   if (preferredVoice) {
+     utterance.voice = preferredVoice;
+   }
+
+   utterance.onend = () => {
+     isSpeakingRef.current = false;
+     processSpeechQueue();
+   };
+
+   utterance.onerror = () => {
+     isSpeakingRef.current = false;
+     processSpeechQueue();
+   };
+
+   window.speechSynthesis?.cancel();
+   window.speechSynthesis?.speak(utterance);
+  }, []);
 
   const getCurrentPage = useCallback(() => {
     const path = location.pathname;
