@@ -669,13 +669,26 @@ export default function Profile() {
                 {t("profile.sign_out")}
               </Button>
             ) : (
-              <Button 
-                onClick={() => navigate(createPageUrl('Profile'))}
-                className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base w-full md:w-auto"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                Back to My Profile
-              </Button>
+              <div className="flex gap-2 w-full md:w-auto">
+                <Button 
+                  onClick={() => navigate(createPageUrl('Profile'))}
+                  className="flex-1 md:flex-none bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                  Back
+                </Button>
+                <Button 
+                  onClick={() => followMutation.mutate(viewingUserEmail)}
+                  disabled={followMutation.isPending}
+                  className={`flex-1 md:flex-none h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base ${
+                    isFollowing
+                      ? 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
+                      : 'bg-[#FF6B35] hover:bg-[#F72C25] text-white border-0'
+                  }`}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Button>
+              </div>
             )}
           </div>
 
