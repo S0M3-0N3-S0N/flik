@@ -2,10 +2,23 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
-export default function ResultModal({ isOpen, onClose, originalImage, resultImage, onApply, onDownload, transform, onRegenerate, isRegenerating }) {
-  const [mode, setMode] = useState("compare"); // 'compare' (slider) or 'side' (side-by-side)
+export default function ResultModal({ 
+  isOpen, 
+  onClose, 
+  originalImage, 
+  resultImage, 
+  onApply, 
+  onDownload, 
+  transform, 
+  onRegenerate, 
+  isRegenerating 
+}) {
+  const [mode, setMode] = useState("compare");
   const [sliderPos, setSliderPos] = useState(50);
+  const [userFeedback, setUserFeedback] = useState(null);
 
   if (!isOpen) return null;
 
@@ -15,6 +28,48 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
     transform: `rotate(${transform.rotate}deg) scaleX(${transform.flipH ? -1 : 1}) scaleY(${transform.flipV ? -1 : 1})`
   } : {};
 
+  const handleApplyWithFeedback = async () => {
+    // Mark the result as successful in the learning database
+    try {
+      const recentPrompts = await base44.entities.PromptLearning.filter(
+        { tool_type: 'magic_brush' },
+        '-created_date',
+        1
+      );
+      
+      if (recentPrompts.length > 0) {
+        await base44.entities.PromptLearning.update(recentPrompts[0].id, {
+          was_successful: true
+        });
+      }
+    } catch (error) {
+      console.error("Failed to update learning data:", error);
+    }
+
+    onApply();
+  };
+
+  const handleDiscardWithFeedback = async () => {
+    // Mark the result as unsuccessful
+    try {
+      const recentPrompts = await base44.entities.PromptLearning.filter(
+        { tool_type: 'magic_brush' },
+        '-created_date',
+        1
+      );
+      
+      if (recentPrompts.length > 0) {
+        await base44.entities.PromptLearning.update(recentPrompts[0].id, {
+          was_successful: false
+        });
+      }
+    } catch (error) {
+      console.error("Failed to update learning data:", error);
+    }
+
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -22,7 +77,7 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex items-center justify-center p-4"
-        onClick={onClose}
+        onClick={handleDiscardWithFeedback}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -59,7 +114,7 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
               </div>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleDiscardWithFeedback}
               className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-colors"
             >
               <X className="w-5 h-5 text-white" />
@@ -161,7 +216,7 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
             <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 variant="ghost"
-                onClick={onClose}
+                onClick={handleDiscardWithFeedback}
                 className="flex-1 sm:flex-none text-white/60 hover:text-white hover:bg-white/10"
               >
                 <X className="w-4 h-4 mr-2" />
@@ -194,7 +249,7 @@ export default function ResultModal({ isOpen, onClose, originalImage, resultImag
                 Download
               </Button>
               <Button
-                onClick={onApply}
+                onClick={handleApplyWithFeedback}
                 className="w-full sm:w-auto bg-[#FF6B35] hover:bg-[#F72C25] text-white border-0 sm:min-w-[160px] font-bold shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-105 transition-all z-10"
               >
                 <Check className="w-5 h-5 mr-2" />
