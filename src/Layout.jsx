@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, MessageSquare } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, MessageSquare, Compass } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
@@ -235,7 +235,7 @@ function LayoutContent({ children, currentPageName }) {
                   currentPageName === "Discover" ? "text-white" : "text-white/60 hover:text-white"
                 }`}
               >
-                <Sparkles className="w-4 h-4" />
+                <Compass className="w-4 h-4" />
                 Discover
               </Link>
             </nav>
@@ -306,7 +306,7 @@ function LayoutContent({ children, currentPageName }) {
                       currentPageName === "Discover" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    <Sparkles className="w-5 h-5" />
+                    <Compass className="w-5 h-5" />
                     Discover
                   </Link>
 
