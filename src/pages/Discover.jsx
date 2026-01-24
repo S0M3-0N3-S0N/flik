@@ -127,6 +127,14 @@ export default function DiscoverPage() {
   const getUserByEmail = (email) =>
     allUsers.find((u) => u.email === email);
 
+  const isFollowing = (creatorEmail) =>
+    allFollows.some(
+      (f) => f.follower_email === user?.email && f.following_email === creatorEmail
+    );
+
+  const getFollowerCount = (creatorEmail) =>
+    allFollows.filter((f) => f.following_email === creatorEmail).length;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
