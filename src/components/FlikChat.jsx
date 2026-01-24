@@ -196,8 +196,8 @@ export default function FlikChat() {
     const text = speechQueueRef.current.shift();
     
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.1;
+    utterance.rate = 0.9;
+    utterance.pitch = 1.05;
     utterance.volume = 1;
     
     // Get best available voice
@@ -995,24 +995,24 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
             )}
           </div>
 
-          <div className="p-4 border-t border-white/10 bg-[#1a1a1a]">
+          <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
             {uploadError && (
-              <div className="mb-2 flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {uploadError}
               </div>
             )}
             {attachedImages.length > 0 && (
-              <div className="mb-2 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
                 {attachedImages.map((img) => (
-                  <div key={img.id} className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-white/10 group">
+                  <div key={img.id} className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 group">
                     <img src={img.url} alt={img.name || 'Attached'} className="w-full h-full object-cover" />
                     <button 
                       onClick={() => setAttachedImages(prev => prev.filter(i => i.id !== img.id))} 
                       className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                       title="Remove image"
                     >
-                      <X className="w-4 h-4 text-white" />
+                      <X className="w-3 h-3 text-white" />
                     </button>
                   </div>
                 ))}
@@ -1025,39 +1025,47 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   handleSend();
                 }
               }}
-              className="flex gap-2"
+              className="flex items-center gap-2"
             >
               <button
                 type="button"
-                onClick={() => chatFileRef.current?.click()}
-                className={`p-2 rounded-lg transition-colors ${
-                  isUploadingChat ? 'bg-white/10 cursor-wait' : 'hover:bg-white/10 text-white/60 hover:text-white'
-                }`}
-                disabled={isUploadingChat}
-                title="Upload images"
-              >
-                {isUploadingChat ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-              </button>
-              <button
-                type="button"
-                onClick={handleGalleryPick}
-                className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-                title="Pick from gallery"
-              >
-                <Grid3x3 className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
                 onClick={toggleVoiceInput}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${
                   isListening 
-                    ? 'bg-red-500/30 text-red-400 animate-pulse' 
+                    ? 'bg-red-500/30 text-red-400 animate-pulse scale-110' 
                     : 'hover:bg-white/10 text-white/60 hover:text-white'
                 }`}
-                title={isListening ? "Stop listening" : "Start voice input"}
+                title={isListening ? "Stop listening" : "Start voice"}
               >
-                {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                {isListening ? <Mic className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
               </button>
+
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="What's on your mind?"
+                className="bg-black/20 border-white/10 text-white focus-visible:ring-[#FF6B35] placeholder:text-white/40 flex-1"
+              />
+
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={handleGalleryPick}
+                  className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0"
+                  title="Pick from gallery"
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                </button>
+                <Button 
+                  type="submit" 
+                  size="icon"
+                  disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
+                  className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg rounded-xl h-10 w-10 p-0"
+                >
+                  {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
+
               <input
                 ref={chatFileRef}
                 type="file"
@@ -1066,21 +1074,6 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                 onChange={handleChatImageUpload}
                 className="hidden"
               />
-              
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Hey! What can I help you create? ✨"
-                className="bg-black/20 border-white/10 text-white focus-visible:ring-[#FF6B35] placeholder:text-white/40"
-              />
-              <Button 
-                type="submit" 
-                size="icon"
-                disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
-                className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg"
-              >
-                {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </Button>
             </form>
           </div>
         </motion.div>
