@@ -896,13 +896,43 @@ export default function Profile() {
                     Clear
                   </Button>
                   <Button
-                    size="sm"
-                    onClick={handleBatchDelete}
-                    disabled={batchDeleteProgress > 0}
-                    className="flex-1 sm:flex-none bg-red-500/20 hover:bg-red-500/30 text-red-400 border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm disabled:opacity-50"
+                   size="sm"
+                   onClick={() => {
+                     const urls = selectedItems.map(id => {
+                       const item = creations.find(c => c.id === id);
+                       return item?.url;
+                     }).filter(Boolean).join(',');
+                     navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(urls));
+                   }}
+                   className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm"
+                   title="Edit selected in Photo Studio"
                   >
-                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                    Delete
+                   <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                   Edit
+                  </Button>
+                  <Button
+                   size="sm"
+                   onClick={() => {
+                     const urls = selectedItems.map(id => {
+                       const item = creations.find(c => c.id === id);
+                       return item?.url;
+                     }).filter(Boolean).join(',');
+                     navigate(createPageUrl('Generate') + '?load=' + encodeURIComponent(urls));
+                   }}
+                   className="flex-1 sm:flex-none bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm"
+                   title="Use as reference in Imagine AI"
+                  >
+                   <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                   Imagine
+                  </Button>
+                  <Button
+                   size="sm"
+                   onClick={handleBatchDelete}
+                   disabled={batchDeleteProgress > 0}
+                   className="flex-1 sm:flex-none bg-red-500/20 hover:bg-red-500/30 text-red-400 border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm disabled:opacity-50"
+                  >
+                   <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                   Delete
                   </Button>
                 </div>
               </motion.div>
