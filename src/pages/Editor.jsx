@@ -1539,18 +1539,18 @@ export default function Editor() {
                 <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveTab('transform')}
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
-                    activeTab === 'transform'
-                      ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
-                      : 'hover:bg-white/10 text-white'
-                  }`}
-                  title="Transform"
-                >
-                  <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </Button>
+                   variant="ghost"
+                   size="icon"
+                   onClick={() => setActiveTab('transform')}
+                   className={`hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
+                     activeTab === 'transform'
+                       ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
+                       : 'hover:bg-white/10 text-white'
+                   }`}
+                   title="Transform"
+                 >
+                   <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                 </Button>
 
                 <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
