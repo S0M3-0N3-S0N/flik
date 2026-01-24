@@ -17,6 +17,12 @@ export default function BlockUserModal({ isOpen, onClose, userEmail, isBlocked =
 
   const blockMutation = useMutation({
     mutationFn: async (data) => {
+      // Server-side validation
+      const validation = await base44.functions.invoke('validateBlock', data);
+      if (!validation.data.success) {
+        throw new Error(validation.data.error);
+      }
+
       if (isBlocked) {
         const existing = await base44.entities.BlockedUser.filter({
           blocker_email: data.blocker_email,
@@ -34,8 +40,8 @@ export default function BlockUserModal({ isOpen, onClose, userEmail, isBlocked =
       queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
       onClose();
     },
-    onError: () => {
-      toast.error("Failed to update block status");
+    onError: (error) => {
+      toast.error(error.message || "Failed to update block status");
     },
   });
 
