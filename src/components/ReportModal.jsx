@@ -21,21 +21,33 @@ export default function ReportModal({ isOpen, onClose, reportType, reportId, rep
   const [description, setDescription] = useState("");
 
   const reportMutation = useMutation({
-    mutationFn: (data) => base44.entities.Report.create(data, { data_env: "dev" }),
+    mutationFn: async (data) => {
+      // Server-side validation via backend function
+      const validation = await base44.functions.invoke('validateReport', data);
+      if (!validation.data.success) {
+        throw new Error(validation.data.error);
+      }
+      return await base44.entities.Report.create(data);
+    },
     onSuccess: () => {
       toast.success("Report submitted successfully");
       setReason("");
       setDescription("");
       onClose();
     },
-    onError: () => {
-      toast.error("Failed to submit report");
+    onError: (error) => {
+      toast.error(error.message || "Failed to submit report");
     },
   });
 
   const handleSubmit = async () => {
     if (!reason) {
       toast.error("Please select a reason");
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error("Please provide details");
       return;
     }
 
@@ -46,12 +58,10 @@ export default function ReportModal({ isOpen, onClose, reportType, reportId, rep
     }
 
     reportMutation.mutate({
-      reporter_email: user.email,
       reported_type: reportType,
       reported_id: reportId,
-      reported_user_email: reportedUserEmail || null,
-      reason: reason,
-      description: description,
+      reason,
+      description: description.trim(),
     });
   };
 
