@@ -250,41 +250,74 @@ function CreationCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="absolute bottom-0 left-0 right-0 p-4 space-y-3">
               {/* User info */}
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0">
-                  {creator?.profile_picture ? (
-                    <img src={creator.profile_picture} alt={creator.full_name} className="w-full h-full object-cover" />
-                  ) : (
-                    creation.created_by?.charAt(0).toUpperCase()
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm truncate">
-                    {creator?.full_name || creation.created_by?.split("@")[0]}
-                  </p>
-                  <p className="text-xs text-white/60">
-                    {new Date(creation.created_date).toLocaleDateString()}
-                  </p>
-                </div>
-                {isOwner && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                        <MoreVertical className="w-4 h-4 text-white/80" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-[#1a1a1a] border-white/10">
-                      <DropdownMenuItem
-                        onClick={onDelete}
-                        className="text-red-400 focus:text-red-400 focus:bg-red-400/10"
+                  <div className="flex items-center gap-3 justify-between">
+                    <Link 
+                      to={createPageUrl("Profile")}
+                      onClick={(e) => {
+                        if (creation.created_by) {
+                          sessionStorage.setItem('profile_email', creation.created_by);
+                        }
+                      }}
+                      className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0">
+                        {creator?.profile_picture ? (
+                          <img src={creator.profile_picture} alt={creator.full_name} className="w-full h-full object-cover" />
+                        ) : (
+                          creation.created_by?.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-medium text-sm truncate">
+                          {creator?.full_name || creation.created_by?.split("@")[0]}
+                        </p>
+                        <p className="text-xs text-white/60">
+                          {followerCount} follower{followerCount !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </Link>
+                    {!isOwner && user && (
+                      <button
+                        onClick={onFollow}
+                        disabled={!user}
+                        className={`ml-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                          isFollowing
+                            ? 'bg-white/10 text-white hover:bg-white/20'
+                            : 'bg-[#FF6B35] text-white hover:bg-[#F72C25]'
+                        }`}
                       >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
+                        {isFollowing ? (
+                          <>
+                            <UserCheck className="w-3.5 h-3.5" />
+                            Following
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-3.5 h-3.5" />
+                            Follow
+                          </>
+                        )}
+                      </button>
+                    )}
+                    {isOwner && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                            <MoreVertical className="w-4 h-4 text-white/80" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="bg-[#1a1a1a] border-white/10">
+                          <DropdownMenuItem
+                            onClick={onDelete}
+                            className="text-red-400 focus:text-red-400 focus:bg-red-400/10"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
 
               {/* Title & Prompt */}
               {(creation.title || creation.prompt) && (
