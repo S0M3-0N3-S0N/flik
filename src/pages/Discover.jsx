@@ -24,7 +24,10 @@ export default function DiscoverPage() {
 
   const { data: creations = [], isLoading } = useQuery({
     queryKey: ["creations"],
-    queryFn: () => base44.entities.Creation.list("-created_date", 50),
+    queryFn: async () => {
+      const all = await base44.entities.Creation.list("-created_date", 100);
+      return all.filter(c => c.published_to_discover === true);
+    },
   });
 
   const { data: allLikes = [] } = useQuery({
@@ -107,13 +110,24 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] py-8 px-4 overflow-hidden">
-      <div className="max-w-2xl mx-auto overflow-y-auto h-[calc(100vh-4rem)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <h1 className="text-3xl font-bold gradient-text mb-8 text-center">
-          Discover
-        </h1>
+    <div className="min-h-screen bg-[#0A0A0A] relative overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
+      
+      <div className="relative max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-3">
+            Discover
+          </h1>
+          <p className="text-white/50 text-sm md:text-base">
+            Explore amazing creations from the FLIK community
+          </p>
+        </div>
 
-        <div className="space-y-8">
+        {/* Masonry Grid */}
+        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
           {creations.map((creation) => (
             <CreationCard
               key={creation.id}
@@ -175,93 +189,100 @@ function CreationCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-[#141414] rounded-2xl overflow-hidden border border-white/5"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="break-inside-avoid mb-4 group"
     >
-      {/* Header */}
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold overflow-hidden">
-            {creator?.profile_picture ? (
-              <img src={creator.profile_picture} alt={creator.full_name} className="w-full h-full object-cover" />
-            ) : (
-              creation.created_by?.charAt(0).toUpperCase()
-            )}
-          </div>
-          <div>
-            <p className="text-white font-medium">
-              {creator?.full_name || creation.created_by?.split("@")[0]}
-            </p>
-            <p className="text-xs text-white/40">
-              {new Date(creation.created_date).toLocaleDateString()}
-            </p>
+      <div className="relative bg-[#141414] rounded-2xl overflow-hidden border border-white/5 hover:border-white/10 transition-all">
+        {/* Image */}
+        <div className="relative">
+          <img
+            src={creation.url}
+            alt={creation.title || "Creation"}
+            className="w-full h-auto object-cover"
+          />
+          
+          {/* Overlay on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="absolute bottom-0 left-0 right-0 p-4 space-y-3">
+              {/* User info */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold overflow-hidden flex-shrink-0">
+                  {creator?.profile_picture ? (
+                    <img src={creator.profile_picture} alt={creator.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    creation.created_by?.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm truncate">
+                    {creator?.full_name || creation.created_by?.split("@")[0]}
+                  </p>
+                  <p className="text-xs text-white/60">
+                    {new Date(creation.created_date).toLocaleDateString()}
+                  </p>
+                </div>
+                {isOwner && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                        <MoreVertical className="w-4 h-4 text-white/80" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-[#1a1a1a] border-white/10">
+                      <DropdownMenuItem
+                        onClick={onDelete}
+                        className="text-red-400 focus:text-red-400 focus:bg-red-400/10"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+
+              {/* Title & Prompt */}
+              {(creation.title || creation.prompt) && (
+                <div className="space-y-1">
+                  {creation.title && (
+                    <p className="text-white font-semibold text-sm line-clamp-2">{creation.title}</p>
+                  )}
+                  {creation.prompt && (
+                    <p className="text-white/70 text-xs line-clamp-2">{creation.prompt}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {isOwner && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-2 hover:bg-white/5 rounded-lg transition-colors">
-                <MoreVertical className="w-5 h-5 text-white/60" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-[#1a1a1a] border-white/10">
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="text-red-400 focus:text-red-400 focus:bg-red-400/10"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      {/* Image */}
-      <div className="relative aspect-square bg-black">
-        <img
-          src={creation.url}
-          alt={creation.title || "Creation"}
-          className="w-full h-full object-contain"
-        />
-      </div>
-
-      {/* Actions */}
-      <div className="p-4 space-y-3">
-        <div className="flex items-center gap-4">
+        {/* Actions bar */}
+        <div className="p-4 space-y-3">
+        <div className="flex items-center gap-6">
           <button
             onClick={onLike}
             className="flex items-center gap-2 group"
             disabled={!user}
           >
             <Heart
-              className={`w-6 h-6 transition-all ${
+              className={`w-5 h-5 transition-all ${
                 isLiked
                   ? "fill-red-500 text-red-500"
-                  : "text-white/60 group-hover:text-white"
+                  : "text-white/60 group-hover:text-red-500 group-hover:scale-110"
               }`}
             />
-            <span className="text-white/60">{likesCount}</span>
+            <span className="text-white/80 text-sm font-medium">{likesCount}</span>
           </button>
 
           <button
             onClick={() => setShowComments(!showComments)}
             className="flex items-center gap-2 group"
           >
-            <MessageCircle className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-            <span className="text-white/60">{comments.length}</span>
+            <MessageCircle className="w-5 h-5 text-white/60 group-hover:text-[#FF6B35] group-hover:scale-110 transition-all" />
+            <span className="text-white/80 text-sm font-medium">{comments.length}</span>
           </button>
         </div>
-
-        {/* Title & Prompt */}
-        {creation.title && (
-          <p className="text-white font-medium">{creation.title}</p>
-        )}
-        {creation.prompt && (
-          <p className="text-white/60 text-sm">{creation.prompt}</p>
-        )}
 
         {/* Comments Section */}
         <AnimatePresence>

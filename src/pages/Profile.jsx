@@ -5,7 +5,7 @@ import { debounce } from "lodash";
 import { 
   Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, 
   Pencil, Check, X, Lock, Globe, Search, Trash2, Download, Edit, Wand2, Sparkles,
-  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff
+  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -222,6 +222,17 @@ export default function Profile() {
     },
     onError: () => {
       toast.error('Failed to update');
+    }
+  });
+
+  const togglePublishMutation = useMutation({
+    mutationFn: ({ id, published }) => base44.entities.Creation.update(id, { published_to_discover: published }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['creations'] });
+      toast.success(variables.published ? 'Published to Discover!' : 'Unpublished from Discover');
+    },
+    onError: () => {
+      toast.error('Failed to update publish status');
     }
   });
 
@@ -925,23 +936,33 @@ export default function Profile() {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                togglePublishMutation.mutate({ 
+                                  id: item.id, 
+                                  published: !item.published_to_discover 
+                                });
+                              }}
+                              className={`flex-1 border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3 ${
+                                item.published_to_discover 
+                                  ? 'bg-green-500/30 hover:bg-green-500/40' 
+                                  : 'bg-white/20 hover:bg-white/30'
+                              } text-white`}
+                            >
+                              {item.published_to_discover ? (
+                                <><Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" /><span className="hidden xs:inline sm:inline">Public</span></>
+                              ) : (
+                                <><EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" /><span className="hidden xs:inline sm:inline">Publish</span></>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                               }}
                               className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3"
                             >
                               <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
                               <span className="hidden xs:inline sm:inline">Edit</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(createPageUrl("Generate") + '?load=' + encodeURIComponent(item.url));
-                              }}
-                              className="flex-1 bg-purple-500/30 hover:bg-purple-500/40 text-white border-0 h-9 sm:h-10 text-xs sm:text-sm backdrop-blur-2xl font-medium px-2 sm:px-3"
-                            >
-                              <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                              <span className="hidden xs:inline sm:inline">Remix</span>
                             </Button>
                           </div>
                         </div>
