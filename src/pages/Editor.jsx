@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -1304,6 +1304,19 @@ export default function Editor() {
               </Button>
             </div>
             {currentImage && (
+              <>
+              <Button
+                onClick={() => setShowSharePanel(!showSharePanel)}
+                className={`text-sm transition-all ${
+                  showSharePanel
+                    ? 'bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white'
+                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                }`}
+                title="Share"
+              >
+                <Share2 className="w-4 h-4 lg:mr-2" />
+                <span className="hidden lg:inline">Share</span>
+              </Button>
               <Button
                 onClick={handleSaveToGallery}
                 disabled={isSaving}
@@ -1317,6 +1330,7 @@ export default function Editor() {
                 )}
                 <span className="hidden lg:inline">{isSaving ? "Saving..." : "Save"}</span>
               </Button>
+              </>
             )}
             <Button
               disabled={!currentImage}
