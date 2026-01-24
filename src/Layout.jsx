@@ -115,7 +115,7 @@ function LayoutContent({ children, currentPageName }) {
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      <div className={`min-h-screen bg-[#0A0A0A] text-white transition-all duration-300 overflow-x-hidden ${!isDarkMode ? 'light-mode-theme' : ''}`}>
+      <div className={`min-h-screen bg-[#0A0A0A] text-white transition-all duration-300 overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${!isDarkMode ? 'light-mode-theme' : ''}`}>
         <style>{`
           .light-mode-theme {
             filter: invert(1) hue-rotate(180deg);
