@@ -438,10 +438,11 @@ export default function Generate() {
                               <button
                                 key={count}
                                 onClick={() => setBatchCount(count)}
-                                className={`py-2 rounded-lg border transition-all text-sm font-medium ${
+                                type="button"
+                                className={`w-full py-2 rounded-lg border transition-all text-sm font-medium cursor-pointer relative z-50 ${
                                   batchCount === count 
                                     ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                    : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                                    : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40'
                                 }`}
                               >
                                 {count}
