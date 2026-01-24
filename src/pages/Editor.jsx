@@ -19,6 +19,7 @@ import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import { useFlikActions } from "@/components/useFlikActions";
 import LayersPanel from "@/components/editor/LayersPanel";
+import { useLayersComposite } from "@/components/hooks/useLayersComposite";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
@@ -66,7 +67,7 @@ export default function Editor() {
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
-  const { generateCompositeCanvas, getCompositeBlob } = require('@/components/hooks/useLayersComposite').useLayersComposite();
+  const { generateCompositeCanvas, getCompositeBlob } = useLayersComposite();
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
