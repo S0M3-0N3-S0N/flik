@@ -181,26 +181,35 @@ export default function Editor() {
   }, []);
 
   const handleBatchUpload = useCallback((e) => {
-    const files = Array.from(e.target.files);
-    const imageFiles = files.filter(f => f.type.startsWith('image/'));
-    const images = imageFiles.map(file => ({
-      id: Date.now() + Math.random(),
-      file,
-      preview: createObjectURL(file),
-      name: file.name,
-      adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
-      transform: { rotate: 0, flipH: false, flipV: false },
-      filter: null,
-      brushStrokes: []
-    }));
-    
-    const newBatch = [...batchImages, ...images];
-    setBatchImages(newBatch);
-    
-    if (activeBatchIndex === null && newBatch.length > 0) {
-      switchToBatchImage(0, newBatch);
-    }
-  }, [batchImages, activeBatchIndex, createObjectURL]);
+      const files = Array.from(e.target.files || []);
+      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB per file
+      const imageFiles = files.filter(f => {
+        if (!f.type.startsWith('image/')) return false;
+        if (f.size > MAX_FILE_SIZE) {
+          toast.error(`${f.name} exceeds 100MB limit`);
+          return false;
+        }
+        return true;
+      });
+
+      const images = imageFiles.map(file => ({
+        id: Date.now() + Math.random(),
+        file,
+        preview: createObjectURL(file),
+        name: file.name,
+        adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
+        transform: { rotate: 0, flipH: false, flipV: false },
+        filter: null,
+        brushStrokes: []
+      }));
+
+      const newBatch = [...batchImages, ...images];
+      setBatchImages(newBatch);
+
+      if (activeBatchIndex === null && newBatch.length > 0) {
+        switchToBatchImage(0, newBatch);
+      }
+    }, [batchImages, activeBatchIndex, createObjectURL]);
 
   const saveCurrentStateToBatch = useCallback(() => {
     if (activeBatchIndex === null || !batchImages[activeBatchIndex]) return;
