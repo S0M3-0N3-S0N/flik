@@ -311,15 +311,15 @@ export default function Editor() {
     }
   }, [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
 
-  const handleGetProcessedBlob = useCallback(async () => {
-    try {
-      return await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
-    } catch (e) {
-      console.error('Blob generation failed:', e);
-      toast.error('Failed to process image');
-      return null;
-    }
-  }, [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
+  const handleGetProcessedBlob = async () => {
+      try {
+        return await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
+      } catch (e) {
+        console.error('Blob generation failed:', e);
+        toast.error('Failed to process image');
+        return null;
+      }
+    };
 
   const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) return;
