@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
+import { FLIK_AVATAR_URL } from "../constants/appConstants";
 
 const MessageBubble = React.memo(function MessageBubble({ 
   message, 
@@ -80,7 +81,7 @@ const MessageBubble = React.memo(function MessageBubble({
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] flex-shrink-0 shadow-lg shadow-[#FF6B35]/20">
           <div className="w-full h-full rounded-[10px] bg-[#141414] flex items-center justify-center overflow-hidden">
             <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+              src={FLIK_AVATAR_URL} 
               alt="FLIK" 
               className="w-full h-full object-cover"
             />
