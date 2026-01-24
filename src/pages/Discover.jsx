@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, MessageCircle, Send, MoreVertical, Trash2, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreVertical, Trash2, Sparkles, UserPlus, UserCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPageUrl } from "@/utils";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
