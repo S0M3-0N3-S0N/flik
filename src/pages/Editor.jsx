@@ -493,6 +493,7 @@ export default function Editor() {
 
   const handleCancelCrop = useCallback(() => {
     setIsCropping(false);
+    setActiveTab('ai');
   }, []);
 
   const handleApplyCrop = useCallback(async () => {
