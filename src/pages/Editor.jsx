@@ -1115,27 +1115,14 @@ export default function Editor() {
 
   return (
     <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
-      <AnimatePresence>
-        {["ai", "adjust", "filters", "transform", "remove", "crop"].includes(activeTab) && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="fixed bottom-4 left-4 top-20 w-80 z-50 bg-[#0A0A0A] border border-white/10 rounded-2xl glass-card overflow-y-auto flex flex-col"
-          >
-            <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
-              <h3 className="text-sm font-semibold text-white capitalize">{activeTab}</h3>
-              <button
-                onClick={() => setActiveTab(null)}
-                className="p-1 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1">
-              <div className="px-4 pb-4 flex-1 overflow-y-auto">
-                <TabsContent value="ai" className="mt-0">
+      <motion.aside
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="px-4 pb-4">
+            <TabsContent value="ai" className="mt-0">
               <ToolPanel 
                 onToolSelect={handleToolSelect} 
                 isProcessing={isProcessing}
@@ -1232,22 +1219,20 @@ export default function Editor() {
               )}
             </TabsContent>
 
-                <TabsContent value="crop" className="mt-0">
-                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
-                  {currentImage ? (
-                    <CropPanel
-                      onApplyCrop={handleApplyCrop}
-                      onCancelCrop={handleCancelCrop}
-                    />
-                  ) : (
-                    <p className="text-white/40 text-sm">Upload an image to start</p>
-                  )}
-                </TabsContent>
-              </div>
-            </Tabs>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <TabsContent value="crop" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
+              {currentImage ? (
+                <CropPanel
+                  onApplyCrop={handleApplyCrop}
+                  onCancelCrop={handleCancelCrop}
+                />
+              ) : (
+                <p className="text-white/40 text-sm">Upload an image to start</p>
+              )}
+            </TabsContent>
+          </div>
+        </Tabs>
+      </motion.aside>
       
       <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
         <motion.div
