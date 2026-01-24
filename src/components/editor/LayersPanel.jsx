@@ -38,7 +38,7 @@ export default function LayersPanel({
               </div>
             </div>
           </div>
-          <input type="file" accept="image/*" onChange={onAddImageLayer} className="hidden" />
+          <input type="file" accept="image/*" multiple onChange={onAddImageLayer} className="hidden" />
         </label>
       </div>
 

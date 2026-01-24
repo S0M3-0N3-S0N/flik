@@ -166,37 +166,40 @@ export default function Editor() {
 
   // Layer management functions
   const handleAddImageLayer = useCallback((e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    const preview = createObjectURL(file);
-    const newLayer = {
-      id: Date.now() + Math.random(),
-      name: `Layer ${layers.length + 1}`,
-      image: { file, preview, url: preview },
-      thumbnail: preview,
-      visible: true,
-      locked: false,
-      opacity: 100,
-      x: 0,
-      y: 0,
-      width: canvasSize.width,
-      height: canvasSize.height,
-      adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
-      transform: { rotate: 0, flipH: false, flipV: false },
-      filter: null
-    };
+    files.forEach((file, index) => {
+      const preview = createObjectURL(file);
+      const newLayer = {
+        id: Date.now() + Math.random() + index,
+        name: `Layer ${layers.length + index + 1}`,
+        image: { file, preview, url: preview },
+        thumbnail: preview,
+        visible: true,
+        locked: false,
+        opacity: 100,
+        x: 0,
+        y: 0,
+        width: canvasSize.width,
+        height: canvasSize.height,
+        adjustments: { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 },
+        transform: { rotate: 0, flipH: false, flipV: false },
+        filter: null
+      };
 
-    setLayers(prev => [...prev, newLayer]);
-    setSelectedLayerId(newLayer.id);
-    
-    // Set as current image for editing
-    setCurrentImage(newLayer.image);
-    setAdjustments(newLayer.adjustments);
-    setTransform(newLayer.transform);
-    setSelectedFilter(newLayer.filter);
+      setLayers(prev => [...prev, newLayer]);
+      setSelectedLayerId(newLayer.id);
+      
+      // Set as current image for editing
+      setCurrentImage(newLayer.image);
+      setAdjustments(newLayer.adjustments);
+      setTransform(newLayer.transform);
+      setSelectedFilter(newLayer.filter);
+    });
 
-    toast.success('Layer added!');
+    toast.success(`${files.length} layer${files.length > 1 ? 's' : ''} added!`);
+    e.target.value = ''; // Reset input
   }, [layers, canvasSize, createObjectURL]);
 
   const handleSelectLayer = useCallback((layerId) => {
@@ -1133,16 +1136,19 @@ export default function Editor() {
                 }}
               >
                 {layers.length > 0 ? (
-                  <div className="relative max-w-full max-h-full" style={{ aspectRatio: `${canvasSize.width} / ${canvasSize.height}` }}>
+                  <div className="relative max-w-full max-h-full">
                     {layers.filter(l => l.visible).map(layer => (
                       <img
                         key={layer.id}
                         src={layer.image.preview || layer.image.url}
                         alt={layer.name}
-                        className={`absolute inset-0 w-full h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
+                        className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
                           selectedLayerId === layer.id ? 'ring-2 ring-[#FF6B35] ring-offset-2 ring-offset-black' : ''
                         }`}
                         style={{
+                          position: layers.indexOf(layer) === 0 ? 'relative' : 'absolute',
+                          top: 0,
+                          left: 0,
                           opacity: layer.opacity / 100,
                           filter: (() => {
                             const filters = [];
