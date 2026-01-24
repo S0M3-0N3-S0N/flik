@@ -1232,17 +1232,17 @@ export default function Editor() {
               )}
             </TabsContent>
 
-            <TabsContent value="crop" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
-              {currentImage ? (
-                <CropPanel
-                  onApplyCrop={handleApplyCrop}
-                  onCancelCrop={handleCancelCrop}
-                />
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
-            </TabsContent>
+                <TabsContent value="crop" className="mt-0">
+                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
+                  {currentImage ? (
+                    <CropPanel
+                      onApplyCrop={handleApplyCrop}
+                      onCancelCrop={handleCancelCrop}
+                    />
+                  ) : (
+                    <p className="text-white/40 text-sm">Upload an image to start</p>
+                  )}
+                </TabsContent>
               </div>
             </Tabs>
           </motion.div>
