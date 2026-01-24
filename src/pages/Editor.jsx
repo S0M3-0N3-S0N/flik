@@ -300,6 +300,7 @@ export default function Editor() {
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
+      setRegenerateAction(null);
     }
   }, [currentImage, handleGetProcessedBlob, createObjectURL]);
 
@@ -1411,7 +1412,7 @@ export default function Editor() {
         onDownload={handleDownload}
         transform={processedImage ? undefined : transform}
         onRegenerate={regenerateAction}
-        isRegenerating={isProcessing}
+        isRegenerating={isProcessing || isMagicBrushProcessing}
       />
     </div>
   );
