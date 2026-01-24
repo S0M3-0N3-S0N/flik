@@ -236,7 +236,7 @@ export default function FlikChat() {
   }, []);
 
   const handleChatImageUpload = useCallback(async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
     const validFiles = files.filter(f => {
       if (!f.type.startsWith('image/')) return false;
       if (f.size > MAX_FILE_SIZE) {
@@ -258,6 +258,7 @@ export default function FlikChat() {
     } catch (err) {
       console.error("Chat upload error:", err);
       setUploadError("Failed to upload images. Please try again.");
+      toast.error("Upload failed");
     } finally {
       setIsUploadingChat(false);
       if (chatFileRef.current) chatFileRef.current.value = '';
