@@ -142,7 +142,7 @@ export default function DiscoverPage() {
                 commentMutation.mutate({
                   creation_id: creation.id,
                   text,
-                  user_name: user?.full_name || "Anonymous",
+                  user_name: user?.display_name || user?.full_name || "Anonymous",
                   user_email: user?.email,
                 })
               }
