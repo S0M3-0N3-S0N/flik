@@ -1135,7 +1135,7 @@ export default function Editor() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1">
               <div className="px-4 pb-4 flex-1 overflow-y-auto">
-            <TabsContent value="ai" className="mt-0">
+                <TabsContent value="ai" className="mt-0">
               <ToolPanel 
                 onToolSelect={handleToolSelect} 
                 isProcessing={isProcessing}
