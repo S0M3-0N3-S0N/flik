@@ -1117,7 +1117,7 @@ export default function Editor() {
     <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden" />
       
-      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
+      <main className="flex-1 flex flex-col w-full h-full relative min-h-0">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
