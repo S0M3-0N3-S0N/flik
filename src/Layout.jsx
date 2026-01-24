@@ -35,7 +35,16 @@ function LayoutContent({ children, currentPageName }) {
   }, [language]);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me()
+      .then(user => {
+        if (!user) {
+          base44.auth.redirectToLogin(window.location.pathname);
+        }
+        setUser(user);
+      })
+      .catch(() => {
+        base44.auth.redirectToLogin(window.location.pathname);
+      });
   }, []);
 
   // Global keyboard shortcut for FLIK
