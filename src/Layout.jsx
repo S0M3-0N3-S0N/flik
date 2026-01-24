@@ -256,7 +256,16 @@ function LayoutContent({ children, currentPageName }) {
                 <Sparkles className="w-4 h-4" />
                 Notifications
               </Link>
-            </nav>
+              <Link 
+                to={createPageUrl("FollowFeed")} 
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  currentPageName === "FollowFeed" ? "text-white" : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Compass className="w-4 h-4" />
+                Feed
+              </Link>
+              </nav>
             
             <div className="flex items-center gap-4">
               <Link 
