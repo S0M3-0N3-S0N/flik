@@ -238,6 +238,24 @@ function LayoutContent({ children, currentPageName }) {
                 <Compass className="w-4 h-4" />
                 Discover
               </Link>
+              <Link 
+                to={createPageUrl("Messages")} 
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  currentPageName === "Messages" ? "text-white" : "text-white/60 hover:text-white"
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Messages
+              </Link>
+              <Link 
+                to={createPageUrl("Notifications")} 
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  currentPageName === "Notifications" ? "text-white" : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                Notifications
+              </Link>
             </nav>
             
             <div className="flex items-center gap-4">
