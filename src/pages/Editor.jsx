@@ -1120,8 +1120,7 @@ export default function Editor() {
         animate={{ opacity: 1 }}
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
-
-
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="px-4 pb-4">
             <TabsContent value="ai" className="mt-0">
               <ToolPanel 
