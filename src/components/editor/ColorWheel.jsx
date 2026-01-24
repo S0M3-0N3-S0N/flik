@@ -139,7 +139,7 @@ export default function ColorWheel({
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
       >
-        <div className="bg-[#1a1a1a]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl w-80"
+        <div className="bg-[#1a1a1a]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl w-[calc(100vw-2rem)] sm:w-80 max-w-80"
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
