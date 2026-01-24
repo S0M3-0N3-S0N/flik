@@ -56,7 +56,8 @@ const ChatInput = React.memo(function ChatInput({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (!isTyping && !isUploadingChat) {
+          e.stopPropagation();
+          if (!isTyping && !isUploadingChat && onSend) {
             onSend();
           }
         }}
@@ -64,7 +65,11 @@ const ChatInput = React.memo(function ChatInput({
       >
         <motion.button
           type="button"
-          onClick={onVoiceToggle}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (onVoiceToggle) onVoiceToggle();
+          }}
           className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${
             isListening 
               ? 'bg-red-500/30 text-red-400 animate-pulse scale-110' 
@@ -87,7 +92,11 @@ const ChatInput = React.memo(function ChatInput({
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={onGalleryPick}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onGalleryPick && !isTyping) onGalleryPick();
+            }}
             className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0"
             title="Pick from gallery"
             disabled={isTyping}
@@ -95,7 +104,12 @@ const ChatInput = React.memo(function ChatInput({
             <Grid3x3 className="w-4 h-4" />
           </button>
           <Button 
-            type="submit" 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!isTyping && !isUploadingChat && onSend) onSend();
+            }}
             size="icon"
             disabled={isTyping || isUploadingChat}
             className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg rounded-xl h-10 w-10 p-0"
