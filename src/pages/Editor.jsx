@@ -481,7 +481,7 @@ export default function Editor() {
     ctx.globalCompositeOperation = 'source-over';
     
     return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
-  }, [currentImage, paintStrokes, handleGenerateCanvas, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
+  }, [currentImage, paintStrokes, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor, adjustments, transform, selectedFilter, generateCanvas]);
 
   const handleAdjustmentChange = useCallback((newAdjustments) => {
     setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
