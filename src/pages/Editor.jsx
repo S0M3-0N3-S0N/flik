@@ -111,7 +111,12 @@ export default function Editor() {
       setActiveTab('crop');
       if (payload.active) handleStartCrop();
     }
-  });
+  }, () => ({
+    currentTool: activeTab,
+    magicBrushPrompt: magicBrushPrompt,
+    hasMaskDrawn: brushStrokes.length > 0,
+    hasImage: !!currentImage
+  }));
 
   // Load image from URL parameter
   useEffect(() => {

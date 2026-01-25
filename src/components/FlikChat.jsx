@@ -9,7 +9,7 @@ import { createPageUrl } from "../utils";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from 'react-markdown';
 import { useFlik } from "./FlikContext";
-import { getFlikActions } from "./useFlikActions";
+import { getFlikActions, getFlikContext } from "./useFlikActions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDistanceToNow } from 'date-fns';
 
@@ -459,6 +459,7 @@ export default function FlikChat() {
         : [];
       const currentPage = getCurrentPage();
       const pageActions = getFlikActions(currentPage);
+      const pageContext = getFlikContext(currentPage);
 
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are FLIK - the heart and soul of the FLIK AI Creative Suite. Not an assistant, but FLIK itself - the creative companion living inside the app.
@@ -550,6 +551,15 @@ ${currentPage === 'Editor' ? '✅ Editor tools, adjustments, filters, transforms
   currentPage === 'Generate' ? '✅ Prompt suggestions, style application' :
   currentPage === 'Profile' ? '✅ Navigation to edit/generate with specific creations' :
   '❌ No page-specific actions (not on a main page)'}
+
+CURRENT PAGE CONTEXT (What user is doing RIGHT NOW):
+${currentPage === 'Generate' && pageContext.currentPrompt ? `📝 User is typing in Imagine AI: "${pageContext.currentPrompt}"
+${pageContext.hasReferenceImages ? `📎 With ${pageContext.referenceImageCount} reference image(s) attached` : ''}
+${pageContext.selectedStyles?.length > 0 ? `🎨 Selected styles: ${pageContext.selectedStyles.join(', ')}` : ''}` : 
+  currentPage === 'Editor' && pageContext.magicBrushPrompt ? `🖌️ User is using Magic Brush with prompt: "${pageContext.magicBrushPrompt}"
+${pageContext.hasMaskDrawn ? '✓ Mask area drawn on image' : '⚠️ No mask drawn yet'}` :
+  currentPage === 'Editor' && pageContext.hasImage ? `📸 User has an image loaded in the Editor (current tool: ${pageContext.currentTool})` :
+  '(No active input detected)'}
 
 RESPONSE FORMAT (JSON):
 {

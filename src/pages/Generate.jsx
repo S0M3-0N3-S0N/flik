@@ -51,7 +51,12 @@ export default function Generate() {
         setSelectedStyles([...selectedStyles, styleId]);
       }
     }
-  });
+  }, () => ({
+    currentPrompt: prompt,
+    hasReferenceImages: uploadedImages.length > 0,
+    referenceImageCount: uploadedImages.length,
+    selectedStyles: selectedStyles
+  }));
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
