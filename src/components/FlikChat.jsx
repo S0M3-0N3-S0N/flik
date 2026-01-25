@@ -996,8 +996,18 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
                   )}
                 </div>
                 {msg.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {cachedUserData?.userProfile?.profile_picture ? (
+                      <img 
+                        src={cachedUserData.userProfile.profile_picture} 
+                        alt={cachedUserData.userProfile.full_name || 'User'} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-semibold text-sm">
+                        {cachedUserData?.userProfile?.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4 text-white" />}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
