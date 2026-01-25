@@ -403,7 +403,7 @@ export default function Editor() {
   const handleDownload = useCallback(async () => {
     if (!currentImage) return;
     try {
-      const blob = await getProcessedImageWithPaint(true); // Pass true to exclude filters
+      const blob = await getProcessedImageWithPaint();
       if (!blob) {
         toast.error("Could not get image data to download.");
         return;
@@ -421,15 +421,13 @@ export default function Editor() {
       console.error("Download failed", e);
       toast.error("Download failed. Please try again.");
     }
-  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL]);
+  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL, adjustments, transform, selectedFilter]);
 
-  const getProcessedImageWithPaint = useCallback(async (excludeFilters = false) => {
+  const getProcessedImageWithPaint = useCallback(async () => {
     if (!currentImage) return null;
     
-    // Generate canvas without filters if requested
-    const baseCanvas = excludeFilters 
-      ? await generateCanvas(currentImage, adjustments, transform, null)
-      : await handleGenerateCanvas();
+    // Generate canvas WITH all adjustments, transforms, AND filters
+    const baseCanvas = await generateCanvas(currentImage, adjustments, transform, selectedFilter);
     if (!baseCanvas) return null;
     
     // If no paint strokes, just return the base canvas
@@ -633,7 +631,7 @@ export default function Editor() {
     if (!currentImage) return;
     setIsSaving(true);
     try {
-      const blob = await getProcessedImageWithPaint(true); // Pass true to exclude filters
+      const blob = await getProcessedImageWithPaint();
       if (!blob) {
         toast.error("Could not get image data to save.");
         return;
