@@ -421,13 +421,12 @@ export default function Editor() {
       console.error("Download failed", e);
       toast.error("Download failed. Please try again.");
     }
-  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL, adjustments, transform, selectedFilter]);
+  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL]);
 
   const getProcessedImageWithPaint = useCallback(async () => {
     if (!currentImage) return null;
     
-    // Generate canvas WITH all adjustments, transforms, AND filters
-    const baseCanvas = await generateCanvas(currentImage, adjustments, transform, selectedFilter);
+    const baseCanvas = await handleGenerateCanvas();
     if (!baseCanvas) return null;
     
     // If no paint strokes, just return the base canvas
@@ -481,7 +480,7 @@ export default function Editor() {
     ctx.globalCompositeOperation = 'source-over';
     
     return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
-  }, [currentImage, paintStrokes, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor, adjustments, transform, selectedFilter, generateCanvas]);
+  }, [currentImage, paintStrokes, handleGenerateCanvas, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
 
   const handleAdjustmentChange = useCallback((newAdjustments) => {
     setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
