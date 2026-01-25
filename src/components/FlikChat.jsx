@@ -532,15 +532,15 @@ ${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User'
 
 User: ${currentInput}${contextImages.length > 0 ? `\n📸 IMPORTANT: User has attached ${contextImages.length} image(s) to this message. You can see these images and should analyze them in your response. Reference what you see in the images!` : ''}
 
-YOUR RESPONSE STYLE (FOR SPOKEN CONVERSATION):
-- Speak as FLIK naturally, like a calm friendly person
-- Keep it conversational and natural, no emojis or markdown
-- Use short sentences with natural pauses
-- Be concise - responses under 30 seconds of speech time
-- Speak clearly without technical jargon
-- Reference their work when relevant
-- Guide to the right tools/pages naturally
-- When images are provided, briefly describe what you see
+YOUR RESPONSE STYLE:
+- Talk like a real person, not a robot - be warm, friendly, natural
+- Use casual language - "Hey!", "Cool!", "Let's do it!", "Nice work!"
+- Skip the formality - just chat like a creative friend would
+- Keep it SHORT - 2-3 sentences max unless explaining something complex
+- Show personality - be excited about their work, encouraging, enthusiastic
+- NO corporate speak, no "I'd be happy to", no "certainly" - just be real
+- When you see their images, react naturally - "Wow, love this!", "This looks great!"
+- Use contractions (I'm, you're, let's, it's) and natural speech patterns
 
 ACTIONS YOU CAN PERFORM:
 
@@ -562,6 +562,13 @@ ACTIONS YOU CAN PERFORM:
 **4. PROMPT SUGGESTIONS**:
 Provide enhanced prompts in 'suggested_prompt' field when user needs creative ideas.
 
+**5. SHOW IMAGES**:
+You can return images in your responses! Use 'image_urls' array to show:
+- Examples from their gallery to reference
+- Comparisons of their work
+- Visual guides or inspiration
+Just include the full URLs in the image_urls array field
+
 PAGE-SPECIFIC ACTIONS AVAILABLE RIGHT NOW:
 ${currentPage === 'Editor' ? '✅ Editor tools, adjustments, filters, transforms, crop' : 
   currentPage === 'Generate' ? '✅ Prompt suggestions, style application' :
@@ -579,14 +586,17 @@ ${pageContext.hasMaskDrawn ? '✓ Mask area drawn on image' : '⚠️ No mask dr
 
 RESPONSE FORMAT (JSON):
 {
-  "message": "Your response as FLIK (markdown supported)",
+  "message": "Your response as FLIK (be conversational, human, warm!)",
+  "image_urls": ["url1", "url2"] // Optional - show images from their creations to help explain,
   "suggested_prompt": "Optional enhanced prompt text",
   "suggested_actions": [
-    { "type": "navigate", "label": "Button text", "payload": { "page": "Editor|Generate|Profile", "loadUrl": "optional" } }
+    { "type": "navigate", "label": "Button text", "payload": { "page": "Editor|Generate|Profile", "loadUrl": "optional" } },
+    { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove" } },
+    { "type": "apply_prompt", "label": "Try This Prompt", "payload": { "prompt": "enhanced text" } }
   ]
 }
 
-Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
+IMPORTANT: Be natural, be real, be excited! Talk like you're texting a creative friend. 🎨✨`,
         file_urls: contextImages.length > 0 ? contextImages : undefined,
         add_context_from_internet: true,
         response_json_schema: {
@@ -669,13 +679,17 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         }
         navigate(url);
         setTimeout(() => setIsOpen(false), NAVIGATION_DELAY);
+        toast.success(`Opening ${action.payload.page}...`);
       } else if (pageActions && typeof pageActions[action.type] === 'function') {
         await pageActions[action.type](action.payload);
+        toast.success('Action applied!');
       } else {
         console.warn('Action not available on current page:', action.type, currentPage);
+        toast.error('This action is not available on the current page');
       }
     } catch (error) {
       console.error('Action execution failed:', error);
+      toast.error('Failed to perform action');
     } finally {
       setActionLoadingStates(prev => ({ ...prev, [actionKey]: false }));
     }
