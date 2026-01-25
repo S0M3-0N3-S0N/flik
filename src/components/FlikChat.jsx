@@ -1053,6 +1053,15 @@ Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
               <div className="flex gap-1">
                 <button
                   type="button"
+                  onClick={() => chatFileRef.current?.click()}
+                  disabled={isUploadingChat}
+                  className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0 disabled:opacity-50"
+                  title="Upload images"
+                >
+                  {isUploadingChat ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                </button>
+                <button
+                  type="button"
                   onClick={handleGalleryPick}
                   className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0"
                   title="Pick from gallery"
