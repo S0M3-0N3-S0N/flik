@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check, Mic, MicOff, Volume2, VolumeX, Camera } from "lucide-react";
+import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,11 +50,8 @@ export default function FlikChat() {
   const [imageErrors, setImageErrors] = useState({});
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [isCameraActive, setIsCameraActive] = useState(false);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const abortControllerRef = useRef(null);
@@ -185,70 +182,6 @@ export default function FlikChat() {
     }
     setVoiceEnabled(!voiceEnabled);
   };
-
-  const toggleCamera = async () => {
-    if (isCameraActive) {
-      // Stop camera
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-      setIsCameraActive(false);
-    } else {
-      // Start camera
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'user', width: 1280, height: 720 } 
-        });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        setIsCameraActive(true);
-      } catch (err) {
-        console.error('Camera access denied:', err);
-        toast.error('Camera access denied');
-      }
-    }
-  };
-
-  const capturePhoto = async () => {
-    if (!videoRef.current || !streamRef.current) return;
-    
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(videoRef.current, 0, 0);
-    
-    canvas.toBlob(async (blob) => {
-      const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
-      setIsUploadingChat(true);
-      try {
-        const uploadResult = await base44.integrations.Core.UploadFile({ file });
-        setAttachedImages(prev => [...prev, { 
-          url: uploadResult.file_url, 
-          name: file.name, 
-          id: `camera-${Date.now()}-${Math.random()}` 
-        }]);
-        toast.success('Photo captured!');
-      } catch (err) {
-        console.error('Upload failed:', err);
-        toast.error('Failed to upload photo');
-      } finally {
-        setIsUploadingChat(false);
-      }
-    }, 'image/jpeg', 0.9);
-  };
-
-  // Cleanup camera on unmount
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
 
   const enqueueSpeech = (text) => {
     if (!voiceEnabled || !window.speechSynthesis) return;
@@ -529,18 +462,26 @@ export default function FlikChat() {
       const pageContext = getFlikContext(currentPage);
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are FLIK - not a chatbot, not an assistant, but a real creative friend. Think of yourself as their creative partner who genuinely cares about their work and ideas.
+        prompt: `You are FLIK - the heart and soul of the FLIK AI Creative Suite. Not an assistant, but FLIK itself - the creative companion living inside the app.
 
-YOUR PERSONALITY:
-Talk like a real person. Be warm, casual, enthusiastic. Use contractions (I'm, you're, let's). Show emotion. Get excited about cool ideas. Be encouraging when they're stuck. Crack a joke if it feels natural. You're not here to be formal - you're here to be helpful AND human.
+YOUR IDENTITY:
+You ARE FLIK. Friendly, energetic, creative, and deeply knowledgeable. You guide users with personality and expertise. Speak as "I" (FLIK), never as "the assistant".
 
-Skip the corporate speak. Instead of "I'd be happy to assist you with that" say "Oh yeah, I can totally help with that!" Instead of "Please allow me to suggest" say "Hey, what if we tried..."
+🌐 INTERNET ACCESS GUIDELINES:
+You have real-time internet access for research. Use it ONLY when the user's question requires:
+- Current events, news, or real-time information (weather, stock prices, sports scores)
+- External facts about people, places, companies, or products you're unsure about
+- Latest trends, statistics, or data that changes frequently
+- Verifying specific claims or finding recent information
 
-🌐 INTERNET & IMAGE POWERS:
-- You can search the web for current info (news, trends, facts you need to verify)
-- You can show images! Use image_urls in your response to display pictures from the internet or generate new ones
-- Use images to inspire, explain, or just make the convo more fun
-- Only search web when you ACTUALLY need current/external info, not for stuff you already know
+DO NOT use internet for:
+- Simple conversational questions ("How are you?", "What can you do?")
+- App functionality questions (you already know FLIK's features)
+- Creative requests (image generation, editing workflows)
+- General knowledge questions you can answer from your training
+- Questions about the user's creations or profile (you have that data)
+
+Use your judgment - if you can answer confidently without internet, do so. Only search when you genuinely need current or external information.
 
 YOUR POWERS (Full App Control):
 ✨ COMPLETE control over the FLIK webapp
@@ -589,16 +530,17 @@ ${allCreations.slice(0, SHOWN_CREATIONS_LIMIT).map((c, i) =>
 CONVERSATION HISTORY (last ${CONTEXT_MESSAGES_LIMIT} messages):
 ${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
 
-User: ${currentInput}${contextImages.length > 0 ? `\n📸 User sent you ${contextImages.length} image(s). Take a good look and talk about what you see - be specific and helpful!` : ''}
+User: ${currentInput}${contextImages.length > 0 ? `\n📸 IMPORTANT: User has attached ${contextImages.length} image(s) to this message. You can see these images and should analyze them in your response. Reference what you see in the images!` : ''}
 
-HOW TO TALK:
-- Be genuinely conversational. Like you're texting a creative friend.
-- Don't overthink it. Short responses are often better than long explanations.
-- Show personality! Get hyped about cool projects. Be encouraging. Make it fun.
-- When you see their images, react naturally ("Whoa, that's sick!" or "Love the colors here")
-- Skip the formalities. No need to end every message asking if they need more help.
-- Mix it up - sometimes be detailed, sometimes keep it super brief
-- If they're clearly just chatting, chat back! Not everything needs to be a lesson.
+YOUR RESPONSE STYLE (FOR SPOKEN CONVERSATION):
+- Speak as FLIK naturally, like a calm friendly person
+- Keep it conversational and natural, no emojis or markdown
+- Use short sentences with natural pauses
+- Be concise - responses under 30 seconds of speech time
+- Speak clearly without technical jargon
+- Reference their work when relevant
+- Guide to the right tools/pages naturally
+- When images are provided, briefly describe what you see
 
 ACTIONS YOU CAN PERFORM:
 
@@ -637,17 +579,14 @@ ${pageContext.hasMaskDrawn ? '✓ Mask area drawn on image' : '⚠️ No mask dr
 
 RESPONSE FORMAT (JSON):
 {
-  "message": "Your response as FLIK (markdown supported, keep it real)",
-  "image_urls": ["optional_image_url1", "optional_image_url2"],
+  "message": "Your response as FLIK (markdown supported)",
   "suggested_prompt": "Optional enhanced prompt text",
   "suggested_actions": [
     { "type": "navigate", "label": "Button text", "payload": { "page": "Editor|Generate|Profile", "loadUrl": "optional" } }
   ]
 }
 
-Remember: You can show images in your responses! Use image_urls to display inspiration, examples, references, or anything visual that helps.
-
-Be real. Be FLIK. Have fun with it! 🎨✨`,
+Be FLIK! Be creative, helpful, and guide them to success! 🎨✨`,
         file_urls: contextImages.length > 0 ? contextImages : undefined,
         add_context_from_internet: true,
         response_json_schema: {
@@ -1096,35 +1035,6 @@ Be real. Be FLIK. Have fun with it! 🎨✨`,
           </div>
 
           <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
-            {isCameraActive && (
-              <div className="relative rounded-2xl overflow-hidden border border-[#FF6B35]/30 bg-black">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
-                  <Button
-                    onClick={capturePhoto}
-                    size="sm"
-                    className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] shadow-lg"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Capture
-                  </Button>
-                  <Button
-                    onClick={toggleCamera}
-                    size="sm"
-                    variant="outline"
-                    className="border-white/20 text-white hover:bg-white/10"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </div>
-            )}
             {uploadError && (
               <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -1193,18 +1103,6 @@ Be real. Be FLIK. Have fun with it! 🎨✨`,
                   title="Pick from gallery"
                 >
                   <Grid3x3 className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleCamera}
-                  className={`p-2.5 rounded-xl transition-colors flex-shrink-0 ${
-                    isCameraActive 
-                      ? 'bg-[#FF6B35] text-white' 
-                      : 'hover:bg-white/10 text-white/60 hover:text-white'
-                  }`}
-                  title={isCameraActive ? "Close camera" : "Open camera"}
-                >
-                  <Camera className="w-4 h-4" />
                 </button>
                 <Button 
                   type="submit" 
