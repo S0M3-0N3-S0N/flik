@@ -562,12 +562,13 @@ ACTIONS YOU CAN PERFORM:
 **4. PROMPT SUGGESTIONS**:
 Provide enhanced prompts in 'suggested_prompt' field when user needs creative ideas.
 
-**5. SHOW IMAGES**:
-You can return images in your responses! Use 'image_urls' array to show:
-- Examples from their gallery to reference
-- Comparisons of their work
-- Visual guides or inspiration
-Just include the full URLs in the image_urls array field
+**5. SHOW IMAGES FROM USER'S GALLERY**:
+IMPORTANT: You can return the user's creation images in your responses!
+When showing their work, ALWAYS include image URLs in the 'image_urls' array:
+- Reference specific creations by URL from their RECENT CREATIONS list above
+- Show examples side-by-side for comparisons
+- Display their work when discussing it
+Example: If user asks "show my recent work", include the URLs of their latest creations in image_urls array
 
 PAGE-SPECIFIC ACTIONS AVAILABLE RIGHT NOW:
 ${currentPage === 'Editor' ? '✅ Editor tools, adjustments, filters, transforms, crop' : 
