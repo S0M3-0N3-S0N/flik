@@ -403,7 +403,7 @@ export default function Editor() {
   const handleDownload = useCallback(async () => {
     if (!currentImage) return;
     try {
-      const blob = await getProcessedImageWithPaint();
+      const blob = await getProcessedImageWithPaint(true); // Pass true to exclude filters
       if (!blob) {
         toast.error("Could not get image data to download.");
         return;
@@ -423,10 +423,13 @@ export default function Editor() {
     }
   }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL]);
 
-  const getProcessedImageWithPaint = useCallback(async () => {
+  const getProcessedImageWithPaint = useCallback(async (excludeFilters = false) => {
     if (!currentImage) return null;
     
-    const baseCanvas = await handleGenerateCanvas();
+    // Generate canvas without filters if requested
+    const baseCanvas = excludeFilters 
+      ? await generateCanvas(currentImage, adjustments, transform, null)
+      : await handleGenerateCanvas();
     if (!baseCanvas) return null;
     
     // If no paint strokes, just return the base canvas
@@ -630,7 +633,7 @@ export default function Editor() {
     if (!currentImage) return;
     setIsSaving(true);
     try {
-      const blob = await getProcessedImageWithPaint();
+      const blob = await getProcessedImageWithPaint(true); // Pass true to exclude filters
       if (!blob) {
         toast.error("Could not get image data to save.");
         return;
