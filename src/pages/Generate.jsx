@@ -31,6 +31,7 @@ export default function Generate() {
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [imageStrength, setImageStrength] = useState(0.5);
+  const [imageCount, setImageCount] = useState(1);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryCreations, setGalleryCreations] = useState([]);
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
@@ -55,7 +56,9 @@ export default function Generate() {
     currentPrompt: prompt,
     hasReferenceImages: uploadedImages.length > 0,
     referenceImageCount: uploadedImages.length,
-    selectedStyles: selectedStyles
+    selectedStyles: selectedStyles,
+    imageCount: imageCount,
+    aspectRatio: aspectRatio
   }));
 
   useEffect(() => {
@@ -118,9 +121,8 @@ export default function Generate() {
         ${aiModel === 'gemini' ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
 
         CRITICAL RULES:
-        1. DEFAULT to generating EXACTLY ONE prompt. 
-        2. ONLY generate multiple prompts if the user EXPLICITLY specifies a quantity (e.g., "3 images", "5 variations") or explicitly asks for "variations" or "different angles".
-        3. If no quantity/variation is requested, return an array with ONLY ONE prompt.
+        1. User wants to generate EXACTLY ${imageCount} image(s). Return ${imageCount} enhanced prompt(s).
+        2. ${imageCount > 1 ? 'Create variations with different angles, lighting, or composition while maintaining the core subject.' : 'Return a single enhanced prompt.'}
 
         Enhancement Tasks:
         1. Greatly improve the prompt quality. Add professional details: lighting (e.g., volumetric, cinematic, studio), camera parameters (e.g., 85mm, f/1.8, 4k, 8k), composition, and textures.
@@ -152,9 +154,12 @@ export default function Generate() {
             ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
             : `${finalPrompt}, masterpiece, high quality, detailed`;
           
-          // Append aspect ratio instruction (handled by model or prompt engineering)
-          if (aspectRatio === "16:9") fullPrompt += ", wide cinematic shot, 16:9 aspect ratio";
-          else if (aspectRatio === "9:16") fullPrompt += ", tall portrait shot, 9:16 aspect ratio";
+          // CRITICAL: Aspect ratio must be enforced at the START of the prompt for best results
+          if (aspectRatio === "16:9") {
+            fullPrompt = `CRITICAL REQUIREMENT: WIDE 16:9 LANDSCAPE FORMAT ONLY. Ultra-wide cinematic composition. ${fullPrompt}. MUST BE HORIZONTAL LANDSCAPE 16:9 RATIO`;
+          } else if (aspectRatio === "9:16") {
+            fullPrompt = `CRITICAL REQUIREMENT: TALL 9:16 PORTRAIT FORMAT ONLY. Vertical portrait composition. ${fullPrompt}. MUST BE VERTICAL PORTRAIT 9:16 RATIO`;
+          }
           
           // Append negative prompt if exists
           if (negativePrompt.trim()) {
@@ -415,41 +420,61 @@ export default function Generate() {
                   <Popover>
                     <PopoverTrigger asChild>
                       <button 
-                        className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
-                          (aspectRatio !== "1:1" || negativePrompt) 
+                        className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
+                          (aspectRatio !== "1:1" || negativePrompt || imageCount !== 1) 
                             ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                             : 'text-white/60 hover:bg-white/5 hover:text-white'
                         }`}
                         title="Advanced Settings"
                       >
                         <Settings2 className="w-4 h-4" />
+                        {imageCount > 1 && <span className="font-bold">×{imageCount}</span>}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {[
-                              { id: "1:1", icon: Square, label: "Square" },
-                              { id: "16:9", icon: RectangleHorizontal, label: "Landscape" },
-                              { id: "9:16", icon: RectangleVertical, label: "Portrait" }
-                            ].map((ratio) => (
-                              <button
-                                key={ratio.id}
-                                onClick={() => setAspectRatio(ratio.id)}
-                                className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
-                                  aspectRatio === ratio.id 
-                                    ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                    : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
-                                }`}
-                              >
-                                <ratio.icon className="w-4 h-4" />
-                                <span className="text-[10px]">{ratio.label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                     <div className="space-y-4">
+                       <div className="space-y-2">
+                         <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Number of Images</Label>
+                         <div className="grid grid-cols-3 gap-2">
+                           {[1, 3, 5].map((count) => (
+                             <button
+                               key={count}
+                               onClick={() => setImageCount(count)}
+                               className={`flex items-center justify-center gap-1.5 p-3 rounded-lg border transition-all font-bold text-base ${
+                                 imageCount === count 
+                                   ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                   : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                               }`}
+                             >
+                               {count}
+                             </button>
+                           ))}
+                         </div>
+                       </div>
+
+                       <div className="space-y-2">
+                         <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
+                         <div className="grid grid-cols-3 gap-2">
+                           {[
+                             { id: "1:1", icon: Square, label: "Square" },
+                             { id: "16:9", icon: RectangleHorizontal, label: "Landscape" },
+                             { id: "9:16", icon: RectangleVertical, label: "Portrait" }
+                           ].map((ratio) => (
+                             <button
+                               key={ratio.id}
+                               onClick={() => setAspectRatio(ratio.id)}
+                               className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
+                                 aspectRatio === ratio.id 
+                                   ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                   : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                               }`}
+                             >
+                               <ratio.icon className="w-4 h-4" />
+                               <span className="text-[10px]">{ratio.label}</span>
+                             </button>
+                           ))}
+                         </div>
+                       </div>
 
                         <div className="space-y-2">
                           <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
