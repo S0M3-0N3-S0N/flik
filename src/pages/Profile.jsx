@@ -739,7 +739,7 @@ export default function Profile() {
               />
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin">
                <Tabs value={filterType} onValueChange={setFilterType} className="flex-shrink-0">
                 <TabsList className="bg-white/5 border border-white/10 h-9 sm:h-10 rounded-xl p-0.5 sm:p-1 gap-0.5 sm:gap-1">
                   {FILTER_TYPES.map(filter => (
