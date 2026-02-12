@@ -873,24 +873,37 @@ RULES:
                 <p className="text-xs text-white/50">Your Creative Companion</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 relative z-10">
+            <div className="flex items-center gap-1 relative z-10">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setShowConversations(true)}
-                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10"
+                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-8 w-8"
                 title="Saved conversations"
               >
-                <History className="w-4 h-4" />
+                <History className="w-3.5 h-3.5" />
               </Button>
+              {messages.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleSaveConversation}
+                  disabled={isSavingConversation}
+                  className="text-white/60 hover:text-green-400 hover:bg-green-500/10 h-8 w-8"
+                  title="Save conversation"
+                >
+                  {isSavingConversation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                </Button>
+              )}
+              <div className="w-px h-4 bg-white/10 mx-0.5" />
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setInternetEnabled(!internetEnabled)}
-                className={internetEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}
-                title={internetEnabled ? "Disable internet access" : "Enable internet access"}
+                className={`h-8 w-8 ${internetEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}`}
+                title={internetEnabled ? "Internet: ON" : "Internet: OFF"}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {internetEnabled ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                   ) : (
@@ -905,36 +918,13 @@ RULES:
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleVoiceOutput}
-                className={voiceEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}
-                title={voiceEnabled ? "Disable voice output" : "Enable voice output"}
+                className={`h-8 w-8 ${voiceEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}`}
+                title={voiceEnabled ? "Voice: ON" : "Voice: OFF"}
               >
-                {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
               </Button>
-              {messages.length > 0 && (
-                <>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={handleSaveConversation}
-                    disabled={isSavingConversation}
-                    className="text-white/60 hover:text-green-400 hover:bg-green-500/10"
-                    title="Save conversation"
-                  >
-                    {isSavingConversation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setShowClearConfirm(true)}
-                    className="text-white/40 hover:text-red-400 hover:bg-red-500/10"
-                    title="Clear conversation"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-white/60 hover:text-white">
-                <X className="w-5 h-5" />
+              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-white/60 hover:text-white h-8 w-8 ml-1">
+                <X className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -1547,16 +1537,16 @@ RULES:
         <Dialog open={showConversations} onOpenChange={setShowConversations}>
           <DialogContent className="max-w-2xl max-h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold gradient-text flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
-                  <div className="w-full h-full rounded-[10px] bg-[#0a0a0a] flex items-center justify-center">
-                    <History className="w-5 h-5 text-[#FF6B35]" />
+              <DialogTitle className="text-xl font-bold gradient-text flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
+                  <div className="w-full h-full rounded-[9px] bg-[#0a0a0a] flex items-center justify-center">
+                    <History className="w-4 h-4 text-[#FF6B35]" />
                   </div>
                 </div>
                 Saved Conversations
               </DialogTitle>
             </DialogHeader>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {savedConversations.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
@@ -1569,28 +1559,28 @@ RULES:
                 savedConversations.map((conv) => (
                   <div
                     key={conv.id}
-                    className="p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 transition-all group"
+                    className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 transition-all group"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-2">
                       <button
                         onClick={() => handleLoadConversation(conv)}
-                        className="flex-1 text-left"
+                        className="flex-1 text-left min-w-0"
                       >
-                        <h4 className="text-white font-medium text-sm mb-1 group-hover:text-[#FF6B35] transition-colors">
+                        <h4 className="text-white font-medium text-sm mb-0.5 group-hover:text-[#FF6B35] transition-colors truncate">
                           {conv.title}
                         </h4>
-                        <p className="text-white/40 text-xs">
-                          {conv.messages?.length || 0} messages • {formatDistanceToNow(new Date(conv.last_message_at || conv.created_date), { addSuffix: true })}
+                        <p className="text-white/40 text-[11px]">
+                          {conv.messages?.length || 0} msgs • {formatDistanceToNow(new Date(conv.last_message_at || conv.created_date), { addSuffix: true })}
                         </p>
                       </button>
                       <Button
                         onClick={() => deleteConversationMutation.mutate(conv.id)}
                         variant="ghost"
                         size="icon"
-                        className="text-white/40 hover:text-red-400 hover:bg-red-500/10 h-8 w-8"
-                        title="Delete conversation"
+                        className="text-white/40 hover:text-red-400 hover:bg-red-500/10 h-7 w-7 flex-shrink-0"
+                        title="Delete"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
                   </div>
