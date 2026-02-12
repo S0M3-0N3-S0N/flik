@@ -172,7 +172,18 @@ export default function FlikChat() {
       setIsListening(false);
     } else {
       setInput('');
-      recognitionRef.current?.start();
+      try {
+        recognitionRef.current?.start();
+      } catch (error) {
+        // Ignore if already started
+        if (error.message && error.message.includes('already started')) {
+          console.log('Recognition already started');
+        } else {
+          console.error('Speech recognition error:', error);
+          toast.error('Voice recognition failed to start');
+        }
+        return;
+      }
       
       // Auto-send after user stops speaking (3 second silence)
       const autoSendTimeout = setTimeout(() => {
