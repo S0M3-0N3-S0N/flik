@@ -1063,10 +1063,10 @@ RULES:
                     </div>
                   ) : (
                   <div
-                    className={`px-4 py-3 rounded-2xl text-sm space-y-2 ${
+                    className={`px-4 py-3 rounded-2xl text-sm space-y-2 border ${
                       msg.role === 'user'
-                        ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white rounded-tr-none shadow-lg'
-                        : 'bg-white/8 text-white/90 rounded-tl-none backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors'
+                        ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white rounded-tr-none shadow-lg border-[#FF6B35]/30'
+                        : 'bg-white/8 text-white/90 rounded-tl-none backdrop-blur-md border-white/10 hover:border-white/20 transition-colors'
                     }`}
                   >
                     {msg.role === 'user' && msg.images && msg.images.length > 0 && (
