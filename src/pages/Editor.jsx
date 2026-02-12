@@ -1103,16 +1103,7 @@ export default function Editor() {
                   <ZoomOut className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                 </Button>
 
-                <div className="w-16 sm:w-20 lg:w-32 relative">
-                  <Slider 
-                    value={[zoom]} 
-                    min={0.1} 
-                    max={5} 
-                    step={0.1} 
-                    onValueChange={(v) => setZoom(v[0])}
-                    className="[&_.relative]:bg-white/10 [&_.relative]:h-1.5 [&_.absolute]:bg-gradient-to-r [&_.absolute]:from-white [&_.absolute]:to-white/90 [&_.absolute]:shadow-[0_0_15px_rgba(255,255,255,0.6)] [&_span]:border-2 [&_span]:border-white/80 [&_span]:shadow-xl [&_span]:w-4 [&_span]:h-4"
-                  />
-                </div>
+
 
                 <Button
                   variant="ghost"
