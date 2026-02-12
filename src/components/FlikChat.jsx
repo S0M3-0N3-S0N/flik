@@ -1570,7 +1570,7 @@ RULES:
 
         {/* Saved Conversations Dialog */}
         <Dialog open={showConversations} onOpenChange={setShowConversations}>
-          <DialogContent className="max-w-2xl max-h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col">
+          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold gradient-text flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
