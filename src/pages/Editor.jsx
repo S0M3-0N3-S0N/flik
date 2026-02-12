@@ -406,10 +406,16 @@ export default function Editor() {
         throw new Error("Failed to generate canvas");
       }
 
-      const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width));
-      const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height));
-      const cropWidth = Math.max(1, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
-      const cropHeight = Math.max(1, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
+      const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width - 1));
+      const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height - 1));
+      let cropWidth = Math.max(2, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
+      let cropHeight = Math.max(2, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
+      
+      if (cropWidth <= 0 || cropHeight <= 0) {
+        toast.error("Crop area too small. Increase the selection.");
+        setIsProcessing(false);
+        return;
+      }
 
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = cropWidth;
