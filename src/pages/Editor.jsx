@@ -17,7 +17,7 @@ import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
-import ColorWheel from "@/components/editor/ColorWheel";
+
 
 import { useFlikActions } from "@/components/useFlikActions";
 
@@ -66,15 +66,7 @@ export default function Editor() {
   const [activeBatchIndex, setActiveBatchIndex] = useState(null);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchCancelled, setBatchCancelled] = useState(false);
-  const [brushColor, setBrushColor] = useState("#FF6B35");
-  const [brushPreset, setBrushPreset] = useState({ id: 'round', name: 'Round', icon: '●', opacity: 1, size: 30, spacing: 25, jitter: 0, flow: 100, wetness: 0 });
-  const [showColorWheel, setShowColorWheel] = useState(false);
-  const [paintStrokes, setPaintStrokes] = useState([]);
-  const [isPaintMode, setIsPaintMode] = useState(false);
-  const [paintLayerOpacity, setPaintLayerOpacity] = useState(1);
-  const [paintLayerVisible, setPaintLayerVisible] = useState(true);
-  const [blendMode, setBlendMode] = useState('source-over');
-  const [paintBrushMode, setPaintBrushMode] = useState('draw');
+
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const toolbarHideTimeoutRef = useRef(null);
 
@@ -83,7 +75,7 @@ export default function Editor() {
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
-  const paintCanvasRef = useRef(null);
+
   const containerRef = useRef(null);
   const cursorRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
@@ -175,7 +167,6 @@ export default function Editor() {
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
       setBrushStrokes([]);
-      setPaintStrokes([]);
       setIsCropping(false);
       setCropArea({ x: 10, y: 10, width: 80, height: 80 });
       setUndoHistory([]);
@@ -365,45 +356,43 @@ export default function Editor() {
   const handleUndo = useCallback(() => {
     if (undoHistory.length > 0) {
       const previous = undoHistory[undoHistory.length - 1];
-      setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+      setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
       
       if (previous.image) {
         setCurrentImage(previous.image);
         if (previous.adjustments) setAdjustments(previous.adjustments);
         if (previous.filter !== undefined) setSelectedFilter(previous.filter);
         if (previous.transform) setTransform(previous.transform);
-        if (previous.paintStrokes) setPaintStrokes(previous.paintStrokes);
       } else {
         setCurrentImage(previous);
       }
       
       setUndoHistory(prev => prev.slice(0, -1));
     }
-  }, [undoHistory, currentImage, adjustments, selectedFilter, transform, paintStrokes]);
+  }, [undoHistory, currentImage, adjustments, selectedFilter, transform]);
 
   const handleRedo = useCallback(() => {
     if (redoHistory.length > 0) {
       const next = redoHistory[redoHistory.length - 1];
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
 
       if (next.image) {
         setCurrentImage(next.image);
         if (next.adjustments) setAdjustments(next.adjustments);
         if (next.filter !== undefined) setSelectedFilter(next.filter);
         if (next.transform) setTransform(next.transform);
-        if (next.paintStrokes) setPaintStrokes(next.paintStrokes);
       } else {
         setCurrentImage(next);
       }
       
       setRedoHistory(prev => prev.slice(0, -1));
     }
-  }, [redoHistory, currentImage, adjustments, selectedFilter, transform, paintStrokes]);
+  }, [redoHistory, currentImage, adjustments, selectedFilter, transform]);
 
   const handleDownload = useCallback(async () => {
     if (!currentImage) return;
     try {
-      const blob = await getProcessedImageWithPaint();
+      const blob = await handleGetProcessedBlob();
       if (!blob) {
         toast.error("Could not get image data to download.");
         return;
@@ -421,78 +410,21 @@ export default function Editor() {
       console.error("Download failed", e);
       toast.error("Download failed. Please try again.");
     }
-  }, [currentImage, paintStrokes, createObjectURL, revokeObjectURL]);
+  }, [currentImage, handleGetProcessedBlob, createObjectURL, revokeObjectURL]);
 
-  const getProcessedImageWithPaint = useCallback(async () => {
-    if (!currentImage) return null;
-    
-    const baseCanvas = await handleGenerateCanvas();
-    if (!baseCanvas) return null;
-    
-    // If no paint strokes, just return the base canvas
-    if (paintStrokes.length === 0 || !paintLayerVisible) {
-      return new Promise(resolve => baseCanvas.toBlob(resolve, 'image/png'));
-    }
-    
-    // Create final canvas with paint merged
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = baseCanvas.width;
-    finalCanvas.height = baseCanvas.height;
-    const ctx = finalCanvas.getContext('2d');
-    
-    // Draw base image
-    ctx.drawImage(baseCanvas, 0, 0);
-    
-    // Draw paint strokes
-    ctx.globalAlpha = paintLayerOpacity;
-    paintStrokes.forEach(stroke => {
-      const points = stroke.points;
-      if (!points || points.length === 0) return;
-      
-      const isErase = stroke.type === 'erase';
-      const size = stroke.size || brushSize;
-      const color = stroke.color || brushColor;
-      const opacity = stroke.opacity || 1;
-      const flow = stroke.flow || 100;
-      
-      ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
-      
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-      
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
-      
-      points.forEach(point => {
-        ctx.beginPath();
-        ctx.arc(
-          (point.x / 100) * finalCanvas.width,
-          (point.y / 100) * finalCanvas.height,
-          size / 2,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      });
-    });
-    
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-    
-    return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
-  }, [currentImage, paintStrokes, handleGenerateCanvas, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
+
 
   const handleAdjustmentChange = useCallback((newAdjustments) => {
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     setAdjustments(newAdjustments);
     setRedoHistory([]);
-  }, [currentImage, adjustments, selectedFilter, transform, paintStrokes]);
+  }, [currentImage, adjustments, selectedFilter, transform]);
 
   const handleFilterSelect = useCallback((filter) => {
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     setSelectedFilter(filter);
     setRedoHistory([]);
-  }, [currentImage, adjustments, selectedFilter, transform, paintStrokes]);
+  }, [currentImage, adjustments, selectedFilter, transform]);
 
   const handleTransform = useCallback(async (type) => {
     if (!currentImage) return;
@@ -630,7 +562,7 @@ export default function Editor() {
     if (!currentImage) return;
     setIsSaving(true);
     try {
-      const blob = await getProcessedImageWithPaint();
+      const blob = await handleGetProcessedBlob();
       if (!blob) {
         toast.error("Could not get image data to save.");
         return;
@@ -650,41 +582,9 @@ export default function Editor() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentImage, getProcessedImageWithPaint]);
+  }, [currentImage, handleGetProcessedBlob]);
 
-  const handleBakePaint = useCallback(async () => {
-    if (!currentImage || paintStrokes.length === 0) return;
-    
-    setIsProcessing(true);
-    try {
-      const blob = await getProcessedImageWithPaint();
-      if (!blob) {
-        toast.error("Could not bake paint layer.");
-        return;
-      }
-      
-      const url = createObjectURL(blob);
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
-      setCurrentImage({
-        url: url,
-        preview: url,
-        name: "baked_image.png"
-      });
-      
-      setPaintStrokes([]);
-      setAdjustments({ brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 });
-      setSelectedFilter(null);
-      setTransform({ rotate: 0, flipH: false, flipV: false });
-      setRedoHistory([]);
-      
-      toast.success("Paint layer baked into image!");
-    } catch (error) {
-      console.error("Error baking paint:", error);
-      toast.error("Failed to bake paint layer.");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [currentImage, paintStrokes, getProcessedImageWithPaint, createObjectURL, adjustments, selectedFilter, transform]);
+
 
   const handleClearBatch = useCallback(() => {
     batchImages.forEach(img => revokeObjectURL(img.preview));
@@ -789,27 +689,6 @@ export default function Editor() {
         setIsDrawing(true);
         setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
       }
-    } else if (showColorWheel && currentImage && !isCropping) {
-      const pos = getRelativePosition(e);
-      if (pos) {
-        e.preventDefault();
-        setIsPaintMode(true);
-        setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
-        const pressure = e.pressure || (e.touches && e.touches[0].force) || 1;
-        setPaintStrokes(prev => [...prev, { 
-          points: [{ ...pos, pressure }], 
-          type: paintBrushMode,
-          size: brushPreset?.size || brushSize,
-          color: brushColor,
-          opacity: brushPreset?.opacity || 1,
-          spacing: brushPreset?.spacing || 25,
-          jitter: brushPreset?.jitter || 0,
-          flow: brushPreset?.flow || 100,
-          wetness: brushPreset?.wetness || 0,
-          pressure
-        }]);
-        setRedoHistory([]);
-      }
     } else if (isCropping) {
       const pos = getRelativePosition(e);
       if (pos) {
@@ -853,7 +732,7 @@ export default function Editor() {
       return;
     }
 
-    if ((activeTab === "remove" || (showColorWheel && !isCropping)) && cursorRef.current && containerRef.current && clientX !== undefined) {
+    if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
@@ -870,62 +749,6 @@ export default function Editor() {
           newStrokes[newStrokes.length - 1].points.push(pos);
           return newStrokes;
         });
-      }
-    } else if (showColorWheel && isPaintMode && currentImage && !isCropping) {
-      const pos = getRelativePosition(e);
-      if (pos && paintStrokes.length > 0) {
-        e.preventDefault();
-        const pressure = e.pressure || (e.touches && e.touches[0].force) || 1;
-        setPaintStrokes(prev => {
-          const newStrokes = [...prev];
-          newStrokes[newStrokes.length - 1].points.push({ ...pos, pressure });
-          return newStrokes;
-        });
-
-        // Draw immediately for real-time feedback
-        if (paintCanvasRef.current && imageRef.current) {
-          const canvas = paintCanvasRef.current;
-          const img = imageRef.current;
-          const rect = img.getBoundingClientRect();
-          const ctx = canvas.getContext('2d');
-          
-          const currentStroke = paintStrokes[paintStrokes.length - 1];
-          const lastPoint = currentStroke.points[currentStroke.points.length - 1];
-          
-          const isErase = paintBrushMode === 'erase';
-          const size = brushPreset?.size || brushSize;
-          const color = brushColor;
-          const opacity = brushPreset?.opacity || 1;
-          const flow = brushPreset?.flow || 100;
-          
-          ctx.globalAlpha = paintLayerOpacity;
-          ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
-          
-          const r = parseInt(color.slice(1, 3), 16);
-          const g = parseInt(color.slice(3, 5), 16);
-          const b = parseInt(color.slice(5, 7), 16);
-          
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
-          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
-          ctx.lineWidth = size;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          
-          if (lastPoint && currentStroke.points.length > 1) {
-            const prevPoint = currentStroke.points[currentStroke.points.length - 2];
-            ctx.beginPath();
-            ctx.moveTo((prevPoint.x / 100) * rect.width, (prevPoint.y / 100) * rect.height);
-            ctx.lineTo((pos.x / 100) * rect.width, (pos.y / 100) * rect.height);
-            ctx.stroke();
-          } else {
-            ctx.beginPath();
-            ctx.arc((pos.x / 100) * rect.width, (pos.y / 100) * rect.height, size / 2, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          
-          ctx.globalAlpha = 1;
-          ctx.globalCompositeOperation = 'source-over';
-        }
       }
     } else if (isCropping && isDragging && dragStart && dragType) {
       const pos = getRelativePosition(e);
@@ -969,7 +792,6 @@ export default function Editor() {
 
   const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
-    setIsPaintMode(false);
     setIsDragging(false);
     setIsPanning(false);
     setDragType(null);
@@ -1029,64 +851,7 @@ export default function Editor() {
     ctx.globalCompositeOperation = 'source-over';
   }, [brushStrokes, brushSize, brushOpacity, activeTab]);
 
-  useEffect(() => {
-    if (!paintCanvasRef.current || !imageRef.current || !paintLayerVisible) return;
 
-    const canvas = paintCanvasRef.current;
-    const img = imageRef.current;
-    const rect = img.getBoundingClientRect();
-    
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (paintStrokes.length === 0) return;
-
-    ctx.globalAlpha = paintLayerOpacity;
-
-    paintStrokes.forEach(stroke => {
-      const points = stroke.points;
-      if (!points || points.length === 0) return;
-      
-      const isErase = stroke.type === 'erase';
-      const size = stroke.size || brushSize;
-      const color = stroke.color || brushColor;
-      const opacity = stroke.opacity || 1;
-      const flow = stroke.flow || 100;
-      
-      ctx.globalCompositeOperation = isErase ? 'destination-out' : blendMode;
-      
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-      
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * (flow / 100)})`;
-      ctx.lineWidth = size;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      
-      if (points.length === 1) {
-        ctx.beginPath();
-        ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, size / 2, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.beginPath();
-        ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
-        
-        for (let i = 1; i < points.length; i++) {
-          ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
-        }
-        
-        ctx.stroke();
-      }
-    });
-    
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-  }, [paintStrokes, paintLayerOpacity, paintLayerVisible, blendMode, brushSize, brushColor]);
 
   const getFilterStyle = useCallback(() => {
     const filters = [];
@@ -1380,12 +1145,6 @@ export default function Editor() {
                 Drag to mask
               </div>
             )}
-            {showColorWheel && activeTab !== "remove" && currentImage && (
-              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
-                <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-                Painting enabled
-              </div>
-            )}
             {isCropping && (
               <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
@@ -1459,17 +1218,17 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: 'none' }}
         >
-          {(activeTab === "remove" || (showColorWheel && !isCropping)) && !isSpacePressed && !isPanning && !isPanToolActive && (
+          {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
               style={{
-                width: (brushPreset?.size || brushSize) * zoom,
-                height: (brushPreset?.size || brushSize) * zoom,
+                width: brushSize * zoom,
+                height: brushSize * zoom,
                 transform: 'translate(-50%, -50%)',
                 display: 'none',
-                borderColor: showColorWheel && activeTab !== "remove" ? (paintBrushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : brushColor) : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)'),
-                backgroundColor: showColorWheel && activeTab !== "remove" ? (paintBrushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : `${brushColor}40`) : (brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)')
+                borderColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)',
+                backgroundColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)'
               }}
             />
           )}
@@ -1500,7 +1259,7 @@ export default function Editor() {
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                    (activeTab === "remove" || (showColorWheel && !isCropping)) && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
+                    activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
@@ -1512,14 +1271,6 @@ export default function Editor() {
                 {activeTab === "remove" && currentImage && (
                   <canvas
                     ref={canvasRef}
-                    className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full"
-                    style={{ filter: 'none' }}
-                  />
-                )}
-
-                {currentImage && (
-                  <canvas
-                    ref={paintCanvasRef}
                     className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full"
                     style={{ filter: 'none' }}
                   />
@@ -1690,52 +1441,6 @@ export default function Editor() {
                 >
                   <CropIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
-
-                <div className="w-px h-4 bg-white/10" />
-
-                <div className="relative">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowColorWheel(!showColorWheel)}
-                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 relative ${
-                      showColorWheel 
-                        ? 'bg-white text-black hover:bg-white/90' 
-                        : 'hover:bg-white/10 text-white'
-                    }`}
-                    title="Color & Brush"
-                  >
-                    <Paintbrush className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <div 
-                      className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a]"
-                      style={{ backgroundColor: brushColor }}
-                    />
-                  </Button>
-
-                  <ColorWheel
-                    color={brushColor}
-                    onColorChange={setBrushColor}
-                    brushPreset={brushPreset}
-                    onBrushChange={setBrushPreset}
-                    isOpen={showColorWheel}
-                    onClose={() => setShowColorWheel(false)}
-                    paintBrushMode={paintBrushMode}
-                    onPaintBrushModeChange={setPaintBrushMode}
-                    paintLayerOpacity={paintLayerOpacity}
-                    onPaintLayerOpacityChange={setPaintLayerOpacity}
-                    paintLayerVisible={paintLayerVisible}
-                    onPaintLayerVisibleChange={setPaintLayerVisible}
-                    blendMode={blendMode}
-                    onBlendModeChange={setBlendMode}
-                    paintStrokes={paintStrokes}
-                    onClearPaint={() => {
-                      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, paintStrokes }]);
-                      setPaintStrokes([]);
-                    }}
-                    onBakePaint={handleBakePaint}
-                    isBaking={isProcessing}
-                  />
-                </div>
               </div>
             </motion.div>
           )}
