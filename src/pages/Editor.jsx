@@ -622,27 +622,27 @@ export default function Editor() {
           newCrop.x = Math.max(0, Math.min(100 - cropArea.width, cropArea.x + deltaX));
           newCrop.y = Math.max(0, Math.min(100 - cropArea.height, cropArea.y + deltaY));
         } else if (dragType === 'nw') {
-          const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 10, cropArea.x + deltaX));
-          const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 10, cropArea.y + deltaY));
+          const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 15, cropArea.x + deltaX));
+          const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 15, cropArea.y + deltaY));
           newCrop.width = cropArea.width + (cropArea.x - newX);
           newCrop.height = cropArea.height + (cropArea.y - newY);
           newCrop.x = newX;
           newCrop.y = newY;
         } else if (dragType === 'ne') {
-          const newWidth = Math.max(10, Math.min(100 - cropArea.x, cropArea.width + deltaX));
-          const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 10, cropArea.y + deltaY));
+          const newWidth = Math.max(15, Math.min(100 - cropArea.x, cropArea.width + deltaX));
+          const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 15, cropArea.y + deltaY));
           newCrop.width = newWidth;
           newCrop.height = cropArea.height + (cropArea.y - newY);
           newCrop.y = newY;
         } else if (dragType === 'sw') {
-          const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 10, cropArea.x + deltaX));
-          const newHeight = Math.max(10, Math.min(100 - cropArea.y, cropArea.height + deltaY));
+          const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 15, cropArea.x + deltaX));
+          const newHeight = Math.max(15, Math.min(100 - cropArea.y, cropArea.height + deltaY));
           newCrop.width = cropArea.width + (cropArea.x - newX);
           newCrop.height = newHeight;
           newCrop.x = newX;
         } else if (dragType === 'se') {
-          newCrop.width = Math.max(10, Math.min(100 - cropArea.x, cropArea.width + deltaX));
-          newCrop.height = Math.max(10, Math.min(100 - cropArea.y, cropArea.height + deltaY));
+          newCrop.width = Math.max(15, Math.min(100 - cropArea.x, cropArea.width + deltaX));
+          newCrop.height = Math.max(15, Math.min(100 - cropArea.y, cropArea.height + deltaY));
         }
 
         setCropArea(newCrop);
