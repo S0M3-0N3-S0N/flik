@@ -39,7 +39,7 @@ export default function FlikChat() {
   const [galleryLastFetch, setGalleryLastFetch] = useState(0);
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
-  const [displayedCount, setDisplayedCount] = useState(20);
+  const [displayedCount, setDisplayedCount] = useState(SHOWN_CREATIONS_LIMIT);
   const [fullImageView, setFullImageView] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editInput, setEditInput] = useState("");
@@ -135,10 +135,6 @@ export default function FlikChat() {
           const finalInput = transcript.trim();
           if (finalInput.length > 0) {
             setInput(finalInput);
-            // Auto-send after a short delay
-            setTimeout(() => {
-              setInput(finalInput);
-            }, 100);
           }
         }
       };
@@ -159,13 +155,14 @@ export default function FlikChat() {
       recognitionRef.current?.start();
       
       // Auto-send after user stops speaking (3 second silence)
-      const timeoutId = setTimeout(() => {
+      const autoSendTimeout = setTimeout(() => {
         if (isListening && input.trim().length > 0) {
           recognitionRef.current?.stop();
         }
       }, 3000);
       
-      return () => clearTimeout(timeoutId);
+      const cleanup = () => clearTimeout(autoSendTimeout);
+      return cleanup;
     }
   };
 
@@ -315,7 +312,7 @@ export default function FlikChat() {
     setShowGalleryPicker(true);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
-    setDisplayedCount(20);
+    setDisplayedCount(SHOWN_CREATIONS_LIMIT);
     setImageErrors({});
     
     // Use cached gallery data if fresh
@@ -408,8 +405,8 @@ export default function FlikChat() {
   }, [galleryCreations, gallerySearchTerm]);
 
   const displayedGalleryCreations = useMemo(() => {
-    return filteredGalleryCreations;
-  }, [filteredGalleryCreations]);
+    return filteredGalleryCreations.slice(0, displayedCount);
+  }, [filteredGalleryCreations, displayedCount]);
 
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
@@ -1257,7 +1254,7 @@ RULES:
                 }`}
                 title={isListening ? "Stop listening" : "Start voice"}
               >
-                {isListening ? <Mic className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </button>
 
               <div className="relative flex-1">
