@@ -1445,8 +1445,6 @@ export default function Editor() {
                 </Button>
               </div>
             </motion.div>
-              </div>
-            </motion.div>
           )}
         </div>
       </main>
