@@ -883,18 +883,6 @@ RULES:
               >
                 <History className="w-3.5 h-3.5" />
               </Button>
-              {messages.length > 0 && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={handleSaveConversation}
-                  disabled={isSavingConversation}
-                  className="text-white/60 hover:text-green-400 hover:bg-green-500/10 h-8 w-8"
-                  title="Save conversation"
-                >
-                  {isSavingConversation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                </Button>
-              )}
               <div className="w-px h-4 bg-white/10 mx-0.5" />
               <Button 
                 variant="ghost" 
@@ -1604,11 +1592,14 @@ RULES:
                 </div>
               ) : (
                 savedConversations.map((conv) => (
-                  <div
+                  <motion.div
                     key={conv.id}
-                    className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 transition-all group"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="relative p-3 rounded-lg bg-[#0a0a0a] border border-white/10 hover:border-[#FF6B35]/40 transition-all group overflow-hidden"
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative flex items-start justify-between gap-2">
                       <button
                         onClick={() => handleLoadConversation(conv)}
                         className="flex-1 text-left min-w-0"
@@ -1630,7 +1621,7 @@ RULES:
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>
