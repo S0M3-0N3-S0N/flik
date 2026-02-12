@@ -1612,30 +1612,30 @@ export default function Editor() {
                 toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
               }}
             >
-              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
+              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1 sm:p-1.5 flex items-center gap-0.5 sm:gap-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsPanToolActive(!isPanToolActive)}
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'hover:bg-white/10 text-white'}`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'hover:bg-white/10 text-white'}`}
                   title="Pan Tool (Space)"
                 >
-                  <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Move className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Zoom Out"
                 >
-                  <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <ZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                 </Button>
 
-                <div className="w-16 sm:w-20 lg:w-32 px-1.5 sm:px-2">
+                <div className="w-12 sm:w-16 lg:w-32 px-1 sm:px-1.5">
                   <Slider 
                     value={[zoom]} 
                     min={0.1} 
@@ -1650,25 +1650,25 @@ export default function Editor() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Zoom In"
                 >
-                  <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <ZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
+                  className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full hover:bg-white/10 text-white flex-shrink-0"
                   title="Reset View"
                 >
-                  <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <Button
                   variant="ghost"
@@ -1681,33 +1681,33 @@ export default function Editor() {
                       handleStartCrop();
                     }
                   }}
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full transition-all flex-shrink-0 ${
                     isCropping 
                       ? 'bg-[#FF6B35] text-white hover:bg-[#F72C25]' 
                       : 'hover:bg-white/10 text-white'
                   }`}
                   title="Crop & Resize"
                 >
-                  <CropIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <CropIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-3 sm:h-4 bg-white/10 hidden sm:block" />
 
                 <div className="relative">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowColorWheel(!showColorWheel)}
-                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 relative ${
+                    className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full transition-all flex-shrink-0 relative ${
                       showColorWheel 
                         ? 'bg-white text-black hover:bg-white/90' 
                         : 'hover:bg-white/10 text-white'
                     }`}
                     title="Color & Brush"
                   >
-                    <Paintbrush className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <Paintbrush className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                     <div 
-                      className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1a1a]"
+                      className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border border-[#1a1a1a]"
                       style={{ backgroundColor: brushColor }}
                     />
                   </Button>
