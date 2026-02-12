@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check, Mic, MicOff, Volume2, VolumeX, Save, History, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useFlik } from "./FlikContext";
 import { getFlikActions, getFlikContext } from "./useFlikActions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDistanceToNow } from 'date-fns';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Constants
 const CACHE_DURATION = 30000; // 30 seconds
@@ -51,6 +52,9 @@ export default function FlikChat() {
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [internetEnabled, setInternetEnabled] = useState(true);
+  const [showConversations, setShowConversations] = useState(false);
+  const [conversationTitle, setConversationTitle] = useState("");
+  const [isSavingConversation, setIsSavingConversation] = useState(false);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
@@ -60,6 +64,7 @@ export default function FlikChat() {
   const recognitionRef = useRef(null);
   const speechQueueRef = useRef([]);
   const isSpeakingRef = useRef(false);
+  const queryClient = useQueryClient();
 
   // Memoized ReactMarkdown components configuration
   const markdownComponents = useMemo(() => ({
@@ -776,6 +781,67 @@ RULES:
     setEditInput("");
   }, []);
 
+  // Conversations Query
+  const { data: savedConversations = [] } = useQuery({
+    queryKey: ['flikConversations'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      return base44.entities.FlikConversation.filter({ created_by: user.email }, '-last_message_at', 50);
+    },
+    enabled: isOpen
+  });
+
+  const saveConversationMutation = useMutation({
+    mutationFn: async ({ title, messages }) => {
+      return base44.entities.FlikConversation.create({
+        title,
+        messages,
+        last_message_at: new Date().toISOString()
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
+      toast.success('Conversation saved!');
+      setConversationTitle("");
+    },
+    onError: () => {
+      toast.error('Failed to save conversation');
+    }
+  });
+
+  const deleteConversationMutation = useMutation({
+    mutationFn: (id) => base44.entities.FlikConversation.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
+      toast.success('Conversation deleted');
+    },
+    onError: () => {
+      toast.error('Failed to delete conversation');
+    }
+  });
+
+  const handleSaveConversation = async () => {
+    if (messages.length === 0) {
+      toast.error('No messages to save');
+      return;
+    }
+    
+    const title = conversationTitle.trim() || `Chat ${new Date().toLocaleDateString()}`;
+    setIsSavingConversation(true);
+    
+    try {
+      await saveConversationMutation.mutateAsync({ title, messages });
+    } finally {
+      setIsSavingConversation(false);
+    }
+  };
+
+  const handleLoadConversation = (conversation) => {
+    setMessages(conversation.messages || []);
+    setShowConversations(false);
+    toast.success('Conversation loaded');
+  };
+
   return (
     <>
     <AnimatePresence>
@@ -808,6 +874,15 @@ RULES:
               </div>
             </div>
             <div className="flex items-center gap-2 relative z-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowConversations(true)}
+                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10"
+                title="Saved conversations"
+              >
+                <History className="w-4 h-4" />
+              </Button>
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -1106,6 +1181,25 @@ RULES:
           </div>
 
           <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
+            {messages.length > 0 && (
+              <div className="flex gap-2">
+                <Input
+                  value={conversationTitle}
+                  onChange={(e) => setConversationTitle(e.target.value)}
+                  placeholder="Name this conversation..."
+                  className="flex-1 bg-black/20 border-white/10 text-white text-xs h-8 placeholder:text-white/30"
+                />
+                <Button
+                  onClick={handleSaveConversation}
+                  disabled={isSavingConversation}
+                  size="sm"
+                  className="bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 px-3"
+                  title="Save conversation"
+                >
+                  {isSavingConversation ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                </Button>
+              </div>
+            )}
             {uploadError && (
               <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -1431,7 +1525,7 @@ RULES:
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <p className="text-white/70 text-sm">
-                This will permanently delete all messages in your conversation with FLIK. This action cannot be undone.
+                This will clear the current chat. You can save it first if needed.
               </p>
               <div className="flex gap-3">
                 <Button
@@ -1445,12 +1539,70 @@ RULES:
                   onClick={() => {
                     clearHistory();
                     setShowClearConfirm(false);
+                    toast.success('Conversation cleared');
                   }}
                   className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg"
                 >
                   Clear All
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Saved Conversations Dialog */}
+        <Dialog open={showConversations} onOpenChange={setShowConversations}>
+          <DialogContent className="max-w-2xl max-h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold gradient-text flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
+                  <div className="w-full h-full rounded-[10px] bg-[#0a0a0a] flex items-center justify-center">
+                    <History className="w-5 h-5 text-[#FF6B35]" />
+                  </div>
+                </div>
+                Saved Conversations
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {savedConversations.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="w-10 h-10 text-white/20" />
+                  </div>
+                  <p className="text-white/60 text-sm">No saved conversations yet</p>
+                  <p className="text-white/40 text-xs mt-2">Save your chats to revisit them later</p>
+                </div>
+              ) : (
+                savedConversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className="p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 transition-all group"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <button
+                        onClick={() => handleLoadConversation(conv)}
+                        className="flex-1 text-left"
+                      >
+                        <h4 className="text-white font-medium text-sm mb-1 group-hover:text-[#FF6B35] transition-colors">
+                          {conv.title}
+                        </h4>
+                        <p className="text-white/40 text-xs">
+                          {conv.messages?.length || 0} messages • {formatDistanceToNow(new Date(conv.last_message_at || conv.created_date), { addSuffix: true })}
+                        </p>
+                      </button>
+                      <Button
+                        onClick={() => deleteConversationMutation.mutate(conv.id)}
+                        variant="ghost"
+                        size="icon"
+                        className="text-white/40 hover:text-red-400 hover:bg-red-500/10 h-8 w-8"
+                        title="Delete conversation"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </DialogContent>
         </Dialog>
