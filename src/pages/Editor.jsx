@@ -1599,7 +1599,7 @@ export default function Editor() {
           
           {currentImage && (
             <motion.div 
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30"
+              className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30 max-w-full"
               initial={{ opacity: 1, scale: 1 }}
               animate={{ opacity: toolbarVisible ? 1 : 0, scale: toolbarVisible ? 1 : 0.8 }}
               transition={{ duration: 0.3 }}
@@ -1612,7 +1612,7 @@ export default function Editor() {
                 toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
               }}
             >
-              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
+              <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <Button
                   variant="ghost"
                   size="icon"
