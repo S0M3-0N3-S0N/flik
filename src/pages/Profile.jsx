@@ -5,7 +5,7 @@ import { debounce } from "lodash";
 import { 
   Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, 
   Pencil, Check, X, Lock, Globe, Search, Trash2, Download, Edit, Wand2, Sparkles,
-  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff, Users, ArrowLeft
+  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,71 +80,21 @@ export default function Profile() {
   const [imageErrors, setImageErrors] = useState({});
 
   // Data Fetching
-  const [viewingUserEmail, setViewingUserEmail] = useState(null);
-
-  useEffect(() => {
-    const storedEmail = sessionStorage.getItem('profile_email');
-    if (storedEmail) {
-      setViewingUserEmail(storedEmail);
-      sessionStorage.removeItem('profile_email');
-    }
-  }, []);
-
-  const { data: currentUser } = useQuery({
+  const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: viewingUser } = useQuery({
-    queryKey: ['viewingUser', viewingUserEmail],
-    queryFn: async () => {
-      if (!viewingUserEmail) return null;
-      const users = await base44.entities.User.list();
-      return users.find(u => u.email === viewingUserEmail);
-    },
-    enabled: !!viewingUserEmail,
-  });
-
-  const user = viewingUser || currentUser;
-  const isOwnProfile = !viewingUserEmail;
-
   const { data: creations = [], isLoading } = useQuery({
-    queryKey: ['creations', viewingUserEmail || currentUser?.email],
+    queryKey: ['creations', user?.email],
     queryFn: () => {
-      const email = viewingUserEmail || currentUser?.email;
-      return email ? base44.entities.Creation.filter({ created_by: email }, '-created_date', MAX_CREATIONS_FETCH) : [];
+      return user?.email ? base44.entities.Creation.filter({ created_by: user.email }, '-created_date', MAX_CREATIONS_FETCH) : [];
     },
-    enabled: !!(viewingUserEmail || currentUser?.email),
+    enabled: !!user?.email,
     initialData: [],
   });
 
-  const { data: follows = [] } = useQuery({
-    queryKey: ['follows'],
-    queryFn: () => base44.entities.Follow.list(),
-  });
 
-  const followMutation = useMutation({
-    mutationFn: async (creatorEmail) => {
-      const existingFollow = follows.find(
-        (f) => f.follower_email === currentUser?.email && f.following_email === creatorEmail
-      );
-      if (existingFollow) {
-        await base44.entities.Follow.delete(existingFollow.id);
-      } else {
-        await base44.entities.Follow.create({
-          follower_email: currentUser?.email,
-          following_email: creatorEmail,
-        });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['follows'] });
-    },
-  });
-
-  const isFollowing = viewingUserEmail && follows.some(
-    (f) => f.follower_email === currentUser?.email && f.following_email === viewingUserEmail
-  );
 
   // Debounced search with cleanup
   useEffect(() => {
@@ -456,16 +406,6 @@ export default function Profile() {
     ...getTimeframeStats(creations)
   }), [creations]);
 
-  const followerCount = useMemo(() => 
-    follows.filter(f => f.following_email === user?.email).length,
-    [follows, user?.email]
-  );
-
-  const followingCount = useMemo(() => 
-    follows.filter(f => f.follower_email === user?.email).length,
-    [follows, user?.email]
-  );
-
   // Reset page and clear selections when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -641,17 +581,7 @@ export default function Profile() {
                 <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="break-all">{user.email}</span>
               </p>
-              <div className="mt-3 sm:mt-4 flex items-center gap-4 text-xs sm:text-sm text-white/60 justify-center md:justify-start flex-wrap">
-                <div className="flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span><span className="text-white font-medium">{followerCount}</span> followers</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span><span className="text-white font-medium">{followingCount}</span> following</span>
-                </div>
-              </div>
-              <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
+              <div className="mt-3 sm:mt-4 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
                   Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
@@ -659,36 +589,13 @@ export default function Profile() {
               </div>
             </div>
             
-            {isOwnProfile ? (
-              <Button 
-                onClick={handleLogout}
-                className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base w-full md:w-auto"
-              >
-                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                {t("profile.sign_out")}
-              </Button>
-            ) : (
-              <div className="flex gap-2 w-full md:w-auto">
-                <Button 
-                  onClick={() => navigate(createPageUrl('Profile'))}
-                  className="flex-1 md:flex-none bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                  Back
-                </Button>
-                <Button 
-                  onClick={() => followMutation.mutate(viewingUserEmail)}
-                  disabled={followMutation.isPending}
-                  className={`flex-1 md:flex-none h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base ${
-                    isFollowing
-                      ? 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
-                      : 'bg-[#FF6B35] hover:bg-[#F72C25] text-white border-0'
-                  }`}
-                >
-                  {isFollowing ? 'Following' : 'Follow'}
-                </Button>
-              </div>
-            )}
+            <Button 
+              onClick={handleLogout}
+              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base w-full md:w-auto"
+            >
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+              {t("profile.sign_out")}
+            </Button>
           </div>
 
           <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
