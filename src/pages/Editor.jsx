@@ -553,7 +553,7 @@ export default function Editor() {
     } else if (isCropping) {
       const pos = getRelativePosition(e);
       if (pos) {
-        const handleSize = 5;
+        const handleSize = 8;
         let type = null;
         
         if (Math.abs(pos.x - cropArea.x) < handleSize && Math.abs(pos.y - cropArea.y) < handleSize) {
