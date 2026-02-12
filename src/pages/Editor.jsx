@@ -358,14 +358,10 @@ export default function Editor() {
       const previous = undoHistory[undoHistory.length - 1];
       setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
       
-      if (previous.image) {
-        setCurrentImage(previous.image);
-        if (previous.adjustments) setAdjustments(previous.adjustments);
-        if (previous.filter !== undefined) setSelectedFilter(previous.filter);
-        if (previous.transform) setTransform(previous.transform);
-      } else {
-        setCurrentImage(previous);
-      }
+      setCurrentImage(previous.image);
+      setAdjustments(previous.adjustments || { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 });
+      setSelectedFilter(previous.filter !== undefined ? previous.filter : null);
+      setTransform(previous.transform || { rotate: 0, flipH: false, flipV: false });
       
       setUndoHistory(prev => prev.slice(0, -1));
     }
@@ -376,14 +372,10 @@ export default function Editor() {
       const next = redoHistory[redoHistory.length - 1];
       setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
 
-      if (next.image) {
-        setCurrentImage(next.image);
-        if (next.adjustments) setAdjustments(next.adjustments);
-        if (next.filter !== undefined) setSelectedFilter(next.filter);
-        if (next.transform) setTransform(next.transform);
-      } else {
-        setCurrentImage(next);
-      }
+      setCurrentImage(next.image);
+      setAdjustments(next.adjustments || { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 });
+      setSelectedFilter(next.filter !== undefined ? next.filter : null);
+      setTransform(next.transform || { rotate: 0, flipH: false, flipV: false });
       
       setRedoHistory(prev => prev.slice(0, -1));
     }
@@ -441,9 +433,9 @@ export default function Editor() {
 
       const canvas = await generateCanvas(
         currentImage, 
-        { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 }, 
+        adjustments, 
         tempTransform, 
-        null
+        selectedFilter
       );
 
       if (!canvas) {
