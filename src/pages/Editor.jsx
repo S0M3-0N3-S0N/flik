@@ -1078,7 +1078,7 @@ export default function Editor() {
                 toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
               }}
             >
-              <div className="relative bg-gradient-to-r from-black/60 via-black/50 to-black/60 backdrop-blur-2xl border border-white/10 rounded-full p-2.5 flex items-center gap-1.5 shadow-[0_25px_50px_rgba(255,107,53,0.15),0_0_0_1px_rgba(255,107,53,0.2)_inset] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,107,53,0.05) 0%, rgba(0,0,0,0) 50%, rgba(255,184,0,0.03) 100%)' }}>
+              <div className="relative bg-gradient-to-r from-black/60 via-black/50 to-black/60 backdrop-blur-2xl border border-white/10 rounded-full p-1.5 sm:p-2.5 flex items-center gap-1 sm:gap-1.5 shadow-[0_25px_50px_rgba(255,107,53,0.15),0_0_0_1px_rgba(255,107,53,0.2)_inset] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,107,53,0.05) 0%, rgba(0,0,0,0) 50%, rgba(255,184,0,0.03) 100%)' }}>
                 <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
                 
                 <Button
