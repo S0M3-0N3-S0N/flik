@@ -16,7 +16,8 @@ export function useCanvas() {
     });
 
     // Handle rotation dimensions
-    if (transform.rotate === 90 || transform.rotate === 270) {
+    const rotationAngle = ((transform.rotate % 360) + 360) % 360;
+    if (rotationAngle === 90 || rotationAngle === 270) {
       canvas.width = img.height;
       canvas.height = img.width;
     } else {
