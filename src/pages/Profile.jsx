@@ -205,14 +205,20 @@ export default function Profile() {
   };
 
   // Gallery Logic
+  const [isBatchDeleting, setIsBatchDeleting] = useState(false);
+
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Creation.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['creations'] });
-      toast.success('Creation deleted successfully');
+      if (!isBatchDeleting) {
+        toast.success('Creation deleted successfully');
+      }
     },
     onError: () => {
-      toast.error('Failed to delete creation');
+      if (!isBatchDeleting) {
+        toast.error('Failed to delete creation');
+      }
     }
   });
 
@@ -299,6 +305,7 @@ export default function Profile() {
       }
     }
     
+    setIsBatchDeleting(true);
     setBatchDeleteProgress(0);
     setBatchDeleteFailed(0);
     const toastId = toast.loading(`Deleting 0/${total} items...`);
@@ -317,11 +324,12 @@ export default function Profile() {
     }
     
     if (failed === 0) {
-      toast.success(`${total} items deleted successfully`, { id: toastId });
+      toast.success(`${total} ${total === 1 ? 'item' : 'items'} deleted successfully`, { id: toastId });
     } else {
       toast.error(`${total - failed}/${total} deleted (${failed} failed)`, { id: toastId });
     }
     
+    setIsBatchDeleting(false);
     setSelectedItems([]);
     setDeleteConfirm(null);
     setBatchDeleteProgress(0);
