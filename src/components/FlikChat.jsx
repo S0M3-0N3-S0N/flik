@@ -24,6 +24,7 @@ const GALLERY_FETCH_LIMIT = 50;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const NAVIGATION_DELAY = 800; // ms
 const MAX_IN_MEMORY_MESSAGES = 100;
+const FLIK_AVATAR_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg";
 
 export default function FlikChat() {
   const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages } = useFlik();
@@ -115,6 +116,25 @@ export default function FlikChat() {
     }
   }, [messages, isOpen]);
 
+  // Initialize voices for speech synthesis
+  useEffect(() => {
+    if (window.speechSynthesis) {
+      // Load voices immediately if available
+      window.speechSynthesis.getVoices();
+      
+      // Listen for voices changed event (needed for some browsers)
+      const handleVoicesChanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      
+      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+      
+      return () => {
+        window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+      };
+    }
+  }, []);
+
   // Initialize speech recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -185,13 +205,13 @@ export default function FlikChat() {
     setVoiceEnabled(!voiceEnabled);
   };
 
-  const enqueueSpeech = (text) => {
+  const enqueueSpeech = useCallback((text) => {
     if (!voiceEnabled || !window.speechSynthesis) return;
     speechQueueRef.current.push(text);
     processSpeechQueue();
-  };
+  }, [voiceEnabled, processSpeechQueue]);
 
-  const processSpeechQueue = () => {
+  const processSpeechQueue = useCallback(() => {
     if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
     
     isSpeakingRef.current = true;
@@ -225,7 +245,7 @@ export default function FlikChat() {
     
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
-  };
+  }, []);
 
   const getCurrentPage = useCallback(() => {
     const path = location.pathname;
@@ -859,7 +879,7 @@ RULES:
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/30">
                 <div className="w-full h-full rounded-[14px] bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
                   <img 
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                    src={FLIK_AVATAR_URL} 
                     alt="FLIK" 
                     className="w-full h-full object-cover"
                   />
@@ -925,7 +945,7 @@ RULES:
               >
                 <div className="w-full h-full rounded-[14px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
                   <img 
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                    src={FLIK_AVATAR_URL} 
                     alt="FLIK" 
                     className="w-full h-full object-cover"
                   />
