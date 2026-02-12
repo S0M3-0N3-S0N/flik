@@ -1176,7 +1176,7 @@ RULES:
                   )}
                 </div>
                 {msg.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center flex-shrink-0 overflow-hidden shadow-lg shadow-[#FF6B35]/20">
                     {cachedUserData?.userProfile?.profile_picture ? (
                       <img 
                         src={cachedUserData.userProfile.profile_picture} 
