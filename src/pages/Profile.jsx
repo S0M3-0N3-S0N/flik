@@ -1279,7 +1279,7 @@ export default function Profile() {
             </div>
 
             {/* Action Buttons */}
-            <div className="p-3 sm:p-5 md:p-6 border-t border-white/10 bg-[#1a1a1a] space-y-2 sm:space-y-2.5 flex-shrink-0">
+            <div className="p-2 sm:p-4 md:p-5 border-t border-white/10 bg-[#1a1a1a] space-y-1.5 sm:space-y-2 flex-shrink-0">
               <Button
                 onClick={() => {
                   navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url));
