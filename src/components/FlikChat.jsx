@@ -50,6 +50,7 @@ export default function FlikChat() {
   const [imageErrors, setImageErrors] = useState({});
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [internetEnabled, setInternetEnabled] = useState(true);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
@@ -464,6 +465,8 @@ export default function FlikChat() {
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are FLIK - the heart and soul of the FLIK AI Creative Suite. Not an assistant, but FLIK itself - the creative companion living inside the app.
 
+${!internetEnabled ? '⚠️ INTERNET ACCESS DISABLED: User has turned off internet access. Do NOT mention current events, real-time data, or external information. Only use your training knowledge and the user data provided.' : ''}
+
 YOUR IDENTITY:
 You ARE FLIK. Friendly, energetic, creative, and deeply knowledgeable. You guide users with personality and expertise. Speak as "I" (FLIK), never as "the assistant".
 
@@ -635,7 +638,7 @@ RULES:
 ✓ Only suggest actions that work on current page (check ACTIONS ENABLED section!)
 ✓ Make action labels short and clear`,
         file_urls: contextImages.length > 0 ? contextImages : undefined,
-        add_context_from_internet: true,
+        add_context_from_internet: internetEnabled,
         response_json_schema: {
           type: "object",
           properties: {
@@ -806,6 +809,24 @@ RULES:
               </div>
             </div>
             <div className="flex items-center gap-2 relative z-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setInternetEnabled(!internetEnabled)}
+                className={internetEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}
+                title={internetEnabled ? "Disable internet access" : "Enable internet access"}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {internetEnabled ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                  ) : (
+                    <>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
+                    </>
+                  )}
+                </svg>
+              </Button>
               <Button 
                 variant="ghost" 
                 size="icon" 
