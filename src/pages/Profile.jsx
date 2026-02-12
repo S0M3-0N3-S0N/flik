@@ -1148,7 +1148,7 @@ export default function Profile() {
           {/* Details Panel */}
           <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col border-t md:border-t-0 md:border-l border-white/10 bg-[#1a1a1a] max-h-[40vh] md:max-h-full overflow-hidden">
             {/* Header */}
-            <div className="p-4 sm:p-5 md:p-6 border-b border-white/10 flex-shrink-0">
+            <div className="p-2 sm:p-4 md:p-5 border-b border-white/10 flex-shrink-0">
               <DialogHeader className="p-0 space-y-2">
                 <DialogTitle className="text-lg sm:text-xl gradient-text line-clamp-2 text-left pr-8">
                   {selectedItem?.title || selectedItem?.prompt || 'Creation'}
