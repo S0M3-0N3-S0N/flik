@@ -1365,6 +1365,7 @@ export default function Editor() {
             >
               <div className="relative bg-gradient-to-br from-black/40 via-black/30 to-black/40 backdrop-blur-3xl border border-white/20 rounded-full p-2 flex items-center gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05)_inset] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+                
                 <Button
                   variant="ghost"
                   size="icon"
@@ -1443,6 +1444,7 @@ export default function Editor() {
                   <CropIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                 </Button>
               </div>
+            </motion.div>
               </div>
             </motion.div>
           )}
