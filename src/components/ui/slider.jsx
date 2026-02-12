@@ -14,7 +14,7 @@ const Slider = React.forwardRef(({ className, ...props }, ref) => (
       <SliderPrimitive.Range className="absolute h-full bg-primary" />
     </SliderPrimitive.Track>
     <SliderPrimitive.Thumb
-      className="block h-4 w-4 rounded-full bg-background shadow transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50" />
+      className="block h-4 w-4 rounded-full bg-background transition-colors outline-none disabled:pointer-events-none disabled:opacity-50" />
   </SliderPrimitive.Root>
 ))
 Slider.displayName = SliderPrimitive.Root.displayName
