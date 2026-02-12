@@ -554,7 +554,6 @@ Check "PAGE-SPECIFIC ACTIONS AVAILABLE RIGHT NOW" section below to see what's en
 { "type": "navigate", "label": "Open Photo Studio", "payload": { "page": "Editor", "loadUrl": "optional_url" } }
 { "type": "navigate", "label": "Go to Imagine AI", "payload": { "page": "Generate" } }
 { "type": "navigate", "label": "View Gallery", "payload": { "page": "Profile" } }
-{ "type": "navigate", "label": "Browse Discover", "payload": { "page": "Discover" } }
 
 **ON EDITOR PAGE ONLY** - these actions:
 { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove" } }

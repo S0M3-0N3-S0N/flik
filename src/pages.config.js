@@ -47,7 +47,6 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Discover from './pages/Discover';
 import Editor from './pages/Editor';
 import Generate from './pages/Generate';
 import Profile from './pages/Profile';
@@ -55,7 +54,6 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Discover": Discover,
     "Editor": Editor,
     "Generate": Generate,
     "Profile": Profile,
