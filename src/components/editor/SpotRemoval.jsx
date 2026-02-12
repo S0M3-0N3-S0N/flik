@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Wand2, Paintbrush, Eraser, MessageSquare, ImagePlus, X, Loader2, Sparkles, Lightbulb } from "lucide-react";
+import { Wand2, Paintbrush, Eraser, MessageSquare, ImagePlus, X, Loader2, Sparkles, Lightbulb, Grid3x3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function SpotRemoval({ 
   onRemoveSpot, 
@@ -23,6 +24,9 @@ export default function SpotRemoval({
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
+  const [galleryCreations, setGalleryCreations] = useState([]);
+  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
 
   // Debounce prompt changes to get AI suggestions
   useEffect(() => {
@@ -104,6 +108,32 @@ Return ONLY the 3 suggestions, nothing else.`,
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleGalleryPick = async () => {
+    setShowGalleryPicker(true);
+    setIsLoadingGallery(true);
+    try {
+      const user = await base44.auth.me();
+      const creations = await base44.entities.Creation.filter(
+        { created_by: user.email },
+        '-created_date',
+        50
+      );
+      setGalleryCreations(creations);
+    } catch (error) {
+      console.error("Failed to load gallery:", error);
+      toast.error("Failed to load gallery");
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  };
+
+  const handleGallerySelect = (creation) => {
+    const imageUrl = creation.thumbnail_url || creation.url;
+    onReferenceImagesChange([...referenceImages, imageUrl]);
+    setShowGalleryPicker(false);
+    toast.success("Image added from gallery");
   };
 
   const handleGenerateWithLearning = async () => {
@@ -257,6 +287,15 @@ Return ONLY the 3 suggestions, nothing else.`,
                 <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
               </label>
 
+              <button
+                onClick={handleGalleryPick}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap"
+              >
+                <Grid3x3 className="w-4 h-4" />
+                <span className="hidden sm:inline">Gallery</span>
+                <span className="sm:hidden">Gal</span>
+              </button>
+
               {referenceImages.length > 0 && (
                 <div className="flex items-center justify-center min-w-[36px] h-[36px] rounded-lg bg-white/5 border border-white/10 px-2" title={`${referenceImages.length} images added`}>
                   <span className="text-xs text-white/60 font-medium">{referenceImages.length}</span>
@@ -300,6 +339,50 @@ Return ONLY the 3 suggestions, nothing else.`,
           )}
         </Button>
       </div>
+
+      {/* Gallery Picker Dialog */}
+      <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
+        <DialogContent className="max-w-4xl max-h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold gradient-text flex items-center gap-2">
+              <Grid3x3 className="w-5 h-5" />
+              Pick from Gallery
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto p-4">
+            {isLoadingGallery ? (
+              <div className="grid grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <div key={idx} className="aspect-square rounded-xl bg-white/5 animate-pulse" />
+                ))}
+              </div>
+            ) : galleryCreations.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-white/60">No creations yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {galleryCreations.map((creation) => (
+                  <button
+                    key={creation.id}
+                    onClick={() => handleGallerySelect(creation)}
+                    className="relative aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35]/50 transition-all group"
+                  >
+                    <img
+                      src={creation.thumbnail_url || creation.url}
+                      alt={creation.title || 'Creation'}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                      <p className="text-white text-xs font-medium line-clamp-2">{creation.title || 'Untitled'}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
