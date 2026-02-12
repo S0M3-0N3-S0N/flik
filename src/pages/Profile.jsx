@@ -826,12 +826,12 @@ export default function Profile() {
 
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin">
                <Tabs value={filterType} onValueChange={setFilterType} className="flex-shrink-0">
-                <TabsList className="bg-white/5 border border-white/10 h-10 rounded-xl p-1 gap-1">
+                <TabsList className="bg-white/5 border border-white/10 h-9 sm:h-10 rounded-xl p-0.5 sm:p-1 gap-0.5 sm:gap-1">
                   {FILTER_TYPES.map(filter => (
                     <TabsTrigger 
                       key={filter.value}
                       value={filter.value} 
-                      className="px-3 sm:px-5 h-8 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg text-xs sm:text-sm font-medium transition-all"
+                      className="px-2.5 sm:px-5 h-8 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap"
                     >
                       {filter.label}
                     </TabsTrigger>
@@ -840,7 +840,7 @@ export default function Profile() {
               </Tabs>
 
               <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="w-[110px] sm:w-[140px] bg-white/5 border-white/10 text-white h-10 rounded-xl text-xs sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all">
+                <SelectTrigger className="w-[100px] sm:w-[140px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -851,7 +851,7 @@ export default function Profile() {
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[120px] sm:w-[160px] bg-white/5 border-white/10 text-white h-10 rounded-xl text-xs sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all">
+                <SelectTrigger className="w-[105px] sm:w-[160px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
