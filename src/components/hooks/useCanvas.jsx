@@ -7,7 +7,9 @@ export function useCanvas() {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    if (!sourceImage.url.startsWith('blob:')) {
+      img.crossOrigin = "anonymous";
+    }
     img.src = sourceImage.preview || sourceImage.url;
 
     await new Promise((resolve, reject) => {

@@ -445,7 +445,7 @@ export default function Editor() {
     if (!currentImage) return;
     setIsSaving(true);
     try {
-      const blob = await handleGetProcessedBlob();
+      const blob = await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
       if (!blob) {
         toast.error("Could not get image data to save.");
         return;
@@ -465,7 +465,7 @@ export default function Editor() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentImage, handleGetProcessedBlob]);
+  }, [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
 
 
