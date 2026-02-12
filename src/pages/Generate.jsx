@@ -371,7 +371,7 @@ export default function Generate() {
               </div>
 
               {/* Toolbar */}
-              <div className="flex items-center justify-between p-2 mt-2 bg-white/5 rounded-2xl flex-wrap gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 mt-2 bg-white/5 rounded-2xl gap-2">
                 <div className="flex items-center gap-2 px-2 flex-wrap">
 
 
@@ -386,18 +386,19 @@ export default function Generate() {
                     </SelectContent>
                   </Select>
 
-                  <div className="w-px h-4 bg-white/10 mx-1" />
+                  <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
 
                   <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
+                    className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors whitespace-nowrap ${
                       uploadedImages.length > 0
                         ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                         : 'text-white/60 hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    {uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}
+                    <span className="hidden xs:inline">{uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}</span>
+                    <span className="xs:hidden">{uploadedImages.length > 0 ? uploadedImages.length : 'Add'}</span>
                   </button>
                   <input
                     ref={fileInputRef}
@@ -410,17 +411,17 @@ export default function Generate() {
 
                   <button
                     onClick={handleGalleryPick}
-                    className="h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                    className="h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
                     title="Add from gallery"
                   >
                     <Grid3x3 className="w-3.5 h-3.5" />
-                    Gallery
+                    <span className="hidden xs:inline">Gallery</span>
                   </button>
 
                   <Popover>
                     <PopoverTrigger asChild>
                       <button 
-                        className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors ${
+                        className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors whitespace-nowrap ${
                           (aspectRatio !== "1:1" || negativePrompt || imageCount !== 1) 
                             ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                             : 'text-white/60 hover:bg-white/5 hover:text-white'
@@ -514,7 +515,7 @@ export default function Generate() {
                 <Button
                   onClick={handleGenerate}
                   disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
-                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all ml-auto"
+                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto"
                 >
                   {isGenerating ? (
                     <>
