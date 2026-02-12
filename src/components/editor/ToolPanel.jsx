@@ -83,6 +83,14 @@ const tools = [
     category: "Edit",
     prompt: "Remove the background from this image, keep only the main subject, make background transparent or pure white"
   },
+  { 
+    id: "4k", 
+    icon: Zap, 
+    label: "4K Ultra", 
+    description: "Super high quality upscale",
+    category: "Enhancement",
+    prompt: "Upscale this image to 4K ultra high resolution, maximize clarity and detail, enhance sharpness, reduce any noise, maintain natural appearance with professional quality"
+  },
 ];
 
 const categories = ["Enhancement", "Creative", "Edit"];
