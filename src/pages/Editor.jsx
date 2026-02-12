@@ -385,6 +385,8 @@ export default function Editor() {
   const handleStartCrop = useCallback(() => {
     setIsCropping(true);
     setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   }, []);
 
   const handleCancelCrop = useCallback(() => {
