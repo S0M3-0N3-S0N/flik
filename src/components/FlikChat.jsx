@@ -931,32 +931,76 @@ RULES:
 
           <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent" ref={scrollRef}>
             {messages.length === 0 && (
-              <div className="text-center py-16 px-4 space-y-6 flex flex-col items-center justify-center h-full">
-              <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[3px] shadow-2xl shadow-[#FF6B35]/40">
-              <div className="w-full h-full rounded-[21px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-                <img 
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
-                  alt="FLIK" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <div className="text-center py-12 px-4 space-y-8 flex flex-col items-center justify-center h-full">
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                transition={{ duration: 0.3 }}
+                className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40"
+              >
+                <div className="w-full h-full rounded-[14px] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg" 
+                    alt="FLIK" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </motion.div>
               <div>
-              <h4 className="text-white font-bold text-xl gradient-text mb-2">I'm FLIK</h4>
-              <p className="text-white/50 text-sm leading-relaxed max-w-xs">
-                Your creative voice. Ask me to help design, edit, generate, or just chat about your ideas.
-              </p>
+                <h4 className="text-white font-bold text-2xl mb-1.5">Ready to create?</h4>
+                <p className="text-white/40 text-sm leading-relaxed">
+                  How can I help you today?
+                </p>
               </div>
-              <div className="flex flex-col gap-2 w-full max-w-xs mt-4">
-              <button onClick={() => setInput("Show me my recent creations")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> My Creations
-              </button>
-              <button onClick={() => setInput("Help me create something amazing")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Create Something
-              </button>
-              <button onClick={() => setInput("What can you do?")} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 rounded-xl text-xs text-white/70 hover:text-white transition-all group">
-                <span className="text-white/40 group-hover:text-[#FF6B35]">→</span> Capabilities
-              </button>
+              <div className="flex flex-col gap-2.5 w-full max-w-sm mt-2">
+                <motion.button 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  onClick={() => setInput("Show me my recent creations")} 
+                  className="relative px-5 py-3.5 bg-[#0a0a0a] rounded-2xl text-sm text-white/80 hover:text-white transition-all group overflow-hidden"
+                >
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
+                  <div className="absolute inset-[1.5px] rounded-[15px] bg-[#0a0a0a]" />
+                  <div className="absolute inset-[1.5px] rounded-[15px] border border-white/5 group-hover:border-[#FF6B35]/30 transition-colors" />
+                  <span className="relative">Show me my recent creations</span>
+                </motion.button>
+                <motion.button 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  onClick={() => setInput("Help me create something amazing")} 
+                  className="relative px-5 py-3.5 bg-[#0a0a0a] rounded-2xl text-sm text-white/80 hover:text-white transition-all group overflow-hidden"
+                >
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
+                  <div className="absolute inset-[1.5px] rounded-[15px] bg-[#0a0a0a]" />
+                  <div className="absolute inset-[1.5px] rounded-[15px] border border-white/5 group-hover:border-[#FF6B35]/30 transition-colors" />
+                  <span className="relative">Help me create something amazing</span>
+                </motion.button>
+                <motion.button 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  onClick={() => setInput("What can you do?")} 
+                  className="relative px-5 py-3.5 bg-[#0a0a0a] rounded-2xl text-sm text-white/80 hover:text-white transition-all group overflow-hidden"
+                >
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
+                  <div className="absolute inset-[1.5px] rounded-[15px] bg-[#0a0a0a]" />
+                  <div className="absolute inset-[1.5px] rounded-[15px] border border-white/5 group-hover:border-[#FF6B35]/30 transition-colors" />
+                  <span className="relative">What can you do?</span>
+                </motion.button>
+                <motion.button 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  onClick={() => setInput("Give me creative tips")} 
+                  className="relative px-5 py-3.5 bg-[#0a0a0a] rounded-2xl text-sm text-white/80 hover:text-white transition-all group overflow-hidden"
+                >
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
+                  <div className="absolute inset-[1.5px] rounded-[15px] bg-[#0a0a0a]" />
+                  <div className="absolute inset-[1.5px] rounded-[15px] border border-white/5 group-hover:border-[#FF6B35]/30 transition-colors" />
+                  <span className="relative">Give me creative tips</span>
+                </motion.button>
               </div>
               </div>
             )}
@@ -1212,29 +1256,32 @@ RULES:
                   handleSend();
                 }
               }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 relative"
             >
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#FF6B35]/5 via-[#F72C25]/5 to-[#FFB800]/5 blur-xl" />
               <button
                 type="button"
                 onClick={toggleVoiceInput}
-                className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${
+                className={`relative p-2.5 rounded-xl transition-all flex-shrink-0 ${
                   isListening 
                     ? 'bg-red-500/30 text-red-400 animate-pulse scale-110' 
                     : 'hover:bg-white/10 text-white/60 hover:text-white'
                 }`}
                 title={isListening ? "Stop listening" : "Start voice"}
               >
-                {isListening ? <Mic className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                {isListening ? <Mic className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </button>
 
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="What's on your mind?"
-                className="bg-black/20 border-white/10 text-white focus-visible:ring-[#FF6B35] placeholder:text-white/40 flex-1"
-              />
+              <div className="relative flex-1">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask me anything..."
+                  className="bg-black/40 border border-white/10 focus-visible:border-[#FF6B35]/40 text-white focus-visible:ring-1 focus-visible:ring-[#FF6B35]/30 placeholder:text-white/30 h-11 rounded-2xl px-4"
+                />
+              </div>
 
-              <div className="flex gap-1">
+              <div className="flex gap-1.5 relative">
                 <button
                   type="button"
                   onClick={() => chatFileRef.current?.click()}
@@ -1256,7 +1303,7 @@ RULES:
                   type="submit" 
                   size="icon"
                   disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
-                  className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg rounded-xl h-10 w-10 p-0"
+                  className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg hover:shadow-xl hover:shadow-[#FF6B35]/30 rounded-xl h-11 w-11 p-0 transition-all disabled:opacity-50"
                 >
                   {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
