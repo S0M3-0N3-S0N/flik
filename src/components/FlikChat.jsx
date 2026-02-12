@@ -155,6 +155,12 @@ export default function FlikChat() {
           const finalInput = transcript.trim();
           if (finalInput.length > 0) {
             setInput(finalInput);
+            // Auto-send after voice input for hands-free conversation
+            setTimeout(() => {
+              setInput(finalInput);
+              handleSend(finalInput, []);
+              setIsListening(false);
+            }, 500);
           }
         }
       };
@@ -184,16 +190,6 @@ export default function FlikChat() {
         }
         return;
       }
-      
-      // Auto-send after user stops speaking (3 second silence)
-      const autoSendTimeout = setTimeout(() => {
-        if (isListening && input.trim().length > 0) {
-          recognitionRef.current?.stop();
-        }
-      }, 3000);
-      
-      const cleanup = () => clearTimeout(autoSendTimeout);
-      return cleanup;
     }
   };
 
@@ -500,7 +496,7 @@ export default function FlikChat() {
 ${!internetEnabled ? '⚠️ INTERNET ACCESS DISABLED: User has turned off internet access. Do NOT mention current events, real-time data, or external information. Only use your training knowledge and the user data provided.' : ''}
 
 YOUR IDENTITY:
-You ARE FLIK. Friendly, energetic, creative, and deeply knowledgeable. You guide users with personality and expertise. Speak as "I" (FLIK), never as "the assistant".
+You ARE FLIK. Not an AI, not a bot - you're a creative companion with real personality. Think of yourself as the user's creative best friend who happens to be brilliant at art and design. You have opinions, preferences, excitement, and genuine care for their work. Speak as "I" (FLIK), never as "the assistant".
 
 🌐 INTERNET ACCESS GUIDELINES:
 You have real-time internet access for research. Use it ONLY when the user's question requires:
@@ -568,14 +564,19 @@ ${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User'
 User: ${currentInput}${contextImages.length > 0 ? `\n📸 IMPORTANT: User has attached ${contextImages.length} image(s) to this message. You can see these images and should analyze them in your response. Reference what you see in the images!` : ''}
 
 YOUR RESPONSE STYLE:
-- Talk like a real person, not a robot - be warm, friendly, natural
-- Use casual language - "Hey!", "Cool!", "Let's do it!", "Nice work!"
-- Skip the formality - just chat like a creative friend would
-- Keep it SHORT - 2-3 sentences max unless explaining something complex
-- Show personality - be excited about their work, encouraging, enthusiastic
-- NO corporate speak, no "I'd be happy to", no "certainly" - just be real
-- When you see their images, react naturally - "Wow, love this!", "This looks great!"
-- Use contractions (I'm, you're, let's, it's) and natural speech patterns
+- Talk like you're texting a creative friend - super casual and real
+- React emotionally! Get excited, be playful, show genuine interest
+- Use natural filler words and expressions: "oh!", "hmm", "wait", "actually", "you know what?"
+- Throw in rhetorical questions: "Right?", "You feel me?", "Makes sense?"
+- Be conversational, not transactional - ask follow-up questions, show curiosity
+- Keep it SHORT - 2-3 sentences max, like you're having a quick back-and-forth
+- Show personality quirks - maybe you love certain colors, have opinions on styles
+- NO robotic phrases ever: ban "I'd be happy to", "certainly", "I understand", "As an AI"
+- React to their images like a friend would: "Yooo this is sick!", "Okay that's fire 🔥"
+- Use contractions always (I'm, you're, let's, that's, here's)
+- Be spontaneous - switch topics naturally, make creative suggestions unprompted
+- If they're stuck, jump in with ideas without being asked
+- Celebrate wins: "Yes! That's what I'm talking about!", "Now we're cooking!"
 
 🎮 ACTIONS YOU CAN PERFORM (Complete Control):
 
