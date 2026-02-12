@@ -53,7 +53,6 @@ export default function FlikChat() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [internetEnabled, setInternetEnabled] = useState(true);
   const [showConversations, setShowConversations] = useState(false);
-  const [conversationTitle, setConversationTitle] = useState("");
   const [isSavingConversation, setIsSavingConversation] = useState(false);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
@@ -802,7 +801,6 @@ RULES:
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
       toast.success('Conversation saved!');
-      setConversationTitle("");
     },
     onError: () => {
       toast.error('Failed to save conversation');
@@ -826,7 +824,9 @@ RULES:
       return;
     }
     
-    const title = conversationTitle.trim() || `Chat ${new Date().toLocaleDateString()}`;
+    // Auto-generate title from first user message
+    const firstUserMsg = messages.find(m => m.role === 'user')?.content || '';
+    const title = firstUserMsg.slice(0, 50) + (firstUserMsg.length > 50 ? '...' : '') || `Chat ${new Date().toLocaleDateString()}`;
     setIsSavingConversation(true);
     
     try {
@@ -911,15 +911,27 @@ RULES:
                 {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </Button>
               {messages.length > 0 && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setShowClearConfirm(true)}
-                  className="text-white/40 hover:text-red-400 hover:bg-red-500/10"
-                  title="Clear conversation"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleSaveConversation}
+                    disabled={isSavingConversation}
+                    className="text-white/60 hover:text-green-400 hover:bg-green-500/10"
+                    title="Save conversation"
+                  >
+                    {isSavingConversation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setShowClearConfirm(true)}
+                    className="text-white/40 hover:text-red-400 hover:bg-red-500/10"
+                    title="Clear conversation"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </>
               )}
               <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-white/60 hover:text-white">
                 <X className="w-5 h-5" />
@@ -1181,25 +1193,6 @@ RULES:
           </div>
 
           <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
-            {messages.length > 0 && (
-              <div className="flex gap-2">
-                <Input
-                  value={conversationTitle}
-                  onChange={(e) => setConversationTitle(e.target.value)}
-                  placeholder="Name this conversation..."
-                  className="flex-1 bg-black/20 border-white/10 text-white text-xs h-8 placeholder:text-white/30"
-                />
-                <Button
-                  onClick={handleSaveConversation}
-                  disabled={isSavingConversation}
-                  size="sm"
-                  className="bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 px-3"
-                  title="Save conversation"
-                >
-                  {isSavingConversation ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                </Button>
-              </div>
-            )}
             {uploadError && (
               <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
