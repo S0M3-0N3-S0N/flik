@@ -323,7 +323,7 @@ export default function Generate() {
             transition={{ delay: 0.2 }}
             className="text-lg text-white/50 mb-12 max-w-2xl mx-auto"
           >
-            Describe your vision and watch AI bring it to life in seconds
+            Watch FLIK bring it to life
           </motion.p>
           
           <motion.div
