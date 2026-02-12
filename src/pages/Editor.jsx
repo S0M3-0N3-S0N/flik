@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -1429,7 +1429,7 @@ export default function Editor() {
                 {isSaving ? (
                   <Loader2 className="w-4 h-4 lg:mr-2 animate-spin" />
                 ) : (
-                  <Sparkles className="w-4 h-4 lg:mr-2" />
+                  <Save className="w-4 h-4 lg:mr-2" />
                 )}
                 <span className="hidden lg:inline">{isSaving ? "Saving..." : "Save"}</span>
               </Button>
