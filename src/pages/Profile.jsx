@@ -497,14 +497,14 @@ export default function Profile() {
       <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
         
         {/* Profile Header */}
-        <div className="relative bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-10 glass-card overflow-hidden">
+        <div className="relative bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-6 md:p-10 glass-card overflow-hidden">
           {/* Background Glow Effect */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="relative flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 md:mb-10 text-center md:text-left">
+          <div className="relative flex flex-col md:flex-row items-center gap-3 sm:gap-6 md:gap-8 mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
             <div className="relative group">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30">
-                <div className="w-full h-full rounded-[18px] sm:rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-3xl sm:text-4xl font-bold text-white overflow-hidden">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30">
+                <div className="w-full h-full rounded-[14px] sm:rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-2xl sm:text-4xl font-bold text-white overflow-hidden">
                   {user.profile_picture ? (
                     <img 
                       src={user.profile_picture} 
@@ -528,13 +528,13 @@ export default function Profile() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
+                className="absolute -bottom-0.5 -right-0.5 sm:-bottom-2 sm:-right-2 w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
                 aria-label="Change profile picture"
               >
                 {isUploading ? (
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-spin" />
                 ) : (
-                  <Camera className="w-5 h-5 text-white" />
+                  <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 )}
               </button>
               <input
@@ -547,7 +547,7 @@ export default function Profile() {
             </div>
             
             <div className="flex-1 w-full">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 justify-center md:justify-start flex-wrap">
+              <div className="flex items-center gap-1.5 sm:gap-3 mb-1.5 sm:mb-2 justify-center md:justify-start flex-wrap">
                 {isEditingName ? (
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Input
@@ -574,7 +574,7 @@ export default function Profile() {
                   </div>
                 ) : (
                   <>
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
+                    <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
                     <button 
                       onClick={startEditingName} 
                       className="p-2 sm:p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -585,11 +585,11 @@ export default function Profile() {
                   </>
                 )}
               </div>
-              <p className="text-white/50 text-sm sm:text-base flex items-center gap-2 justify-center md:justify-start flex-wrap break-all">
+              <p className="text-white/50 text-xs sm:text-base flex items-center gap-1.5 sm:gap-2 justify-center md:justify-start flex-wrap break-all">
                 <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="break-all">{user.email}</span>
               </p>
-              <div className="mt-3 sm:mt-4 flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
+              <div className="mt-2 sm:mt-4 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
                   Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
@@ -606,18 +606,18 @@ export default function Profile() {
             </Button>
           </div>
 
-          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="relative grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
             <div className="group p-4 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
-                    <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
+                <div className="flex items-center gap-1.5 sm:gap-3">
+                  <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-xs sm:text-sm font-medium">{t("profile.language")}</span>
+                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">{t("profile.language")}</span>
                 </div>
               </div>
               <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-sm">
+                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white h-8 sm:h-10 rounded-lg sm:rounded-xl text-xs sm:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -629,13 +629,13 @@ export default function Profile() {
               </Select>
             </div>
 
-            <div className="group p-4 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
+            <div className="group p-3 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-lg sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="flex items-center gap-1.5 sm:gap-3">
+                  <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-xs sm:text-sm font-medium">Contact Email</span>
+                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">Contact</span>
                 </div>
                 {!isEditingEmail && (
                   <button 
@@ -666,35 +666,35 @@ export default function Profile() {
                   </div>
                 </div>
               ) : (
-                <p className="text-white/90 text-xs sm:text-sm truncate">{user.contact_email || user.email}</p>
+                <p className="text-white/90 text-[11px] sm:text-sm truncate">{user.contact_email || user.email}</p>
               )}
             </div>
             
-            <div className="group p-4 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
-                    <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
+            <div className="group p-3 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-lg sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="flex items-center gap-1.5 sm:gap-3">
+                  <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
+                    <Lock className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-xs sm:text-sm font-medium">{t("profile.password")}</span>
+                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">{t("profile.password")}</span>
                 </div>
               </div>
               <Button 
                 size="sm" 
                 onClick={() => setShowPasswordDialog(true)}
-                className="w-full bg-white/5 hover:bg-white/10 text-white border-0 h-8 sm:h-9 text-xs sm:text-sm"
+                className="w-full bg-white/5 hover:bg-white/10 text-white border-0 h-7 sm:h-9 text-[11px] sm:text-sm"
               >
                 {t("profile.change")}
               </Button>
             </div>
 
-            <div className="group p-4 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-xl sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center">
-                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
+            <div className="group p-3 sm:p-5 bg-white/5 hover:bg-white/[0.07] rounded-lg sm:rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="flex items-center gap-1.5 sm:gap-3">
+                  <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-xs sm:text-sm font-medium">Statistics</span>
+                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">Stats</span>
                 </div>
                 <button 
                   onClick={() => setShowStatsExpanded(!showStatsExpanded)}
@@ -704,8 +704,8 @@ export default function Profile() {
                   <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${showStatsExpanded ? 'rotate-180' : ''}`} />
                 </button>
               </div>
-              <div className="space-y-2">
-                <p className="text-2xl sm:text-3xl font-bold gradient-text">{stats.total}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xl sm:text-3xl font-bold gradient-text">{stats.total}</p>
                 <AnimatePresence>
                   {showStatsExpanded && (
                     <motion.div 
