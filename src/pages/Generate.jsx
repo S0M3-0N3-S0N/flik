@@ -231,8 +231,21 @@ export default function Generate() {
     }
   };
 
-  const handleDeleteImage = (id) => {
+  const handleDeleteImage = async (id) => {
+    const imageToDelete = generatedImages.find(img => img.id === id);
     setGeneratedImages(generatedImages.filter(img => img.id !== id));
+    
+    // Auto-delete from gallery (Creation entity)
+    if (imageToDelete) {
+      try {
+        const creations = await base44.entities.Creation.filter({ url: imageToDelete.url });
+        if (creations.length > 0) {
+          await base44.entities.Creation.delete(creations[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to delete from gallery:", err);
+      }
+    }
   };
 
   const handleGalleryPick = async () => {
@@ -286,92 +299,124 @@ export default function Generate() {
 
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <section className="relative py-20 px-6 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
+      <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-4 sm:px-6 overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div 
-            initial={{ x: "-50%" }}
+            initial={{ x: "-50%", y: "-50%" }}
             animate={{ 
-              scale: [1, 1.15, 1],
-              opacity: [0.6, 1, 0.6],
-              x: "-50%"
+              scale: [1, 1.2, 1],
+              opacity: [0.4, 0.8, 0.4],
+              x: "-50%",
+              y: "-50%"
             }}
             transition={{ 
-              duration: 3, 
+              duration: 4, 
               repeat: Infinity,
               ease: "easeInOut" 
             }}
-            className="absolute top-0 left-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/80 to-transparent blur-[100px]" 
+            className="absolute top-1/4 left-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-b from-[#FF6B35]/60 to-transparent blur-[120px]" 
+          />
+          <motion.div 
+            initial={{ x: "-50%", y: "-50%" }}
+            animate={{ 
+              scale: [1, 1.15, 1],
+              opacity: [0.3, 0.6, 0.3],
+              x: "-50%",
+              y: "-50%"
+            }}
+            transition={{ 
+              duration: 5, 
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5
+            }}
+            className="absolute top-1/3 left-2/3 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FFB800]/40 to-transparent blur-[100px]" 
           />
         </div>
         
-        <div className="relative max-w-4xl mx-auto text-center">
-
+        <div className="relative max-w-5xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0 }}
+            className="mb-8"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20 backdrop-blur-sm">
+              <span className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
+              <span className="text-sm font-medium text-white/70">AI-Powered Image Generation</span>
+            </div>
+          </motion.div>
           
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl font-bold mb-6"
+            className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
           >
-            <span className="text-white">Create with </span>
-            <span className="gradient-text">Imagination</span>
+            <span className="text-white">Transform Your Ideas Into </span>
+            <span className="gradient-text">Stunning Visuals</span>
           </motion.h1>
           
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg text-white/50 mb-12 max-w-2xl mx-auto"
+            className="text-lg sm:text-xl text-white/60 mb-16 max-w-3xl mx-auto leading-relaxed"
           >
-            Watch FLIK bring it to life
+            Watch FLIK bring it to life with cutting-edge AI. From concept to creation in seconds.
           </motion.p>
           
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative max-w-3xl mx-auto"
+            className="relative max-w-4xl mx-auto w-full"
           >
-            <div className="relative bg-[#141414]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-2 shadow-2xl transition-all duration-300 hover:border-white/20">
+            <div className="relative bg-gradient-to-br from-[#0a0a0a]/90 via-[#141414]/80 to-[#0a0a0a]/90 backdrop-blur-2xl rounded-3xl border border-white/10 p-3 sm:p-4 shadow-2xl transition-all duration-300 hover:border-white/20 glow-effect">
               {/* Input Area */}
-              <div className="relative px-4 pt-4 flex flex-col gap-4">
+              <div className="relative px-4 sm:px-6 pt-4 sm:pt-6 flex flex-col gap-4">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">What do you want to create?</label>
               <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe your vision (e.g., 'A cat in 3 different styles')..."
-                className="w-full min-h-[100px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    handleGenerate();
-                  }
-                }}
+               value={prompt}
+               onChange={(e) => setPrompt(e.target.value)}
+               placeholder="Describe your vision (e.g., 'A futuristic city at sunset with flying cars')..."
+               className="w-full min-h-[120px] bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/30 text-base sm:text-lg resize-none focus:outline-none focus:border-[#FF6B35]/50 focus:ring-1 focus:ring-[#FF6B35]/20 p-4 transition-all duration-300"
+               onKeyDown={(e) => {
+                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                   handleGenerate();
+                 }
+               }}
               />
 
               {/* Uploaded Images Preview */}
               {(uploadedImages.length > 0 || isUploading) && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
-                  {uploadedImages.map((img) => (
-                    <div key={img.id} className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/10 group flex-shrink-0">
-                      <img src={img.url} className="w-full h-full object-cover" />
-                      <button 
-                        onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
-                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                      >
-                        <X className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  ))}
-                  {isUploading && (
-                    <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 animate-pulse flex-shrink-0">
-                      <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
-                    </div>
-                  )}
-                </div>
+               <div className="px-4 sm:px-6">
+                 <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">Reference Images</p>
+                 <div className="flex items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
+                   {uploadedImages.map((img) => (
+                     <div key={img.id} className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/10 group flex-shrink-0 shadow-lg hover:shadow-xl transition-shadow">
+                       <img src={img.url} className="w-full h-full object-cover" />
+                       <button 
+                         onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
+                         className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                       >
+                         <X className="w-5 h-5 text-white" />
+                       </button>
+                     </div>
+                   ))}
+                   {isUploading && (
+                     <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center border-2 border-white/10 animate-pulse flex-shrink-0">
+                       <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
+                     </div>
+                   )}
+                 </div>
+               </div>
               )}
               </div>
 
               {/* Toolbar */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 mt-2 bg-white/5 rounded-2xl gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 mt-4 bg-gradient-to-r from-white/[0.08] to-white/[0.02] rounded-2xl gap-3 border border-white/5">
                 <div className="flex items-center gap-2 px-2 flex-wrap">
 
 
@@ -513,22 +558,22 @@ export default function Generate() {
                 </div>
 
                 <Button
-                  onClick={handleGenerate}
-                  disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
-                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Generate
-                    </>
-                  )}
-                </Button>
+                   onClick={handleGenerate}
+                   disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
+                   className="btn-gradient text-white rounded-xl px-6 h-11 shadow-lg shadow-[#FF6B35]/30 hover:shadow-[#FF6B35]/50 transition-all w-full sm:w-auto sm:ml-auto font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   {isGenerating ? (
+                     <>
+                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                       Creating...
+                     </>
+                   ) : (
+                     <>
+                       <Sparkles className="w-4 h-4 mr-2" />
+                       Generate
+                     </>
+                   )}
+                 </Button>
               </div>
               </div>
 
