@@ -875,23 +875,23 @@ export default function Profile() {
                     <span className="ml-2 text-xs text-white/60">({batchDeleteProgress}% deleted)</span>
                   )}
                 </span>
-                <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                   <Button
                     size="sm"
                     onClick={totalPages > 1 ? selectAllFiltered : selectAll}
-                    className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm"
+                    className="flex-1 min-w-[100px] sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-2 sm:px-4 text-xs sm:text-sm"
                     aria-label={totalPages > 1 ? "Select all filtered items" : "Select all visible items"}
                   >
                     {selectedItems.length === filteredCreations.length ? (
-                      <><CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Deselect All {totalPages > 1 && `(${filteredCreations.length})`}</>
+                      <><CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" /> <span className="hidden xs:inline">Deselect</span><span className="xs:hidden">All</span> <span className="hidden sm:inline">{totalPages > 1 && `(${filteredCreations.length})`}</span></>
                     ) : (
-                      <><Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Select All {totalPages > 1 && `(${filteredCreations.length})`}</>
+                      <><Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" /> Select <span className="hidden sm:inline">{totalPages > 1 && `(${filteredCreations.length})`}</span></>
                     )}
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => setSelectedItems([])}
-                    className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm"
+                    className="flex-1 min-w-[80px] sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-2 sm:px-4 text-xs sm:text-sm"
                   >
                     Clear
                   </Button>
@@ -904,11 +904,11 @@ export default function Profile() {
                      }).filter(Boolean).join(',');
                      navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(urls));
                    }}
-                   className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm"
+                   className="flex-1 min-w-[80px] sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-2 sm:px-3 text-xs sm:text-sm"
                    title="Edit selected in Photo Studio"
                   >
-                   <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                   Edit
+                   <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
+                   <span className="hidden sm:inline ml-1">Edit</span>
                   </Button>
                   <Button
                    size="sm"
@@ -919,20 +919,20 @@ export default function Profile() {
                      }).filter(Boolean).join(',');
                      navigate(createPageUrl('Generate') + '?load=' + encodeURIComponent(urls));
                    }}
-                   className="flex-1 sm:flex-none bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm"
+                   className="flex-1 min-w-[90px] sm:flex-none bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-9 px-2 sm:px-3 text-xs sm:text-sm"
                    title="Use as reference in Imagine AI"
                   >
-                   <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                   Imagine
+                   <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
+                   <span className="hidden sm:inline ml-1">Imagine</span>
                   </Button>
                   <Button
                    size="sm"
                    onClick={handleBatchDelete}
                    disabled={batchDeleteProgress > 0}
-                   className="flex-1 sm:flex-none bg-red-500/20 hover:bg-red-500/30 text-red-400 border-0 h-9 px-3 sm:px-4 text-xs sm:text-sm disabled:opacity-50"
+                   className="flex-1 min-w-[80px] sm:flex-none bg-red-500/20 hover:bg-red-500/30 text-red-400 border-0 h-9 px-2 sm:px-3 text-xs sm:text-sm disabled:opacity-50"
                   >
-                   <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                   Delete
+                   <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
+                   <span className="hidden sm:inline ml-1">Delete</span>
                   </Button>
                 </div>
               </motion.div>
