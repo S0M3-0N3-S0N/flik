@@ -13,7 +13,7 @@ import ToolPanel from "@/components/editor/ToolPanel";
 import AdjustmentsPanel from "@/components/editor/AdjustmentsPanel";
 import FiltersPanel from "@/components/editor/FiltersPanel";
 import TransformPanel from "@/components/editor/TransformPanel";
-import SpotRemoval from "@/components/editor/SpotRemoval";
+import MagicBrush from "@/components/editor/MagicBrush";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
@@ -818,57 +818,24 @@ export default function Editor() {
             </TabsContent>
 
             <TabsContent value="remove" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Magic Brush</h3>
               {currentImage ? (
-                <>
-                  <SpotRemoval 
-                    onRemoveSpot={handleMagicBrush}
-                    isProcessing={isMagicBrushProcessing}
-                    brushSize={brushSize}
-                    onBrushSizeChange={setBrushSize}
-                    brushOpacity={brushOpacity}
-                    onBrushOpacityChange={setBrushOpacity}
-                    brushMode={brushMode}
-                    onBrushModeChange={setBrushMode}
-                    prompt={magicBrushPrompt}
-                    onPromptChange={setMagicBrushPrompt}
-                    referenceImages={magicBrushImages}
-                    onReferenceImagesChange={setMagicBrushImages}
-                  />
-                  {brushStrokes.length > 0 && (
-                    <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-white/80">{brushStrokes.length} stroke(s)</span>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (brushStrokes.length > 0) {
-                                setBrushStrokes(prev => prev.slice(0, -1));
-                              }
-                            }}
-                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
-                            title="Undo last stroke"
-                          >
-                            <RotateCw className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setBrushStrokes([])}
-                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
-                          >
-                            <X className="w-3 h-3 mr-1" />
-                            Clear
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
+                <MagicBrush 
+                  onGenerate={handleMagicBrush}
+                  isProcessing={isMagicBrushProcessing}
+                  brushSize={brushSize}
+                  onBrushSizeChange={setBrushSize}
+                  brushMode={brushMode}
+                  onBrushModeChange={setBrushMode}
+                  prompt={magicBrushPrompt}
+                  onPromptChange={setMagicBrushPrompt}
+                  referenceImages={magicBrushImages}
+                  onReferenceImagesChange={setMagicBrushImages}
+                  brushStrokes={brushStrokes}
+                />
               ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
+                <div className="py-16 text-center">
+                  <p className="text-white/40 text-sm">Upload an image to start</p>
+                </div>
               )}
             </TabsContent>
 
