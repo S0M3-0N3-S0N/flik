@@ -96,21 +96,33 @@ Return ONLY the 3 suggestions, nothing else.`,
   };
 
   const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    const files = Array.from(e.target.files || []);
+    console.log("Files selected:", files.length);
+    
+    if (files.length === 0) {
+      console.log("No files selected");
+      return;
+    }
 
     setIsUploading(true);
     try {
+      console.log("Starting upload of", files.length, "files");
       const newImages = await Promise.all(files.map(async (file) => {
+        console.log("Uploading file:", file.name);
         const result = await base44.integrations.Core.UploadFile({ file });
+        console.log("Upload result:", result);
         return result.file_url;
       }));
-      onReferenceImagesChange([...referenceImages, ...newImages]);
-      toast.success(`${files.length} image${files.length > 1 ? 's' : ''} added`);
-      e.target.value = ''; // Reset input so same file can be selected again
+      
+      console.log("All uploads complete, new images:", newImages);
+      const updatedImages = [...referenceImages, ...newImages];
+      console.log("Updated reference images:", updatedImages);
+      onReferenceImagesChange(updatedImages);
+      toast.success(`${files.length} image${files.length > 1 ? 's' : ''} uploaded successfully!`);
+      e.target.value = '';
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Failed to upload images");
+      toast.error(`Failed to upload: ${error.message || 'Unknown error'}`);
     } finally {
       setIsUploading(false);
     }
