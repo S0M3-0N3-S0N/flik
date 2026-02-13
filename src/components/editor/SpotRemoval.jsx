@@ -313,6 +313,7 @@ Return ONLY the 3 suggestions, nothing else.`,
           </AnimatePresence>
 
           <div className="space-y-3 mt-3">
+            <Label className="text-white/60 text-xs">Reference Images (Optional)</Label>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleGalleryPick}
@@ -350,9 +351,9 @@ Return ONLY the 3 suggestions, nothing else.`,
                 />
               </label>
 
-              {referenceImages.length > 0 && (
-                <div className="flex items-center justify-center min-w-[36px] h-[36px] rounded-lg bg-white/5 border border-white/10 px-2" title={`${referenceImages.length} images added`}>
-                  <span className="text-xs text-white/60 font-medium">{referenceImages.length}</span>
+              {referenceImages?.length > 0 && (
+                <div className="flex items-center justify-center min-w-[36px] h-[36px] rounded-lg bg-[#FF6B35]/20 border border-[#FF6B35]/40 px-2" title={`${referenceImages.length} images added`}>
+                  <span className="text-xs text-[#FF6B35] font-semibold">{referenceImages.length}</span>
                 </div>
               )}
             </div>
