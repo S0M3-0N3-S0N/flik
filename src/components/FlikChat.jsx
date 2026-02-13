@@ -1522,9 +1522,8 @@ RULES:
             </div>
             <div className="flex gap-2 sm:gap-3 relative z-10">
               <Button
-                variant="outline"
                 onClick={() => setSelectedGalleryImages([])}
-                className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 hover:border-white/40 text-sm px-6 py-2.5 rounded-xl transition-all"
+                className="flex-1 sm:flex-none bg-white/10 border border-white/30 text-white hover:bg-white/20 hover:border-white/50 text-sm px-6 py-2.5 rounded-xl transition-all font-medium"
               >
                 Clear Selection
               </Button>
