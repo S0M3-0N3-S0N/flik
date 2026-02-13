@@ -20,6 +20,7 @@ export default function SpotRemoval({
   referenceImages = [],
   onReferenceImagesChange
 }) {
+  console.log("SpotRemoval render - referenceImages:", referenceImages);
   const [isUploading, setIsUploading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -96,21 +97,33 @@ Return ONLY the 3 suggestions, nothing else.`,
   };
 
   const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    const files = Array.from(e.target.files || []);
+    console.log("Files selected:", files.length);
+    
+    if (files.length === 0) {
+      console.log("No files selected");
+      return;
+    }
 
     setIsUploading(true);
     try {
+      console.log("Starting upload of", files.length, "files");
       const newImages = await Promise.all(files.map(async (file) => {
+        console.log("Uploading file:", file.name);
         const result = await base44.integrations.Core.UploadFile({ file });
+        console.log("Upload result:", result);
         return result.file_url;
       }));
-      onReferenceImagesChange([...referenceImages, ...newImages]);
-      toast.success(`${files.length} image${files.length > 1 ? 's' : ''} added`);
-      e.target.value = ''; // Reset input so same file can be selected again
+      
+      console.log("All uploads complete, new images:", newImages);
+      const updatedImages = [...referenceImages, ...newImages];
+      console.log("Updated reference images:", updatedImages);
+      onReferenceImagesChange(updatedImages);
+      toast.success(`${files.length} image${files.length > 1 ? 's' : ''} uploaded successfully!`);
+      e.target.value = '';
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Failed to upload images");
+      toast.error(`Failed to upload: ${error.message || 'Unknown error'}`);
     } finally {
       setIsUploading(false);
     }
@@ -300,6 +313,7 @@ Return ONLY the 3 suggestions, nothing else.`,
           </AnimatePresence>
 
           <div className="space-y-3 mt-3">
+            <Label className="text-white/60 text-xs">Reference Images (Optional)</Label>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleGalleryPick}
@@ -310,26 +324,64 @@ Return ONLY the 3 suggestions, nothing else.`,
                 <span className="sm:hidden">Gal</span>
               </button>
 
-              {referenceImages.length > 0 && (
-                <div className="flex items-center justify-center min-w-[36px] h-[36px] rounded-lg bg-white/5 border border-white/10 px-2" title={`${referenceImages.length} images added`}>
-                  <span className="text-xs text-white/60 font-medium">{referenceImages.length}</span>
+              <label className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap ${
+                isUploading 
+                  ? 'bg-white/5 cursor-not-allowed opacity-50' 
+                  : 'bg-white/5 hover:bg-white/10 cursor-pointer'
+              }`}>
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Upload</span>
+                    <span className="sm:hidden">Up</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={isUploading}
+                />
+              </label>
+
+              {referenceImages?.length > 0 && (
+                <div className="flex items-center justify-center min-w-[36px] h-[36px] rounded-lg bg-[#FF6B35]/20 border border-[#FF6B35]/40 px-2" title={`${referenceImages.length} images added`}>
+                  <span className="text-xs text-[#FF6B35] font-semibold">{referenceImages.length}</span>
                 </div>
               )}
             </div>
             
             {referenceImages.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {referenceImages.map((url, idx) => (
-                  <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 group border border-white/10">
-                    <img src={url} alt="Reference" className="w-full h-full object-cover" />
-                    <button
-                      onClick={() => onReferenceImagesChange(referenceImages.filter((_, i) => i !== idx))}
-                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                    >
-                      <X className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                <Label className="text-white/60 text-xs">Reference Images</Label>
+                <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {referenceImages.map((url, idx) => (
+                    <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 group border border-white/10 bg-white/5">
+                      <img src={url} alt={`Reference ${idx + 1}`} className="w-full h-full object-cover" onError={(e) => {
+                        console.error(`Failed to load image ${idx}:`, url);
+                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Crect width="80" height="80" fill="%23333"/%3E%3Ctext x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23666" font-size="10"%3EError%3C/text%3E%3C/svg%3E';
+                      }} />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onReferenceImagesChange(referenceImages.filter((_, i) => i !== idx));
+                          toast.success("Image removed");
+                        }}
+                        className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                        title="Remove image"
+                      >
+                        <X className="w-5 h-5 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
