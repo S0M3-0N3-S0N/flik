@@ -289,13 +289,6 @@ Return ONLY the 3 suggestions, nothing else.`,
 
           <div className="space-y-3 mt-3">
             <div className="flex items-center gap-2">
-              <label className="flex-1 cursor-pointer inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap">
-                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
-                <span className="hidden sm:inline">Add Reference</span>
-                <span className="sm:hidden">Add Ref</span>
-                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-              </label>
-
               <button
                 onClick={handleGalleryPick}
                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap"
