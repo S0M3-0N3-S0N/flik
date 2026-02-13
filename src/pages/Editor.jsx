@@ -1086,54 +1086,48 @@ export default function Editor() {
                 toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
               }}
             >
-              <div className="relative bg-gradient-to-r from-black/60 via-black/50 to-black/60 backdrop-blur-2xl border border-white/10 rounded-full px-1 py-1 sm:px-2 sm:py-1.5 flex items-center gap-0.5 sm:gap-1 shadow-[0_25px_50px_rgba(255,107,53,0.15),0_0_0_1px_rgba(255,107,53,0.2)_inset]" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,107,53,0.05) 0%, rgba(0,0,0,0) 50%, rgba(255,184,0,0.03) 100%)' }}>
+              <div className="relative bg-gradient-to-r from-black/60 via-black/50 to-black/60 backdrop-blur-2xl border border-white/10 rounded-full px-1 py-1 flex items-center gap-0.5 shadow-[0_25px_50px_rgba(255,107,53,0.15),0_0_0_1px_rgba(255,107,53,0.2)_inset]" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,107,53,0.05) 0%, rgba(0,0,0,0) 50%, rgba(255,184,0,0.03) 100%)' }}>
                 <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
                 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsPanToolActive(!isPanToolActive)}
-                  className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-gradient-to-br from-white to-white/90 text-black hover:from-white/95 hover:to-white/85 shadow-[0_0_20px_rgba(255,255,255,0.4)]' : 'hover:bg-white/10 text-white'}`}
+                  className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-gradient-to-br from-white to-white/90 text-black hover:from-white/95 hover:to-white/85 shadow-[0_0_20px_rgba(255,255,255,0.4)]' : 'hover:bg-white/10 text-white'}`}
                   title="Pan Tool (Space)"
                 >
-                  <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Move className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </Button>
-
-                <div className="hidden sm:block w-px h-4 bg-white/10 mx-0.5" />
 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
-                  className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
+                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
                   title="Zoom Out"
                 >
-                  <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <ZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </Button>
 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
-                  className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
+                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
                   title="Zoom In"
                 >
-                  <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <ZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </Button>
-
-                <div className="hidden sm:block w-px h-4 bg-white/10 mx-0.5" />
 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
-                  className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
+                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
                   title="Reset View"
                 >
-                  <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </Button>
-
-                <div className="hidden sm:block w-px h-4 bg-white/10 mx-0.5" />
 
                 <Button
                   variant="ghost"
@@ -1146,14 +1140,14 @@ export default function Editor() {
                       handleStartCrop();
                     }
                   }}
-                  className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all flex-shrink-0 ${
+                  className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all flex-shrink-0 ${
                     isCropping 
                       ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white hover:from-[#FF8B55] hover:to-[#FF4C45] shadow-[0_0_20px_rgba(255,107,53,0.5)]' 
                       : 'hover:bg-white/10 text-white/80 hover:text-white'
                   }`}
                   title="Crop & Resize"
                 >
-                  <CropIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <CropIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </Button>
               </div>
             </motion.div>
