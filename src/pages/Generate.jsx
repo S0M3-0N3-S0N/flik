@@ -286,7 +286,7 @@ export default function Generate() {
 
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <section className="relative py-20 px-6 overflow-hidden">
+      <section className="relative py-10 sm:py-16 md:py-20 px-4 sm:px-6 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <motion.div 
             initial={{ x: "-50%" }}
@@ -300,7 +300,7 @@ export default function Generate() {
               repeat: Infinity,
               ease: "easeInOut" 
             }}
-            className="absolute top-0 left-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/80 to-transparent blur-[100px]" 
+            className="absolute top-0 left-1/2 w-[300px] sm:w-[500px] md:w-[600px] h-[300px] sm:h-[500px] md:h-[600px] rounded-full bg-gradient-to-b from-[#FF6B35]/80 to-transparent blur-[80px] sm:blur-[100px]" 
           />
         </div>
         
@@ -311,7 +311,7 @@ export default function Generate() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl font-bold mb-6"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 px-2"
           >
             <span className="text-white">Create with </span>
             <span className="gradient-text">Imagination</span>
@@ -321,7 +321,7 @@ export default function Generate() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg text-white/50 mb-12 max-w-2xl mx-auto"
+            className="text-sm sm:text-base md:text-lg text-white/50 mb-8 sm:mb-10 md:mb-12 max-w-2xl mx-auto px-4"
           >
             Describe your vision and watch AI bring it to life in seconds
           </motion.p>
@@ -332,14 +332,14 @@ export default function Generate() {
             transition={{ delay: 0.3 }}
             className="relative max-w-3xl mx-auto"
           >
-            <div className="relative bg-[#141414]/80 backdrop-blur-xl rounded-3xl border border-white/10 p-2 shadow-2xl transition-all duration-300 hover:border-white/20">
+            <div className="relative bg-[#141414]/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/10 p-1.5 sm:p-2 shadow-2xl transition-all duration-300 hover:border-white/20">
               {/* Input Area */}
-              <div className="relative px-4 pt-4 flex flex-col gap-4">
+              <div className="relative px-3 sm:px-4 pt-3 sm:pt-4 flex flex-col gap-3 sm:gap-4">
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="Describe your vision (e.g., 'A cat in 3 different styles')..."
-                className="w-full min-h-[100px] bg-transparent text-white placeholder:text-white/30 text-xl resize-none focus:outline-none"
+                className="w-full min-h-[80px] sm:min-h-[100px] bg-transparent text-white placeholder:text-white/30 text-base sm:text-lg md:text-xl resize-none focus:outline-none"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                     handleGenerate();
@@ -349,21 +349,21 @@ export default function Generate() {
 
               {/* Uploaded Images Preview */}
               {(uploadedImages.length > 0 || isUploading) && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {uploadedImages.map((img) => (
-                    <div key={img.id} className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/10 group flex-shrink-0">
+                    <div key={img.id} className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl overflow-hidden border border-white/10 group flex-shrink-0">
                       <img src={img.url} className="w-full h-full object-cover" />
                       <button 
                         onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
-                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 active:opacity-100 flex items-center justify-center transition-opacity"
                       >
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                       </button>
                     </div>
                   ))}
                   {isUploading && (
-                    <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 animate-pulse flex-shrink-0">
-                      <Loader2 className="w-5 h-5 text-white/50 animate-spin" />
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl bg-white/5 flex items-center justify-center border border-white/10 animate-pulse flex-shrink-0">
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-white/50 animate-spin" />
                     </div>
                   )}
                 </div>
@@ -371,13 +371,13 @@ export default function Generate() {
               </div>
 
               {/* Toolbar */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 mt-2 bg-white/5 rounded-2xl gap-2">
-                <div className="flex items-center gap-2 px-2 flex-wrap">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-1.5 sm:p-2 mt-2 bg-white/5 rounded-xl sm:rounded-2xl gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2 flex-wrap">
 
 
                   <Select value={aiModel} onValueChange={setAiModel}>
-                    <SelectTrigger className="h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-xs rounded-full gap-2 px-3 focus:ring-0">
-                      <Zap className={`w-3.5 h-3.5 ${aiModel === 'gemini' ? 'text-[#FF6B35]' : 'text-white/50'}`} />
+                    <SelectTrigger className="h-8 sm:h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-[11px] sm:text-xs rounded-full gap-1.5 sm:gap-2 px-2.5 sm:px-3 focus:ring-0">
+                      <Zap className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${aiModel === 'gemini' ? 'text-[#FF6B35]' : 'text-white/50'}`} />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -390,13 +390,13 @@ export default function Generate() {
 
                   <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                    className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
                       uploadedImages.length > 0
                         ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                         : 'text-white/60 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    <Upload className="w-3.5 h-3.5" />
+                    <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span className="hidden xs:inline">{uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}</span>
                     <span className="xs:hidden">{uploadedImages.length > 0 ? uploadedImages.length : 'Add'}</span>
                   </button>
@@ -411,25 +411,25 @@ export default function Generate() {
 
                   <button
                     onClick={handleGalleryPick}
-                    className="h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
+                    className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
                     title="Add from gallery"
                   >
-                    <Grid3x3 className="w-3.5 h-3.5" />
+                    <Grid3x3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span className="hidden xs:inline">Gallery</span>
                   </button>
 
                   <Popover>
                     <PopoverTrigger asChild>
                       <button 
-                        className={`h-9 px-3 rounded-full flex items-center gap-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                        className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
                           (aspectRatio !== "1:1" || negativePrompt || imageCount !== 1) 
                             ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
                             : 'text-white/60 hover:bg-white/5 hover:text-white'
                         }`}
                         title="Advanced Settings"
                       >
-                        <Settings2 className="w-4 h-4" />
-                        {imageCount > 1 && <span className="font-bold">×{imageCount}</span>}
+                        <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        {imageCount > 1 && <span className="font-bold text-[11px] sm:text-xs">×{imageCount}</span>}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl">
@@ -515,17 +515,17 @@ export default function Generate() {
                 <Button
                   onClick={handleGenerate}
                   disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
-                  className="btn-gradient text-white rounded-xl px-6 h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto"
+                  className="btn-gradient text-white rounded-lg sm:rounded-xl px-4 sm:px-6 h-9 sm:h-10 text-sm shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto"
                 >
                   {isGenerating ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating
+                      <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 animate-spin" />
+                      <span className="text-xs sm:text-sm">Generating</span>
                     </>
                   ) : (
                     <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Generate
+                      <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
+                      <span className="text-xs sm:text-sm">Generate</span>
                     </>
                   )}
                 </Button>
@@ -547,7 +547,7 @@ export default function Generate() {
         </div>
       </section>
       
-      <section className="px-6 pb-20">
+      <section className="px-4 sm:px-6 pb-12 sm:pb-16 md:pb-20">
         <div className="max-w-7xl mx-auto">
           <ImageGrid 
             images={generatedImages} 
@@ -560,25 +560,25 @@ export default function Generate() {
       </section>
 
       <Dialog open={showGallery} onOpenChange={setShowGallery}>
-        <DialogContent className="max-w-7xl w-[96vw] h-[92vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col shadow-2xl p-0 rounded-3xl overflow-hidden">
-          <DialogHeader className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4 border-b border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] flex-shrink-0 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
+        <DialogContent className="max-w-7xl w-[96vw] h-[92vh] sm:h-[90vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border border-white/10 sm:border-2 text-white flex flex-col shadow-2xl p-0 rounded-2xl sm:rounded-3xl overflow-hidden">
+          <DialogHeader className="px-4 sm:px-5 md:px-7 pt-4 sm:pt-5 md:pt-6 pb-3 sm:pb-4 border-b border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] flex-shrink-0 relative">
+            <div className="absolute inset-0 opacity-50 sm:opacity-100 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
             <div className="relative z-10">
-              <DialogTitle className="text-2xl sm:text-3xl font-bold gradient-text flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
-                  <div className="w-full h-full rounded-[10px] bg-[#0a0a0a] flex items-center justify-center">
-                    <ImageIcon className="w-5 h-5 text-[#FF6B35]" />
+              <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold gradient-text flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
+                  <div className="w-full h-full rounded-[7px] sm:rounded-[10px] bg-[#0a0a0a] flex items-center justify-center">
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
                 </div>
                 Gallery Picker
               </DialogTitle>
-              <p className="text-sm text-white/60 mb-4 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-xs font-medium">
-                  <ImageIcon className="w-3.5 h-3.5" />
+              <p className="text-xs sm:text-sm text-white/60 mb-3 sm:mb-4 flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-[10px] sm:text-xs font-medium">
+                  <ImageIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   {galleryCreations.length} image{galleryCreations.length !== 1 ? 's' : ''}
                 </span>
                 {selectedGalleryImages.length > 0 && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium animate-pulse">
+                  <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] sm:text-xs font-medium animate-pulse">
                     ✓ {selectedGalleryImages.length} selected
                   </span>
                 )}
@@ -588,7 +588,7 @@ export default function Generate() {
                   value={gallerySearchTerm}
                   onChange={(e) => setGallerySearchTerm(e.target.value)}
                   placeholder="🔍 Search by title or prompt..."
-                  className="bg-black/40 border-white/20 text-white text-sm focus-visible:ring-2 focus-visible:ring-[#FF6B35] placeholder:text-white/40 h-11 pl-4 pr-4 rounded-xl shadow-lg backdrop-blur-sm"
+                  className="bg-black/40 border-white/20 text-white text-xs sm:text-sm focus-visible:ring-2 focus-visible:ring-[#FF6B35] placeholder:text-white/40 h-9 sm:h-11 pl-3 sm:pl-4 pr-3 sm:pr-4 rounded-lg sm:rounded-xl shadow-lg backdrop-blur-sm"
                 />
               </div>
             </div>
@@ -692,32 +692,33 @@ export default function Generate() {
             </div>
           </div>
           {selectedGalleryImages.length > 0 && (
-            <div className="px-5 sm:px-7 py-4 sm:py-5 border-t-2 border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 flex-shrink-0 relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
-              <div className="relative z-10 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center">
-                  <Check className="w-5 h-5 text-green-400" />
+            <div className="px-3 sm:px-5 md:px-7 py-3 sm:py-4 md:py-5 border-t border-white/10 sm:border-t-2 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 md:gap-4 flex-shrink-0 relative">
+              <div className="absolute inset-0 opacity-50 sm:opacity-100 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
+              <div className="relative z-10 flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 text-green-400" />
                 </div>
-                <div>
-                  <p className="text-white text-sm font-semibold">
+                <div className="min-w-0">
+                  <p className="text-white text-xs sm:text-sm font-semibold truncate">
                     {selectedGalleryImages.length} Image{selectedGalleryImages.length !== 1 ? 's' : ''} Selected
                   </p>
-                  <p className="text-white/50 text-xs">Ready to add as references</p>
+                  <p className="text-white/50 text-[10px] sm:text-xs hidden sm:block">Ready to add as references</p>
                 </div>
               </div>
-              <div className="flex gap-2 sm:gap-3 relative z-10">
+              <div className="flex gap-2 relative z-10">
                 <Button
                   variant="outline"
                   onClick={() => setSelectedGalleryImages([])}
-                  className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 hover:border-white/40 text-sm px-6 py-2.5 rounded-xl transition-all"
+                  className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 hover:border-white/40 text-xs sm:text-sm px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all h-9 sm:h-auto"
                 >
-                  Clear Selection
+                  Clear
                 </Button>
                 <Button
                   onClick={confirmGallerySelection}
-                  className="flex-1 sm:flex-none bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-sm px-8 py-2.5 rounded-xl shadow-xl hover:shadow-2xl transition-all font-semibold"
+                  className="flex-1 sm:flex-none bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-xs sm:text-sm px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-xl hover:shadow-2xl transition-all font-semibold h-9 sm:h-auto"
                 >
-                  Add as References →
+                  <span className="hidden sm:inline">Add as References →</span>
+                  <span className="sm:hidden">Add ({selectedGalleryImages.length})</span>
                 </Button>
               </div>
             </div>
