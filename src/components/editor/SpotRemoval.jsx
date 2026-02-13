@@ -100,13 +100,16 @@ Return ONLY the 3 suggestions, nothing else.`,
 
     setIsUploading(true);
     try {
-      const newImages = await Promise.all(files.map(async (file) => {
+      const uploadPromises = files.map(async (file) => {
         const result = await base44.integrations.Core.UploadFile({ file });
         return result.file_url;
-      }));
-      onReferenceImagesChange([...referenceImages, ...newImages]);
+      });
+      
+      const newImages = await Promise.all(uploadPromises);
+      const updatedImages = [...referenceImages, ...newImages];
+      onReferenceImagesChange(updatedImages);
       toast.success(`${files.length} image${files.length > 1 ? 's' : ''} added`);
-      e.target.value = ''; // Reset input so same file can be selected again
+      e.target.value = '';
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Failed to upload images");
