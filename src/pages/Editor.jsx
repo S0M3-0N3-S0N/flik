@@ -62,8 +62,16 @@ export default function Editor() {
   const [dragStart, setDragStart] = useState(null);
   const [dragType, setDragType] = useState(null);
 
-  const [toolbarVisible, setToolbarVisible] = useState(true);
-  const toolbarHideTimeoutRef = useRef(null);
+  const [toolbarPosition, setToolbarPosition] = useState(() => {
+    try {
+      const saved = localStorage.getItem('toolbar_position');
+      return saved ? JSON.parse(saved) : { bottom: 24, right: 24 };
+    } catch {
+      return { bottom: 24, right: 24 };
+    }
+  });
+  const [isDraggingToolbar, setIsDraggingToolbar] = useState(false);
+  const [toolbarDragOffset, setToolbarDragOffset] = useState({ x: 0, y: 0 });
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
@@ -80,6 +88,57 @@ export default function Editor() {
 
   // Track object URLs for proper cleanup
   const objectURLsRef = useRef(new Set());
+
+  // Save toolbar position
+  useEffect(() => {
+    localStorage.setItem('toolbar_position', JSON.stringify(toolbarPosition));
+  }, [toolbarPosition]);
+
+  // Toolbar drag handlers
+  const handleToolbarDragStart = (e) => {
+    e.preventDefault();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setToolbarDragOffset({
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    });
+    setIsDraggingToolbar(true);
+  };
+
+  const handleToolbarDrag = (e) => {
+    if (!isDraggingToolbar) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    const newRight = window.innerWidth - clientX - toolbarDragOffset.x;
+    const newBottom = window.innerHeight - clientY - toolbarDragOffset.y;
+    
+    setToolbarPosition({
+      right: Math.max(16, Math.min(window.innerWidth - 200, newRight)),
+      bottom: Math.max(16, Math.min(window.innerHeight - 60, newBottom))
+    });
+  };
+
+  const handleToolbarDragEnd = () => {
+    setIsDraggingToolbar(false);
+  };
+
+  useEffect(() => {
+    if (isDraggingToolbar) {
+      window.addEventListener('mousemove', handleToolbarDrag);
+      window.addEventListener('mouseup', handleToolbarDragEnd);
+      window.addEventListener('touchmove', handleToolbarDrag);
+      window.addEventListener('touchend', handleToolbarDragEnd);
+      return () => {
+        window.removeEventListener('mousemove', handleToolbarDrag);
+        window.removeEventListener('mouseup', handleToolbarDragEnd);
+        window.removeEventListener('touchmove', handleToolbarDrag);
+        window.removeEventListener('touchend', handleToolbarDragEnd);
+      };
+    }
+  }, [isDraggingToolbar, toolbarDragOffset]);
 
   // Register actions for FLIK
   useFlikActions('Editor', {
@@ -1073,82 +1132,116 @@ export default function Editor() {
           
           {currentImage && (
             <motion.div 
-              className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30 max-w-full"
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: toolbarVisible ? 1 : 0, scale: toolbarVisible ? 1 : 0.8 }}
-              transition={{ duration: 0.3 }}
-              onMouseEnter={() => {
-                setToolbarVisible(true);
-                if (toolbarHideTimeoutRef.current) clearTimeout(toolbarHideTimeoutRef.current);
+              onMouseDown={handleToolbarDragStart}
+              onTouchStart={handleToolbarDragStart}
+              style={{
+                bottom: `${toolbarPosition.bottom}px`,
+                right: `${toolbarPosition.right}px`,
+                touchAction: 'none'
               }}
-              onMouseLeave={() => {
-                if (toolbarHideTimeoutRef.current) clearTimeout(toolbarHideTimeoutRef.current);
-                toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
-              }}
+              className={`fixed z-30 ${isDraggingToolbar ? 'cursor-grabbing' : 'cursor-grab'}`}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="relative bg-gradient-to-r from-black/60 via-black/50 to-black/60 backdrop-blur-2xl border border-white/10 rounded-full px-1 py-1 flex items-center gap-0.5 shadow-[0_25px_50px_rgba(255,107,53,0.15),0_0_0_1px_rgba(255,107,53,0.2)_inset]" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,107,53,0.05) 0%, rgba(0,0,0,0) 50%, rgba(255,184,0,0.03) 100%)' }}>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800] rounded-2xl opacity-0 group-hover:opacity-30 blur-lg transition-opacity duration-300" />
                 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsPanToolActive(!isPanToolActive)}
-                  className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-gradient-to-br from-white to-white/90 text-black hover:from-white/95 hover:to-white/85 shadow-[0_0_20px_rgba(255,255,255,0.4)]' : 'hover:bg-white/10 text-white'}`}
-                  title="Pan Tool (Space)"
-                >
-                  <Move className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
+                <div className="relative bg-gradient-to-br from-black/90 via-black/80 to-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-1.5 flex items-center gap-1 shadow-2xl">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+                  
+                  <div className="flex items-center gap-1 relative">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDraggingToolbar) setIsPanToolActive(!isPanToolActive);
+                      }}
+                      className={`relative w-9 h-9 rounded-xl transition-all ${
+                        isPanToolActive 
+                          ? 'bg-gradient-to-br from-white to-white/90 text-black shadow-lg' 
+                          : 'hover:bg-white/10 text-white/70 hover:text-white'
+                      }`}
+                      title="Pan Tool (Space)"
+                    >
+                      <Move className="w-4 h-4" />
+                    </Button>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
-                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
-                  title="Zoom Out"
-                >
-                  <ZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
+                    <div className="w-px h-6 bg-white/10" />
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
-                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDraggingToolbar) setZoom(z => Math.max(z - 0.1, 0.1));
+                      }}
+                      className="relative w-9 h-9 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-all"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </Button>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
-                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
-                  title="Reset View"
-                >
-                  <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDraggingToolbar) setZoom(z => Math.min(z + 0.1, 5));
+                      }}
+                      className="relative w-9 h-9 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-all"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </Button>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (isCropping) {
-                      handleCancelCrop();
-                    } else {
-                      setActiveTab('crop');
-                      handleStartCrop();
-                    }
-                  }}
-                  className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all flex-shrink-0 ${
-                    isCropping 
-                      ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white hover:from-[#FF8B55] hover:to-[#FF4C45] shadow-[0_0_20px_rgba(255,107,53,0.5)]' 
-                      : 'hover:bg-white/10 text-white/80 hover:text-white'
-                  }`}
-                  title="Crop & Resize"
-                >
-                  <CropIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDraggingToolbar) {
+                          setZoom(1);
+                          setPan({x: 0, y: 0});
+                          setIsPanToolActive(false);
+                        }
+                      }}
+                      className="relative w-9 h-9 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-all"
+                      title="Reset View"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </Button>
+
+                    <div className="w-px h-6 bg-white/10" />
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDraggingToolbar) {
+                          if (isCropping) {
+                            handleCancelCrop();
+                          } else {
+                            setActiveTab('crop');
+                            handleStartCrop();
+                          }
+                        }
+                      }}
+                      className={`relative w-9 h-9 rounded-xl transition-all ${
+                        isCropping 
+                          ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white shadow-lg shadow-[#FF6B35]/30' 
+                          : 'hover:bg-white/10 text-white/70 hover:text-white'
+                      }`}
+                      title="Crop & Resize"
+                    >
+                      <CropIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-50 group-hover:opacity-100 transition-opacity" />
+                </div>
               </div>
             </motion.div>
           )}
