@@ -1073,82 +1073,80 @@ export default function Editor() {
           
           {currentImage && (
             <motion.div 
-              className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:translate-x-0 lg:bottom-6 lg:right-6 z-30 max-w-full"
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: toolbarVisible ? 1 : 0, scale: toolbarVisible ? 1 : 0.8 }}
-              transition={{ duration: 0.3 }}
-              onMouseEnter={() => {
-                setToolbarVisible(true);
-                if (toolbarHideTimeoutRef.current) clearTimeout(toolbarHideTimeoutRef.current);
-              }}
-              onMouseLeave={() => {
-                if (toolbarHideTimeoutRef.current) clearTimeout(toolbarHideTimeoutRef.current);
-                toolbarHideTimeoutRef.current = setTimeout(() => setToolbarVisible(false), 3000);
-              }}
+              className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="relative bg-gradient-to-r from-black/60 via-black/50 to-black/60 backdrop-blur-2xl border border-white/10 rounded-full px-1 py-1 flex items-center gap-0.5 shadow-[0_25px_50px_rgba(255,107,53,0.15),0_0_0_1px_rgba(255,107,53,0.2)_inset]" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,107,53,0.05) 0%, rgba(0,0,0,0) 50%, rgba(255,184,0,0.03) 100%)' }}>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsPanToolActive(!isPanToolActive)}
-                  className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all flex-shrink-0 ${isPanToolActive ? 'bg-gradient-to-br from-white to-white/90 text-black hover:from-white/95 hover:to-white/85 shadow-[0_0_20px_rgba(255,255,255,0.4)]' : 'hover:bg-white/10 text-white'}`}
-                  title="Pan Tool (Space)"
-                >
-                  <Move className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setZoom(z => Math.max(z - 0.1, 0.1))}
-                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
-                  title="Zoom Out"
-                >
-                  <ZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setZoom(z => Math.min(z + 0.1, 5))}
-                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
-                  className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-white/10 text-white/80 hover:text-white flex-shrink-0 transition-all"
-                  title="Reset View"
-                >
-                  <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (isCropping) {
-                      handleCancelCrop();
-                    } else {
-                      setActiveTab('crop');
-                      handleStartCrop();
-                    }
-                  }}
-                  className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all flex-shrink-0 ${
-                    isCropping 
-                      ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white hover:from-[#FF8B55] hover:to-[#FF4C45] shadow-[0_0_20px_rgba(255,107,53,0.5)]' 
-                      : 'hover:bg-white/10 text-white/80 hover:text-white'
-                  }`}
-                  title="Crop & Resize"
-                >
-                  <CropIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
+              <div className="flex flex-col gap-2 items-end">
+                <div className="bg-gradient-to-r from-black/80 via-black/70 to-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-1.5 shadow-2xl">
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsPanToolActive(!isPanToolActive)}
+                      className={`w-10 h-10 rounded-xl transition-all ${isPanToolActive ? 'bg-white text-black shadow-lg' : 'hover:bg-white/10 text-white'}`}
+                      title="Pan (Space)"
+                    >
+                      <Move className="w-4 h-4" />
+                    </Button>
+                    
+                    <div className="w-full h-px bg-white/10" />
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setZoom(z => Math.min(z + 0.2, 5))}
+                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setZoom(z => Math.max(z - 0.2, 0.1))}
+                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
+                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
+                      title="Reset"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </Button>
+                    
+                    <div className="w-full h-px bg-white/10" />
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (isCropping) {
+                          handleCancelCrop();
+                        } else {
+                          setActiveTab('crop');
+                          handleStartCrop();
+                        }
+                      }}
+                      className={`w-10 h-10 rounded-xl transition-all ${
+                        isCropping 
+                          ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white shadow-lg' 
+                          : 'hover:bg-white/10 text-white'
+                      }`}
+                      title="Crop"
+                    >
+                      <CropIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
