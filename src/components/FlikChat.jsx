@@ -899,7 +899,6 @@ RULES:
               </div>
               <div>
                 <h3 className="font-bold text-white text-lg gradient-text">FLIK</h3>
-                <p className="text-xs text-white/50">Your Creative Companion</p>
               </div>
             </div>
             <div className="flex items-center gap-1 relative z-10">
