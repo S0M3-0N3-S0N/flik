@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Save } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, RotateCw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -8,12 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
 import { useCanvas } from "@/components/hooks/useCanvas";
-import { useMagicBrush } from "@/components/hooks/useMagicBrush";
 import ToolPanel from "@/components/editor/ToolPanel";
 import AdjustmentsPanel from "@/components/editor/AdjustmentsPanel";
 import FiltersPanel from "@/components/editor/FiltersPanel";
 import TransformPanel from "@/components/editor/TransformPanel";
-import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
@@ -42,14 +40,6 @@ export default function Editor() {
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [transform, setTransform] = useState({ rotate: 0, flipH: false, flipV: false });
   
-  const [brushStrokes, setBrushStrokes] = useState([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [brushSize, setBrushSize] = useState(30);
-  const [brushOpacity, setBrushOpacity] = useState(0.8);
-  const [brushMode, setBrushMode] = useState('draw');
-  const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
-  const [magicBrushImages, setMagicBrushImages] = useState([]);
-  
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -66,13 +56,10 @@ export default function Editor() {
   const toolbarHideTimeoutRef = useRef(null);
 
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
-  const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
   
   const imageRef = useRef(null);
-  const canvasRef = useRef(null);
 
   const containerRef = useRef(null);
-  const cursorRef = useRef(null);
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
   const [redoHistory, setRedoHistory] = useState([]);
@@ -100,8 +87,6 @@ export default function Editor() {
     }
   }, () => ({
     currentTool: activeTab,
-    magicBrushPrompt: magicBrushPrompt,
-    hasMaskDrawn: brushStrokes.length > 0,
     hasImage: !!currentImage
   }));
 
@@ -161,7 +146,6 @@ export default function Editor() {
       });
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
-      setBrushStrokes([]);
       setIsCropping(false);
       setCropArea({ x: 10, y: 10, width: 80, height: 80 });
       setUndoHistory([]);
@@ -225,7 +209,6 @@ export default function Editor() {
       });
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
-      setBrushStrokes([]);
       setRedoHistory([]);
     }
     setShowResult(false);
@@ -343,7 +326,6 @@ export default function Editor() {
           name: "transformed.png"
         });
         setTransform({ rotate: 0, flipH: false, flipV: false });
-        setBrushStrokes([]);
         setRedoHistory([]);
         setIsProcessing(false);
       }, 'image/png');
@@ -353,34 +335,6 @@ export default function Editor() {
       toast.error("Transform failed. Please try again.");
     }
   }, [currentImage, adjustments, selectedFilter, transform, generateCanvas, createObjectURL]);
-
-  const handleMagicBrush = useCallback(async () => {
-    setRegenerateAction(() => () => handleMagicBrush());
-
-    try {
-      const resultUrl = await processMagicBrush({
-        imageRef,
-        brushStrokes,
-        brushSize,
-        magicBrushPrompt,
-        magicBrushImages,
-        getProcessedImageBlob,
-        currentImage,
-        adjustments,
-        transform,
-        selectedFilter,
-        setActiveTool
-      });
-
-      if (resultUrl) {
-        setResultImage(resultUrl);
-        setShowResult(true);
-      }
-    } catch (error) {
-      console.error("Magic brush error:", error);
-      toast.error("Error executing magic brush. Please try again.");
-    }
-  }, [brushStrokes, brushSize, magicBrushPrompt, magicBrushImages, getProcessedImageBlob, currentImage, adjustments, transform, selectedFilter, processMagicBrush]);
 
   const handleStartCrop = useCallback(() => {
     setIsCropping(true);
@@ -550,13 +504,7 @@ export default function Editor() {
       return;
     }
 
-    if (activeTab === "remove" && currentImage) {
-      const pos = getRelativePosition(e);
-      if (pos) {
-        setIsDrawing(true);
-        setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
-      }
-    } else if (isCropping) {
+    if (isCropping) {
       const pos = getRelativePosition(e);
       if (pos) {
         const handleSize = 8;
@@ -581,10 +529,10 @@ export default function Editor() {
         }
       }
     }
-  }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea]);
+  }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, isCropping, cropArea]);
 
   const handleMouseMove = useCallback((e) => {
-    if (e.cancelable && (isDrawing || isDragging || isPanning)) {
+    if (e.cancelable && (isDragging || isPanning)) {
       e.preventDefault();
     }
 
@@ -599,25 +547,7 @@ export default function Editor() {
       return;
     }
 
-    if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
-      cursorRef.current.style.left = `${x}px`;
-      cursorRef.current.style.top = `${y}px`;
-      cursorRef.current.style.display = 'block';
-    }
-
-    if (activeTab === "remove" && isDrawing && currentImage) {
-      const pos = getRelativePosition(e);
-      if (pos && brushStrokes.length > 0) {
-        setBrushStrokes(prev => {
-          const newStrokes = [...prev];
-          newStrokes[newStrokes.length - 1].points.push(pos);
-          return newStrokes;
-        });
-      }
-    } else if (isCropping && isDragging && dragStart && dragType) {
+    if (isCropping && isDragging && dragStart && dragType) {
       const pos = getRelativePosition(e);
       if (pos) {
         const deltaX = pos.x - dragStart.x;
@@ -655,10 +585,9 @@ export default function Editor() {
         setDragStart(pos);
       }
     }
-  }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, isDragging, dragStart, dragType, cropArea, isPanning, pan]);
+  }, [isDragging, dragStart, dragType, cropArea, isPanning, pan, getRelativePosition]);
 
   const handleMouseUp = useCallback(() => {
-    setIsDrawing(false);
     setIsDragging(false);
     setIsPanning(false);
     setDragType(null);
@@ -666,57 +595,7 @@ export default function Editor() {
   
   const handleMouseLeave = useCallback(() => {
     handleMouseUp();
-    if (cursorRef.current) {
-      cursorRef.current.style.display = 'none';
-    }
   }, [handleMouseUp]);
-
-  useEffect(() => {
-    if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
-
-    const canvas = canvasRef.current;
-    const img = imageRef.current;
-    const rect = img.getBoundingClientRect();
-    
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (brushStrokes.length === 0) return;
-
-    brushStrokes.forEach(stroke => {
-      const points = stroke.points || stroke;
-      if (!points || points.length === 0) return;
-      
-      const isErase = stroke.type === 'erase';
-      const size = stroke.size || brushSize;
-      
-      ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
-      ctx.strokeStyle = `rgba(255, 107, 53, ${brushOpacity})`;
-      ctx.fillStyle = `rgba(255, 107, 53, ${brushOpacity})`;
-      ctx.lineWidth = size;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      
-      if (points.length === 1) {
-        ctx.beginPath();
-        ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.beginPath();
-        ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
-        
-        for (let i = 1; i < points.length; i++) {
-          ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
-        }
-        
-        ctx.stroke();
-      }
-    });
-    ctx.globalCompositeOperation = 'source-over';
-  }, [brushStrokes, brushSize, brushOpacity, activeTab]);
 
 
 
@@ -756,7 +635,7 @@ export default function Editor() {
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-5 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-4 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
@@ -768,9 +647,6 @@ export default function Editor() {
             </TabsTrigger>
             <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <RotateCw className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Wand2 className="w-4 h-4" />
             </TabsTrigger>
           </TabsList>
 
@@ -817,61 +693,6 @@ export default function Editor() {
               )}
             </TabsContent>
 
-            <TabsContent value="remove" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Magic Brush</h3>
-              {currentImage ? (
-                <>
-                  <SpotRemoval 
-                    onRemoveSpot={handleMagicBrush}
-                    isProcessing={isMagicBrushProcessing}
-                    brushSize={brushSize}
-                    onBrushSizeChange={setBrushSize}
-                    brushOpacity={brushOpacity}
-                    onBrushOpacityChange={setBrushOpacity}
-                    brushMode={brushMode}
-                    onBrushModeChange={setBrushMode}
-                    prompt={magicBrushPrompt}
-                    onPromptChange={setMagicBrushPrompt}
-                    referenceImages={magicBrushImages}
-                    onReferenceImagesChange={setMagicBrushImages}
-                  />
-                  {brushStrokes.length > 0 && (
-                    <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-white/80">{brushStrokes.length} stroke(s)</span>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (brushStrokes.length > 0) {
-                                setBrushStrokes(prev => prev.slice(0, -1));
-                              }
-                            }}
-                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
-                            title="Undo last stroke"
-                          >
-                            <RotateCw className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setBrushStrokes([])}
-                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
-                          >
-                            <X className="w-3 h-3 mr-1" />
-                            Clear
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
-            </TabsContent>
-
             <TabsContent value="crop" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
               {currentImage ? (
@@ -894,12 +715,6 @@ export default function Editor() {
           className="h-14 border-b border-white/5 flex items-center justify-between px-4 lg:px-6 glass-card flex-shrink-0"
         >
           <div className="flex items-center gap-2">
-            {activeTab === "remove" && currentImage && (
-              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
-                <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-                Drag to mask
-              </div>
-            )}
             {isCropping && (
               <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
@@ -973,20 +788,6 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: 'none' }}
         >
-          {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
-            <div
-              ref={cursorRef}
-              className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
-              style={{
-                width: brushSize * zoom,
-                height: brushSize * zoom,
-                transform: 'translate(-50%, -50%)',
-                display: 'none',
-                borderColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)',
-                backgroundColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)'
-              }}
-            />
-          )}
           <div 
             className="absolute inset-0 opacity-[0.03]"
             style={{
@@ -1014,7 +815,7 @@ export default function Editor() {
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
                   className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
-                    activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
+                    isCropping ? "cursor-move" : ""
                   }`}
                   style={{
                     filter: getFilterStyle(),
@@ -1022,14 +823,6 @@ export default function Editor() {
                   }}
                   draggable={false}
                 />
-                
-                {activeTab === "remove" && currentImage && (
-                  <canvas
-                    ref={canvasRef}
-                    className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full"
-                    style={{ filter: 'none' }}
-                  />
-                )}
 
                 {isCropping && (
                   <>
@@ -1068,7 +861,7 @@ export default function Editor() {
           )}
           
           <AnimatePresence>
-            {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
+            {isProcessing && <ProcessingOverlay tool={activeTool} />}
           </AnimatePresence>
           
           {currentImage && (
@@ -1162,7 +955,7 @@ export default function Editor() {
         onDownload={handleDownload}
         transform={processedImage ? undefined : transform}
         onRegenerate={regenerateAction}
-        isRegenerating={isProcessing || isMagicBrushProcessing}
+        isRegenerating={isProcessing}
       />
     </div>
   );
