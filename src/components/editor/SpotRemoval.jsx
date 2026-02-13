@@ -284,7 +284,7 @@ Return ONLY the 3 suggestions, nothing else.`,
                 {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
                 <span className="hidden sm:inline">Add Reference</span>
                 <span className="sm:hidden">Add Ref</span>
-                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
+                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
               </label>
 
               <button
