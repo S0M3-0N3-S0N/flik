@@ -27,6 +27,7 @@ export default function SpotRemoval({
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [galleryCreations, setGalleryCreations] = useState([]);
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
+  const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
 
   // Debounce prompt changes to get AI suggestions
   useEffect(() => {
@@ -138,11 +139,22 @@ Return ONLY the 3 suggestions, nothing else.`,
     }
   };
 
-  const handleGallerySelect = (creation) => {
+  const handleGalleryToggle = (creation) => {
     const imageUrl = creation.thumbnail_url || creation.url;
-    onReferenceImagesChange([...referenceImages, imageUrl]);
-    setShowGalleryPicker(false);
-    toast.success("Image added from gallery");
+    setSelectedGalleryImages(prev => 
+      prev.includes(imageUrl) 
+        ? prev.filter(url => url !== imageUrl)
+        : [...prev, imageUrl]
+    );
+  };
+
+  const handleAddSelectedImages = () => {
+    if (selectedGalleryImages.length > 0) {
+      onReferenceImagesChange([...referenceImages, ...selectedGalleryImages]);
+      toast.success(`${selectedGalleryImages.length} image${selectedGalleryImages.length > 1 ? 's' : ''} added from gallery`);
+      setSelectedGalleryImages([]);
+      setShowGalleryPicker(false);
+    }
   };
 
   const handleGenerateWithLearning = async () => {
@@ -343,15 +355,23 @@ Return ONLY the 3 suggestions, nothing else.`,
       </div>
 
       {/* Gallery Picker Dialog */}
-      <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-        <DialogContent className="max-w-4xl max-h-[85vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col">
+      <Dialog open={showGalleryPicker} onOpenChange={(open) => {
+        setShowGalleryPicker(open);
+        if (!open) setSelectedGalleryImages([]);
+      }}>
+        <DialogContent className="max-w-4xl bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold gradient-text flex items-center gap-2">
               <Grid3x3 className="w-5 h-5" />
               Pick from Gallery
+              {selectedGalleryImages.length > 0 && (
+                <span className="text-sm text-white/60 font-normal">
+                  ({selectedGalleryImages.length} selected)
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="p-4">
             {isLoadingGallery ? (
               <div className="grid grid-cols-3 gap-4">
                 {Array.from({ length: 6 }).map((_, idx) => (
@@ -363,24 +383,51 @@ Return ONLY the 3 suggestions, nothing else.`,
                 <p className="text-white/60">No creations yet</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {galleryCreations.map((creation) => (
-                  <button
-                    key={creation.id}
-                    onClick={() => handleGallerySelect(creation)}
-                    className="relative aspect-square rounded-xl overflow-hidden border-2 border-white/10 hover:border-[#FF6B35]/50 transition-all group"
-                  >
-                    <img
-                      src={creation.thumbnail_url || creation.url}
-                      alt={creation.title || 'Creation'}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                      <p className="text-white text-xs font-medium line-clamp-2">{creation.title || 'Untitled'}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto pr-2">
+                  {galleryCreations.map((creation) => {
+                    const imageUrl = creation.thumbnail_url || creation.url;
+                    const isSelected = selectedGalleryImages.includes(imageUrl);
+                    return (
+                      <button
+                        key={creation.id}
+                        onClick={() => handleGalleryToggle(creation)}
+                        className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all group ${
+                          isSelected 
+                            ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/50' 
+                            : 'border-white/10 hover:border-[#FF6B35]/50'
+                        }`}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={creation.title || 'Creation'}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#FF6B35] flex items-center justify-center shadow-lg">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                          <p className="text-white text-xs font-medium line-clamp-2">{creation.title || 'Untitled'}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedGalleryImages.length > 0 && (
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      onClick={handleAddSelectedImages}
+                      className="btn-gradient"
+                    >
+                      Add {selectedGalleryImages.length} Image{selectedGalleryImages.length > 1 ? 's' : ''}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </DialogContent>
