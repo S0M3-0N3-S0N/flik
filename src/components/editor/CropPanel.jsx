@@ -16,6 +16,14 @@ export default function CropPanel({ onApplyCrop, onCancelCrop }) {
             <p className="text-xs text-white/40">Adjust image composition</p>
           </div>
         </div>
+        <div className="space-y-2 border-t border-white/5 pt-3">
+          <p className="text-xs text-white/60 leading-relaxed">
+            Drag corners to resize the crop area. Click and drag inside to move selection.
+          </p>
+          <div className="text-xs text-[#FF6B35]/60 bg-[#FF6B35]/5 p-2 rounded-lg">
+            ✓ Works offline - all editing happens on your device
+          </div>
+        </div>
       </div>
       
       <div className="flex flex-col gap-3">
