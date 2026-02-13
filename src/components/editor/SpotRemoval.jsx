@@ -102,6 +102,8 @@ Return ONLY the 3 suggestions, nothing else.`,
         return result.file_url;
       }));
       onReferenceImagesChange([...referenceImages, ...newImages]);
+      toast.success(`${files.length} image${files.length > 1 ? 's' : ''} added`);
+      e.target.value = ''; // Reset input so same file can be selected again
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Failed to upload images");
