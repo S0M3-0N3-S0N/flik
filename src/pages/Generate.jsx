@@ -707,9 +707,8 @@ export default function Generate() {
               </div>
               <div className="flex gap-2 relative z-10">
                 <Button
-                  variant="outline"
                   onClick={() => setSelectedGalleryImages([])}
-                  className="flex-1 sm:flex-none border-white/20 text-white hover:bg-white/10 hover:border-white/40 text-xs sm:text-sm px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all h-9 sm:h-auto"
+                  className="flex-1 sm:flex-none bg-white/10 border border-white/30 text-white hover:bg-white/20 hover:border-white/50 text-xs sm:text-sm px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all h-9 sm:h-auto font-medium"
                 >
                   Clear
                 </Button>
