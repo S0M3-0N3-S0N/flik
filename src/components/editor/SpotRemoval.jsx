@@ -310,10 +310,23 @@ Return ONLY the 3 suggestions, nothing else.`,
                 <span className="sm:hidden">Gal</span>
               </button>
 
-              <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap cursor-pointer">
-                <ImagePlus className="w-4 h-4" />
-                <span className="hidden sm:inline">Upload</span>
-                <span className="sm:hidden">Up</span>
+              <label className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap ${
+                isUploading 
+                  ? 'bg-white/5 cursor-not-allowed opacity-50' 
+                  : 'bg-white/5 hover:bg-white/10 cursor-pointer'
+              }`}>
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Upload</span>
+                    <span className="sm:hidden">Up</span>
+                  </>
+                )}
                 <input
                   type="file"
                   accept="image/*"
