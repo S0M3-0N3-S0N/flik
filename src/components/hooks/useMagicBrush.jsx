@@ -9,7 +9,7 @@ export function useMagicBrush() {
     brushStrokes,
     brushSize,
     magicBrushPrompt,
-    magicBrushImages,
+    magicBrushImages = [],
     getProcessedImageBlob,
     currentImage,
     adjustments,
@@ -109,8 +109,8 @@ export function useMagicBrush() {
 
       // 3. Analyze with LLM
       if (setActiveTool) setActiveTool({ label: "Analyzing Request..." });
-      const instruction = magicBrushPrompt.trim() || "remove this object and fill the background seamlessly";
-      const hasReferences = magicBrushImages.length > 0;
+      const instruction = magicBrushPrompt?.trim() || "remove this object and fill the background seamlessly";
+      const hasReferences = magicBrushImages && magicBrushImages.length > 0;
 
       const llmResponse = await base44.integrations.Core.InvokeLLM({
         prompt: `You are a world-class AI visual director.

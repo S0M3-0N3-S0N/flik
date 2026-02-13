@@ -83,9 +83,12 @@ Return ONLY the 3 suggestions, nothing else.`,
       if (response.suggestions && response.suggestions.length > 0) {
         setAiSuggestions(response.suggestions);
         setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
       }
     } catch (error) {
       console.error("Failed to get AI suggestions:", error);
+      setShowSuggestions(false);
     } finally {
       setIsLoadingSuggestions(false);
     }
@@ -117,6 +120,9 @@ Return ONLY the 3 suggestions, nothing else.`,
     setIsLoadingGallery(true);
     try {
       const user = await base44.auth.me();
+      if (!user?.email) {
+        throw new Error("User not authenticated");
+      }
       const creations = await base44.entities.Creation.filter(
         { created_by: user.email },
         '-created_date',
@@ -126,6 +132,7 @@ Return ONLY the 3 suggestions, nothing else.`,
     } catch (error) {
       console.error("Failed to load gallery:", error);
       toast.error("Failed to load gallery");
+      setShowGalleryPicker(false);
     } finally {
       setIsLoadingGallery(false);
     }
