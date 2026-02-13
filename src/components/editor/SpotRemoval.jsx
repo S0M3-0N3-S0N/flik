@@ -359,49 +359,46 @@ Return ONLY the 3 suggestions, nothing else.`,
         setShowGalleryPicker(open);
         if (!open) setSelectedGalleryImages([]);
       }}>
-        <DialogContent className="max-w-5xl h-[85vh] bg-[#0a0a0a] border border-white/10 text-white p-0 gap-0 overflow-hidden flex flex-col">
-          <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-[#FF6B35]/5 to-[#FFB800]/5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center">
-                <Grid3x3 className="w-5 h-5 text-white" />
+        <DialogContent className="max-w-5xl h-[90vh] sm:h-[85vh] bg-[#0a0a0a] border border-white/10 text-white p-0 gap-0 overflow-hidden flex flex-col">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 bg-gradient-to-r from-[#FF6B35]/5 to-[#FFB800]/5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center flex-shrink-0">
+                  <Grid3x3 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-white truncate">Your Gallery</h3>
+                  <p className="text-xs text-white/50 hidden sm:block">Select images to add as references</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Your Gallery</h3>
-                <p className="text-xs text-white/50">Select images to add as references</p>
-              </div>
-            </div>
-            {selectedGalleryImages.length > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-white/60">
-                  {selectedGalleryImages.length} selected
-                </span>
+              {selectedGalleryImages.length > 0 && (
                 <Button
                   onClick={handleAddSelectedImages}
-                  className="btn-gradient h-9 px-4"
+                  className="btn-gradient h-9 px-3 sm:px-4 text-xs sm:text-sm flex-shrink-0"
                 >
-                  Add to References
+                  <span className="hidden sm:inline">Add</span> ({selectedGalleryImages.length})
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto px-6 py-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {isLoadingGallery ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                 {Array.from({ length: 8 }).map((_, idx) => (
                   <div key={idx} className="aspect-square rounded-lg bg-white/5 animate-pulse" />
                 ))}
               </div>
             ) : galleryCreations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center py-20">
-                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                  <Grid3x3 className="w-8 h-8 text-white/30" />
+              <div className="flex flex-col items-center justify-center h-full text-center py-12 sm:py-20 px-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-3 sm:mb-4">
+                  <Grid3x3 className="w-6 h-6 sm:w-8 sm:h-8 text-white/30" />
                 </div>
-                <p className="text-white/60 text-sm">No creations in your gallery yet</p>
+                <p className="text-white/60 text-sm">No creations yet</p>
                 <p className="text-white/40 text-xs mt-1">Create your first image to see it here</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                 {galleryCreations.map((creation) => {
                   const imageUrl = creation.thumbnail_url || creation.url;
                   const isSelected = selectedGalleryImages.includes(imageUrl);
@@ -409,10 +406,10 @@ Return ONLY the 3 suggestions, nothing else.`,
                     <button
                       key={creation.id}
                       onClick={() => handleGalleryToggle(creation)}
-                      className={`relative aspect-square rounded-lg overflow-hidden transition-all group ${
+                      className={`relative aspect-square rounded-lg overflow-hidden transition-all active:scale-95 ${
                         isSelected 
-                          ? 'ring-2 ring-[#FF6B35] scale-[0.98]' 
-                          : 'hover:scale-[0.98]'
+                          ? 'ring-2 ring-[#FF6B35]' 
+                          : ''
                       }`}
                     >
                       <img
@@ -423,18 +420,15 @@ Return ONLY the 3 suggestions, nothing else.`,
                       <div className={`absolute inset-0 transition-all ${
                         isSelected 
                           ? 'bg-[#FF6B35]/20' 
-                          : 'bg-black/0 group-hover:bg-black/30'
+                          : 'bg-black/0'
                       }`} />
                       {isSelected && (
-                        <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-[#FF6B35] flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#FF6B35] flex items-center justify-center shadow-lg">
+                          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p className="text-white text-xs font-medium line-clamp-1">{creation.title || 'Untitled'}</p>
-                      </div>
                     </button>
                   );
                 })}
