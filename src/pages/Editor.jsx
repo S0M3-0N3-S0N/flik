@@ -1132,14 +1132,12 @@ export default function Editor() {
           
           {currentImage && (
             <motion.div 
-              onMouseDown={handleToolbarDragStart}
-              onTouchStart={handleToolbarDragStart}
               style={{
                 bottom: `${toolbarPosition.bottom}px`,
                 right: `${toolbarPosition.right}px`,
                 touchAction: 'none'
               }}
-              className={`fixed z-30 ${isDraggingToolbar ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className="fixed z-30"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2 }}
@@ -1147,7 +1145,11 @@ export default function Editor() {
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800] rounded-2xl opacity-0 group-hover:opacity-30 blur-lg transition-opacity duration-300" />
                 
-                <div className="relative bg-gradient-to-br from-black/90 via-black/80 to-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-1.5 flex items-center gap-1 shadow-2xl">
+                <div 
+                  onMouseDown={handleToolbarDragStart}
+                  onTouchStart={handleToolbarDragStart}
+                  className={`relative bg-gradient-to-br from-black/90 via-black/80 to-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-1.5 flex items-center gap-1 shadow-2xl ${isDraggingToolbar ? 'cursor-grabbing' : 'cursor-grab'}`}
+                >
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
                   
                   <div className="flex items-center gap-1 relative">
