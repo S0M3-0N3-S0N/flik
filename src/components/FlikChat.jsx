@@ -295,7 +295,7 @@ export default function FlikChat() {
     isFetchingUserDataRef.current = true;
     try {
       const userProfile = await base44.auth.me();
-      const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', MAX_RECENT_CREATIONS);
+      const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', MAX_RECENT_CREATIONS, { data_env: "prod" });
       setCachedUserData({ userProfile, allCreations });
       setLastFetchTime(Date.now());
     } catch (e) {
@@ -355,7 +355,8 @@ export default function FlikChat() {
       const creations = await base44.entities.Creation.filter(
         { created_by: user.email },
         '-created_date',
-        GALLERY_FETCH_LIMIT
+        GALLERY_FETCH_LIMIT,
+        { data_env: "prod" }
       );
       setGalleryCreations(creations);
       setGalleryCachedData(creations);
