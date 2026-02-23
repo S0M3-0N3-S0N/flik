@@ -65,6 +65,7 @@ export default function FlikChat() {
   const speechQueueRef = useRef([]);
   const isSpeakingRef = useRef(false);
   const queryClient = useQueryClient();
+  const attachedImageObjectURLs = useRef(new Set());
 
   // Memoized ReactMarkdown components configuration
   const markdownComponents = useMemo(() => ({
