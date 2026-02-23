@@ -816,7 +816,7 @@ RULES:
     queryKey: ['flikConversations'],
     queryFn: async () => {
       const user = await base44.auth.me();
-      return base44.entities.FlikConversation.filter({ created_by: user.email }, '-last_message_at', 50);
+      return base44.entities.FlikConversation.filter({ created_by: user.email }, '-last_message_at', 50, { data_env: "prod" });
     },
     enabled: isOpen
   });
@@ -827,7 +827,7 @@ RULES:
         title,
         messages,
         last_message_at: new Date().toISOString()
-      });
+      }, { data_env: "prod" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
@@ -839,7 +839,7 @@ RULES:
   });
 
   const deleteConversationMutation = useMutation({
-    mutationFn: (id) => base44.entities.FlikConversation.delete(id),
+    mutationFn: (id) => base44.entities.FlikConversation.delete(id, { data_env: "prod" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
       toast.success('Conversation deleted');
