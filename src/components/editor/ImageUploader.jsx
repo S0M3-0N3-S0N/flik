@@ -45,9 +45,13 @@ export default function ImageUploader({ onImageSelect, currentImage, multiple = 
     reader.onload = (e) => {
       onImageSelect({
         file,
+        url: e.target.result,
         preview: e.target.result,
         name: file.name
       });
+    };
+    reader.onerror = () => {
+      console.error('Error reading file');
     };
     reader.readAsDataURL(file);
   };
