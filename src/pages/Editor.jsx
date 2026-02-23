@@ -175,30 +175,47 @@ export default function Editor() {
   const handleGetProcessedBlob = useCallback(() => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
   const handleToolSelect = useCallback(async (tool) => {
-    if (!currentImage) return;
+    if (!currentImage) {
+      toast.error("Please upload an image first");
+      return;
+    }
     
+    toast.loading(`Applying ${tool.label}...`, { id: `tool-${tool.id}` });
     setActiveTool(tool);
     setIsProcessing(true);
     setRegenerateAction(() => () => handleToolSelect(tool));
     
     try {
       const blob = await handleGetProcessedBlob();
+      if (!blob) {
+        throw new Error("Failed to process image");
+      }
+      
       const processedUrl = createObjectURL(blob);
       setProcessedImage(processedUrl);
       
       const file = new File([blob], "processed_input.png", { type: "image/png" });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
       
+      if (!uploadResult?.file_url) {
+        throw new Error("Failed to upload image");
+      }
+      
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
         existing_image_urls: [uploadResult.file_url]
       });
       
+      if (!result?.url) {
+        throw new Error("Failed to generate image");
+      }
+      
       setResultImage(result.url);
       setShowResult(true);
+      toast.success(`${tool.label} applied successfully!`, { id: `tool-${tool.id}` });
     } catch (error) {
       console.error("Error processing image:", error);
-      toast.error("Error processing image. Please try again.");
+      toast.error(error.message || "Error processing image. Please try again.", { id: `tool-${tool.id}` });
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
