@@ -257,7 +257,6 @@ export default function Editor() {
         grayscale: 0,
       });
       setSelectedFilter(null);
-      setTransform({ rotate: 0, flipH: false, flipV: false });
       setBrushStrokes([]);
       setRedoHistory([]);
     }
@@ -408,10 +407,26 @@ export default function Editor() {
       if (resultUrl) {
         setResultImage(resultUrl);
         setShowResult(true);
+        
+        // Log to PromptLearning
+        await base44.entities.PromptLearning.create({
+          prompt: magicBrushPrompt,
+          tool_type: "magic_brush",
+          was_successful: true,
+          context: { has_reference_images: magicBrushImages.length > 0 }
+        }).catch(err => console.error("Failed to log prompt learning:", err));
       }
     } catch (error) {
       console.error("Magic brush error:", error);
       toast.error("Error executing magic brush. Please try again.");
+      
+      // Log failed attempt
+      await base44.entities.PromptLearning.create({
+        prompt: magicBrushPrompt,
+        tool_type: "magic_brush",
+        was_successful: false,
+        context: { has_reference_images: magicBrushImages.length > 0, error: error.message }
+      }).catch(err => console.error("Failed to log prompt learning:", err));
     }
   }, [brushStrokes, brushSize, magicBrushPrompt, magicBrushImages, getProcessedImageBlob, currentImage, adjustments, transform, selectedFilter, processMagicBrush]);
 
@@ -465,7 +480,6 @@ export default function Editor() {
           preview: url,
           name: "cropped_image.png"
         });
-        setTransform({ rotate: 0, flipH: false, flipV: false });
         setAdjustments({
           brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0
         });
@@ -498,7 +512,7 @@ export default function Editor() {
         type: 'image',
         url: uploadResult.file_url,
         thumbnail_url: uploadResult.file_url
-      }, { data_env: "dev" });
+      });
       toast.success('Saved to Gallery!');
     } catch (err) {
       console.error("Error saving to gallery:", err);
@@ -789,7 +803,7 @@ export default function Editor() {
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-5 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
@@ -801,6 +815,9 @@ export default function Editor() {
             </TabsTrigger>
             <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <RotateCw className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="crop" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <CropIcon className="w-4 h-4" />
             </TabsTrigger>
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
@@ -1096,7 +1113,6 @@ export default function Editor() {
           ) : (
             <ImageUploader 
               onImageSelect={handleImageSelect}
-              currentImage={currentImage}
             />
           )}
           
