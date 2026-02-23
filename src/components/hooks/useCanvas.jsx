@@ -59,9 +59,13 @@ export function useCanvas() {
   const getProcessedImageBlob = async (sourceImage, adjustments, transform, selectedFilter) => {
     const canvas = await generateCanvas(sourceImage, adjustments, transform, selectedFilter);
     if (!canvas) return null;
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
-        resolve(blob);
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create image blob'));
+        }
       }, 'image/png', 1.0);
     });
   };
