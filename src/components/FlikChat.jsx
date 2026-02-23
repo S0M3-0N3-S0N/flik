@@ -240,14 +240,9 @@ export default function FlikChat() {
     utterance.pitch = 1.05;
     utterance.volume = 1;
     
-    // Get best available voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.lang === 'en-US') || 
-                          voices.find(v => v.lang.startsWith('en')) ||
-                          voices[0];
-    
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+    const voice = getPreferredVoice();
+    if (voice) {
+      utterance.voice = voice;
     }
     
     utterance.onend = () => {
@@ -262,7 +257,7 @@ export default function FlikChat() {
     
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
-  }, []);
+  }, [getPreferredVoice]);
 
   const enqueueSpeech = useCallback((text) => {
     if (!voiceEnabled || !window.speechSynthesis) return;
