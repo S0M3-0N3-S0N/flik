@@ -226,9 +226,8 @@ export default function FlikChat() {
     
     // Get best available voice
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.name.includes('Google US English')) || 
-                          voices.find(v => v.name.includes('Samantha')) ||
-                          voices.find(v => v.lang.includes('en-US')) ||
+    const preferredVoice = voices.find(v => v.lang === 'en-US') || 
+                          voices.find(v => v.lang.startsWith('en')) ||
                           voices[0];
     
     if (preferredVoice) {
