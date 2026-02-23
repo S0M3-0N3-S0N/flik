@@ -279,6 +279,11 @@ export default function FlikChat() {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      // Revoke all attached image object URLs
+      attachedImageObjectURLs.current.forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+      attachedImageObjectURLs.current.clear();
     };
   }, []);
 
