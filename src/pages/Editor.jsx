@@ -213,9 +213,25 @@ export default function Editor() {
       setResultImage(result.url);
       setShowResult(true);
       toast.success(`${tool.label} applied successfully!`, { id: `tool-${tool.id}` });
+      
+      // Log to PromptLearning
+      await base44.entities.PromptLearning.create({
+        prompt: tool.prompt,
+        tool_type: "ai_tool",
+        was_successful: true,
+        context: { tool_id: tool.id, tool_label: tool.label }
+      }).catch(err => console.error("Failed to log prompt learning:", err));
     } catch (error) {
       console.error("Error processing image:", error);
       toast.error(error.message || "Error processing image. Please try again.", { id: `tool-${tool.id}` });
+      
+      // Log failed attempt
+      await base44.entities.PromptLearning.create({
+        prompt: tool.prompt,
+        tool_type: "ai_tool",
+        was_successful: false,
+        context: { tool_id: tool.id, tool_label: tool.label, error: error.message }
+      }).catch(err => console.error("Failed to log prompt learning:", err));
     } finally {
       setIsProcessing(false);
       setActiveTool(null);

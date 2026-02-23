@@ -8,19 +8,23 @@ export function useCanvas() {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Failed to get 2D context from canvas');
     const img = new Image();
-    
     const imageUrl = sourceImage.preview || sourceImage.url;
+    
+    if (!imageUrl) {
+      throw new Error('No image URL provided');
+    }
+    
     if (!imageUrl.startsWith('blob:') && !imageUrl.startsWith('data:')) {
       img.crossOrigin = "anonymous";
     }
-    img.src = imageUrl;
 
     await new Promise((resolve, reject) => {
-      img.onload = resolve;
+      img.onload = () => resolve();
       img.onerror = (e) => {
         console.error('Image load error:', e, 'URL:', imageUrl);
         reject(new Error('Failed to load image'));
       };
+      img.src = imageUrl;
     });
 
     // Handle rotation dimensions
