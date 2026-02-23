@@ -195,15 +195,30 @@ export default function FlikChat() {
     }
   };
 
-  const speakResponse = (text) => {
+  const getPreferredVoice = useCallback(() => {
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find(v => 
+      v.name.includes('Google US English') || 
+      v.name.includes('Samantha') ||
+      (v.lang.startsWith('en-US') && v.name.toLowerCase().includes('female'))
+    ) || voices.find(v => v.lang.startsWith('en-US')) || voices[0];
+  }, []);
+
+  const speakResponse = useCallback((text) => {
     if (!voiceEnabled || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
+    const voice = getPreferredVoice();
+    
+    if (voice) {
+      utterance.voice = voice;
+    }
+    
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.volume = 1;
     window.speechSynthesis.speak(utterance);
-  };
+  }, [voiceEnabled, getPreferredVoice]);
 
   const toggleVoiceOutput = () => {
     if (voiceEnabled) {
