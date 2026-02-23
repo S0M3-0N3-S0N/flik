@@ -828,13 +828,13 @@ RULES:
   }, []);
 
   // Conversations Query
-  const { data: savedConversations = [] } = useQuery({
+  const { data: savedConversations = [], isLoading: isLoadingConversations } = useQuery({
     queryKey: ['flikConversations'],
     queryFn: async () => {
       const user = await base44.auth.me();
       return base44.entities.FlikConversation.filter({ created_by: user.email }, '-last_message_at', 50, { data_env: "prod" });
     },
-    enabled: isOpen
+    enabled: showConversations
   });
 
   const saveConversationMutation = useMutation({
@@ -1627,7 +1627,12 @@ RULES:
               </DialogTitle>
             </DialogHeader>
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {savedConversations.length === 0 ? (
+              {isLoadingConversations ? (
+                <div className="text-center py-16">
+                  <Loader2 className="w-8 h-8 text-[#FF6B35] animate-spin mx-auto mb-4" />
+                  <p className="text-white/60 text-sm">Loading conversations...</p>
+                </div>
+              ) : savedConversations.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
                     <MessageSquare className="w-10 h-10 text-white/20" />
