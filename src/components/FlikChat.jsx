@@ -403,7 +403,8 @@ export default function FlikChat() {
         { created_by: user.email },
         '-created_date',
         GALLERY_FETCH_LIMIT,
-        galleryCreations.length
+        galleryCreations.length,
+        { data_env: "prod" }
       );
       
       const updatedCreations = [...galleryCreations, ...newCreations];
