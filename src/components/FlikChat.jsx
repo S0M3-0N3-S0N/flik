@@ -24,6 +24,7 @@ const GALLERY_FETCH_LIMIT = 50;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const NAVIGATION_DELAY = 800; // ms
 const MAX_IN_MEMORY_MESSAGES = 100;
+const MAX_STORED_MESSAGES = 100;
 const FLIK_AVATAR_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg";
 
 export default function FlikChat() {
