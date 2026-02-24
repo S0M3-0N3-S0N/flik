@@ -923,16 +923,6 @@ RULES:
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={handleSaveConversation}
-                disabled={isSavingConversation || messages.length === 0}
-                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-8 w-8 disabled:opacity-30"
-                title="Save conversation"
-              >
-                {isSavingConversation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
                 onClick={() => setShowConversations(true)}
                 className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-8 w-8"
                 title="Saved conversations"
