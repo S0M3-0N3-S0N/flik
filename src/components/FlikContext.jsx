@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 const FlikContext = createContext();
 
@@ -23,6 +25,7 @@ export function FlikProvider({ children }) {
     }
   });
   const [attachedImages, setAttachedImages] = useState([]);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
 
   // Persist messages with limit
   useEffect(() => {
@@ -33,7 +36,66 @@ export function FlikProvider({ children }) {
   const clearHistory = () => {
     setMessages([]);
     setAttachedImages([]);
+    setCurrentConversationId(null);
     localStorage.removeItem('flik_messages');
+  };
+
+  const saveCurrentConversation = async () => {
+    if (messages.length === 0) {
+      toast.error('No messages to save');
+      return null;
+    }
+
+    try {
+      // Generate title from first user message
+      const firstUserMsg = messages.find(m => m.role === 'user')?.content || '';
+      const title = firstUserMsg.slice(0, 50) + (firstUserMsg.length > 50 ? '...' : '') || `Chat ${new Date().toLocaleDateString()}`;
+      
+      if (currentConversationId) {
+        // Update existing conversation
+        await base44.entities.FlikConversation.update(currentConversationId, {
+          title,
+          messages,
+          last_message_at: new Date().toISOString()
+        }, { data_env: "prod" });
+        toast.success('Conversation updated!');
+        return currentConversationId;
+      } else {
+        // Create new conversation
+        const newConversation = await base44.entities.FlikConversation.create({
+          title,
+          messages,
+          last_message_at: new Date().toISOString()
+        }, { data_env: "prod" });
+        setCurrentConversationId(newConversation.id);
+        toast.success('Conversation saved!');
+        return newConversation.id;
+      }
+    } catch (error) {
+      console.error('Failed to save conversation:', error);
+      toast.error('Failed to save conversation');
+      return null;
+    }
+  };
+
+  const startNewConversation = async () => {
+    // Save current conversation if there are messages
+    if (messages.length > 0) {
+      await saveCurrentConversation();
+    }
+    
+    // Clear state for new conversation
+    setMessages([]);
+    setAttachedImages([]);
+    setCurrentConversationId(null);
+    localStorage.removeItem('flik_messages');
+    toast.success('Started new conversation');
+  };
+
+  const loadConversation = (conversation) => {
+    setMessages(conversation.messages || []);
+    setCurrentConversationId(conversation.id);
+    setAttachedImages([]);
   };
 
   return (
@@ -44,7 +106,12 @@ export function FlikProvider({ children }) {
       setMessages,
       clearHistory,
       attachedImages,
-      setAttachedImages
+      setAttachedImages,
+      currentConversationId,
+      setCurrentConversationId,
+      saveCurrentConversation,
+      startNewConversation,
+      loadConversation
     }}>
       {children}
     </FlikContext.Provider>

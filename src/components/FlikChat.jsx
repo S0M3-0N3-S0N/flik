@@ -28,7 +28,7 @@ const MAX_STORED_MESSAGES = 100;
 const FLIK_AVATAR_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg";
 
 export default function FlikChat() {
-  const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages } = useFlik();
+  const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages, currentConversationId, setCurrentConversationId, saveCurrentConversation, startNewConversation, loadConversation } = useFlik();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isUploadingChat, setIsUploadingChat] = useState(false);
@@ -838,16 +838,28 @@ RULES:
   });
 
   const saveConversationMutation = useMutation({
-    mutationFn: async ({ title, messages }) => {
-      return base44.entities.FlikConversation.create({
-        title,
-        messages,
-        last_message_at: new Date().toISOString()
-      }, { data_env: "prod" });
+    mutationFn: async ({ title, messages, conversationId }) => {
+      if (conversationId) {
+        // Update existing
+        return base44.entities.FlikConversation.update(conversationId, {
+          title,
+          messages,
+          last_message_at: new Date().toISOString()
+        }, { data_env: "prod" });
+      } else {
+        // Create new
+        return base44.entities.FlikConversation.create({
+          title,
+          messages,
+          last_message_at: new Date().toISOString()
+        }, { data_env: "prod" });
+      }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
-      toast.success('Conversation saved!');
+      if (!currentConversationId && result?.id) {
+        setCurrentConversationId(result.id);
+      }
     },
     onError: () => {
       toast.error('Failed to save conversation');
@@ -866,27 +878,24 @@ RULES:
   });
 
   const handleSaveConversation = async () => {
-    if (messages.length === 0) {
-      toast.error('No messages to save');
-      return;
-    }
-    
-    // Auto-generate title from first user message
-    const firstUserMsg = messages.find(m => m.role === 'user')?.content || '';
-    const title = firstUserMsg.slice(0, 50) + (firstUserMsg.length > 50 ? '...' : '') || `Chat ${new Date().toLocaleDateString()}`;
     setIsSavingConversation(true);
-    
     try {
-      await saveConversationMutation.mutateAsync({ title, messages });
+      await saveCurrentConversation();
+      queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
     } finally {
       setIsSavingConversation(false);
     }
   };
 
   const handleLoadConversation = (conversation) => {
-    setMessages(conversation.messages || []);
+    loadConversation(conversation);
     setShowConversations(false);
     toast.success('Conversation loaded');
+  };
+
+  const handleNewConversation = async () => {
+    await startNewConversation();
+    queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
   };
 
   return (
