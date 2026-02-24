@@ -1290,58 +1290,96 @@ RULES:
                   handleSend();
                 }
               }}
-              className="flex items-center gap-2 relative"
+              className="flex items-center gap-3"
             >
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#FF6B35]/5 via-[#F72C25]/5 to-[#FFB800]/5 blur-xl" />
-              <button
-                type="button"
-                onClick={toggleVoiceInput}
-                className={`relative p-2.5 rounded-xl transition-all flex-shrink-0 ${
-                  isListening 
-                    ? 'bg-red-500/30 text-red-400 animate-pulse scale-110' 
-                    : 'hover:bg-white/10 text-white/60 hover:text-white'
-                }`}
-                title={isListening ? "Stop listening" : "Start voice"}
-              >
-                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              </button>
+              {/* Attachments Menu Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rect = document.getElementById('attach-menu-btn')?.getBoundingClientRect();
+                    const menu = document.getElementById('attach-menu');
+                    if (menu) {
+                      menu.classList.toggle('hidden');
+                    }
+                  }}
+                  id="attach-menu-btn"
+                  className="w-12 h-12 rounded-full bg-[#2a2a2a] hover:bg-[#333333] flex items-center justify-center transition-all flex-shrink-0 shadow-lg"
+                  title="Add attachments"
+                >
+                  <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+                
+                {/* Popup Menu */}
+                <div 
+                  id="attach-menu"
+                  className="hidden absolute bottom-full left-0 mb-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl min-w-[180px]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      chatFileRef.current?.click();
+                      document.getElementById('attach-menu')?.classList.add('hidden');
+                    }}
+                    disabled={isUploadingChat}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left disabled:opacity-50"
+                  >
+                    {isUploadingChat ? <Loader2 className="w-4 h-4 animate-spin text-[#FF6B35]" /> : <Upload className="w-4 h-4 text-[#FF6B35]" />}
+                    <span className="text-sm">Upload Image</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleGalleryPick();
+                      document.getElementById('attach-menu')?.classList.add('hidden');
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                  >
+                    <Grid3x3 className="w-4 h-4 text-[#FF6B35]" />
+                    <span className="text-sm">From Gallery</span>
+                  </button>
+                </div>
+              </div>
 
-              <div className="relative flex-1">
+              {/* Input Field with Mic */}
+              <div className="relative flex-1 flex items-center bg-[#2a2a2a] rounded-full h-12 px-5 shadow-lg">
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me anything..."
-                  className="bg-black/40 border border-white/10 focus-visible:border-[#FF6B35]/40 text-white focus-visible:ring-1 focus-visible:ring-[#FF6B35]/30 placeholder:text-white/30 h-11 rounded-2xl px-4"
+                  placeholder="Ask anything"
+                  className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white placeholder:text-white/40 h-auto p-0 text-base"
                 />
+                <button
+                  type="button"
+                  onClick={toggleVoiceInput}
+                  className={`ml-2 flex-shrink-0 transition-all ${
+                    isListening 
+                      ? 'text-red-400 animate-pulse scale-110' 
+                      : 'text-white/50 hover:text-white/80'
+                  }`}
+                  title={isListening ? "Stop listening" : "Start voice"}
+                >
+                  {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
               </div>
 
-              <div className="flex gap-1.5 relative">
-                <button
-                  type="button"
-                  onClick={() => chatFileRef.current?.click()}
-                  disabled={isUploadingChat}
-                  className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0 disabled:opacity-50"
-                  title="Upload images"
-                >
-                  {isUploadingChat ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleGalleryPick}
-                  className="p-2.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors flex-shrink-0"
-                  title="Pick from gallery"
-                >
-                  <Grid3x3 className="w-4 h-4" />
-                </button>
-                <Button 
-                  type="submit" 
-                  size="icon"
-                  disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
-                  className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg hover:shadow-xl hover:shadow-[#FF6B35]/30 rounded-xl h-11 w-11 p-0 transition-all disabled:opacity-50"
-                >
-                  {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
-              </div>
+              {/* Send Button */}
+              <Button 
+                type="submit" 
+                size="icon"
+                disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
+                className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-xl hover:shadow-2xl hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-50 flex-shrink-0 p-0"
+              >
+                {isTyping ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                )}
+              </Button>
 
               <input
                 ref={chatFileRef}
