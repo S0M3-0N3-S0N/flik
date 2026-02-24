@@ -929,25 +929,7 @@ RULES:
               >
                 <History className="w-3.5 h-3.5" />
               </Button>
-              <div className="w-px h-4 bg-white/10 mx-0.5" />
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setInternetEnabled(!internetEnabled)}
-                className={`h-8 w-8 ${internetEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}`}
-                title={internetEnabled ? "Internet: ON" : "Internet: OFF"}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {internetEnabled ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                  ) : (
-                    <>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
-                    </>
-                  )}
-                </svg>
-              </Button>
+
               <Button 
                 variant="ghost" 
                 size="icon" 
