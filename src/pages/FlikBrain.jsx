@@ -122,19 +122,6 @@ export default function FlikBrain() {
     const edges = new THREE.LineSegments(edgesGeo, edgesMat);
     outerGroup.add(edges);
 
-    // Core shell
-    const core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.5, 64, 64),
-      new THREE.MeshStandardMaterial({
-        color: 0xff4500,
-        emissive: 0xff2400,
-        emissiveIntensity: 2.4,
-        roughness: 0.25,
-        metalness: 0.25
-      })
-    );
-    scene.add(core);
-
     // Edge beams
     let coreFlash = 0;
     const MAX_EDGE_BEAMS = 200;
@@ -334,7 +321,6 @@ export default function FlikBrain() {
           mode = 'inside';
           outerGroup.visible = false;
           innerGroup.visible = true;
-          core.visible = false;
         }
       } else if (mode === 'transitionOut') {
         tCam = Math.min(1, tCam + dt / DURATION);
@@ -345,7 +331,6 @@ export default function FlikBrain() {
           mode = 'outside';
           outerGroup.visible = true;
           innerGroup.visible = false;
-          core.visible = true;
         }
       }
     };
@@ -392,11 +377,6 @@ export default function FlikBrain() {
         }
 
         if (coreFlash > 0) coreFlash = Math.max(0, coreFlash - 0.05);
-        const baseColor = new THREE.Color(0xff4500);
-        const hotColor = new THREE.Color(0xff2400);
-        core.material.emissiveIntensity = 2.4 + 1.5 * coreFlash;
-        core.material.emissive = baseColor.clone().lerp(hotColor, coreFlash);
-        core.material.color = baseColor.clone().lerp(hotColor, coreFlash * 0.5);
       }
 
       // Inside visuals
