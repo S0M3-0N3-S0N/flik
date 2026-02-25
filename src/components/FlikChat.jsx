@@ -57,8 +57,6 @@ export default function FlikChat() {
   const [internetEnabled, setInternetEnabled] = useState(true);
   const [showConversations, setShowConversations] = useState(false);
   const [isSavingConversation, setIsSavingConversation] = useState(false);
-  const [flikIconTapCount, setFlikIconTapCount] = useState(0);
-  const flikIconTapTimerRef = useRef(null);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
@@ -851,31 +849,6 @@ export default function FlikChat() {
     base44.analytics.track({ eventName: 'flik_conversation_started' });
   };
 
-  const handleFlikIconTap = () => {
-    setFlikIconTapCount(prev => {
-      const newCount = prev + 1;
-      
-      // Clear existing timer
-      if (flikIconTapTimerRef.current) {
-        clearTimeout(flikIconTapTimerRef.current);
-      }
-      
-      // If 3 taps, navigate to brain page
-      if (newCount === 3) {
-        navigate(createPageUrl('FlikBrain'));
-        base44.analytics.track({ eventName: 'flik_brain_easter_egg_activated' });
-        return 0; // Reset count
-      }
-      
-      // Reset count after 500ms of inactivity
-      flikIconTapTimerRef.current = setTimeout(() => {
-        setFlikIconTapCount(0);
-      }, 500);
-      
-      return newCount;
-    });
-  };
-
   return (
     <>
     <AnimatePresence>
@@ -893,11 +866,7 @@ export default function FlikChat() {
           <div className="flex items-center justify-between p-5 border-b border-white/5 bg-gradient-to-r from-[#141414] via-[#0f0f0f] to-[#1a1a1a] relative overflow-hidden backdrop-blur-xl">
             <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/8 via-transparent to-[#FFB800]/8" />
             <div className="flex items-center gap-3 relative z-10">
-              <button 
-                onClick={handleFlikIconTap}
-                className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/30 cursor-pointer active:scale-95 transition-transform"
-                aria-label="FLIK avatar (tap 3 times for Easter egg)"
-              >
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-lg shadow-[#FF6B35]/30">
                 <div className="w-full h-full rounded-[14px] bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
                   <img 
                     src={FLIK_AVATAR_URL} 
@@ -905,7 +874,7 @@ export default function FlikChat() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-              </button>
+              </div>
               <div>
                 <h3 className="font-bold text-white text-lg gradient-text">FLIK</h3>
               </div>
