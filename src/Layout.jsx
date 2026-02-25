@@ -233,7 +233,7 @@ function LayoutContent({ children, currentPageName }) {
                 <span className="text-sm font-medium">Back</span>
               </button>
             ) : (
-              <Link to={createPageUrl("Editor")} className="flex items-center gap-3">
+              <Link to={createPageUrl("Editor")} className="flex items-center gap-3 flex-1 justify-center md:flex-none md:justify-start">
                 <span className="text-2xl font-bold gradient-text">FLIK</span>
               </Link>
             )}
