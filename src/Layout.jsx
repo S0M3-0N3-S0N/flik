@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
@@ -27,8 +27,12 @@ function LayoutContent({ children, currentPageName }) {
   });
   const [isDraggingFlik, setIsDraggingFlik] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const t = (key) => translations[language]?.[key] || translations['en'][key] || key;
+
+  const isChildRoute = !['Editor', 'Generate', 'Profile'].includes(currentPageName);
 
   useEffect(() => {
     localStorage.setItem('app_language', language);
@@ -203,11 +207,21 @@ function LayoutContent({ children, currentPageName }) {
         `}</style>
         
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
+        <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Link to={createPageUrl("Editor")} className="flex items-center gap-3">
-              <span className="text-2xl font-bold gradient-text">FLIK</span>
-            </Link>
+            {isChildRoute ? (
+              <button 
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="text-sm font-medium">Back</span>
+              </button>
+            ) : (
+              <Link to={createPageUrl("Editor")} className="flex items-center gap-3">
+                <span className="text-2xl font-bold gradient-text">FLIK</span>
+              </Link>
+            )}
             
             <nav className="hidden md:flex items-center gap-8">
               <Link 
@@ -244,82 +258,63 @@ function LayoutContent({ children, currentPageName }) {
                   )}
                 </div>
               </Link>
-
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
-              >
-                {isMobileMenuOpen ? (
-                  <X className="w-5 h-5 text-white" />
-                ) : (
-                  <Menu className="w-5 h-5 text-white" />
-                )}
-              </button>
             </div>
           </div>
-
-          {/* Mobile Menu */}
-          <AnimatePresence>
-            {isMobileMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="md:hidden border-t border-white/5 bg-[#0A0A0A]/95 backdrop-blur-xl overflow-hidden"
-              >
-                <nav className="flex flex-col p-4 gap-2">
-                  <Link 
-                    to={createPageUrl("Editor")} 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                      currentPageName === "Editor" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                    }`}
-                  >
-                    <Image className="w-5 h-5" />
-                    {t("nav.photo_studio")}
-                  </Link>
-
-                  <Link 
-                    to={createPageUrl("Generate")} 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                      currentPageName === "Generate" ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
-                    }`}
-                  >
-                    <Wand2 className="w-5 h-5" />
-                    {t("nav.imagine_ai")}
-                  </Link>
-
-                  <div className="border-t border-white/10 my-2"></div>
-
-
-
-
-
-
-
-                  <div className="border-t border-white/10 my-2"></div>
-
-                  <Link 
-                    to={createPageUrl("Profile")} 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 transition-colors ${
-                      currentPageName === "Profile" ? "bg-white/10 text-white" : "text-white hover:bg-white/10"
-                    }`}
-                  >
-                    <User className="w-5 h-5" />
-                    {t("nav.profile")}
-                  </Link>
-                  </nav>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </header>
         
         {/* Main Content */}
-        <main className="pt-16">
+        <main className="pt-16 pb-20 md:pb-0">
           {children}
         </main>
+
+        {/* Bottom Navigation Bar - Mobile Only */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="flex items-center justify-around px-4 py-3">
+            <Link 
+              to={createPageUrl("Editor")} 
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] ${
+                currentPageName === "Editor" 
+                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
+                  : "text-white/60"
+              }`}
+            >
+              <Image className="w-6 h-6" />
+              <span className="text-[10px] font-medium">Editor</span>
+            </Link>
+
+            <Link 
+              to={createPageUrl("Generate")} 
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] ${
+                currentPageName === "Generate" 
+                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
+                  : "text-white/60"
+              }`}
+            >
+              <Wand2 className="w-6 h-6" />
+              <span className="text-[10px] font-medium">Generate</span>
+            </Link>
+
+            <Link 
+              to={createPageUrl("Profile")} 
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] ${
+                currentPageName === "Profile" 
+                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
+                  : "text-white/60"
+              }`}
+            >
+              <div className={`w-6 h-6 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
+                currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
+              }`}>
+                {user?.profile_picture ? (
+                  <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  user?.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />
+                )}
+              </div>
+              <span className="text-[10px] font-medium">Profile</span>
+            </Link>
+          </div>
+        </nav>
 
         {/* Global FLIK Button - Draggable */}
         <motion.button
