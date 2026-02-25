@@ -334,6 +334,18 @@ function LayoutContent({ children, currentPageName }) {
             </button>
 
             <button
+              onClick={() => setIsOpen(true)}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                isOpen 
+                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
+                  : "text-white/60"
+              }`}
+            >
+              <Sparkles className="w-6 h-6" />
+              <span className="text-[10px] font-medium">FLIK</span>
+            </button>
+
+            <button
               onClick={(e) => {
                 if (currentPageName === "Profile") {
                   e.preventDefault();
@@ -362,7 +374,7 @@ function LayoutContent({ children, currentPageName }) {
           </div>
         </nav>
 
-        {/* Global FLIK Button - Draggable */}
+        {/* Global FLIK Button - Draggable (Desktop Only) */}
         <motion.button
           onClick={(e) => {
             if (!isDraggingFlik) setIsOpen(true);
@@ -374,7 +386,7 @@ function LayoutContent({ children, currentPageName }) {
             right: `${flikPosition.right}px`,
             touchAction: 'none'
           }}
-          className={`fixed z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 transition-shadow duration-300 ${
+          className={`hidden md:fixed z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 transition-shadow duration-300 ${
             isDraggingFlik ? 'cursor-grabbing scale-110' : 'cursor-grab hover:scale-110'
           }`}
           whileHover={!isDraggingFlik ? { scale: 1.1 } : {}}
