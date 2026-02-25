@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft } from "lucide-react";
