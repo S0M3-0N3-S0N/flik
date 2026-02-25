@@ -798,6 +798,21 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Pull-to-refresh indicator */}
+        {pullDistance > 0 && (
+          <div 
+            className="fixed top-16 left-0 right-0 z-40 flex justify-center"
+            style={{ 
+              transform: `translateY(${Math.min(pullDistance - 80, 50)}px)`,
+              transition: isPulling ? 'none' : 'transform 0.3s ease-out'
+            }}
+          >
+            <div className={`bg-white/10 backdrop-blur-xl rounded-full p-3 border border-white/20 ${isPulling ? 'scale-110' : ''} transition-transform`}>
+              <Loader2 className={`w-5 h-5 text-[#FF6B35] ${isPulling ? 'animate-spin' : ''}`} />
+            </div>
+          </div>
+        )}
+
         {/* Creations Section */}
         <div className="space-y-6">
 
