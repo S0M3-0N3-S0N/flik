@@ -271,6 +271,23 @@ export default function FlikChat() {
   const [cachedUserData, setCachedUserData] = useState(null);
   const [lastFetchTime, setLastFetchTime] = useState(0);
 
+  const fetchUserData = useCallback(async () => {
+    if (isFetchingUserDataRef.current) return;
+    
+    isFetchingUserDataRef.current = true;
+    try {
+      const userProfile = await base44.auth.me();
+      const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', MAX_RECENT_CREATIONS, { data_env: "prod" });
+      setCachedUserData({ userProfile, allCreations });
+      setLastFetchTime(Date.now());
+    } catch (e) {
+      console.error("Failed to fetch user data:", e);
+      setCachedUserData({ userProfile: null, allCreations: [] });
+    } finally {
+      isFetchingUserDataRef.current = false;
+    }
+  }, []);
+
   useEffect(() => {
     // Prefetch user data when chat opens
     if (isOpen && (!cachedUserData || Date.now() - lastFetchTime > CACHE_DURATION)) {
@@ -298,23 +315,6 @@ export default function FlikChat() {
       setMessages(prev => prev.slice(-MAX_IN_MEMORY_MESSAGES));
     }
   }, [messages.length, setMessages]);
-
-  const fetchUserData = useCallback(async () => {
-    if (isFetchingUserDataRef.current) return;
-    
-    isFetchingUserDataRef.current = true;
-    try {
-      const userProfile = await base44.auth.me();
-      const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', MAX_RECENT_CREATIONS, { data_env: "prod" });
-      setCachedUserData({ userProfile, allCreations });
-      setLastFetchTime(Date.now());
-    } catch (e) {
-      console.error("Failed to fetch user data:", e);
-      setCachedUserData({ userProfile: null, allCreations: [] });
-    } finally {
-      isFetchingUserDataRef.current = false;
-    }
-  }, []);
 
   const handleChatImageUpload = async (e) => {
     const files = Array.from(e.target.files);
