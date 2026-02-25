@@ -386,7 +386,7 @@ function LayoutContent({ children, currentPageName }) {
             right: `${flikPosition.right}px`,
             touchAction: 'none'
           }}
-          className={`hidden md:fixed z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 transition-shadow duration-300 ${
+          className={`hidden md:block fixed z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-[2px] shadow-2xl shadow-[#FF6B35]/40 transition-shadow duration-300 ${
             isDraggingFlik ? 'cursor-grabbing scale-110' : 'cursor-grab hover:scale-110'
           }`}
           whileHover={!isDraggingFlik ? { scale: 1.1 } : {}}
