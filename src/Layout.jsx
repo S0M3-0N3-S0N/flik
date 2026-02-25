@@ -21,7 +21,7 @@ function LayoutContent({ children, currentPageName }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en');
   const [user, setUser] = useState(null);
-  const { isOpen, setIsOpen, messages } = useFlik();
+  const { isOpen, setIsOpen, messages, setToggleTheme } = useFlik();
   const [flikPosition, setFlikPosition] = useState(() => {
     try {
       const saved = localStorage.getItem('flik_button_position');
@@ -126,11 +126,16 @@ function LayoutContent({ children, currentPageName }) {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
-  };
+  }, [isDarkMode]);
+
+  // Expose toggleTheme to FlikContext for FlikChat access
+  useEffect(() => {
+    setToggleTheme(() => toggleTheme);
+  }, [toggleTheme, setToggleTheme]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
