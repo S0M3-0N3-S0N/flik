@@ -4,7 +4,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 
-export function MobileSelect({ value, onValueChange, options, placeholder, triggerClassName, label }) {
+export default function MobileSelect({ value, onValueChange, options, placeholder, triggerClassName, label, className }) {
   const [open, setOpen] = useState(false);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -16,7 +16,7 @@ export function MobileSelect({ value, onValueChange, options, placeholder, trigg
         <DrawerTrigger asChild>
           <Button 
             variant="outline" 
-            className={triggerClassName || "w-full justify-between bg-white/5 border-white/10 text-white hover:bg-white/10"}
+            className={className || triggerClassName || "w-full justify-between bg-white/5 border-white/10 text-white hover:bg-white/10"}
           >
             {selectedOption?.label || placeholder || "Select..."}
           </Button>
@@ -51,7 +51,7 @@ export function MobileSelect({ value, onValueChange, options, placeholder, trigg
 
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={triggerClassName}>
+      <SelectTrigger className={className || triggerClassName}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
