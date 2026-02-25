@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
@@ -47,6 +48,7 @@ export default function Generate() {
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
   const [imageErrors, setImageErrors] = useState({});
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -471,9 +473,15 @@ export default function Generate() {
                     <span className="hidden xs:inline">Gallery</span>
                   </button>
 
-                  <Popover>
+                  <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
                     <PopoverTrigger asChild>
                       <button 
+                        onClick={(e) => {
+                          if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                            e.preventDefault();
+                            setShowAdvancedSettings(true);
+                          }
+                        }}
                         className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
                           (aspectRatio !== "1:1" || negativePrompt || imageCount !== 1) 
                             ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
@@ -485,7 +493,7 @@ export default function Generate() {
                         {imageCount > 1 && <span className="font-bold text-[11px] sm:text-xs">×{imageCount}</span>}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl">
+                    <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl hidden md:block">
                      <div className="space-y-4">
                        <div className="space-y-2">
                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Number of Images</Label>
