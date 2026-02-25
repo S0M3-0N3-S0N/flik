@@ -310,11 +310,7 @@ export default function FlikBrain() {
       tCam = 0;
     };
 
-    const onKeyDown = (e) => {
-      if (e.key === 'i' || e.key === 'I') startEnter();
-      if (e.key === 'o' || e.key === 'O') startExit();
-    };
-    window.addEventListener('keydown', onKeyDown);
+
 
     const easeInOutCubic = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
@@ -435,7 +431,6 @@ export default function FlikBrain() {
       clearInterval(edgeBeamInterval);
       clearInterval(corePulseInterval);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('mouseup', onUp);
       canvas.removeEventListener('mousedown', onDown);
       canvas.removeEventListener('mousemove', onMove);
@@ -465,7 +460,7 @@ export default function FlikBrain() {
       
       {/* HUD */}
       <div className="fixed left-3 bottom-3 text-[#ffd5c6] text-xs leading-relaxed bg-[rgba(30,0,0,0.35)] px-2 py-1.5 rounded-lg backdrop-blur-sm font-sans">
-        LMB drag: rotate • RMB drag: pan • wheel/pinch: zoom • press <b className="text-[#fff1ea]">I</b> to enter core • press <b className="text-[#fff1ea]">O</b> to exit
+        LMB drag: rotate • RMB drag: pan • wheel/pinch: zoom
       </div>
 
       {/* Back button */}
