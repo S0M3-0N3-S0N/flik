@@ -5,7 +5,7 @@ import { debounce } from "lodash";
 import { 
   Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, 
   Pencil, Check, X, Lock, Globe, Search, Trash2, Download, Edit, Wand2, Sparkles,
-  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff
+  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff, Sun, Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,11 @@ export default function Profile() {
   const [batchDeleteProgress, setBatchDeleteProgress] = useState(0);
   const [batchDeleteFailed, setBatchDeleteFailed] = useState(0);
   const [deletedItems, setDeletedItems] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [showStatsExpanded, setShowStatsExpanded] = useState(() => {
     return localStorage.getItem('profile_stats_expanded') === 'true';
   });
@@ -587,6 +592,22 @@ export default function Profile() {
         
         {/* Profile Header */}
         <div className="relative bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-6 md:p-10 glass-card overflow-hidden">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={() => {
+              const newMode = !isDarkMode;
+              setIsDarkMode(newMode);
+              localStorage.setItem('theme', newMode ? 'dark' : 'light');
+              window.location.reload();
+            }}
+            className="absolute top-3 right-3 sm:top-6 sm:right-6 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all duration-300 hover:scale-105"
+          >
+            {isDarkMode ? (
+              <Sun className="w-5 h-5 sm:w-6 sm:h-6 text-[#FFB800]" />
+            ) : (
+              <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-[#FF6B35]" />
+            )}
+          </button>
           {/* Background Glow Effect */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
