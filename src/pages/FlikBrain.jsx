@@ -310,11 +310,6 @@ export default function FlikBrain() {
       tCam = 0;
     };
 
-    canvas.addEventListener('dblclick', () => {
-      if (mode === 'outside') startEnter();
-      else if (mode === 'inside') startExit();
-    });
-
     const onKeyDown = (e) => {
       if (e.key === 'i' || e.key === 'I') startEnter();
       if (e.key === 'o' || e.key === 'O') startExit();
@@ -448,7 +443,6 @@ export default function FlikBrain() {
       canvas.removeEventListener('touchmove', onTouchMove);
       canvas.removeEventListener('touchend', onUp);
       canvas.removeEventListener('wheel', onWheel);
-      canvas.removeEventListener('dblclick', startEnter);
       
       // Dispose Three.js resources
       scene.traverse((obj) => {
@@ -471,7 +465,7 @@ export default function FlikBrain() {
       
       {/* HUD */}
       <div className="fixed left-3 bottom-3 text-[#ffd5c6] text-xs leading-relaxed bg-[rgba(30,0,0,0.35)] px-2 py-1.5 rounded-lg backdrop-blur-sm font-sans">
-        LMB drag: rotate • RMB drag: pan • wheel/pinch: zoom • <b className="text-[#fff1ea]">Double‑click</b> or press <b className="text-[#fff1ea]">I</b> to enter core • press <b className="text-[#fff1ea]">O</b> to exit
+        LMB drag: rotate • RMB drag: pan • wheel/pinch: zoom • press <b className="text-[#fff1ea]">I</b> to enter core • press <b className="text-[#fff1ea]">O</b> to exit
       </div>
 
       {/* Back button */}
