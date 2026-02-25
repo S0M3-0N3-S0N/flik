@@ -386,16 +386,21 @@ export default function FlikChat() {
         return { url: uploadResult.file_url, name: file.name, id: `${Date.now()}-${idx}-${Math.random()}` };
       }));
       setAttachedImages(prev => [...prev, ...newImages]);
+      base44.analytics.track({ 
+        eventName: 'flik_images_uploaded',
+        properties: { count: newImages.length }
+      });
     } catch (err) {
       console.error("Chat upload error:", err);
       setUploadError("Failed to upload images. Please try again.");
+      base44.analytics.track({ eventName: 'flik_image_upload_error' });
     } finally {
       setIsUploadingChat(false);
       if (chatFileRef.current) chatFileRef.current.value = '';
     }
   };
 
-  const handleGalleryPick = async () => {
+  const handleGalleryPick = useCallback(async () => {
     setShowGalleryPicker(true);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
@@ -406,6 +411,7 @@ export default function FlikChat() {
     if (galleryCachedData && Date.now() - galleryLastFetch < GALLERY_CACHE_DURATION) {
       setGalleryCreations(galleryCachedData);
       setGalleryHasMore(galleryCachedData.length >= GALLERY_FETCH_LIMIT);
+      base44.analytics.track({ eventName: 'flik_gallery_opened', properties: { cached: true } });
       return;
     }
     
@@ -422,6 +428,7 @@ export default function FlikChat() {
       setGalleryCachedData(creations);
       setGalleryLastFetch(Date.now());
       setGalleryHasMore(creations.length >= GALLERY_FETCH_LIMIT);
+      base44.analytics.track({ eventName: 'flik_gallery_opened', properties: { cached: false } });
     } catch (e) {
       console.error("Failed to load gallery:", e);
       setGalleryCreations([]);
@@ -429,29 +436,34 @@ export default function FlikChat() {
     } finally {
       setIsLoadingGallery(false);
     }
-  };
+  }, [galleryCachedData, galleryLastFetch]);
 
-  const toggleGallerySelection = (creation) => {
+  const toggleGallerySelection = useCallback((creation) => {
     const imageUrl = creation.thumbnail_url || creation.url;
-    const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
-    
-    if (isSelected) {
-      setSelectedGalleryImages(prev => prev.filter(img => img.url !== imageUrl));
-    } else {
-      setSelectedGalleryImages(prev => [...prev, {
-        url: imageUrl,
-        name: creation.title || 'Creation',
-        id: `creation-${creation.id}-${Date.now()}`
-      }]);
-    }
-  };
+    setSelectedGalleryImages(prev => {
+      const isSelected = prev.some(img => img.url === imageUrl);
+      if (isSelected) {
+        return prev.filter(img => img.url !== imageUrl);
+      } else {
+        return [...prev, {
+          url: imageUrl,
+          name: creation.title || 'Creation',
+          id: `creation-${creation.id}-${Date.now()}`
+        }];
+      }
+    });
+  }, []);
 
-  const confirmGallerySelection = () => {
+  const confirmGallerySelection = useCallback(() => {
     setAttachedImages(prev => [...prev, ...selectedGalleryImages]);
     setShowGalleryPicker(false);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
-  };
+    base44.analytics.track({ 
+      eventName: 'flik_gallery_images_selected',
+      properties: { count: selectedGalleryImages.length }
+    });
+  }, [selectedGalleryImages]);
 
   const handleLoadMoreGallery = async () => {
     if (isLoadingMore || !galleryHasMore) return;
@@ -483,7 +495,7 @@ export default function FlikChat() {
     setImageErrors(prev => ({ ...prev, [creationId]: true }));
   }, []);
 
-  // Memoized filtered and sliced gallery creations
+  // Memoized filtered gallery creations for dialog
   const filteredGalleryCreations = useMemo(() => {
     if (!gallerySearchTerm.trim()) return galleryCreations;
     const term = gallerySearchTerm.toLowerCase();
@@ -492,10 +504,6 @@ export default function FlikChat() {
       (c.prompt?.toLowerCase().includes(term))
     );
   }, [galleryCreations, gallerySearchTerm]);
-
-  const displayedGalleryCreations = useMemo(() => {
-    return filteredGalleryCreations.slice(0, displayedCount);
-  }, [filteredGalleryCreations, displayedCount]);
   
   // Memoize filtered creations to avoid duplicate filtering
   const filteredGalleryCreationsForDialog = useMemo(() => {
