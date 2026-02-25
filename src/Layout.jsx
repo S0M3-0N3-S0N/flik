@@ -324,7 +324,7 @@ function LayoutContent({ children, currentPageName }) {
           onMouseDown={handleFlikDragStart}
           onTouchStart={handleFlikDragStart}
           style={{
-            bottom: `${flikPosition.bottom}px`,
+            bottom: `calc(${flikPosition.bottom}px + env(safe-area-inset-bottom))`,
             right: `${flikPosition.right}px`,
             touchAction: 'none'
           }}
@@ -340,7 +340,6 @@ function LayoutContent({ children, currentPageName }) {
               alt="Chat with FLIK" 
               className="w-full h-full object-cover pointer-events-none"
             />
-
           </div>
         </motion.button>
 

@@ -87,7 +87,7 @@ export default function Profile() {
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: creations = [], isLoading } = useQuery({
+  const { data: creations = [], isLoading, refetch } = useQuery({
     queryKey: ['profileCreations', user?.email],
     queryFn: () => {
       return user?.email ? base44.entities.Creation.filter({ created_by: user.email }, '-created_date', MAX_CREATIONS_FETCH) : [];
@@ -95,6 +95,55 @@ export default function Profile() {
     enabled: !!user?.email,
     initialData: [],
   });
+
+  // Pull-to-refresh functionality
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartY = useRef(0);
+  const isPullRefreshActive = useRef(false);
+
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      if (window.scrollY === 0) {
+        touchStartY.current = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (window.scrollY === 0 && touchStartY.current > 0) {
+        const touchY = e.touches[0].clientY;
+        const distance = touchY - touchStartY.current;
+        if (distance > 0 && distance < 150) {
+          setPullDistance(distance);
+          isPullRefreshActive.current = true;
+          if (distance > 80) {
+            setIsPulling(true);
+          }
+        }
+      }
+    };
+
+    const handleTouchEnd = async () => {
+      if (isPullRefreshActive.current && pullDistance > 80) {
+        await queryClient.invalidateQueries({ queryKey: ['profileCreations'] });
+        toast.success('Refreshed!');
+      }
+      touchStartY.current = 0;
+      setPullDistance(0);
+      setIsPulling(false);
+      isPullRefreshActive.current = false;
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [pullDistance, queryClient]);
 
 
 
