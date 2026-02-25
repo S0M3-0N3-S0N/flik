@@ -30,7 +30,9 @@ import {
   MAX_CREATIONS_FETCH, 
   SORT_OPTIONS, 
   DATE_FILTERS,
-  FILTER_TYPES
+  FILTER_TYPES,
+  BATCH_DELETE_WARNING_THRESHOLD,
+  BATCH_DELETE_TOAST_DURATION
 } from "@/components/profile/ProfileConstants";
 import { 
   validateEmail, 
@@ -86,7 +88,7 @@ export default function Profile() {
   });
 
   const { data: creations = [], isLoading } = useQuery({
-    queryKey: ['creations', user?.email],
+    queryKey: ['profileCreations', user?.email],
     queryFn: () => {
       return user?.email ? base44.entities.Creation.filter({ created_by: user.email }, '-created_date', MAX_CREATIONS_FETCH) : [];
     },
@@ -139,8 +141,9 @@ export default function Profile() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       await base44.auth.updateMe({ profile_picture: file_url });
-      await queryClient.invalidateQueries({ queryKey: ['user'] });
+      await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       toast.success('Profile picture updated!', { id: toastId });
+      base44.analytics.track({ eventName: 'profile_picture_updated' });
     } catch (error) {
       console.error("Failed to upload profile picture:", error);
       toast.error('Failed to upload profile picture', { id: toastId });
@@ -163,9 +166,10 @@ export default function Profile() {
     const toastId = toast.loading('Updating email...');
     try {
       await base44.auth.updateMe({ contact_email: emailInput });
-      await queryClient.invalidateQueries({ queryKey: ['user'] });
+      await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setIsEditingEmail(false);
       toast.success('Email updated successfully!', { id: toastId });
+      base44.analytics.track({ eventName: 'profile_email_updated' });
     } catch (error) {
       console.error("Failed to update email:", error);
       toast.error('Failed to update email', { id: toastId });
@@ -186,9 +190,10 @@ export default function Profile() {
     const toastId = toast.loading('Updating name...');
     try {
       await base44.auth.updateMe({ display_name: nameInput });
-      await queryClient.invalidateQueries({ queryKey: ['user'] });
+      await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setIsEditingName(false);
       toast.success('Name updated successfully!', { id: toastId });
+      base44.analytics.track({ eventName: 'profile_name_updated' });
     } catch (error) {
       console.error("Failed to update name:", error);
       toast.error('Failed to update name', { id: toastId });
@@ -210,9 +215,10 @@ export default function Profile() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Creation.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['creations'] });
+      queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
       if (!isBatchDeleting) {
         toast.success('Creation deleted successfully');
+        base44.analytics.track({ eventName: 'profile_creation_deleted', properties: { method: 'single' } });
       }
     },
     onError: () => {
@@ -224,11 +230,13 @@ export default function Profile() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Creation.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['creations'] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
       setEditingTitle(null);
       setEditingPrompt(null);
       toast.success('Updated successfully');
+      const updateType = variables.data.title ? 'title' : variables.data.prompt ? 'prompt' : 'other';
+      base44.analytics.track({ eventName: 'profile_creation_updated', properties: { field: updateType } });
     },
     onError: () => {
       toast.error('Failed to update');
@@ -238,8 +246,12 @@ export default function Profile() {
   const togglePublishMutation = useMutation({
     mutationFn: ({ id, published }) => base44.entities.Creation.update(id, { published_to_discover: published }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['creations'] });
+      queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
       toast.success(variables.published ? 'Published to Discover!' : 'Unpublished from Discover');
+      base44.analytics.track({ 
+        eventName: 'profile_creation_publish_toggled', 
+        properties: { published: variables.published } 
+      });
     },
     onError: () => {
       toast.error('Failed to update publish status');
@@ -274,8 +286,9 @@ export default function Profile() {
                 
                 const { id, created_date, updated_date, created_by, ...dataWithoutMeta } = itemToDelete;
                 await base44.entities.Creation.create(dataWithoutMeta);
-                await queryClient.invalidateQueries({ queryKey: ['creations'] });
+                await queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
                 toast.success('Creation restored!', { id: t.id });
+                base44.analytics.track({ eventName: 'profile_creation_restored' });
               } catch (error) {
                 toast.error('Failed to restore', { id: t.id });
               }
@@ -285,7 +298,7 @@ export default function Profile() {
             Undo
           </Button>
         </div>
-      ), { duration: 5000 });
+      ), { duration: BATCH_DELETE_TOAST_DURATION });
     }
   };
 
@@ -298,7 +311,7 @@ export default function Profile() {
     const total = selectedItems.length;
     
     // Warning for large bulk operations
-    if (total > 50) {
+    if (total > BATCH_DELETE_WARNING_THRESHOLD) {
       if (!window.confirm(`You're about to delete ${total} items. This may take a while. Continue?`)) {
         setDeleteConfirm(null);
         return;
@@ -325,8 +338,16 @@ export default function Profile() {
     
     if (failed === 0) {
       toast.success(`${total} ${total === 1 ? 'item' : 'items'} deleted successfully`, { id: toastId });
+      base44.analytics.track({ 
+        eventName: 'profile_batch_delete_completed', 
+        properties: { count: total, success: true } 
+      });
     } else {
       toast.error(`${total - failed}/${total} deleted (${failed} failed)`, { id: toastId });
+      base44.analytics.track({ 
+        eventName: 'profile_batch_delete_completed', 
+        properties: { count: total, success: false, failed } 
+      });
     }
     
     setIsBatchDeleting(false);
@@ -357,6 +378,7 @@ export default function Profile() {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
       toast.success('Downloaded successfully', { id: toastId });
+      base44.analytics.track({ eventName: 'profile_creation_downloaded', properties: { type } });
     } catch (err) {
       toast.error('Download failed, opening in new tab', { id: toastId });
       window.open(url, '_blank');
@@ -425,6 +447,7 @@ export default function Profile() {
       setSelectedItems([]);
     } else {
       setSelectedItems(paginatedCreations.map(c => c.id));
+      base44.analytics.track({ eventName: 'profile_select_all_page', properties: { count: paginatedCreations.length } });
     }
   }, [selectedItems.length, paginatedCreations]);
 
@@ -433,6 +456,7 @@ export default function Profile() {
       setSelectedItems([]);
     } else {
       setSelectedItems(filteredCreations.map(c => c.id));
+      base44.analytics.track({ eventName: 'profile_select_all_filtered', properties: { count: filteredCreations.length } });
     }
   }, [selectedItems.length, filteredCreations]);
 

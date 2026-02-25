@@ -1,3 +1,4 @@
+
 // Profile Page Constants
 
 export const ITEMS_PER_PAGE = 20;
@@ -27,3 +28,7 @@ export const FILTER_TYPES = [
 
 // Accessibility - Minimum touch target size
 export const MIN_TOUCH_TARGET = 44; // 44x44px
+
+// Batch operations
+export const BATCH_DELETE_WARNING_THRESHOLD = 50;
+export const BATCH_DELETE_TOAST_DURATION = 5000;
