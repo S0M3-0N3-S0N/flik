@@ -1428,7 +1428,7 @@ export default function FlikChat() {
                 </div>
               ))}
             </>
-          ) : displayedGalleryCreations.length === 0 ? (
+          ) : filteredGalleryCreations.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-16 sm:py-20 text-center px-4">
               <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center mb-5 border border-white/10 shadow-lg">
                 <ImageIcon className="w-12 h-12 text-white/20" />
@@ -1450,7 +1450,7 @@ export default function FlikChat() {
             </div>
           ) : (
             <>
-              {displayedGalleryCreations.map((creation) => {
+              {filteredGalleryCreations.map((creation) => {
                 const imageUrl = creation.thumbnail_url || creation.url;
                 const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
                 const hasError = imageErrors[creation.id];
