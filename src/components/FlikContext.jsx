@@ -17,20 +17,45 @@ export function FlikProvider({ children }) {
   const [messages, setMessages] = useState(() => {
     try {
       const saved = localStorage.getItem('flik_messages');
-      const parsed = saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
       // Limit to last 50 messages to prevent bloat
-      return parsed.slice(-50);
-    } catch {
+      return Array.isArray(parsed) ? parsed.slice(-50) : [];
+    } catch (e) {
+      console.warn('Failed to load FLIK messages:', e);
+      // Clear corrupted data
+      try {
+        localStorage.removeItem('flik_messages');
+      } catch {}
       return [];
     }
   });
   const [attachedImages, setAttachedImages] = useState([]);
   const [currentConversationId, setCurrentConversationId] = useState(null);
 
-  // Persist messages with limit
+  // Persist messages with limit and overflow protection
   useEffect(() => {
     const limited = messages.slice(-50); // Keep only last 50
-    localStorage.setItem('flik_messages', JSON.stringify(limited));
+    try {
+      const serialized = JSON.stringify(limited);
+      // Check if we're approaching localStorage limit (usually 5-10MB)
+      if (serialized.length > 4000000) { // 4MB threshold
+        console.warn('FLIK messages too large, truncating');
+        const truncated = messages.slice(-20);
+        localStorage.setItem('flik_messages', JSON.stringify(truncated));
+      } else {
+        localStorage.setItem('flik_messages', serialized);
+      }
+    } catch (e) {
+      console.error('Failed to save FLIK messages:', e);
+      // If quota exceeded, clear and save smaller set
+      if (e.name === 'QuotaExceededError') {
+        try {
+          const minimal = messages.slice(-10);
+          localStorage.setItem('flik_messages', JSON.stringify(minimal));
+        } catch {}
+      }
+    }
   }, [messages]);
 
   const clearHistory = () => {

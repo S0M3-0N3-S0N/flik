@@ -68,6 +68,8 @@ export default function FlikChat() {
   const isSpeakingRef = useRef(false);
   const queryClient = useQueryClient();
   const attachedImageObjectURLs = useRef(new Set());
+  const lastMessageTimeRef = useRef(0);
+  const eventListenersRef = useRef([]);
 
   // Memoized ReactMarkdown components configuration
   const markdownComponents = useMemo(() => ({
@@ -148,7 +150,10 @@ export default function FlikChat() {
       recognition.lang = 'en-US';
 
       recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
+      recognition.onend = () => {
+        setIsListening(false);
+        base44.analytics.track({ eventName: 'flik_voice_input_ended' });
+      };
       recognition.onresult = (event) => {
         let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -167,9 +172,18 @@ export default function FlikChat() {
           }
         }
       };
-      recognition.onerror = () => {
+      recognition.onerror = (event) => {
+        try {
+          recognitionRef.current?.stop();
+        } catch (e) {
+          // Ignore if already stopped
+        }
         setIsListening(false);
         toast.error('Voice recognition failed');
+        base44.analytics.track({ 
+          eventName: 'flik_voice_input_error',
+          properties: { error: event.error }
+        });
       };
       recognitionRef.current = recognition;
     }
@@ -182,7 +196,7 @@ export default function FlikChat() {
     };
   }, []);
 
-  const toggleVoiceInput = () => {
+  const toggleVoiceInput = useCallback(() => {
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
@@ -190,6 +204,7 @@ export default function FlikChat() {
       setInput('');
       try {
         recognitionRef.current?.start();
+        base44.analytics.track({ eventName: 'flik_voice_input_started' });
       } catch (error) {
         // Ignore if already started
         if (error.message && error.message.includes('already started')) {
@@ -201,7 +216,7 @@ export default function FlikChat() {
         return;
       }
     }
-  };
+  }, [isListening]);
 
   const getPreferredVoice = useCallback(() => {
     const voices = window.speechSynthesis.getVoices();
@@ -214,14 +229,19 @@ export default function FlikChat() {
 
 
 
-  const toggleVoiceOutput = () => {
+  const toggleVoiceOutput = useCallback(() => {
+    const newState = !voiceEnabled;
     if (voiceEnabled) {
       window.speechSynthesis?.cancel();
       isSpeakingRef.current = false;
       speechQueueRef.current = [];
     }
-    setVoiceEnabled(!voiceEnabled);
-  };
+    setVoiceEnabled(newState);
+    base44.analytics.track({ 
+      eventName: 'flik_voice_output_toggled',
+      properties: { enabled: newState }
+    });
+  }, [voiceEnabled]);
 
   const processSpeechQueue = useCallback(function processSpeech() {
     if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
@@ -298,14 +318,44 @@ export default function FlikChat() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Abort any pending requests
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+        abortControllerRef.current = null;
       }
+      
+      // Stop speech synthesis
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      isSpeakingRef.current = false;
+      speechQueueRef.current = [];
+      
+      // Stop voice recognition
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // Ignore if already stopped
+        }
+        recognitionRef.current = null;
+      }
+      
       // Revoke all attached image object URLs
       attachedImageObjectURLs.current.forEach(url => {
-        URL.revokeObjectURL(url);
+        try {
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          // Ignore revoke errors
+        }
       });
       attachedImageObjectURLs.current.clear();
+      
+      // Clean up event listeners
+      eventListenersRef.current.forEach(({ element, event, handler }) => {
+        element.removeEventListener(event, handler);
+      });
+      eventListenersRef.current = [];
     };
   }, []);
 
@@ -446,6 +496,16 @@ export default function FlikChat() {
   const displayedGalleryCreations = useMemo(() => {
     return filteredGalleryCreations.slice(0, displayedCount);
   }, [filteredGalleryCreations, displayedCount]);
+  
+  // Memoize filtered creations to avoid duplicate filtering
+  const filteredGalleryCreationsForDialog = useMemo(() => {
+    if (!gallerySearchTerm.trim()) return galleryCreations;
+    const term = gallerySearchTerm.toLowerCase();
+    return galleryCreations.filter(c => 
+      (c.title?.toLowerCase().includes(term)) || 
+      (c.prompt?.toLowerCase().includes(term))
+    );
+  }, [galleryCreations, gallerySearchTerm]);
 
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
@@ -453,6 +513,20 @@ export default function FlikChat() {
     
     if (!messageContent.trim() && messageImages.length === 0) {
       setIsListening(false);
+      return;
+    }
+    
+    // Rate limiting: prevent spam (max 1 message per 2 seconds)
+    const now = Date.now();
+    if (now - lastMessageTimeRef.current < 2000) {
+      toast.error('Please wait a moment before sending another message');
+      return;
+    }
+    lastMessageTimeRef.current = now;
+    
+    // Input validation
+    if (messageContent.length > 5000) {
+      toast.error('Message too long (max 5000 characters)');
       return;
     }
     
@@ -483,10 +557,18 @@ export default function FlikChat() {
     // Abort previous request if exists
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
     
-    // Create new abort controller
+    // Create new abort controller with timeout
     abortControllerRef.current = new AbortController();
+    const timeoutId = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        setError("Request timed out. Please try again.");
+        setIsTyping(false);
+      }
+    }, 60000); // 60 second timeout
 
     try {
       // Use cached data if available
@@ -502,6 +584,15 @@ export default function FlikChat() {
       const pageActions = getFlikActions(currentPage);
       const pageContext = getFlikContext(currentPage);
 
+      base44.analytics.track({ 
+        eventName: 'flik_message_sent',
+        properties: { 
+          hasImages: contextImages.length > 0,
+          internetEnabled,
+          currentPage
+        }
+      });
+      
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: buildFlikPrompt({
           internetEnabled,
@@ -551,6 +642,17 @@ export default function FlikChat() {
       };
       setMessages(prev => [...prev, assistantMsg]);
       
+      clearTimeout(timeoutId);
+      
+      base44.analytics.track({ 
+        eventName: 'flik_response_received',
+        properties: { 
+          hasImages: !!response.image_urls?.length,
+          hasSuggestedActions: !!response.suggested_actions?.length,
+          currentPage
+        }
+      });
+      
       // Speak response in natural sentences if voice output is enabled
       if (voiceEnabled) {
         const sentences = response.message
@@ -562,11 +664,17 @@ export default function FlikChat() {
         });
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
         console.log('Request aborted');
+        base44.analytics.track({ eventName: 'flik_request_aborted' });
         return;
       }
       console.error("FLIK error:", error);
+      base44.analytics.track({ 
+        eventName: 'flik_error',
+        properties: { error: error.message || 'Unknown error' }
+      });
       const errorMsg = { 
         role: 'assistant', 
         content: "Oops! I'm having trouble connecting right now. Try again in a moment? 🔌",
@@ -710,6 +818,7 @@ export default function FlikChat() {
     try {
       await saveCurrentConversation();
       queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
+      base44.analytics.track({ eventName: 'flik_conversation_saved' });
     } finally {
       setIsSavingConversation(false);
     }
@@ -719,11 +828,13 @@ export default function FlikChat() {
     loadConversation(conversation);
     setShowConversations(false);
     toast.success('Conversation loaded');
+    base44.analytics.track({ eventName: 'flik_conversation_loaded' });
   };
 
   const handleNewConversation = async () => {
     await startNewConversation();
     queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
+    base44.analytics.track({ eventName: 'flik_conversation_started' });
   };
 
   return (
@@ -779,7 +890,10 @@ export default function FlikChat() {
               >
                 {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-white/60 hover:text-white h-8 w-8 ml-1">
+              <Button variant="ghost" size="icon" onClick={() => {
+                setIsOpen(false);
+                base44.analytics.track({ eventName: 'flik_chat_closed' });
+              }} className="text-white/60 hover:text-white h-8 w-8 ml-1">
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -1292,7 +1406,7 @@ export default function FlikChat() {
           }}
         >
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-          {isLoadingGallery ? (
+            {isLoadingGallery ? (
             <>
               {Array.from({ length: 18 }).map((_, idx) => (
                 <div
