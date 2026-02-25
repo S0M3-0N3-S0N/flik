@@ -35,14 +35,35 @@ export default function BlockUserModal({ isOpen, onClose, userEmail, isBlocked =
         await base44.entities.BlockedUser.create(data);
       }
     },
+    onMutate: async (data) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ["blockedUsers"] });
+      const previousBlocked = queryClient.getQueryData(["blockedUsers"]);
+      
+      queryClient.setQueryData(["blockedUsers"], (old) => {
+        if (isBlocked) {
+          return old?.filter(b => b.blocked_email !== data.blocked_email) || [];
+        } else {
+          return [...(old || []), { ...data, id: 'temp-' + Date.now() }];
+        }
+      });
+      
+      return { previousBlocked };
+    },
     onSuccess: () => {
       toast.success(isBlocked ? "User unblocked" : "User blocked");
-      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
       onClose();
     },
-    onError: (error) => {
+    onError: (error, data, context) => {
+      // Rollback on error
+      if (context?.previousBlocked) {
+        queryClient.setQueryData(["blockedUsers"], context.previousBlocked);
+      }
       toast.error(error.message || "Failed to update block status");
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+    }
   });
 
   const handleToggleBlock = async () => {

@@ -21,6 +21,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import { LanguageContext } from "../Layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MobileSelect from "@/components/ui/mobile-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from 'react-hot-toast';
@@ -263,17 +264,32 @@ export default function Profile() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Creation.delete(id),
+    onMutate: async (id) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['profileCreations', user?.email] });
+      const previousCreations = queryClient.getQueryData(['profileCreations', user?.email]);
+      queryClient.setQueryData(['profileCreations', user?.email], (old) => 
+        old?.filter(c => c.id !== id) || []
+      );
+      return { previousCreations };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
       if (!isBatchDeleting) {
         toast.success('Creation deleted successfully');
         base44.analytics.track({ eventName: 'profile_creation_deleted', properties: { method: 'single' } });
       }
     },
-    onError: () => {
+    onError: (err, id, context) => {
+      // Rollback on error
+      if (context?.previousCreations) {
+        queryClient.setQueryData(['profileCreations', user?.email], context.previousCreations);
+      }
       if (!isBatchDeleting) {
         toast.error('Failed to delete creation');
       }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
     }
   });
 
@@ -842,27 +858,21 @@ export default function Profile() {
                 </TabsList>
               </Tabs>
 
-              <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="w-[100px] sm:w-[140px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_FILTERS.map(filter => (
-                    <SelectItem key={filter.value} value={filter.value}>{filter.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect 
+                value={dateFilter} 
+                onValueChange={setDateFilter}
+                options={DATE_FILTERS}
+                className="w-[100px] sm:w-[140px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all"
+                label="Date Filter"
+              />
 
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[105px] sm:w-[160px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map(option => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect 
+                value={sortBy} 
+                onValueChange={setSortBy}
+                options={SORT_OPTIONS}
+                className="w-[105px] sm:w-[160px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all"
+                label="Sort By"
+              />
             </div>
           </div>
 

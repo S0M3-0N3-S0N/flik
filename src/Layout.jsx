@@ -12,7 +12,12 @@ import { base44 } from "@/api/base44Client";
 export const LanguageContext = React.createContext();
 
 function LayoutContent({ children, currentPageName }) {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    // Detect system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en');
   const [user, setUser] = useState(null);
@@ -109,6 +114,16 @@ function LayoutContent({ children, currentPageName }) {
     if (savedTheme === 'light') {
       setIsDarkMode(false);
     }
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      if (!localStorage.getItem('theme')) {
+        setIsDarkMode(e.matches);
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   const toggleTheme = () => {
