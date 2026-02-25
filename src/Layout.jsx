@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, MessageSquare } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
@@ -294,7 +294,7 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Bottom Navigation Bar - Mobile Only */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
-          <div className="flex items-center justify-around px-4 py-3">
+          <div className="flex items-center justify-around px-2 py-3">
             <button
               onClick={(e) => {
                 if (currentPageName === "Editor") {
@@ -304,7 +304,7 @@ function LayoutContent({ children, currentPageName }) {
                   navigate(createPageUrl("Editor"));
                 }
               }}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all min-w-[60px] min-h-[44px] ${
                 currentPageName === "Editor" 
                   ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                   : "text-white/60"
@@ -323,7 +323,7 @@ function LayoutContent({ children, currentPageName }) {
                   navigate(createPageUrl("Generate"));
                 }
               }}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all min-w-[60px] min-h-[44px] ${
                 currentPageName === "Generate" 
                   ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                   : "text-white/60"
@@ -331,6 +331,18 @@ function LayoutContent({ children, currentPageName }) {
             >
               <Wand2 className="w-6 h-6" />
               <span className="text-[10px] font-medium">Generate</span>
+            </button>
+
+            <button
+              onClick={() => setIsOpen(true)}
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all min-w-[60px] min-h-[44px] ${
+                isOpen 
+                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
+                  : "text-white/60"
+              }`}
+            >
+              <MessageSquare className="w-6 h-6" />
+              <span className="text-[10px] font-medium">FLIK</span>
             </button>
 
             <button
@@ -342,7 +354,7 @@ function LayoutContent({ children, currentPageName }) {
                   navigate(createPageUrl("Profile"));
                 }
               }}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all min-w-[60px] min-h-[44px] ${
                 currentPageName === "Profile" 
                   ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                   : "text-white/60"
