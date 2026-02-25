@@ -32,6 +32,7 @@ export function FlikProvider({ children }) {
   });
   const [attachedImages, setAttachedImages] = useState([]);
   const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [toggleTheme, setToggleTheme] = useState(() => () => {});
 
   // Persist messages with limit and overflow protection
   useEffect(() => {
@@ -136,7 +137,9 @@ export function FlikProvider({ children }) {
       setCurrentConversationId,
       saveCurrentConversation,
       startNewConversation,
-      loadConversation
+      loadConversation,
+      toggleTheme,
+      setToggleTheme
     }}>
       {children}
     </FlikContext.Provider>
