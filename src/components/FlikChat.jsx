@@ -880,29 +880,29 @@ export default function FlikChat() {
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setShowConversations(true)}
-                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-8 w-8"
+                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
                 title="Saved conversations"
                 aria-label="View saved conversations"
               >
-                <History className="w-3.5 h-3.5" />
+                <History className="w-4 h-4" />
               </Button>
 
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleVoiceOutput}
-                className={`h-8 w-8 ${voiceEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}`}
+                className={`h-11 w-11 min-h-[44px] min-w-[44px] ${voiceEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}`}
                 title={voiceEnabled ? "Voice output: ON" : "Voice output: OFF"}
                 aria-label={voiceEnabled ? "Disable voice output" : "Enable voice output"}
                 aria-pressed={voiceEnabled}
               >
-                {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </Button>
               <Button variant="ghost" size="icon" onClick={() => {
                 setIsOpen(false);
                 base44.analytics.track({ eventName: 'flik_chat_closed' });
-              }} className="text-white/60 hover:text-white h-8 w-8 ml-1">
-                <X className="w-4 h-4" />
+              }} className="text-white/60 hover:text-white h-11 w-11 min-h-[44px] min-w-[44px] ml-1">
+                <X className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -1204,7 +1204,7 @@ export default function FlikChat() {
             )}
           </div>
 
-          <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3">
+          <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom) + 8px)' }}>
             {uploadError && (
               <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -1248,7 +1248,7 @@ export default function FlikChat() {
                     }
                   }}
                   id="attach-menu-btn"
-                  className="w-12 h-12 rounded-full bg-[#2a2a2a] hover:bg-[#333333] flex items-center justify-center transition-all flex-shrink-0 shadow-lg"
+                  className="w-12 h-12 min-h-[44px] min-w-[44px] rounded-full bg-[#2a2a2a] hover:bg-[#333333] flex items-center justify-center transition-all flex-shrink-0 shadow-lg"
                   title="Add attachments"
                 >
                   <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1347,7 +1347,7 @@ export default function FlikChat() {
                 type="submit" 
                 size="icon"
                 disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
-                className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-xl hover:shadow-2xl hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-50 flex-shrink-0 p-0"
+                className="w-12 h-12 min-h-[44px] min-w-[44px] rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-xl hover:shadow-2xl hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-50 flex-shrink-0 p-0"
               >
                 {isTyping ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -1373,7 +1373,7 @@ export default function FlikChat() {
     </AnimatePresence>
       
     <Dialog open={showGalleryPicker} onOpenChange={setShowGalleryPicker}>
-      <DialogContent className="max-w-7xl w-[96vw] h-[92vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col shadow-2xl p-0 rounded-3xl overflow-hidden">
+      <DialogContent className="max-w-7xl w-[96vw] h-[92vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col shadow-2xl p-0 rounded-3xl overflow-hidden" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom) + 12px)' }}>
         <DialogHeader className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4 border-b border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] flex-shrink-0 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
           <div className="relative z-10">
@@ -1573,7 +1573,7 @@ export default function FlikChat() {
 
         {/* Full Image Viewer */}
         <Dialog open={!!fullImageView} onOpenChange={() => setFullImageView(null)}>
-          <DialogContent className="max-w-5xl max-h-[90vh] bg-black/95 border border-white/10 p-2 rounded-2xl">
+          <DialogContent className="max-w-5xl max-h-[90vh] bg-black/95 border border-white/10 p-2 rounded-2xl" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom) + 12px)' }}>
             <button
               onClick={() => setFullImageView(null)}
               className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
@@ -1592,7 +1592,7 @@ export default function FlikChat() {
 
         {/* Clear Conversation Confirmation */}
         <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
-          <DialogContent className="max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-red-500/30 text-white rounded-2xl">
+          <DialogContent className="max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-red-500/30 text-white rounded-2xl" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom) + 12px)' }}>
             <DialogHeader>
               <DialogTitle className="text-xl font-bold flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center">
@@ -1630,7 +1630,7 @@ export default function FlikChat() {
 
         {/* Saved Conversations Dialog */}
         <Dialog open={showConversations} onOpenChange={setShowConversations}>
-          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col">
+          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border-2 border-white/10 text-white flex flex-col" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom) + 12px)' }}>
             <DialogHeader>
               <DialogTitle className="text-xl font-bold gradient-text flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">

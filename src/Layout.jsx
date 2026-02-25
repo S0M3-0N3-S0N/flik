@@ -293,11 +293,18 @@ function LayoutContent({ children, currentPageName }) {
         </main>
 
         {/* Bottom Navigation Bar - Mobile Only */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
           <div className="flex items-center justify-around px-4 py-3">
-            <Link 
-              to={createPageUrl("Editor")} 
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] ${
+            <button
+              onClick={(e) => {
+                if (currentPageName === "Editor") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  navigate(createPageUrl("Editor"));
+                }
+              }}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
                 currentPageName === "Editor" 
                   ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                   : "text-white/60"
@@ -305,11 +312,18 @@ function LayoutContent({ children, currentPageName }) {
             >
               <Image className="w-6 h-6" />
               <span className="text-[10px] font-medium">Editor</span>
-            </Link>
+            </button>
 
-            <Link 
-              to={createPageUrl("Generate")} 
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] ${
+            <button
+              onClick={(e) => {
+                if (currentPageName === "Generate") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  navigate(createPageUrl("Generate"));
+                }
+              }}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
                 currentPageName === "Generate" 
                   ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                   : "text-white/60"
@@ -317,11 +331,18 @@ function LayoutContent({ children, currentPageName }) {
             >
               <Wand2 className="w-6 h-6" />
               <span className="text-[10px] font-medium">Generate</span>
-            </Link>
+            </button>
 
-            <Link 
-              to={createPageUrl("Profile")} 
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] ${
+            <button
+              onClick={(e) => {
+                if (currentPageName === "Profile") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  navigate(createPageUrl("Profile"));
+                }
+              }}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
                 currentPageName === "Profile" 
                   ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                   : "text-white/60"
@@ -337,7 +358,7 @@ function LayoutContent({ children, currentPageName }) {
                 )}
               </div>
               <span className="text-[10px] font-medium">Profile</span>
-            </Link>
+            </button>
           </div>
         </nav>
 
