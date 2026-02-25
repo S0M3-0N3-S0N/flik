@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wand2, Loader2, Zap, Upload, X, MessageSquare, Settings2, RectangleHorizontal, RectangleVertical, Square, Ban, Image as ImageIcon, Check, AlertCircle, Grid3x3 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,17 @@ import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector
 import ImageGrid from "@/components/generate/ImageGrid";
 import ImageUploader from "@/components/editor/ImageUploader";
 import { useFlikActions } from "@/components/useFlikActions";
+import { 
+  MAX_PROMPTS_PER_GENERATION, 
+  GALLERY_FETCH_LIMIT, 
+  PROMPT_HISTORY_LIMIT,
+  IMAGE_COUNT_OPTIONS,
+  ASPECT_RATIO_OPTIONS,
+  AI_MODEL_OPTIONS,
+  DEFAULT_IMAGE_COUNT,
+  DEFAULT_ASPECT_RATIO,
+  DEFAULT_IMAGE_STRENGTH
+} from "@/components/generate/GenerateConstants";
 
 export default function Generate() {
   const [prompt, setPrompt] = useState("");
@@ -23,23 +34,24 @@ export default function Generate() {
   const [generatedImages, setGeneratedImages] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
   const [error, setError] = useState(null);
-  const [aiModel, setAiModel] = useState("default");
+  const [aiModel, setAiModel] = useState(AI_MODEL_OPTIONS.DEFAULT);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [promptHistory, setPromptHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [imageStrength, setImageStrength] = useState(0.5);
-  const [imageCount, setImageCount] = useState(1);
+  const [imageStrength, setImageStrength] = useState(DEFAULT_IMAGE_STRENGTH);
+  const [imageCount, setImageCount] = useState(DEFAULT_IMAGE_COUNT);
   const [showGallery, setShowGallery] = useState(false);
-  const [galleryCreations, setGalleryCreations] = useState([]);
-  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
   const [selectedGalleryImages, setSelectedGalleryImages] = useState([]);
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
   const [imageErrors, setImageErrors] = useState({});
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const abortControllerRef = useRef(null);
+  const uploadedImageURLsRef = useRef(new Set());
 
   // Register actions for FLIK
   useFlikActions('Generate', {
@@ -61,12 +73,41 @@ export default function Generate() {
     aspectRatio: aspectRatio
   }));
 
+  // Fetch user for gallery
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  // Fetch gallery with React Query
+  const { data: galleryCreations = [], isLoading: isLoadingGallery } = useQuery({
+    queryKey: ['generateGalleryCreations', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.Creation.filter(
+        { created_by: user.email },
+        '-created_date',
+        GALLERY_FETCH_LIMIT
+      );
+    },
+    enabled: !!user?.email && showGallery,
+    staleTime: 30000, // 30 seconds
+  });
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const loadUrl = params.get('load');
     if (loadUrl) {
       setUploadedImages([{ url: loadUrl, id: Date.now() }]);
     }
+
+    return () => {
+      // Cleanup uploaded image object URLs
+      uploadedImageURLsRef.current.forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+      uploadedImageURLsRef.current.clear();
+    };
   }, []);
 
   const handleImageUpload = async (filesOrEvent) => {
@@ -90,6 +131,10 @@ export default function Generate() {
       }));
       setUploadedImages(prev => [...prev, ...newUploads]);
       setIsUploading(false);
+      base44.analytics.track({ 
+        eventName: 'generate_images_uploaded', 
+        properties: { count: validFiles.length } 
+      });
     } catch (err) {
       setError("Failed to upload images");
       setIsUploading(false);
@@ -118,7 +163,7 @@ export default function Generate() {
         prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
         
         ${uploadedImages.length > 0 ? `IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates ${imageStrength > 0.7 ? "EXTREMELY STRICTLY (maintain exact composition and forms)" : imageStrength < 0.4 ? "loosely (use as vague inspiration)" : "strongly"} to them, while applying the user's text prompt as a modification or style.` : ""}
-        ${aiModel === 'gemini' ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
+        ${aiModel === AI_MODEL_OPTIONS.GEMINI ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
 
         CRITICAL RULES:
         1. User wants to generate EXACTLY ${imageCount} image(s). Return ${imageCount} enhanced prompt(s).
@@ -132,7 +177,7 @@ export default function Generate() {
 
         Return JSON format: { "prompts": ["enhanced prompt 1", ...] }`,
         file_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined,
-        add_context_from_internet: aiModel === 'gemini' && uploadedImages.length === 0,
+        add_context_from_internet: aiModel === AI_MODEL_OPTIONS.GEMINI && uploadedImages.length === 0,
         response_json_schema: {
           type: "object",
           properties: {
@@ -144,8 +189,10 @@ export default function Generate() {
       
       promptsToGenerate = llmAnalysis.prompts || [prompt];
       
-      // Limit to 5 max to prevent abuse/timeout
-      if (promptsToGenerate.length > 5) promptsToGenerate = promptsToGenerate.slice(0, 5);
+      // Limit to max to prevent abuse/timeout
+      if (promptsToGenerate.length > MAX_PROMPTS_PER_GENERATION) {
+        promptsToGenerate = promptsToGenerate.slice(0, MAX_PROMPTS_PER_GENERATION);
+      }
 
       // Step 2: Generate all images
       const promises = promptsToGenerate.map(async (finalPrompt) => {
@@ -216,13 +263,26 @@ export default function Generate() {
       setGeneratedImages([...successfulImages, ...generatedImages]);
       
       if (prompt.trim()) {
-        setPromptHistory(prev => [prompt, ...prev.filter(p => p !== prompt)].slice(0, 10));
+        setPromptHistory(prev => [prompt, ...prev.filter(p => p !== prompt)].slice(0, PROMPT_HISTORY_LIMIT));
       }
       
       setPrompt("");
       // Don't clear uploads automatically for workflow continuity
       // But clearing styles is usually better for new starts
       setSelectedStyles([]);
+      
+      // Track generation
+      base44.analytics.track({ 
+        eventName: 'generate_images_created', 
+        properties: { 
+          count: successfulImages.length,
+          hasReferenceImages: uploadedImages.length > 0,
+          styles: selectedStyles.length,
+          aiModel,
+          aspectRatio,
+          imageCount
+        } 
+      });
     } catch (err) {
       console.error("Error generating image:", err);
       setError("Failed to generate. " + (err.message || "Please try again."));
@@ -231,34 +291,20 @@ export default function Generate() {
     }
   };
 
-  const handleDeleteImage = (id) => {
-    setGeneratedImages(generatedImages.filter(img => img.id !== id));
-  };
+  const handleDeleteImage = useCallback((id) => {
+    setGeneratedImages(prev => prev.filter(img => img.id !== id));
+    base44.analytics.track({ eventName: 'generate_image_deleted' });
+  }, []);
 
-  const handleGalleryPick = async () => {
+  const handleGalleryPick = useCallback(() => {
     setShowGallery(true);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
     setImageErrors({});
-    
-    setIsLoadingGallery(true);
-    try {
-      const user = await base44.auth.me();
-      const creations = await base44.entities.Creation.filter(
-        { created_by: user.email },
-        '-created_date',
-        50
-      );
-      setGalleryCreations(creations);
-    } catch (e) {
-      console.error("Failed to load gallery:", e);
-      setGalleryCreations([]);
-    } finally {
-      setIsLoadingGallery(false);
-    }
-  };
+    base44.analytics.track({ eventName: 'generate_gallery_opened' });
+  }, []);
 
-  const toggleGallerySelection = (creation) => {
+  const toggleGallerySelection = useCallback((creation) => {
     const imageUrl = creation.thumbnail_url || creation.url;
     const isSelected = selectedGalleryImages.some(img => img.url === imageUrl);
     
@@ -271,18 +317,22 @@ export default function Generate() {
         id: `creation-${creation.id}-${Date.now()}`
       }]);
     }
-  };
+  }, [selectedGalleryImages]);
 
-  const confirmGallerySelection = () => {
+  const confirmGallerySelection = useCallback(() => {
     setUploadedImages(prev => [...prev, ...selectedGalleryImages]);
     setShowGallery(false);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
-  };
+    base44.analytics.track({ 
+      eventName: 'generate_gallery_images_selected', 
+      properties: { count: selectedGalleryImages.length } 
+    });
+  }, [selectedGalleryImages]);
 
-  const handleImageError = (creationId) => {
+  const handleImageError = useCallback((creationId) => {
     setImageErrors(prev => ({ ...prev, [creationId]: true }));
-  };
+  }, []);
 
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -375,14 +425,17 @@ export default function Generate() {
                 <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2 flex-wrap">
 
 
-                  <Select value={aiModel} onValueChange={setAiModel}>
+                  <Select value={aiModel} onValueChange={(value) => {
+                    setAiModel(value);
+                    base44.analytics.track({ eventName: 'generate_ai_model_changed', properties: { model: value } });
+                  }}>
                     <SelectTrigger className="h-8 sm:h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-[11px] sm:text-xs rounded-full gap-1.5 sm:gap-2 px-2.5 sm:px-3 focus:ring-0">
-                      <Zap className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${aiModel === 'gemini' ? 'text-[#FF6B35]' : 'text-white/50'}`} />
+                      <Zap className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${aiModel === AI_MODEL_OPTIONS.GEMINI ? 'text-[#FF6B35]' : 'text-white/50'}`} />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">Standard</SelectItem>
-                      <SelectItem value="gemini">Smart Enhanced</SelectItem>
+                      <SelectItem value={AI_MODEL_OPTIONS.DEFAULT}>Standard</SelectItem>
+                      <SelectItem value={AI_MODEL_OPTIONS.GEMINI}>Smart Enhanced</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -437,10 +490,13 @@ export default function Generate() {
                        <div className="space-y-2">
                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Number of Images</Label>
                          <div className="grid grid-cols-3 gap-2">
-                           {[1, 3, 5].map((count) => (
+                           {IMAGE_COUNT_OPTIONS.map((count) => (
                              <button
                                key={count}
-                               onClick={() => setImageCount(count)}
+                               onClick={() => {
+                                 setImageCount(count);
+                                 base44.analytics.track({ eventName: 'generate_image_count_changed', properties: { count } });
+                               }}
                                className={`flex items-center justify-center gap-1.5 p-3 rounded-lg border transition-all font-bold text-base ${
                                  imageCount === count 
                                    ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
@@ -456,24 +512,26 @@ export default function Generate() {
                        <div className="space-y-2">
                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
                          <div className="grid grid-cols-3 gap-2">
-                           {[
-                             { id: "1:1", icon: Square, label: "Square" },
-                             { id: "16:9", icon: RectangleHorizontal, label: "Landscape" },
-                             { id: "9:16", icon: RectangleVertical, label: "Portrait" }
-                           ].map((ratio) => (
-                             <button
-                               key={ratio.id}
-                               onClick={() => setAspectRatio(ratio.id)}
-                               className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
-                                 aspectRatio === ratio.id 
-                                   ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                   : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
-                               }`}
-                             >
-                               <ratio.icon className="w-4 h-4" />
-                               <span className="text-[10px]">{ratio.label}</span>
-                             </button>
-                           ))}
+                           {ASPECT_RATIO_OPTIONS.map((ratio) => {
+                             const Icon = ratio.id === "1:1" ? Square : ratio.id === "16:9" ? RectangleHorizontal : RectangleVertical;
+                             return (
+                               <button
+                                 key={ratio.id}
+                                 onClick={() => {
+                                   setAspectRatio(ratio.id);
+                                   base44.analytics.track({ eventName: 'generate_aspect_ratio_changed', properties: { ratio: ratio.id } });
+                                 }}
+                                 className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
+                                   aspectRatio === ratio.id 
+                                     ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                     : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                                 }`}
+                               >
+                                 <Icon className="w-4 h-4" />
+                                 <span className="text-[10px]">{ratio.label}</span>
+                               </button>
+                             );
+                           })}
                          </div>
                        </div>
 
