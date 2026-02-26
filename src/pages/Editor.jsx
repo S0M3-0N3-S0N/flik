@@ -1236,11 +1236,8 @@ export default function Editor() {
                   </>
                 )}
               </div>
-            </div>
-          ) : (
-            <ImageUploader 
-              onImageSelect={handleImageSelect}
-            />
+              </div>
+            </>
           )}
           
           <AnimatePresence>
