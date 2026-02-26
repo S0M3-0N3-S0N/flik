@@ -15,6 +15,7 @@ const filters = [
   { id: "arctic", name: "Arctic", filter: "brightness(110%) saturate(60%) hue-rotate(180deg)" },
   { id: "vibrant", name: "Vibrant", filter: "saturate(200%) contrast(110%)" },
   { id: "soft", name: "Soft", filter: "brightness(105%) contrast(85%) saturate(90%)" },
+  { id: "film", name: "Film", filter: "contrast(110%) saturate(90%) sepia(10%) brightness(95%)" },
 ];
 
 export default function FiltersPanel({ selectedFilter, onFilterSelect, previewImage }) {
