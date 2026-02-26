@@ -482,96 +482,99 @@ export default function Generate() {
                 />
               </div>
 
+              </div>
+
               {/* Advanced Settings - Desktop Popover */}
               <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
                 <PopoverTrigger asChild>
                   <button 
                     style={{ display: 'none' }}
                   />
-                    <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl hidden md:block">
-                     <div className="space-y-4">
-                       <div className="space-y-2">
-                         <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Number of Images</Label>
-                         <div className="grid grid-cols-3 gap-2">
-                           {IMAGE_COUNT_OPTIONS.map((count) => (
-                             <button
-                               key={count}
-                               onClick={() => {
-                                 setImageCount(count);
-                                 base44.analytics.track({ eventName: 'generate_image_count_changed', properties: { count } });
-                               }}
-                               className={`flex items-center justify-center gap-1.5 p-3 rounded-lg border transition-all font-bold text-base ${
-                                 imageCount === count 
-                                   ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                   : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
-                               }`}
-                             >
-                               {count}
-                             </button>
-                           ))}
+                </PopoverTrigger>
+                <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl hidden md:block">
+                 <div className="space-y-4">
+                   <div className="space-y-2">
+                     <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Number of Images</Label>
+                     <div className="grid grid-cols-3 gap-2">
+                       {IMAGE_COUNT_OPTIONS.map((count) => (
+                         <button
+                           key={count}
+                           onClick={() => {
+                             setImageCount(count);
+                             base44.analytics.track({ eventName: 'generate_image_count_changed', properties: { count } });
+                           }}
+                           className={`flex items-center justify-center gap-1.5 p-3 rounded-lg border transition-all font-bold text-base ${
+                             imageCount === count 
+                               ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                               : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                           }`}
+                         >
+                           {count}
+                         </button>
+                       ))}
+                     </div>
+                   </div>
+
+                   <div className="space-y-2">
+                     <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
+                     <div className="grid grid-cols-3 gap-2">
+                       {ASPECT_RATIO_OPTIONS.map((ratio) => {
+                         const Icon = ratio.id === "1:1" ? Square : ratio.id === "16:9" ? RectangleHorizontal : RectangleVertical;
+                         return (
+                           <button
+                             key={ratio.id}
+                             onClick={() => {
+                               setAspectRatio(ratio.id);
+                               base44.analytics.track({ eventName: 'generate_aspect_ratio_changed', properties: { ratio: ratio.id } });
+                             }}
+                             className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
+                               aspectRatio === ratio.id 
+                                 ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                 : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                             }`}
+                           >
+                             <Icon className="w-4 h-4" />
+                             <span className="text-[10px]">{ratio.label}</span>
+                           </button>
+                         );
+                       })}
+                     </div>
+                   </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
+                      <Input 
+                        value={negativePrompt}
+                        onChange={(e) => setNegativePrompt(e.target.value)}
+                        placeholder="Things to avoid (e.g. blurry, ugly)..."
+                        className="bg-black/20 border-white/10 h-8 text-xs text-white"
+                      />
+                    </div>
+
+                    {uploadedImages.length > 0 && (
+                      <div className="space-y-3">
+                         <div className="flex justify-between">
+                            <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
+                            <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
                          </div>
-                       </div>
-
-                       <div className="space-y-2">
-                         <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
-                         <div className="grid grid-cols-3 gap-2">
-                           {ASPECT_RATIO_OPTIONS.map((ratio) => {
-                             const Icon = ratio.id === "1:1" ? Square : ratio.id === "16:9" ? RectangleHorizontal : RectangleVertical;
-                             return (
-                               <button
-                                 key={ratio.id}
-                                 onClick={() => {
-                                   setAspectRatio(ratio.id);
-                                   base44.analytics.track({ eventName: 'generate_aspect_ratio_changed', properties: { ratio: ratio.id } });
-                                 }}
-                                 className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
-                                   aspectRatio === ratio.id 
-                                     ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                     : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
-                                 }`}
-                               >
-                                 <Icon className="w-4 h-4" />
-                                 <span className="text-[10px]">{ratio.label}</span>
-                               </button>
-                             );
-                           })}
-                         </div>
-                       </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
-                          <Input 
-                            value={negativePrompt}
-                            onChange={(e) => setNegativePrompt(e.target.value)}
-                            placeholder="Things to avoid (e.g. blurry, ugly)..."
-                            className="bg-black/20 border-white/10 h-8 text-xs text-white"
-                          />
-                        </div>
-
-                        {uploadedImages.length > 0 && (
-                          <div className="space-y-3">
-                             <div className="flex justify-between">
-                                <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
-                                <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
-                             </div>
-                             <Slider 
-                               value={[imageStrength]} 
-                               min={0.1} 
-                               max={0.9} 
-                               step={0.1} 
-                               onValueChange={(v) => setImageStrength(v[0])}
-                               className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
-                             />
-                             <p className="text-[10px] text-white/40 leading-tight">
-                               Higher values make the result look more like your reference images.
-                             </p>
-                          </div>
-                        )}
+                         <Slider 
+                           value={[imageStrength]} 
+                           min={0.1} 
+                           max={0.9} 
+                           step={0.1} 
+                           onValueChange={(v) => setImageStrength(v[0])}
+                           className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
+                         />
+                         <p className="text-[10px] text-white/40 leading-tight">
+                           Higher values make the result look more like your reference images.
+                         </p>
                       </div>
-                    </PopoverContent>
-                  </Popover>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
 
-                </div>
+              <div>
 
                 <Button
                   onClick={handleGenerate}
