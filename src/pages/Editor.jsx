@@ -1152,17 +1152,40 @@ export default function Editor() {
           <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#FF6B35]/5 blur-[100px] pointer-events-none" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
-          {currentImage ? (
-            <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
-              <div 
-                className={`relative inline-flex max-w-full max-h-full no-invert transition-transform duration-75 ease-out ${
-                  (isPanning || isSpacePressed) ? 'cursor-move' : ''
-                }`}
-                style={{
-                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                  cursor: (isPanning || isSpacePressed || isPanToolActive) ? (isPanning ? 'grabbing' : 'grab') : undefined
-                }}
-              >
+          {!currentImage ? (
+            <ImageUploader onImageLoad={handleImageSelect} />
+          ) : (
+            <>
+              {loadedImages.length > 1 && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/80 backdrop-blur-sm px-3 py-2 rounded-full">
+                  <span className="text-xs text-white/60">
+                    {currentImageIndex + 1} / {loadedImages.length}
+                  </span>
+                  <div className="flex gap-1">
+                    {loadedImages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => switchToImage(idx)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          idx === currentImageIndex 
+                            ? 'bg-[#FF6B35] w-6' 
+                            : 'bg-white/30 hover:bg-white/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
+                <div 
+                  className={`relative inline-flex max-w-full max-h-full no-invert transition-transform duration-75 ease-out ${
+                    (isPanning || isSpacePressed) ? 'cursor-move' : ''
+                  }`}
+                  style={{
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                    cursor: (isPanning || isSpacePressed || isPanToolActive) ? (isPanning ? 'grabbing' : 'grab') : undefined
+                  }}
+                >
                 <img
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
