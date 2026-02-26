@@ -5,9 +5,10 @@ import { base44 } from "@/api/base44Client";
 import { Loader2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
-export default function GalleryPicker({ isOpen, onClose, onSelect }) {
+export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMultiple }) {
   const [creations, setCreations] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -33,13 +34,41 @@ export default function GalleryPicker({ isOpen, onClose, onSelect }) {
   };
 
   const handleSelect = (creation) => {
-    onSelect({
-      url: creation.url,
-      preview: creation.thumbnail_url || creation.url,
-      name: creation.title || 'gallery_image.png'
-    });
+    if (selectedIds.length > 0) {
+      toggleSelection(creation.id);
+    } else {
+      onSelect({
+        url: creation.url,
+        preview: creation.thumbnail_url || creation.url,
+        name: creation.title || 'gallery_image.png'
+      });
+      onClose();
+      toast.success("Image loaded from gallery");
+    }
+  };
+
+  const toggleSelection = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleLoadSelected = () => {
+    if (selectedIds.length === 0) return;
+    
+    const selectedCreations = creations.filter(c => selectedIds.includes(c.id));
+    const images = selectedCreations.map(c => ({
+      url: c.url,
+      preview: c.thumbnail_url || c.url,
+      name: c.title || 'gallery_image.png'
+    }));
+    
+    if (onSelectMultiple) {
+      onSelectMultiple(images);
+      toast.success(`${images.length} images loaded from gallery`);
+    }
+    setSelectedIds([]);
     onClose();
-    toast.success("Image loaded from gallery");
   };
 
   return (

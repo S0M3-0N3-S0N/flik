@@ -24,6 +24,8 @@ import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
+  const [loadedImages, setLoadedImages] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
@@ -151,6 +153,8 @@ export default function Editor() {
 
   const handleImageSelect = useCallback((image) => {
     setCurrentImage(image);
+    setLoadedImages([image]);
+    setCurrentImageIndex(0);
     if (image) {
       setZoom(1);
       setPan({ x: 0, y: 0 });
@@ -172,6 +176,57 @@ export default function Editor() {
       setRedoHistory([]);
     }
   }, []);
+
+  const handleMultipleImagesSelect = useCallback((images) => {
+    if (images && images.length > 0) {
+      setLoadedImages(images);
+      setCurrentImageIndex(0);
+      setCurrentImage(images[0]);
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      setAdjustments({
+        brightness: 0,
+        contrast: 0,
+        saturation: 0,
+        blur: 0,
+        hue: 0,
+        sepia: 0,
+        grayscale: 0,
+      });
+      setSelectedFilter(null);
+      setTransform({ rotate: 0, flipH: false, flipV: false });
+      setBrushStrokes([]);
+      setIsCropping(false);
+      setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+      setUndoHistory([]);
+      setRedoHistory([]);
+    }
+  }, []);
+
+  const switchToImage = useCallback((index) => {
+    if (index >= 0 && index < loadedImages.length) {
+      setCurrentImageIndex(index);
+      setCurrentImage(loadedImages[index]);
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      setAdjustments({
+        brightness: 0,
+        contrast: 0,
+        saturation: 0,
+        blur: 0,
+        hue: 0,
+        sepia: 0,
+        grayscale: 0,
+      });
+      setSelectedFilter(null);
+      setTransform({ rotate: 0, flipH: false, flipV: false });
+      setBrushStrokes([]);
+      setIsCropping(false);
+      setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+      setUndoHistory([]);
+      setRedoHistory([]);
+    }
+  }, [loadedImages]);
 
 
 
@@ -527,25 +582,49 @@ export default function Editor() {
   }, [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
   const handleFileUpload = useCallback((e) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
-        return;
-      }
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      toast.error('Please select image files');
+      return;
+    }
+
+    if (imageFiles.length === 1) {
       const reader = new FileReader();
       reader.onload = (ev) => {
         handleImageSelect({
           url: ev.target.result,
           preview: ev.target.result,
-          name: file.name
+          name: imageFiles[0].name
         });
         toast.success('Image uploaded');
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(imageFiles[0]);
+    } else {
+      const loadedImgs = [];
+      let loadedCount = 0;
+      
+      imageFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          loadedImgs[index] = {
+            url: ev.target.result,
+            preview: ev.target.result,
+            name: file.name
+          };
+          loadedCount++;
+          
+          if (loadedCount === imageFiles.length) {
+            handleMultipleImagesSelect(loadedImgs);
+            toast.success(`${imageFiles.length} images uploaded`);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
-  }, [handleImageSelect]);
+  }, [handleImageSelect, handleMultipleImagesSelect]);
 
 
 
@@ -1248,7 +1327,7 @@ export default function Editor() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  multiple={false}
+                  multiple
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -1274,6 +1353,7 @@ export default function Editor() {
         isOpen={isGalleryPickerOpen}
         onClose={() => setIsGalleryPickerOpen(false)}
         onSelect={handleImageSelect}
+        onSelectMultiple={handleMultipleImagesSelect}
       />
     </div>
   );
