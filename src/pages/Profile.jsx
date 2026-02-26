@@ -590,10 +590,11 @@ export default function Profile() {
           {/* Background Glow Effect */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="relative flex flex-col items-center gap-4 sm:gap-6 md:gap-8 md:flex-row md:items-start mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
-            <div className="relative group">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30 flex-shrink-0">
-                <div className="w-full h-full rounded-[18px] sm:rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-2xl sm:text-4xl font-bold text-white overflow-hidden">
+          <div className="relative flex flex-col items-center gap-5 md:gap-8 md:flex-row md:items-start mb-6 sm:mb-8 md:mb-12">
+            {/* Avatar Section */}
+            <div className="relative group flex-shrink-0">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/40">
+                <div className="w-full h-full rounded-[26px] sm:rounded-[30px] bg-[#0a0a0a] flex items-center justify-center text-4xl sm:text-5xl font-bold text-white overflow-hidden">
                   {user.profile_picture ? (
                     <img 
                       src={user.profile_picture} 
@@ -617,13 +618,13 @@ export default function Profile() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
+                className="absolute -bottom-2 -right-2 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110 active:scale-95"
                 aria-label="Change profile picture"
               >
                 {isUploading ? (
-                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-spin" />
+                  <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 text-white animate-spin" />
                 ) : (
-                  <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 )}
               </button>
               <input
@@ -635,13 +636,14 @@ export default function Profile() {
               />
             </div>
             
-            <div className="flex-1 w-full space-y-2 sm:space-y-3">
+            {/* Info Section */}
+            <div className="flex-1 w-full space-y-4">
               {isEditingName ? (
                 <div className="flex items-center gap-2 w-full">
                   <Input
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
-                    className="h-10 sm:h-11 bg-white/5 border-white/10 text-white text-base sm:text-2xl font-bold flex-1 rounded-xl"
+                    className="h-11 sm:h-12 bg-white/5 border-white/10 text-white text-lg sm:text-2xl font-bold flex-1 rounded-xl"
                     placeholder="Enter name"
                     autoFocus
                   />
@@ -650,23 +652,23 @@ export default function Profile() {
                     className="p-2.5 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     aria-label="Save name"
                   >
-                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <Check className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => setIsEditingName(false)} 
                     className="p-2.5 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     aria-label="Cancel editing name"
                   >
-                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
               ) : (
                 <div className="flex items-start gap-2 justify-center md:justify-start">
                   <div className="flex flex-col items-center md:items-start gap-2 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap justify-center">
-                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">{user.display_name || user.full_name || 'User'}</h2>
+                    <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white line-clamp-2">{user.display_name || user.full_name || 'User'}</h2>
                       {user.role === 'admin' && (
-                        <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-[10px] sm:text-xs font-bold rounded-md sm:rounded-lg shadow-lg whitespace-nowrap">
+                        <span className="px-3 py-1 sm:px-4 sm:py-1.5 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-[11px] sm:text-xs font-bold rounded-lg shadow-lg whitespace-nowrap flex-shrink-0">
                           ADMIN
                         </span>
                       )}
@@ -674,21 +676,21 @@ export default function Profile() {
                   </div>
                   <button 
                     onClick={startEditingName} 
-                    className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    className="p-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     aria-label="Edit name"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-5 h-5" />
                   </button>
                 </div>
               )}
               
-              <div className="flex flex-col gap-1.5 items-center md:items-start">
-                <p className="text-white/50 text-xs sm:text-sm flex items-center gap-1.5 justify-center md:justify-start break-all max-w-full">
-                  <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+              <div className="flex flex-col gap-2.5 items-center md:items-start">
+                <p className="text-white/50 text-sm sm:text-base flex items-center gap-2 justify-center md:justify-start break-all max-w-full">
+                  <Mail className="w-4 h-4 flex-shrink-0" />
                   <span className="break-all">{user.email}</span>
                 </p>
-                <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-white/40 justify-center md:justify-start">
-                  <Calendar className="w-3 h-3 flex-shrink-0" />
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-white/40 justify-center md:justify-start">
+                  <Calendar className="w-4 h-4 flex-shrink-0" />
                   <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
                     Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                   </span>
@@ -698,9 +700,9 @@ export default function Profile() {
             
             <Button 
               onClick={handleLogout}
-              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base w-full md:w-auto"
+              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-11 sm:h-12 px-5 sm:px-8 text-sm sm:text-base w-full md:w-auto rounded-xl transition-all hover:border-red-500/60"
             >
-              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               {t("profile.sign_out")}
             </Button>
           </div>
