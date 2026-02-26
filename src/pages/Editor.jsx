@@ -1152,102 +1152,118 @@ export default function Editor() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex flex-col gap-2 items-end">
-                <div className="bg-gradient-to-r from-black/80 via-black/70 to-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-1.5 shadow-2xl">
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
-                      title="Upload Image"
+              <div className="flex flex-col gap-2 items-end relative">
+                <AnimatePresence>
+                  {isToolboxExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                      transition={{ duration: 0.2 }}
+                      className="bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] backdrop-blur-xl border border-white/20 rounded-2xl p-1.5 shadow-2xl mb-2"
                     >
-                      <Upload className="w-4 h-4" />
-                    </button>
-                    
-                    <button
-                      onClick={() => setIsGalleryPickerOpen(true)}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
-                      title="Load from Gallery"
-                    >
-                      <Grid3x3 className="w-4 h-4" />
-                    </button>
-                    
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple={false}
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    
-                    <div className="w-full h-px bg-white/10" />
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsPanToolActive(!isPanToolActive)}
-                      className={`w-10 h-10 rounded-xl transition-all ${isPanToolActive ? 'bg-white text-black shadow-lg' : 'hover:bg-white/10 text-white'}`}
-                      title="Pan (Space)"
-                    >
-                      <Move className="w-4 h-4" />
-                    </Button>
-                    
-                    <div className="w-full h-px bg-white/10" />
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setZoom(z => Math.min(z + 0.2, 5))}
-                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
-                      title="Zoom In"
-                    >
-                      <ZoomIn className="w-4 h-4" />
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setZoom(z => Math.max(z - 0.2, 0.1))}
-                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
-                      title="Zoom Out"
-                    >
-                      <ZoomOut className="w-4 h-4" />
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
-                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
-                      title="Reset"
-                    >
-                      <Maximize2 className="w-4 h-4" />
-                    </Button>
-                    
-                    <div className="w-full h-px bg-white/10" />
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (isCropping) {
-                          handleCancelCrop();
-                        } else {
-                          setActiveTab('crop');
-                          handleStartCrop();
-                        }
-                      }}
-                      className={`w-10 h-10 rounded-xl transition-all ${
-                        isCropping 
-                          ? 'bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white shadow-lg' 
-                          : 'hover:bg-white/10 text-white'
-                      }`}
-                      title="Crop"
-                    >
-                      <CropIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => {
+                            fileInputRef.current?.click();
+                            setIsToolboxExpanded(false);
+                          }}
+                          className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                          title="Upload Image"
+                        >
+                          <Upload className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            setIsGalleryPickerOpen(true);
+                            setIsToolboxExpanded(false);
+                          }}
+                          className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                          title="Load from Gallery"
+                        >
+                          <Grid3x3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        </button>
+                        
+                        <div className="w-full h-px bg-white/10 my-0.5" />
+                        
+                        <button
+                          onClick={() => {
+                            setIsPanToolActive(!isPanToolActive);
+                            setIsToolboxExpanded(false);
+                          }}
+                          className={`w-9 h-9 md:w-10 md:h-10 rounded-xl transition-all flex items-center justify-center ${isPanToolActive ? 'bg-[#FF6B35] text-white shadow-lg' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
+                          title="Pan (Space)"
+                        >
+                          <Move className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        </button>
+                        
+                        <div className="w-full h-px bg-white/10 my-0.5" />
+                        
+                        <button
+                          onClick={() => setZoom(z => Math.min(z + 0.2, 5))}
+                          className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                          title="Zoom In"
+                        >
+                          <ZoomIn className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        </button>
+                        <button
+                          onClick={() => setZoom(z => Math.max(z - 0.2, 0.1))}
+                          className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                          title="Zoom Out"
+                        >
+                          <ZoomOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        </button>
+                        <button
+                          onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
+                          className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                          title="Reset View"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        </button>
+                        
+                        <div className="w-full h-px bg-white/10 my-0.5" />
+                        
+                        <button
+                          onClick={() => {
+                            handleCancelEdit();
+                            setIsToolboxExpanded(false);
+                          }}
+                          className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                          title="Clear Image"
+                        >
+                          <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                {/* Toggle Button */}
+                <motion.button
+                  onClick={() => setIsToolboxExpanded(!isToolboxExpanded)}
+                  className="w-11 h-11 md:w-12 md:h-12 min-h-[44px] min-w-[44px] rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-2xl hover:shadow-[#FF6B35]/40 transition-all flex items-center justify-center"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    animate={{ rotate: isToolboxExpanded ? 45 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </motion.div>
+                </motion.button>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple={false}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </div>
             </motion.div>
           )}
