@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
 import GalleryPicker from "@/components/editor/GalleryPicker";
-import LayerPanel from "@/components/editor/LayerPanel";
 import { useCanvas } from "@/components/hooks/useCanvas";
 import { useMagicBrush } from "@/components/hooks/useMagicBrush";
 import ToolPanel from "@/components/editor/ToolPanel";
@@ -25,9 +24,6 @@ import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
-  const [layers, setLayers] = useState([]);
-  const [activeLayerId, setActiveLayerId] = useState(null);
-  const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
@@ -175,59 +171,6 @@ export default function Editor() {
       setUndoHistory([]);
       setRedoHistory([]);
     }
-  }, []);
-
-  const addLayers = useCallback((images) => {
-    const newLayers = images.map((img, index) => ({
-      id: `layer-${Date.now()}-${index}`,
-      url: img.url,
-      preview: img.preview,
-      name: img.name || `Layer ${layers.length + index + 1}`,
-      visible: true,
-      opacity: 1,
-    }));
-    
-    setLayers(prev => [...prev, ...newLayers]);
-    
-    if (newLayers.length > 0 && !activeLayerId) {
-      setActiveLayerId(newLayers[0].id);
-      setCurrentImage(images[0]);
-      setIsLayerPanelOpen(true);
-    }
-  }, [layers.length, activeLayerId]);
-
-  const handleLayerSelect = useCallback((layerId) => {
-    setActiveLayerId(layerId);
-    const layer = layers.find(l => l.id === layerId);
-    if (layer) {
-      setCurrentImage({ url: layer.url, preview: layer.preview, name: layer.name });
-    }
-  }, [layers]);
-
-  const handleLayerToggle = useCallback((layerId) => {
-    setLayers(prev => prev.map(layer => 
-      layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
-    ));
-  }, []);
-
-  const handleLayerDelete = useCallback((layerId) => {
-    setLayers(prev => {
-      const newLayers = prev.filter(l => l.id !== layerId);
-      if (activeLayerId === layerId && newLayers.length > 0) {
-        setActiveLayerId(newLayers[0].id);
-        setCurrentImage({ url: newLayers[0].url, preview: newLayers[0].preview, name: newLayers[0].name });
-      } else if (newLayers.length === 0) {
-        setActiveLayerId(null);
-        setCurrentImage(null);
-      }
-      return newLayers;
-    });
-  }, [activeLayerId]);
-
-  const handleLayerOpacityChange = useCallback((layerId, opacity) => {
-    setLayers(prev => prev.map(layer => 
-      layer.id === layerId ? { ...layer, opacity } : layer
-    ));
   }, []);
 
 
@@ -586,38 +529,23 @@ export default function Editor() {
   const handleFileUpload = useCallback((e) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const images = [];
-      let loaded = 0;
-      
-      Array.from(files).forEach((file) => {
-        if (!file.type.startsWith('image/')) {
-          toast.error(`${file.name} is not an image file`);
-          return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          images.push({
-            url: ev.target.result,
-            preview: ev.target.result,
-            name: file.name
-          });
-          loaded++;
-          
-          if (loaded === files.length) {
-            if (images.length === 1) {
-              handleImageSelect(images[0]);
-              toast.success('Image uploaded');
-            } else if (images.length > 1) {
-              addLayers(images);
-              toast.success(`${images.length} images uploaded as layers`);
-            }
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+      const file = files[0];
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        handleImageSelect({
+          url: ev.target.result,
+          preview: ev.target.result,
+          name: file.name
+        });
+        toast.success('Image uploaded');
+      };
+      reader.readAsDataURL(file);
     }
-  }, [handleImageSelect, addLayers]);
+  }, [handleImageSelect]);
 
 
 
@@ -1261,17 +1189,6 @@ export default function Editor() {
                         
                         <button
                           onClick={() => {
-                            setIsLayerPanelOpen(!isLayerPanelOpen);
-                            setIsToolboxExpanded(false);
-                          }}
-                          className={`w-8 h-8 rounded-md transition-all flex items-center justify-center active:scale-95 ${isLayerPanelOpen ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-                          title="Layers"
-                        >
-                          <Layers className="w-3.5 h-3.5" />
-                        </button>
-                        
-                        <button
-                          onClick={() => {
                             setIsPanToolActive(!isPanToolActive);
                             setIsToolboxExpanded(false);
                           }}
@@ -1331,7 +1248,7 @@ export default function Editor() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  multiple
+                  multiple={false}
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -1356,26 +1273,7 @@ export default function Editor() {
       <GalleryPicker
         isOpen={isGalleryPickerOpen}
         onClose={() => setIsGalleryPickerOpen(false)}
-        onSelect={(images) => {
-          if (Array.isArray(images) && images.length > 1) {
-            addLayers(images);
-          } else if (Array.isArray(images) && images.length === 1) {
-            handleImageSelect(images[0]);
-          } else {
-            handleImageSelect(images);
-          }
-        }}
-      />
-      
-      <LayerPanel
-        layers={layers}
-        activeLayerId={activeLayerId}
-        onLayerSelect={handleLayerSelect}
-        onLayerToggle={handleLayerToggle}
-        onLayerDelete={handleLayerDelete}
-        onOpacityChange={handleLayerOpacityChange}
-        isOpen={isLayerPanelOpen}
-        onClose={() => setIsLayerPanelOpen(false)}
+        onSelect={handleImageSelect}
       />
     </div>
   );
