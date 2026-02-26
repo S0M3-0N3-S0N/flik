@@ -586,23 +586,38 @@ export default function Editor() {
   const handleFileUpload = useCallback((e) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        handleImageSelect({
-          url: ev.target.result,
-          preview: ev.target.result,
-          name: file.name
-        });
-        toast.success('Image uploaded');
-      };
-      reader.readAsDataURL(file);
+      const images = [];
+      let loaded = 0;
+      
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith('image/')) {
+          toast.error(`${file.name} is not an image file`);
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          images.push({
+            url: ev.target.result,
+            preview: ev.target.result,
+            name: file.name
+          });
+          loaded++;
+          
+          if (loaded === files.length) {
+            if (images.length === 1) {
+              handleImageSelect(images[0]);
+              toast.success('Image uploaded');
+            } else if (images.length > 1) {
+              addLayers(images);
+              toast.success(`${images.length} images uploaded as layers`);
+            }
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
-  }, [handleImageSelect]);
+  }, [handleImageSelect, addLayers]);
 
 
 
@@ -1246,6 +1261,17 @@ export default function Editor() {
                         
                         <button
                           onClick={() => {
+                            setIsLayerPanelOpen(!isLayerPanelOpen);
+                            setIsToolboxExpanded(false);
+                          }}
+                          className={`w-8 h-8 rounded-md transition-all flex items-center justify-center active:scale-95 ${isLayerPanelOpen ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
+                          title="Layers"
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                        </button>
+                        
+                        <button
+                          onClick={() => {
                             setIsPanToolActive(!isPanToolActive);
                             setIsToolboxExpanded(false);
                           }}
@@ -1305,7 +1331,7 @@ export default function Editor() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  multiple={false}
+                  multiple
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -1330,7 +1356,26 @@ export default function Editor() {
       <GalleryPicker
         isOpen={isGalleryPickerOpen}
         onClose={() => setIsGalleryPickerOpen(false)}
-        onSelect={handleImageSelect}
+        onSelect={(images) => {
+          if (Array.isArray(images) && images.length > 1) {
+            addLayers(images);
+          } else if (Array.isArray(images) && images.length === 1) {
+            handleImageSelect(images[0]);
+          } else {
+            handleImageSelect(images);
+          }
+        }}
+      />
+      
+      <LayerPanel
+        layers={layers}
+        activeLayerId={activeLayerId}
+        onLayerSelect={handleLayerSelect}
+        onLayerToggle={handleLayerToggle}
+        onLayerDelete={handleLayerDelete}
+        onOpacityChange={handleLayerOpacityChange}
+        isOpen={isLayerPanelOpen}
+        onClose={() => setIsLayerPanelOpen(false)}
       />
     </div>
   );
