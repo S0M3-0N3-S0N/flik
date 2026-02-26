@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Save, Image as ImageIcon, Upload } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Save, Image as ImageIcon, Upload, Grid3x3 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -1154,25 +1154,21 @@ export default function Editor() {
               <div className="flex flex-col gap-2 items-end">
                 <div className="bg-gradient-to-r from-black/80 via-black/70 to-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-1.5 shadow-2xl">
                   <div className="flex flex-col gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsGalleryPickerOpen(true)}
-                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
-                      title="Load from Gallery"
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
                       title="Upload Image"
                     >
                       <Upload className="w-4 h-4" />
-                    </Button>
+                    </button>
+                    
+                    <button
+                      onClick={() => setIsGalleryPickerOpen(true)}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                      title="Load from Gallery"
+                    >
+                      <Grid3x3 className="w-4 h-4" />
+                    </button>
                     
                     <input
                       ref={fileInputRef}
