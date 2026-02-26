@@ -636,13 +636,6 @@ export default function Profile() {
             </div>
             
             <div className="flex-1 w-full">
-              {user.role === 'admin' && (
-                <div className="mb-2 flex justify-center md:justify-start">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/30 text-[#FF6B35] text-xs font-semibold">
-                    ADMIN
-                  </span>
-                </div>
-              )}
               <div className="flex items-center gap-1.5 sm:gap-3 mb-1.5 sm:mb-2 justify-center md:justify-start flex-wrap">
                 {isEditingName ? (
                   <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -671,6 +664,11 @@ export default function Profile() {
                 ) : (
                   <>
                     <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
+                    {user.role === 'admin' && (
+                      <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/30 text-[#FF6B35] text-xs font-semibold">
+                        ADMIN
+                      </span>
+                    )}
                     <button 
                       onClick={startEditingName} 
                       className="p-2 sm:p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
