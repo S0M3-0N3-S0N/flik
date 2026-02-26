@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
 import GalleryPicker from "@/components/editor/GalleryPicker";
+import LayerPanel from "@/components/editor/LayerPanel";
 import { useCanvas } from "@/components/hooks/useCanvas";
 import { useMagicBrush } from "@/components/hooks/useMagicBrush";
 import ToolPanel from "@/components/editor/ToolPanel";
@@ -24,6 +25,9 @@ import { useFlikActions } from "@/components/useFlikActions";
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
+  const [layers, setLayers] = useState([]);
+  const [activeLayerId, setActiveLayerId] = useState(null);
+  const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
@@ -171,6 +175,59 @@ export default function Editor() {
       setUndoHistory([]);
       setRedoHistory([]);
     }
+  }, []);
+
+  const addLayers = useCallback((images) => {
+    const newLayers = images.map((img, index) => ({
+      id: `layer-${Date.now()}-${index}`,
+      url: img.url,
+      preview: img.preview,
+      name: img.name || `Layer ${layers.length + index + 1}`,
+      visible: true,
+      opacity: 1,
+    }));
+    
+    setLayers(prev => [...prev, ...newLayers]);
+    
+    if (newLayers.length > 0 && !activeLayerId) {
+      setActiveLayerId(newLayers[0].id);
+      setCurrentImage(images[0]);
+      setIsLayerPanelOpen(true);
+    }
+  }, [layers.length, activeLayerId]);
+
+  const handleLayerSelect = useCallback((layerId) => {
+    setActiveLayerId(layerId);
+    const layer = layers.find(l => l.id === layerId);
+    if (layer) {
+      setCurrentImage({ url: layer.url, preview: layer.preview, name: layer.name });
+    }
+  }, [layers]);
+
+  const handleLayerToggle = useCallback((layerId) => {
+    setLayers(prev => prev.map(layer => 
+      layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
+    ));
+  }, []);
+
+  const handleLayerDelete = useCallback((layerId) => {
+    setLayers(prev => {
+      const newLayers = prev.filter(l => l.id !== layerId);
+      if (activeLayerId === layerId && newLayers.length > 0) {
+        setActiveLayerId(newLayers[0].id);
+        setCurrentImage({ url: newLayers[0].url, preview: newLayers[0].preview, name: newLayers[0].name });
+      } else if (newLayers.length === 0) {
+        setActiveLayerId(null);
+        setCurrentImage(null);
+      }
+      return newLayers;
+    });
+  }, [activeLayerId]);
+
+  const handleLayerOpacityChange = useCallback((layerId, opacity) => {
+    setLayers(prev => prev.map(layer => 
+      layer.id === layerId ? { ...layer, opacity } : layer
+    ));
   }, []);
 
 
