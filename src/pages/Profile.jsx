@@ -48,6 +48,8 @@ export default function Profile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [starTaps, setStarTaps] = useState(0);
+  const [lastTapTime, setLastTapTime] = useState(0);
   
   // Profile State
   const [isUploading, setIsUploading] = useState(false);
