@@ -591,22 +591,22 @@ export default function Generate() {
                   </>
                 )}
               </Button>
-            </div>
+              </div>
+              </motion.div>
+              </div>
 
-            <StyleSelector 
+              <StyleSelector 
               selectedStyles={selectedStyles} 
               onSelect={setSelectedStyles} 
               onClear={() => setSelectedStyles([])} 
-            />
+              />
 
-            {error && (
+              {error && (
               <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-                {error}
+              {error}
               </div>
-            )}
-          </motion.div>
-        </div>
-      </section>
+              )}
+              </section>
       
       <section className="px-4 sm:px-6 pb-12 sm:pb-16 md:pb-20">
         <div className="max-w-7xl mx-auto">
