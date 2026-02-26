@@ -574,27 +574,24 @@ export default function Generate() {
                 </PopoverContent>
               </Popover>
 
-              <div>
-
-                <Button
-                  onClick={handleGenerate}
-                  disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
-                  className="btn-gradient text-white rounded-lg sm:rounded-xl px-4 sm:px-6 h-9 sm:h-10 text-sm shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 animate-spin" />
-                      <span className="text-xs sm:text-sm">Generating</span>
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
-                      <span className="text-xs sm:text-sm">Generate</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-              </div>
+              <Button
+                onClick={handleGenerate}
+                disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
+                className="btn-gradient text-white rounded-lg sm:rounded-xl px-4 sm:px-6 h-9 sm:h-10 text-sm shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto mt-4"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 animate-spin" />
+                    <span className="text-xs sm:text-sm">Generating</span>
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
+                    <span className="text-xs sm:text-sm">Generate</span>
+                  </>
+                )}
+              </Button>
+            </div>
 
             <StyleSelector 
               selectedStyles={selectedStyles} 
