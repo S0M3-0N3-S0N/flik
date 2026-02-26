@@ -1076,18 +1076,18 @@ export default function Profile() {
                               />
                             )}
                           </div>
-                          <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                          <div className="flex gap-1.5 sm:gap-2">
                             <Button
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                               }}
-                              className="bg-white/20 hover:bg-white/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2"
+                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
                               title="Edit in Photo Studio"
                             >
                               <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline ml-1">Edit</span>
+                              <span className="hidden sm:inline">Edit</span>
                             </Button>
                             <Button
                               size="sm"
@@ -1095,11 +1095,11 @@ export default function Profile() {
                                 e.stopPropagation();
                                 navigate(createPageUrl('Generate') + '?prompt=' + encodeURIComponent(item.prompt || ''));
                               }}
-                              className="bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2"
+                              className="flex-1 bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
                               title="Imagine similar image"
                             >
                               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline ml-1">Imagine</span>
+                              <span className="hidden sm:inline">Imagine</span>
                             </Button>
                             <Button
                               size="sm"
@@ -1107,11 +1107,11 @@ export default function Profile() {
                                 e.stopPropagation();
                                 deleteMutation.mutate(item.id);
                               }}
-                              className="bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2"
+                              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
                               title="Delete image"
                             >
                               <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline ml-1">Delete</span>
+                              <span className="hidden sm:inline">Delete</span>
                             </Button>
                             </div>
                         </div>
