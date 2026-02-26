@@ -639,7 +639,7 @@ export default function Profile() {
               {user.role === 'admin' && (
                 <div className="mb-2 flex justify-center md:justify-start">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/30 text-[#FF6B35] text-xs font-semibold">
-                    ⭐ ADMIN
+                    ADMIN
                   </span>
                 </div>
               )}
