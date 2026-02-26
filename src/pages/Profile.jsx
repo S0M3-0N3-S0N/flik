@@ -1124,18 +1124,7 @@ export default function Profile() {
                               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               <span className="hidden sm:inline ml-1">Imagine</span>
                             </Button>
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteMutation.mutate(item.id);
-                              }}
-                              className="bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2"
-                              title="Delete image"
-                            >
-                              <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline ml-1">Delete</span>
-                            </Button>
+
                             </div>
                         </div>
                       </div>
