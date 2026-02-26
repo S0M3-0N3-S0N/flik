@@ -1221,19 +1221,7 @@ export default function Editor() {
                         >
                           <Maximize2 className="w-4 h-4" />
                         </button>
-                        
-                        <div className="h-px bg-white/10 mx-1.5" />
-                        
-                        <button
-                          onClick={() => {
-                            handleCancelEdit();
-                            setIsToolboxExpanded(false);
-                          }}
-                          className="w-9 h-9 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 rounded-lg flex items-center justify-center text-white/60 hover:bg-red-500/10 hover:text-red-400 transition-colors active:scale-95"
-                          title="Clear"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+
                       </div>
                     </motion.div>
                   )}
