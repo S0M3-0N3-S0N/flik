@@ -1157,23 +1157,18 @@ export default function Editor() {
           ) : (
             <>
               {loadedImages.length > 1 && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/80 backdrop-blur-sm px-3 py-2 rounded-full">
-                  <span className="text-xs text-white/60">
-                    {currentImageIndex + 1} / {loadedImages.length}
-                  </span>
-                  <div className="flex gap-1">
-                    {loadedImages.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => switchToImage(idx)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          idx === currentImageIndex 
-                            ? 'bg-[#FF6B35] w-6' 
-                            : 'bg-white/30 hover:bg-white/50'
-                        }`}
-                      />
-                    ))}
-                  </div>
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1.5 rounded-full">
+                  {loadedImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => switchToImage(idx)}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${
+                        idx === currentImageIndex 
+                          ? 'bg-[#FF6B35] w-4' 
+                          : 'bg-white/30 hover:bg-white/50'
+                      }`}
+                    />
+                  ))}
                 </div>
               )}
               <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
