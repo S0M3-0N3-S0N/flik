@@ -1153,7 +1153,7 @@ export default function Editor() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
           {!currentImage ? (
-            <ImageUploader onImageLoad={handleImageSelect} />
+            <ImageUploader onImageSelect={handleImageSelect} />
           ) : (
             <>
               {loadedImages.length > 1 && (
