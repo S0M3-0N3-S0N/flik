@@ -635,59 +635,63 @@ export default function Profile() {
               />
             </div>
             
-            <div className="flex-1 w-full">
-              <div className="flex items-center gap-1.5 sm:gap-3 mb-1.5 sm:mb-2 justify-center md:justify-start flex-wrap">
-                {isEditingName ? (
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Input
-                      value={nameInput}
-                      onChange={(e) => setNameInput(e.target.value)}
-                      className="h-10 sm:h-11 bg-white/5 border-white/10 text-white text-lg sm:text-2xl font-bold w-full sm:w-72 rounded-xl"
-                      placeholder="Enter name"
-                      autoFocus
-                    />
-                    <button 
-                      onClick={handleNameUpdate} 
-                      className="p-2 sm:p-2.5 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      aria-label="Save name"
-                    >
-                      <Check className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                    <button 
-                      onClick={() => setIsEditingName(false)} 
-                      className="p-2 sm:p-2.5 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      aria-label="Cancel editing name"
-                    >
-                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
+            <div className="flex-1 w-full space-y-2 sm:space-y-3">
+              {isEditingName ? (
+                <div className="flex items-center gap-2 w-full">
+                  <Input
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="h-10 sm:h-11 bg-white/5 border-white/10 text-white text-base sm:text-2xl font-bold flex-1 rounded-xl"
+                    placeholder="Enter name"
+                    autoFocus
+                  />
+                  <button 
+                    onClick={handleNameUpdate} 
+                    className="p-2.5 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/30 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Save name"
+                  >
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setIsEditingName(false)} 
+                    className="p-2.5 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Cancel editing name"
+                  >
+                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 justify-center md:justify-start">
+                  <div className="flex flex-col items-center md:items-start gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">{user.display_name || user.full_name || 'User'}</h2>
+                      {user.role === 'admin' && (
+                        <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-[10px] sm:text-xs font-bold rounded-md sm:rounded-lg shadow-lg whitespace-nowrap">
+                          ADMIN
+                        </span>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <>
-                    <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
-                    {user.role === 'admin' && (
-                      <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-[10px] sm:text-xs font-bold rounded-md sm:rounded-lg shadow-lg">
-                        ADMIN
-                      </span>
-                    )}
-                    <button 
-                      onClick={startEditingName} 
-                      className="p-2 sm:p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      aria-label="Edit name"
-                    >
-                      <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </button>
-                  </>
-                )}
-              </div>
-              <p className="text-white/50 text-xs sm:text-base flex items-center gap-1.5 sm:gap-2 justify-center md:justify-start flex-wrap break-all">
-                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="break-all">{user.email}</span>
-              </p>
-              <div className="mt-2 sm:mt-4 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm text-white/40 justify-center md:justify-start">
-                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
-                  Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                </span>
+                  <button 
+                    onClick={startEditingName} 
+                    className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Edit name"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              
+              <div className="flex flex-col gap-1.5 items-center md:items-start">
+                <p className="text-white/50 text-xs sm:text-sm flex items-center gap-1.5 justify-center md:justify-start break-all max-w-full">
+                  <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="break-all">{user.email}</span>
+                </p>
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-white/40 justify-center md:justify-start">
+                  <Calendar className="w-3 h-3 flex-shrink-0" />
+                  <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
+                    Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
               </div>
             </div>
             
