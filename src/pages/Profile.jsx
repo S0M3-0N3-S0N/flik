@@ -665,7 +665,7 @@ export default function Profile() {
                   <>
                     <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
                     {user.role === 'admin' && (
-                      <span className="px-3 py-1 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-xs font-bold rounded-lg shadow-lg">
+                      <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-[10px] sm:text-xs font-bold rounded-md sm:rounded-lg shadow-lg">
                         ADMIN
                       </span>
                     )}
