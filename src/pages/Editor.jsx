@@ -79,6 +79,7 @@ export default function Editor() {
   const [redoHistory, setRedoHistory] = useState([]);
   const [regenerateAction, setRegenerateAction] = useState(null);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
+  const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
 
   // Track object URLs for proper cleanup
   const objectURLsRef = useRef(new Set());
