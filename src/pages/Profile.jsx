@@ -1128,7 +1128,7 @@ export default function Profile() {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteCreationMutation.mutate(item.id);
+                                deleteMutation.mutate(item.id);
                               }}
                               className="bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-1 sm:px-2"
                               title="Delete image"
