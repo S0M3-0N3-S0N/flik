@@ -1270,7 +1270,7 @@ export default function Editor() {
                         
                         <button
                           onClick={() => {
-                            setIsGalleryPickerOpen(true);
+                            fileInputRef.current?.click();
                             setIsToolboxExpanded(false);
                           }}
                           className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
