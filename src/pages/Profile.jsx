@@ -590,10 +590,10 @@ export default function Profile() {
           {/* Background Glow Effect */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="relative flex flex-col md:flex-row items-center gap-3 sm:gap-6 md:gap-8 mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
+          <div className="relative flex flex-col items-center gap-4 sm:gap-6 md:gap-8 md:flex-row md:items-start mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
             <div className="relative group">
-              <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30">
-                <div className="w-full h-full rounded-[14px] sm:rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-2xl sm:text-4xl font-bold text-white overflow-hidden">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30 flex-shrink-0">
+                <div className="w-full h-full rounded-[18px] sm:rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-2xl sm:text-4xl font-bold text-white overflow-hidden">
                   {user.profile_picture ? (
                     <img 
                       src={user.profile_picture} 
@@ -617,7 +617,7 @@ export default function Profile() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="absolute -bottom-0.5 -right-0.5 sm:-bottom-2 sm:-right-2 w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
+                className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
                 aria-label="Change profile picture"
               >
                 {isUploading ? (
