@@ -663,7 +663,7 @@ export default function Profile() {
               ) : (
                 <div className="flex items-start gap-2 justify-center md:justify-start">
                   <div className="flex flex-col items-center md:items-start gap-2 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
+                    <div className="flex items-center gap-2 flex-wrap justify-center">
                       <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">{user.display_name || user.full_name || 'User'}</h2>
                       {user.role === 'admin' && (
                         <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-[10px] sm:text-xs font-bold rounded-md sm:rounded-lg shadow-lg whitespace-nowrap">
