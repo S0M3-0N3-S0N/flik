@@ -669,11 +669,6 @@ export default function Profile() {
                 ) : (
                   <>
                     <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-white">{user.display_name || user.full_name || 'User'}</h2>
-                    {user.role === 'admin' && (
-                      <span className="inline-flex md:ml-0 items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/30 text-[#FF6B35] text-xs font-semibold">
-                        ADMIN
-                      </span>
-                    )}
                     <button 
                       onClick={startEditingName} 
                       className="p-2 sm:p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
