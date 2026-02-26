@@ -679,10 +679,6 @@ export default function Profile() {
                   </>
                 )}
               </div>
-              <p className="text-white/50 text-xs sm:text-base flex items-center gap-1.5 sm:gap-2 justify-center md:justify-start flex-wrap break-all">
-                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="break-all">{user.email}</span>
-              </p>
               <div className="mt-2 sm:mt-4 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
