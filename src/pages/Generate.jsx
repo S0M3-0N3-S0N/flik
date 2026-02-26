@@ -423,16 +423,25 @@ export default function Generate() {
               </div>
 
               {/* Toolbar */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-1.5 sm:p-2 mt-2 bg-white/5 rounded-xl sm:rounded-2xl gap-2">
-                <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2 flex-wrap">
+              <div className="flex items-center gap-2 mt-4 bg-[#2a2a2a] rounded-full px-3 py-2.5 sm:py-3">
+                {/* Add button */}
+                <button 
+                  onClick={() => setShowAdvancedSettings(true)}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#1a1a1a] hover:bg-[#252525] flex items-center justify-center text-white/60 hover:text-white transition-colors flex-shrink-0"
+                  title="Advanced Settings"
+                >
+                  <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
 
-
+                {/* Main input area */}
+                <div className="flex-1 flex items-center gap-2 px-3">
+                  {/* Model selector */}
                   <Select value={aiModel} onValueChange={(value) => {
                     setAiModel(value);
                     base44.analytics.track({ eventName: 'generate_ai_model_changed', properties: { model: value } });
                   }}>
-                    <SelectTrigger className="h-8 sm:h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-[11px] sm:text-xs rounded-full gap-1.5 sm:gap-2 px-2.5 sm:px-3 focus:ring-0">
-                      <Zap className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${aiModel === AI_MODEL_OPTIONS.GEMINI ? 'text-[#FF6B35]' : 'text-white/50'}`} />
+                    <SelectTrigger className="h-8 bg-transparent border-0 text-white/60 hover:text-white text-xs px-0 focus:ring-0">
+                      <Zap className={`w-3.5 h-3.5 ${aiModel === AI_MODEL_OPTIONS.GEMINI ? 'text-[#FF6B35]' : 'text-white/50'}`} />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -441,58 +450,44 @@ export default function Generate() {
                     </SelectContent>
                   </Select>
 
-                  <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
+                  {/* Separator */}
+                  <div className="w-px h-4 bg-white/20" />
 
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
-                      uploadedImages.length > 0
-                        ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                        : 'text-white/60 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="hidden xs:inline">{uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}</span>
-                    <span className="xs:hidden">{uploadedImages.length > 0 ? uploadedImages.length : 'Add'}</span>
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
+                  {/* Input with placeholder */}
+                  <input 
+                    type="text"
+                    placeholder="Ask anything..."
+                    className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-white/40"
                   />
 
-                  <button
-                    onClick={handleGalleryPick}
-                    className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
-                    title="Add from gallery"
-                  >
-                    <Grid3x3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="hidden xs:inline">Gallery</span>
-                  </button>
+                  {/* Microphone icon */}
+                  <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-white/50 hover:text-white cursor-pointer transition-colors flex-shrink-0" />
+                </div>
 
-                  <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
-                    <PopoverTrigger asChild>
-                      <button 
-                        onClick={(e) => {
-                          if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                            e.preventDefault();
-                            setShowAdvancedSettings(true);
-                          }
-                        }}
-                        className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
-                          (aspectRatio !== "1:1" || negativePrompt || imageCount !== 1) 
-                            ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                            : 'text-white/60 hover:bg-white/5 hover:text-white'
-                        }`}
-                        title="Advanced Settings"
-                      >
-                        <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        {imageCount > 1 && <span className="font-bold text-[11px] sm:text-xs">×{imageCount}</span>}
-                      </button>
-                    </PopoverTrigger>
+                {/* Upload button */}
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white flex items-center justify-center text-black hover:bg-white/90 transition-colors flex-shrink-0"
+                  title="Add images"
+                >
+                  <Upload className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Advanced Settings - Desktop Popover */}
+              <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
+                <PopoverTrigger asChild>
+                  <button 
+                    style={{ display: 'none' }}
+                  />
                     <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl hidden md:block">
                      <div className="space-y-4">
                        <div className="space-y-2">
