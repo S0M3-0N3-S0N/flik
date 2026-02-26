@@ -692,6 +692,7 @@ export default function Profile() {
                   <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
                     Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                   </span>
+                </div>
               </div>
             </div>
             
