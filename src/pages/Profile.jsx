@@ -592,7 +592,7 @@ export default function Profile() {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="relative flex flex-col md:flex-row items-center gap-3 sm:gap-6 md:gap-8 mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
             <div className="relative group">
-              <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30 relative">
                 <div className="w-full h-full rounded-[14px] sm:rounded-[22px] bg-[#0a0a0a] flex items-center justify-center text-2xl sm:text-4xl font-bold text-white overflow-hidden">
                   {user.profile_picture ? (
                     <img 
@@ -612,6 +612,11 @@ export default function Profile() {
                     {(user.display_name || user.full_name || user.email || 'U')[0].toUpperCase()}
                   </span>
                 </div>
+                {user.role === 'admin' && (
+                  <span className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#FF6B35] border-2 border-[#0a0a0a] text-white text-xs sm:text-sm font-bold shadow-lg">
+                    ★
+                  </span>
+                )}
               </div>
               
               <button
