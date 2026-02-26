@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Save } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, X, Crop as CropIcon, Layers, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Paintbrush, Palette, Save, Image as ImageIcon, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
+import GalleryPicker from "@/components/editor/GalleryPicker";
 import { useCanvas } from "@/components/hooks/useCanvas";
 import { useMagicBrush } from "@/components/hooks/useMagicBrush";
 import ToolPanel from "@/components/editor/ToolPanel";
@@ -77,9 +78,11 @@ export default function Editor() {
   const [undoHistory, setUndoHistory] = useState([]);
   const [redoHistory, setRedoHistory] = useState([]);
   const [regenerateAction, setRegenerateAction] = useState(null);
+  const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
 
   // Track object URLs for proper cleanup
   const objectURLsRef = useRef(new Set());
+  const fileInputRef = useRef(null);
 
   // Register actions for FLIK
   useFlikActions('Editor', {
@@ -522,6 +525,27 @@ export default function Editor() {
     }
   }, [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
 
+  const handleFileUpload = useCallback((e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        handleImageSelect({
+          url: ev.target.result,
+          preview: ev.target.result,
+          name: file.name
+        });
+        toast.success('Image uploaded');
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [handleImageSelect]);
+
 
 
 
@@ -959,6 +983,35 @@ export default function Editor() {
           </div>
           
           <div className="flex items-center gap-2 lg:gap-3">
+            <Button
+              onClick={() => setIsGalleryPickerOpen(true)}
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10 px-2 lg:px-4"
+              title="Load from Gallery"
+            >
+              <ImageIcon className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Gallery</span>
+            </Button>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10 px-2 lg:px-4"
+              title="Upload Image"
+            >
+              <Upload className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Upload</span>
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple={false}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <div className="w-px h-6 bg-white/10" />
             <div className="flex items-center gap-1">
               <Button
                 onClick={handleUndo}
@@ -1212,6 +1265,12 @@ export default function Editor() {
         transform={processedImage ? undefined : transform}
         onRegenerate={regenerateAction}
         isRegenerating={isProcessing || isMagicBrushProcessing}
+      />
+      
+      <GalleryPicker
+        isOpen={isGalleryPickerOpen}
+        onClose={() => setIsGalleryPickerOpen(false)}
+        onSelect={handleImageSelect}
       />
     </div>
   );
