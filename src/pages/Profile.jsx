@@ -615,9 +615,26 @@ export default function Profile() {
                   </span>
                 </div>
                 {user.role === 'admin' && (
-                  <span className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#FF6B35] border-2 border-[#0a0a0a] text-white text-xs sm:text-sm font-bold shadow-lg">
+                  <button
+                    onClick={() => {
+                      const now = Date.now();
+                      if (now - lastTapTime > 500) {
+                        setStarTaps(1);
+                      } else {
+                        const newCount = starTaps + 1;
+                        setStarTaps(newCount);
+                        if (newCount === 3) {
+                          navigate(createPageUrl('Admin'));
+                          setStarTaps(0);
+                        }
+                      }
+                      setLastTapTime(now);
+                    }}
+                    className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#FF6B35] border-2 border-[#0a0a0a] text-white text-xs sm:text-sm font-bold shadow-lg hover:scale-110 transition-transform cursor-pointer"
+                    title="Admin Portal"
+                  >
                     ★
-                  </span>
+                  </button>
                 )}
               </div>
               
