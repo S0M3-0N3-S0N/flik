@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wand2, Loader2, Zap, Upload, X, MessageSquare, Settings2, RectangleHorizontal, RectangleVertical, Square, Ban, Image as ImageIcon, Check, AlertCircle, Grid3x3, Plus, Mic } from "lucide-react";
+import { Wand2, Loader2, Zap, Upload, X, MessageSquare, Settings2, RectangleHorizontal, RectangleVertical, Square, Ban, Image as ImageIcon, Check, AlertCircle, Grid3x3 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -423,25 +423,16 @@ export default function Generate() {
               </div>
 
               {/* Toolbar */}
-              <div className="flex items-center gap-2 mt-4 bg-[#2a2a2a] rounded-full px-3 py-2.5 sm:py-3">
-                {/* Add button */}
-                <button 
-                  onClick={() => setShowAdvancedSettings(true)}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#1a1a1a] hover:bg-[#252525] flex items-center justify-center text-white/60 hover:text-white transition-colors flex-shrink-0"
-                  title="Advanced Settings"
-                >
-                  <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-1.5 sm:p-2 mt-2 bg-white/5 rounded-xl sm:rounded-2xl gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2 flex-wrap">
 
-                {/* Main input area */}
-                <div className="flex-1 flex items-center gap-2 px-3">
-                  {/* Model selector */}
+
                   <Select value={aiModel} onValueChange={(value) => {
                     setAiModel(value);
                     base44.analytics.track({ eventName: 'generate_ai_model_changed', properties: { model: value } });
                   }}>
-                    <SelectTrigger className="h-8 bg-transparent border-0 text-white/60 hover:text-white text-xs px-0 focus:ring-0">
-                      <Zap className={`w-3.5 h-3.5 ${aiModel === AI_MODEL_OPTIONS.GEMINI ? 'text-[#FF6B35]' : 'text-white/50'}`} />
+                    <SelectTrigger className="h-8 sm:h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-[11px] sm:text-xs rounded-full gap-1.5 sm:gap-2 px-2.5 sm:px-3 focus:ring-0">
+                      <Zap className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${aiModel === AI_MODEL_OPTIONS.GEMINI ? 'text-[#FF6B35]' : 'text-white/50'}`} />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -450,163 +441,177 @@ export default function Generate() {
                     </SelectContent>
                   </Select>
 
-                  {/* Separator */}
-                  <div className="w-px h-4 bg-white/20" />
+                  <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
 
-                  {/* Input with placeholder */}
-                  <input 
-                    type="text"
-                    placeholder="Ask anything..."
-                    className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-white/40"
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
+                      uploadedImages.length > 0
+                        ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
+                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="hidden xs:inline">{uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}</span>
+                    <span className="xs:hidden">{uploadedImages.length > 0 ? uploadedImages.length : 'Add'}</span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
                   />
 
-                  {/* Microphone icon */}
-                  <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-white/50 hover:text-white cursor-pointer transition-colors flex-shrink-0" />
+                  <button
+                    onClick={handleGalleryPick}
+                    className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
+                    title="Add from gallery"
+                  >
+                    <Grid3x3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="hidden xs:inline">Gallery</span>
+                  </button>
+
+                  <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
+                    <PopoverTrigger asChild>
+                      <button 
+                        onClick={(e) => {
+                          if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                            e.preventDefault();
+                            setShowAdvancedSettings(true);
+                          }
+                        }}
+                        className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
+                          (aspectRatio !== "1:1" || negativePrompt || imageCount !== 1) 
+                            ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
+                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        }`}
+                        title="Advanced Settings"
+                      >
+                        <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        {imageCount > 1 && <span className="font-bold text-[11px] sm:text-xs">×{imageCount}</span>}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl hidden md:block">
+                     <div className="space-y-4">
+                       <div className="space-y-2">
+                         <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Number of Images</Label>
+                         <div className="grid grid-cols-3 gap-2">
+                           {IMAGE_COUNT_OPTIONS.map((count) => (
+                             <button
+                               key={count}
+                               onClick={() => {
+                                 setImageCount(count);
+                                 base44.analytics.track({ eventName: 'generate_image_count_changed', properties: { count } });
+                               }}
+                               className={`flex items-center justify-center gap-1.5 p-3 rounded-lg border transition-all font-bold text-base ${
+                                 imageCount === count 
+                                   ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                   : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                               }`}
+                             >
+                               {count}
+                             </button>
+                           ))}
+                         </div>
+                       </div>
+
+                       <div className="space-y-2">
+                         <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
+                         <div className="grid grid-cols-3 gap-2">
+                           {ASPECT_RATIO_OPTIONS.map((ratio) => {
+                             const Icon = ratio.id === "1:1" ? Square : ratio.id === "16:9" ? RectangleHorizontal : RectangleVertical;
+                             return (
+                               <button
+                                 key={ratio.id}
+                                 onClick={() => {
+                                   setAspectRatio(ratio.id);
+                                   base44.analytics.track({ eventName: 'generate_aspect_ratio_changed', properties: { ratio: ratio.id } });
+                                 }}
+                                 className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
+                                   aspectRatio === ratio.id 
+                                     ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
+                                     : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
+                                 }`}
+                               >
+                                 <Icon className="w-4 h-4" />
+                                 <span className="text-[10px]">{ratio.label}</span>
+                               </button>
+                             );
+                           })}
+                         </div>
+                       </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
+                          <Input 
+                            value={negativePrompt}
+                            onChange={(e) => setNegativePrompt(e.target.value)}
+                            placeholder="Things to avoid (e.g. blurry, ugly)..."
+                            className="bg-black/20 border-white/10 h-8 text-xs text-white"
+                          />
+                        </div>
+
+                        {uploadedImages.length > 0 && (
+                          <div className="space-y-3">
+                             <div className="flex justify-between">
+                                <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
+                                <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
+                             </div>
+                             <Slider 
+                               value={[imageStrength]} 
+                               min={0.1} 
+                               max={0.9} 
+                               step={0.1} 
+                               onValueChange={(v) => setImageStrength(v[0])}
+                               className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
+                             />
+                             <p className="text-[10px] text-white/40 leading-tight">
+                               Higher values make the result look more like your reference images.
+                             </p>
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
                 </div>
 
-                {/* Upload button */}
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white flex items-center justify-center text-black hover:bg-white/90 transition-colors flex-shrink-0"
-                  title="Add images"
+                <Button
+                  onClick={handleGenerate}
+                  disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
+                  className="btn-gradient text-white rounded-lg sm:rounded-xl px-4 sm:px-6 h-9 sm:h-10 text-sm shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto"
                 >
-                  <Upload className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 animate-spin" />
+                      <span className="text-xs sm:text-sm">Generating</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
+                      <span className="text-xs sm:text-sm">Generate</span>
+                    </>
+                  )}
+                </Button>
+              </div>
               </div>
 
-              </div>
-
-              {/* Advanced Settings - Desktop Popover */}
-              <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
-                <PopoverTrigger asChild>
-                  <button 
-                    style={{ display: 'none' }}
-                  />
-                </PopoverTrigger>
-                <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl hidden md:block">
-                 <div className="space-y-4">
-                   <div className="space-y-2">
-                     <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Number of Images</Label>
-                     <div className="grid grid-cols-3 gap-2">
-                       {IMAGE_COUNT_OPTIONS.map((count) => (
-                         <button
-                           key={count}
-                           onClick={() => {
-                             setImageCount(count);
-                             base44.analytics.track({ eventName: 'generate_image_count_changed', properties: { count } });
-                           }}
-                           className={`flex items-center justify-center gap-1.5 p-3 rounded-lg border transition-all font-bold text-base ${
-                             imageCount === count 
-                               ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                               : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
-                           }`}
-                         >
-                           {count}
-                         </button>
-                       ))}
-                     </div>
-                   </div>
-
-                   <div className="space-y-2">
-                     <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
-                     <div className="grid grid-cols-3 gap-2">
-                       {ASPECT_RATIO_OPTIONS.map((ratio) => {
-                         const Icon = ratio.id === "1:1" ? Square : ratio.id === "16:9" ? RectangleHorizontal : RectangleVertical;
-                         return (
-                           <button
-                             key={ratio.id}
-                             onClick={() => {
-                               setAspectRatio(ratio.id);
-                               base44.analytics.track({ eventName: 'generate_aspect_ratio_changed', properties: { ratio: ratio.id } });
-                             }}
-                             className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${
-                               aspectRatio === ratio.id 
-                                 ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]' 
-                                 : 'bg-white/5 border-transparent text-white/50 hover:bg-white/10 hover:text-white'
-                             }`}
-                           >
-                             <Icon className="w-4 h-4" />
-                             <span className="text-[10px]">{ratio.label}</span>
-                           </button>
-                         );
-                       })}
-                     </div>
-                   </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
-                      <Input 
-                        value={negativePrompt}
-                        onChange={(e) => setNegativePrompt(e.target.value)}
-                        placeholder="Things to avoid (e.g. blurry, ugly)..."
-                        className="bg-black/20 border-white/10 h-8 text-xs text-white"
-                      />
-                    </div>
-
-                    {uploadedImages.length > 0 && (
-                      <div className="space-y-3">
-                         <div className="flex justify-between">
-                            <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
-                            <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
-                         </div>
-                         <Slider 
-                           value={[imageStrength]} 
-                           min={0.1} 
-                           max={0.9} 
-                           step={0.1} 
-                           onValueChange={(v) => setImageStrength(v[0])}
-                           className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
-                         />
-                         <p className="text-[10px] text-white/40 leading-tight">
-                           Higher values make the result look more like your reference images.
-                         </p>
-                      </div>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              <Button
-                onClick={handleGenerate}
-                disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
-                className="btn-gradient text-white rounded-lg sm:rounded-xl px-4 sm:px-6 h-9 sm:h-10 text-sm shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto mt-4"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 animate-spin" />
-                    <span className="text-xs sm:text-sm">Generating</span>
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
-                    <span className="text-xs sm:text-sm">Generate</span>
-                  </>
-                )}
-              </Button>
-              </div>
-              </motion.div>
-              </div>
-
-              <StyleSelector 
+            <StyleSelector 
               selectedStyles={selectedStyles} 
               onSelect={setSelectedStyles} 
               onClear={() => setSelectedStyles([])} 
-              />
+            />
 
-              {error && (
+            {error && (
               <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-              {error}
+                {error}
               </div>
-              )}
-              </section>
+            )}
+          </motion.div>
+        </div>
+      </section>
       
       <section className="px-4 sm:px-6 pb-12 sm:pb-16 md:pb-20">
         <div className="max-w-7xl mx-auto">
