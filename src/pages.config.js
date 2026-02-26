@@ -50,7 +50,6 @@
 import Editor from './pages/Editor';
 import Generate from './pages/Generate';
 import Profile from './pages/Profile';
-import Admin from './pages/Admin';
 import __Layout from './Layout.jsx';
 
 
@@ -58,7 +57,6 @@ export const PAGES = {
     "Editor": Editor,
     "Generate": Generate,
     "Profile": Profile,
-    "Admin": Admin,
 }
 
 export const pagesConfig = {
