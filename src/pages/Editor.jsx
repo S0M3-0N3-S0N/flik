@@ -1230,7 +1230,7 @@ export default function Editor() {
                 {/* Toggle Button */}
                 <motion.button
                   onClick={() => setIsToolboxExpanded(!isToolboxExpanded)}
-                  className="w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-xl hover:shadow-[#FF6B35]/40 transition-all flex items-center justify-center"
+                  className="w-9 h-9 min-h-[44px] min-w-[44px] rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-lg hover:shadow-[#FF6B35]/40 transition-all flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -1238,7 +1238,7 @@ export default function Editor() {
                     animate={{ rotate: isToolboxExpanded ? 45 : 0 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                   </motion.div>
