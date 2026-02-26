@@ -1236,7 +1236,7 @@ export default function Editor() {
                   </>
                 )}
               </div>
-              </div>
+            </div>
             </>
           )}
           
