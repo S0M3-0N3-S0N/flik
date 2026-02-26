@@ -75,7 +75,21 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-[#141414] border-white/10">
         <DialogHeader>
-          <DialogTitle className="text-white">Select from Gallery</DialogTitle>
+          <DialogTitle className="text-white flex items-center justify-between">
+            <span>Select from Gallery</span>
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-white/60">{selectedIds.length} selected</span>
+                <Button
+                  onClick={handleLoadSelected}
+                  className="bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white hover:opacity-90"
+                  size="sm"
+                >
+                  Load Selected
+                </Button>
+              </div>
+            )}
+          </DialogTitle>
         </DialogHeader>
         
         {loading ? (
@@ -89,26 +103,40 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
             <p className="text-sm mt-2">Create some images first to see them here</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 py-4">
-            {creations.map((creation) => (
-              <button
-                key={creation.id}
-                onClick={() => handleSelect(creation)}
-                className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35] transition-all hover:scale-105"
-              >
-                <img
-                  src={creation.thumbnail_url || creation.url}
-                  alt={creation.title || 'Creation'}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                  <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">
-                    Select
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
+          <>
+            <p className="text-xs text-white/40 mb-2">
+              Click to load single image, or select multiple and click "Load Selected"
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 py-4">
+              {creations.map((creation) => (
+                <button
+                  key={creation.id}
+                  onClick={() => handleSelect(creation)}
+                  className={`group relative aspect-square rounded-lg overflow-hidden border transition-all hover:scale-105 ${
+                    selectedIds.includes(creation.id)
+                      ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/50'
+                      : 'border-white/10 hover:border-[#FF6B35]'
+                  }`}
+                >
+                  <img
+                    src={creation.thumbnail_url || creation.url}
+                    alt={creation.title || 'Creation'}
+                    className="w-full h-full object-cover"
+                  />
+                  {selectedIds.includes(creation.id) && (
+                    <div className="absolute top-2 right-2 w-6 h-6 bg-[#FF6B35] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      ✓
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                    <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">
+                      {selectedIds.includes(creation.id) ? 'Selected' : 'Select'}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
