@@ -983,35 +983,6 @@ export default function Editor() {
           </div>
           
           <div className="flex items-center gap-2 lg:gap-3">
-            <Button
-              onClick={() => setIsGalleryPickerOpen(true)}
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/10 px-2 lg:px-4"
-              title="Load from Gallery"
-            >
-              <ImageIcon className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Gallery</span>
-            </Button>
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/10 px-2 lg:px-4"
-              title="Upload Image"
-            >
-              <Upload className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Upload</span>
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple={false}
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <div className="w-px h-6 bg-white/10" />
             <div className="flex items-center gap-1">
               <Button
                 onClick={handleUndo}
@@ -1183,6 +1154,37 @@ export default function Editor() {
               <div className="flex flex-col gap-2 items-end">
                 <div className="bg-gradient-to-r from-black/80 via-black/70 to-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-1.5 shadow-2xl">
                   <div className="flex flex-col gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsGalleryPickerOpen(true)}
+                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
+                      title="Load from Gallery"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-10 h-10 rounded-xl hover:bg-white/10 text-white"
+                      title="Upload Image"
+                    >
+                      <Upload className="w-4 h-4" />
+                    </Button>
+                    
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple={false}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    
+                    <div className="w-full h-px bg-white/10" />
+                    
                     <Button
                       variant="ghost"
                       size="icon"
