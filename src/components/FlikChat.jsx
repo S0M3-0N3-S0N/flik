@@ -29,7 +29,7 @@ const MAX_STORED_MESSAGES = 100;
 const FLIK_AVATAR_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69467e23e779b599fb62c857/d58a91e16_IMG_6684.jpeg";
 
 export default function FlikChat() {
-  const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages, currentConversationId, setCurrentConversationId, saveCurrentConversation, startNewConversation, loadConversation, toggleTheme } = useFlik();
+  const { isOpen, setIsOpen, messages, setMessages, clearHistory, attachedImages, setAttachedImages, currentConversationId, setCurrentConversationId, saveCurrentConversation, startNewConversation, loadConversation } = useFlik();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isUploadingChat, setIsUploadingChat] = useState(false);
@@ -714,10 +714,6 @@ export default function FlikChat() {
         navigate(url);
         setTimeout(() => setIsOpen(false), NAVIGATION_DELAY);
         toast.success(`Opening ${action.payload.page}...`);
-      } else if (action.type === 'toggle_theme') {
-        toggleTheme();
-        const newMode = localStorage.getItem('theme') === 'dark' ? 'light' : 'dark';
-        toast.success(`Switched to ${newMode} mode`);
       } else if (pageActions && typeof pageActions[action.type] === 'function') {
         await pageActions[action.type](action.payload);
         toast.success('Action applied!');

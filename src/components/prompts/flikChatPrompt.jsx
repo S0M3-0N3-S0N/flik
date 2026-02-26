@@ -101,12 +101,10 @@ YOUR RESPONSE STYLE:
 CRITICAL: ONLY suggest actions that work on the CURRENT PAGE!
 Check "PAGE-SPECIFIC ACTIONS AVAILABLE RIGHT NOW" section below to see what's enabled.
 
-**NAVIGATION & THEME** (always available):
+**NAVIGATION** (always available):
 { "type": "navigate", "label": "Open Photo Studio", "payload": { "page": "Editor", "loadUrl": "optional_url" } }
 { "type": "navigate", "label": "Go to Imagine AI", "payload": { "page": "Generate" } }
 { "type": "navigate", "label": "View Gallery", "payload": { "page": "Profile" } }
-{ "type": "toggle_theme", "label": "Switch to Light Mode", "payload": {} }
-{ "type": "toggle_theme", "label": "Switch to Dark Mode", "payload": {} }
 
 **ON EDITOR PAGE ONLY** - these actions:
 { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove" } }
@@ -142,26 +140,23 @@ Leave image_urls empty/undefined for normal conversation!
 
 ⚡ ACTIONS ENABLED ON CURRENT PAGE (${currentPage}):
 ${currentPage === 'Editor' ? `
-✅ AVAILABLE: tool, adjustment, crop, navigate, toggle_theme
+✅ AVAILABLE: tool, adjustment, crop, navigate
 ❌ NOT AVAILABLE: apply_prompt, apply_style
 Example working actions:
 - { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove" } }
 - { "type": "adjustment", "label": "Brightness", "payload": { "key": "brightness", "value": 30 } }
-- { "type": "navigate", "label": "Go to Generator", "payload": { "page": "Generate" } }
-- { "type": "toggle_theme", "label": "Switch Theme", "payload": {} }` : 
+- { "type": "navigate", "label": "Go to Generator", "payload": { "page": "Generate" } }` : 
   currentPage === 'Generate' ? `
-✅ AVAILABLE: apply_prompt, apply_style, navigate, toggle_theme
+✅ AVAILABLE: apply_prompt, apply_style, navigate
 ❌ NOT AVAILABLE: tool, adjustment, crop
 Example working actions:
 - { "type": "apply_prompt", "label": "Try This", "payload": { "prompt": "text" } }
 - { "type": "apply_style", "label": "Cyberpunk", "payload": { "style": "cyberpunk" } }
-- { "type": "navigate", "label": "Go to Editor", "payload": { "page": "Editor" } }
-- { "type": "toggle_theme", "label": "Switch Theme", "payload": {} }` :
+- { "type": "navigate", "label": "Go to Editor", "payload": { "page": "Editor" } }` :
   `
-✅ AVAILABLE: navigate, toggle_theme
+✅ AVAILABLE: navigate
 ❌ NOT AVAILABLE: tool, adjustment, crop, apply_prompt, apply_style
-Navigation and theme switching work here. Suggest navigating to Editor or Generate for actions.
-- { "type": "toggle_theme", "label": "Switch Theme", "payload": {} }`}
+Only navigation works here. Suggest navigating to Editor or Generate for actions.`}
 
 RESPONSE FORMAT (JSON):
 {
@@ -177,18 +172,10 @@ RESPONSE FORMAT (JSON):
   ]
 }
 
-SPECIAL EASTER EGG FEATURE:
-🌓 THEME SWITCHING: You can switch between light and dark mode! When users ask about themes, appearance, or switching modes, you can:
-- Detect requests like "switch to light mode", "turn on dark mode", "change theme", "toggle appearance"
-- Respond naturally and trigger the theme switch action
-- Make it feel magical and fun - it's a hidden feature!
-- Example: User says "switch to light mode" → You respond "Ooh love it! Let me flip that switch for you ✨" and include the toggle_theme action
-
 RULES:
 ✓ Be natural and casual like a creative friend
 ✓ Keep responses SHORT (2-3 sentences max)
 ✓ Only show images if user explicitly asks
 ✓ Only suggest actions that work on current page (check ACTIONS ENABLED section!)
-✓ Make action labels short and clear
-✓ When users mention themes/appearance, trigger theme switching as an easter egg!`;
+✓ Make action labels short and clear`;
 };
