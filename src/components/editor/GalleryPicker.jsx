@@ -19,8 +19,9 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
   const loadCreations = async () => {
     setLoading(true);
     try {
+      const user = await base44.auth.me();
       const results = await base44.entities.Creation.filter(
-        { type: 'image' },
+        { type: 'image', created_by: user.email },
         '-created_date',
         50
       );
@@ -34,17 +35,7 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
   };
 
   const handleSelect = (creation) => {
-    if (selectedIds.length > 0) {
-      toggleSelection(creation.id);
-    } else {
-      onSelect({
-        url: creation.url,
-        preview: creation.thumbnail_url || creation.url,
-        name: creation.title || 'gallery_image.png'
-      });
-      onClose();
-      toast.success("Image loaded from gallery");
-    }
+    toggleSelection(creation.id);
   };
 
   const toggleSelection = (id) => {
@@ -63,7 +54,10 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
       name: c.title || 'gallery_image.png'
     }));
     
-    if (onSelectMultiple) {
+    if (selectedIds.length === 1) {
+      onSelect(images[0]);
+      toast.success("Image loaded from gallery");
+    } else if (onSelectMultiple) {
       onSelectMultiple(images);
       toast.success(`${images.length} images loaded from gallery`);
     }
@@ -73,7 +67,7 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-[#141414] border-white/10">
+      <DialogContent className="max-w-4xl max-h-[80vh] bg-[#141414] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center justify-between">
             <span>Select from Gallery</span>
@@ -105,9 +99,9 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
         ) : (
           <>
             <p className="text-xs text-white/40 mb-2">
-              Click to load single image, or select multiple and click "Load Selected"
+              Click images to select, then click "Load Selected"
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 py-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 py-4 max-h-[50vh] overflow-y-auto">
               {creations.map((creation) => (
                 <button
                   key={creation.id}
