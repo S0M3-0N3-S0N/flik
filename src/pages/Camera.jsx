@@ -895,7 +895,47 @@ export default function CameraPage() {
       >
         {!photo ? (
           <>
+            {/* Filter Carousel */}
+            {cameraMode === 'photo' && (
+              <CameraFilterCarousel
+                activeFilter={activeFilter}
+                onFilterChange={(filterId) => {
+                  setActiveFilter(filterId);
+                  if (filterId !== 'none' && !filterPipelineRef.current) {
+                    const canvas = effectsCanvasRef.current;
+                    if (canvas) {
+                      filterPipelineRef.current = new CameraFilterPipeline(videoRef.current, canvas);
+                      filterPipelineRef.current.initialize();
+                    }
+                  }
+                }}
+                intensity={filterIntensity}
+                onIntensityChange={setFilterIntensity}
+              />
+            )}
 
+            {/* Burst Mode UI */}
+            <BurstModeUI
+              isBursting={isBursting}
+              burstCount={burstCount}
+              burstPhotos={burstPhotos}
+              onSelectPhoto={selectBurstPhoto}
+              onCancel={() => {
+                setBurstPhotos([]);
+                setBurstCount(0);
+              }}
+            />
+
+            {/* Aspect Ratio Selector */}
+            {cameraMode === 'photo' && (
+              <AspectRatioSelector
+                activeRatio={aspectRatio}
+                onRatioChange={(ratioId, ratioValue) => {
+                  setAspectRatio(ratioId);
+                  dispatchSettings({ key: 'aspectRatio', value: ratioId });
+                }}
+              />
+            )}
 
             {/* Shutter row */}
             <div className="w-full flex items-center justify-around px-8">
