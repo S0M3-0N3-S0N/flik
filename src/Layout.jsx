@@ -350,7 +350,7 @@ function LayoutContent({ children, currentPageName }) {
                       : "text-white/60"
                   }`}
                 >
-                  <Video className="w-6 h-6" />
+                  <Camera className="w-6 h-6" />
                   <span className="text-[10px] font-medium">Camera</span>
                 </button>
               )}
