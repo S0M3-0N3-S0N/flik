@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
