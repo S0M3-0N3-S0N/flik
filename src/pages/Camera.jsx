@@ -607,9 +607,9 @@ export default function CameraPage() {
         )}
       </div>
 
-      {/* ── Bottom controls ── */}
+      {/* ── Bottom controls (floating overlay) ── */}
       <div
-        className="bg-black/90 backdrop-blur-xl flex flex-col items-center pt-4 gap-3 border-t border-white/5"
+        className={`absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 border-t border-white/5 transition-all duration-300 ease-out ${mode === 'VIDEO' ? 'bg-black/15 backdrop-blur-2xl pt-3' : 'bg-black/90 backdrop-blur-xl pt-4'}`}
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
