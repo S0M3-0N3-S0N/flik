@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useReducer } from 'react';
-import { RotateCcw, Zap, ZapOff, Grid3X3, FlipHorizontal, Circle, Square, Settings, Timer, Pause, Play, Check } from 'lucide-react';
+import { RotateCcw, Zap, ZapOff, Grid3X3, RefreshCw, Circle, Square, Settings, Timer, Pause, Play, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from "sonner";
 import { base44 } from '@/api/base44Client';
