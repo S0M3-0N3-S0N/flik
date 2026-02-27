@@ -763,7 +763,7 @@ export default function CameraPage() {
 
       {/* ── Bottom controls (floating overlay) ── */}
       <div
-        className={`absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 transition-all duration-300 ease-out ${mode === 'VIDEO' ? 'bg-transparent pt-3' : 'bg-black/90 backdrop-blur-xl border-t border-white/5 pt-4'}`}
+        className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 transition-all duration-300 ease-out bg-transparent pt-3"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
