@@ -571,8 +571,8 @@ export default function CameraPage() {
           </div>
         )}
 
-        {/* Focus square - shows manual tap or auto-detected face */}
-        {!photo && <FocusSquare position={focusPos || detectedFace} locked={afLocked} />}
+        {/* Focus square */}
+        {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
 
         {/* Exposure slider */}
         <AnimatePresence>
