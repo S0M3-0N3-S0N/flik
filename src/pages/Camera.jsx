@@ -781,7 +781,7 @@ export default function CameraPage() {
       {/* ── Bottom controls (floating overlay) ── */}
       <div
         className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 transition-all duration-300 ease-out bg-transparent pt-3"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', transform: `rotate(${orientation}deg)` }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
       >
