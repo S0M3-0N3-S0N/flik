@@ -238,7 +238,7 @@ export default function CameraPage() {
     }
   };
 
-  // ─── Double tap to focus with proper position calculation ──────────────────────────
+  // ─── Single tap to focus ──────────────────────────────────────────────────
   const handleViewfinderTap = (e) => {
     if (pinchStartDistRef.current) return; // Ignore tap if pinching
     if (afLocked) {
@@ -247,8 +247,6 @@ export default function CameraPage() {
       setShowExposure(false);
       return;
     }
-
-    tapCountRef.current += 1;
 
     const rect = viewfinderRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -261,60 +259,48 @@ export default function CameraPage() {
     const x = (clientX - rect.left) / zoomScale;
     const y = (clientY - rect.top) / zoomScale;
 
-    clearTimeout(doubleTapTimeoutRef.current);
+    setFocusPos({ x, y });
+    setShowExposure(true);
+    haptic(8);
 
-    if (tapCountRef.current === 2) {
-      // Double tap detected - apply focus
-      tapCountRef.current = 0;
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (track) {
+      const caps = track.getCapabilities?.() || {};
+      const advanced = {};
 
-      setFocusPos({ x, y });
-      setShowExposure(true);
-      haptic(8);
+      // Normalize to 0-1 range and clamp
+      const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
 
-      const track = streamRef.current?.getVideoTracks()[0];
-      if (track) {
-        const caps = track.getCapabilities?.() || {};
-        const advanced = {};
-
-        // Normalize to 0-1 range and clamp
-        const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-
-        if (caps.focusMode?.includes('single-shot')) {
-          advanced.focusMode = 'single-shot';
-        } else if (caps.focusMode?.includes('manual')) {
-          advanced.focusMode = 'manual';
-        }
-
-        if (caps.focusPointOfInterest) {
-          advanced.focusPointOfInterest = { x: normX, y: normY };
-        }
-
-        if (caps.exposureMode?.includes('manual')) {
-          advanced.exposureMode = 'manual';
-        } else if (caps.exposureMode?.includes('continuous')) {
-          advanced.exposureMode = 'continuous';
-        }
-
-        if (caps.exposurePointOfInterest) {
-          advanced.exposurePointOfInterest = { x: normX, y: normY };
-        }
-
-        if (Object.keys(advanced).length) {
-          track.applyConstraints({ advanced: [advanced] }).catch(() => {});
-        }
+      if (caps.focusMode?.includes('single-shot')) {
+        advanced.focusMode = 'single-shot';
+      } else if (caps.focusMode?.includes('manual')) {
+        advanced.focusMode = 'manual';
       }
 
-      clearTimeout(tapTimeoutRef.current);
-      tapTimeoutRef.current = setTimeout(() => {
-        if (!afLocked) setShowExposure(false);
-      }, 4000);
-    } else {
-      // Wait for second tap within 300ms
-      doubleTapTimeoutRef.current = setTimeout(() => {
-        tapCountRef.current = 0;
-      }, 300);
+      if (caps.focusPointOfInterest) {
+        advanced.focusPointOfInterest = { x: normX, y: normY };
+      }
+
+      if (caps.exposureMode?.includes('manual')) {
+        advanced.exposureMode = 'manual';
+      } else if (caps.exposureMode?.includes('continuous')) {
+        advanced.exposureMode = 'continuous';
+      }
+
+      if (caps.exposurePointOfInterest) {
+        advanced.exposurePointOfInterest = { x: normX, y: normY };
+      }
+
+      if (Object.keys(advanced).length) {
+        track.applyConstraints({ advanced: [advanced] }).catch(() => {});
+      }
     }
+
+    clearTimeout(tapTimeoutRef.current);
+    tapTimeoutRef.current = setTimeout(() => {
+      if (!afLocked) setShowExposure(false);
+    }, 4000);
   };
 
   // ─── Long press for AE/AF lock ────────────────────────────────────────────────
