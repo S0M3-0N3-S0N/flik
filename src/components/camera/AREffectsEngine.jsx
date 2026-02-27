@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Lazy-loaded face detection
+// Lazy-loaded face detection via CDN
 let faceMesh = null;
-let segmentation = null;
 
 const loadFaceMesh = async () => {
   if (faceMesh) return faceMesh;
   try {
-    const { FaceMesh } = await import('@mediapipe/face_mesh');
-    faceMesh = new FaceMesh({
+    // Load MediaPipe Face Mesh from CDN
+    if (!window.FaceMesh) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js';
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+    
+    faceMesh = new window.FaceMesh({
       locateFile: (file) =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/${file}`,
     });
@@ -16,23 +25,6 @@ const loadFaceMesh = async () => {
     return faceMesh;
   } catch (e) {
     console.warn('Face Mesh loading failed:', e);
-    return null;
-  }
-};
-
-const loadSegmentation = async () => {
-  if (segmentation) return segmentation;
-  try {
-    const { BodySegmentation } = await import(
-      '@tensorflow-models/body-segmentation'
-    );
-    const model = await BodySegmentation.createSegmenter(
-      BodySegmentation.SupportedModels.MediaPipeSelfieSegmentation,
-      { runtime: 'mediapipe' }
-    );
-    return model;
-  } catch (e) {
-    console.warn('Segmentation loading failed:', e);
     return null;
   }
 };
