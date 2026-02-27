@@ -589,10 +589,7 @@ export default function Generate() {
                       <span className="text-xs sm:text-sm">Generating</span>
                     </>
                   ) : (
-                    <>
-                      <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
-                      <span className="text-xs sm:text-sm">Generate</span>
-                    </>
+                    <span className="text-xs sm:text-sm">Generate</span>
                   )}
                 </Button>
               </div>
