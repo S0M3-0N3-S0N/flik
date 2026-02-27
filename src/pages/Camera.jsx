@@ -40,7 +40,7 @@ export default function CameraPage() {
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
   const [facingMode, setFacingMode] = useState('environment');
-  const [modeIndex, setModeIndex] = useState(1);
+  const [modeIndex, setModeIndex] = useState(0);
   const [flashMode, setFlashMode] = useState('off');
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
