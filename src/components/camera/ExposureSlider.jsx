@@ -8,9 +8,14 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
   const [isDragging, setIsDragging] = useState(false);
 
   const getValueFromEvent = (e) => {
-    if (!trackRef.current) return;
+    if (!trackRef.current) {
+      console.warn('ExposureSlider: trackRef not available');
+      return;
+    }
     const rect = trackRef.current.getBoundingClientRect();
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    if (!rect || rect.height === 0) return;
+    const clientY = e.touches ? e.touches[0]?.clientY : e.clientY;
+    if (clientY === undefined) return;
     const ratio = 1 - Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
     onChange(min + ratio * (max - min));
   };
