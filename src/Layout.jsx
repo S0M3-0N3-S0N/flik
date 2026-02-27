@@ -7,7 +7,6 @@ import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
 import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
-import MobileHeader from "@/components/MobileHeader";
 import { base44 } from "@/api/base44Client";
 
 export const LanguageContext = React.createContext();
@@ -222,9 +221,6 @@ function LayoutContent({ children, currentPageName }) {
           }
         `}</style>
 
-        {/* Mobile Header */}
-        <MobileHeader isChildRoute={isChildRoute} />
-
         {/* Top Desktop Navigation */}
         <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="w-full flex items-center justify-center px-8 py-4 relative">
@@ -289,7 +285,7 @@ function LayoutContent({ children, currentPageName }) {
 
         
         {/* Main Content */}
-        <main className="pb-20 md:pb-0 md:pt-14 md:mt-0 mt-12">
+        <main className="pb-20 md:pb-0 md:pt-14">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

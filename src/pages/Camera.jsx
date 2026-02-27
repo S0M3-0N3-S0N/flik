@@ -9,24 +9,11 @@ import { base44 } from '@/api/base44Client';
 import FocusSquare from '../components/camera/FocusSquare';
 import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
-import CameraModeTabs from '../components/camera/CameraModeTabs';
-import CameraFilterCarousel from '../components/camera/CameraFilterCarousel';
-import { CameraFilterPipeline } from '../components/camera/CameraFilterPipeline';
-import AREffectsEngine, { EFFECTS } from '../components/camera/AREffectsEngine';
-import BurstModeUI from '../components/camera/BurstModeUI';
-import AspectRatioSelector from '../components/camera/AspectRatioSelector';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
 const MODES = ['PHOTO'];
-const initialSettings = {
-  showGrid: false,
-  timer: 0,
-  showLevel: false,
-  aspectRatio: '4:3',
-  autoEnhance: false,
-  jpegQuality: 0.92,
-};
+const initialSettings = { showGrid: false, timer: 0 };
 
 function settingsReducer(state, action) {
   return { ...state, [action.key]: action.value };
@@ -77,21 +64,6 @@ export default function CameraPage() {
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
-  const [cameraMode, setCameraMode] = useState('photo');
-  const [activeFilter, setActiveFilter] = useState('none');
-  const [filterIntensity, setFilterIntensity] = useState(1.0);
-  const [activeEffect, setActiveEffect] = useState(null);
-  const [effectIntensity, setEffectIntensity] = useState(0.5);
-  const [isBursting, setIsBursting] = useState(false);
-  const [burstCount, setBurstCount] = useState(0);
-  const [burstPhotos, setBurstPhotos] = useState([]);
-  const [aspectRatio, setAspectRatio] = useState('4:3');
-  const [showLevelHint, setShowLevelHint] = useState(false);
-
-  const filterPipelineRef = useRef(null);
-  const arEngineRef = useRef(null);
-  const burstIntervalRef = useRef(null);
-  const effectsCanvasRef = useRef(null);
 
   const mode = MODES[modeIndex];
 
@@ -200,30 +172,9 @@ export default function CameraPage() {
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
-      clearInterval(burstIntervalRef.current);
-      filterPipelineRef.current?.cleanup();
-      arEngineRef.current?.cleanup();
       unsubscribe();
     };
   }, []);
-
-  // ─── Real-time filter pipeline ────────────────────────────────────────────────
-  useEffect(() => {
-    if (!hasStream || !videoRef.current || activeFilter === 'none') return;
-
-    const canvas = effectsCanvasRef.current;
-    if (!canvas || !filterPipelineRef.current) return;
-
-    const updateFilter = () => {
-      if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
-        filterPipelineRef.current?.setIntensity(filterIntensity);
-      }
-      requestAnimationFrame(updateFilter);
-    };
-
-    const frameId = requestAnimationFrame(updateFilter);
-    return () => cancelAnimationFrame(frameId);
-  }, [hasStream, activeFilter, filterIntensity]);
 
   // ─── Flash torch ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -475,63 +426,11 @@ export default function CameraPage() {
       if (!video || !canvas) return;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
-      // Capture from filter pipeline or effects canvas
-      let dataUrl;
-      if (activeFilter !== 'none' && filterPipelineRef.current) {
-        dataUrl = filterPipelineRef.current.captureFrame();
-      } else if (activeEffect && effectsCanvasRef.current) {
-        dataUrl = effectsCanvasRef.current.toDataURL('image/jpeg', settings.jpegQuality || 0.92);
-      } else {
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0);
-        dataUrl = canvas.toDataURL('image/jpeg', settings.jpegQuality || 0.92);
-      }
-
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       setPhoto(dataUrl);
       setSavedPhoto(null);
     });
-  };
-
-  // ─── Burst mode capture ───────────────────────────────────────────────────────
-  const startBurstCapture = () => {
-    if (!hasStream) return;
-    haptic([10, 5, 30]);
-    setIsBursting(true);
-    setBurstCount(0);
-    setBurstPhotos([]);
-
-    const photos = [];
-    let count = 0;
-    const maxBursts = 20;
-
-    burstIntervalRef.current = setInterval(() => {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      if (!video || !canvas) return;
-
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
-      photos.push(canvas.toDataURL('image/jpeg', 0.85));
-
-      count++;
-      setBurstCount(count);
-
-      if (count >= maxBursts) {
-        clearInterval(burstIntervalRef.current);
-        setIsBursting(false);
-        setBurstPhotos(photos);
-      }
-    }, 100);
-  };
-
-  const selectBurstPhoto = async (photoDataUrl) => {
-    setPhoto(photoDataUrl);
-    setSavedPhoto(null);
-    setBurstPhotos([]);
-    setBurstCount(0);
   };
 
   // ─── Save photo to gallery ────────────────────────────────────────────────────
@@ -547,21 +446,12 @@ export default function CameraPage() {
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      const metadata = {
-        source: 'camera',
-        facing_mode: facingMode,
-        filter: activeFilter !== 'none' ? activeFilter : undefined,
-        effect: activeEffect || undefined,
-        zoom: zoomValue,
-        exposure: exposure,
-      };
-
       await base44.entities.Creation.create({
         type: 'image',
         url: file_url,
         thumbnail_url: file_url,
         title: `Photo ${new Date().toLocaleDateString()}`,
-        metadata,
+        metadata: { source: 'camera', facing_mode: facingMode },
       });
 
       // Invalidate creations query to refresh gallery
@@ -770,15 +660,6 @@ export default function CameraPage() {
           />
         )}
         <canvas ref={canvasRef} className="hidden" />
-        <canvas ref={effectsCanvasRef} className="hidden" />
-
-        {/* Filter Pipeline Canvas for WebGL */}
-        {!photo && activeFilter !== 'none' && (
-          <div
-            id="filter-canvas-wrapper"
-            className="absolute inset-0 pointer-events-none"
-          />
-        )}
 
         {/* Grid */}
         {settings.showGrid && !photo && (
@@ -851,11 +732,6 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
-        {/* Camera Mode Tabs */}
-        {!photo && !isRecording && cameraMode === 'photo' && (
-          <CameraModeTabs activeMode={cameraMode} onModeChange={setCameraMode} />
-        )}
-
         {/* Top controls */}
         {!photo && !isRecording && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5" style={{ transform: `rotate(${orientation}deg)` }}>
@@ -913,47 +789,7 @@ export default function CameraPage() {
       >
         {!photo ? (
           <>
-            {/* Filter Carousel */}
-            {cameraMode === 'photo' && (
-              <CameraFilterCarousel
-                activeFilter={activeFilter}
-                onFilterChange={(filterId) => {
-                  setActiveFilter(filterId);
-                  if (filterId !== 'none' && !filterPipelineRef.current) {
-                    const canvas = effectsCanvasRef.current;
-                    if (canvas) {
-                      filterPipelineRef.current = new CameraFilterPipeline(videoRef.current, canvas);
-                      filterPipelineRef.current.initialize();
-                    }
-                  }
-                }}
-                intensity={filterIntensity}
-                onIntensityChange={setFilterIntensity}
-              />
-            )}
 
-            {/* Burst Mode UI */}
-            <BurstModeUI
-              isBursting={isBursting}
-              burstCount={burstCount}
-              burstPhotos={burstPhotos}
-              onSelectPhoto={selectBurstPhoto}
-              onCancel={() => {
-                setBurstPhotos([]);
-                setBurstCount(0);
-              }}
-            />
-
-            {/* Aspect Ratio Selector */}
-            {cameraMode === 'photo' && (
-              <AspectRatioSelector
-                activeRatio={aspectRatio}
-                onRatioChange={(ratioId, ratioValue) => {
-                  setAspectRatio(ratioId);
-                  dispatchSettings({ key: 'aspectRatio', value: ratioId });
-                }}
-              />
-            )}
 
             {/* Shutter row */}
             <div className="w-full flex items-center justify-around px-8">
@@ -984,21 +820,11 @@ export default function CameraPage() {
               </div>
 
               {/* Shutter */}
-              <motion.button
-                onMouseDown={() => !isBursting && startBurstCapture()}
-                onMouseUp={() => clearInterval(burstIntervalRef.current)}
-                onTouchStart={() => !isBursting && startBurstCapture()}
-                onTouchEnd={() => clearInterval(burstIntervalRef.current)}
-                whileTap={{ scale: 0.9 }}
-                onClick={takePhoto}
+              <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
                 disabled={!hasStream || countdown > 0 || cameraLoading}
-                className="w-20 h-20 rounded-full disabled:opacity-40 relative"
-                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}
-              >
+                className="w-20 h-20 rounded-full disabled:opacity-40"
+                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
                 <div className="w-full h-full rounded-full bg-white" />
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-white/40 text-xs whitespace-nowrap">
-                  Hold for burst
-                </span>
               </motion.button>
 
               {/* Flip */}
