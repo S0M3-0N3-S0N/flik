@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback, useReducer } from 'react';
-import { RotateCcw, Zap, ZapOff, Grid3X3, RefreshCw, Circle, Square, Settings, Timer, Pause, Play, Check } from 'lucide-react';
+import { RotateCcw, Zap, ZapOff, Grid3X3, RefreshCw, Circle, Square, Settings, Timer, Pause, Play, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { toast } from "sonner";
 import { base44 } from '@/api/base44Client';
 import FocusSquare from '../components/camera/FocusSquare';
