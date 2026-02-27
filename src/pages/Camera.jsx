@@ -92,7 +92,32 @@ export default function CameraPage() {
     setHasStream(false);
 
     try {
-      // No audio needed for photo mode
+      // Try native camera first on iOS
+      if (CapacitorCameraAPI.isNative()) {
+        const capabilities = await CapacitorCameraAPI.startCamera({ 
+          facing: facing === 'user' ? 'front' : 'back' 
+        });
+        setZoomCaps({
+          min: capabilities.minZoom || 1,
+          max: capabilities.maxZoom || 5,
+          supported: true
+        });
+        setExposureCaps({
+          min: capabilities.minEV || -2,
+          max: capabilities.maxEV || 2,
+          supported: true
+        });
+        setSupported({
+          res4k: true,
+          fps60: true,
+        });
+        setHasStream(true);
+        setZoomValue(1);
+        setExposure(0);
+        return;
+      }
+
+      // Fallback to web camera
       const audioNeeded = false;
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -105,7 +130,6 @@ export default function CameraPage() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Safe play with error handling
         try {
           await videoRef.current.play();
         } catch (playErr) {
@@ -119,7 +143,6 @@ export default function CameraPage() {
       const track = stream.getVideoTracks()[0];
       const caps = track.getCapabilities?.() || {};
 
-      // Detect hardware capabilities
       setZoomCaps(caps.zoom ? { min: caps.zoom.min, max: caps.zoom.max, supported: true } : { min: 1, max: 4, supported: false });
       setExposureCaps(caps.exposureCompensation
         ? { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, supported: true }
@@ -130,7 +153,6 @@ export default function CameraPage() {
         fps60: !!(caps.frameRate?.max >= 60),
       });
 
-      // Reset zoom and exposure
       setZoomValue(1);
       setExposure(0);
     } catch (err) {
