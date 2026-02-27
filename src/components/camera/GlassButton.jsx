@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-export default function GlassButton({ icon: Icon, onClick, label, active, disabled, size = 'md', className = '' }) {
+export default function GlassButton({ icon: Icon, onClick, label, active, disabled, size = 'md', className = '', children }) {
   const sizeMap = { sm: 'w-8 h-8', md: 'w-10 h-10', lg: 'w-14 h-14', xl: 'w-20 h-20' };
   
   return (
@@ -19,7 +19,8 @@ export default function GlassButton({ icon: Icon, onClick, label, active, disabl
         ${className}
       `}
     >
-      {Icon && <Icon className="w-5 h-5 text-white" />}
+      {children}
+      {!children && Icon && typeof Icon === 'function' && <Icon className="w-5 h-5 text-white" />}
       {label && <span className="text-xs text-white font-medium">{label}</span>}
     </motion.button>
   );
