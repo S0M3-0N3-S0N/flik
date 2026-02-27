@@ -449,12 +449,12 @@ export default function CameraPage() {
   });
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className="fixed inset-0 bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
 
-      {/* ── Viewfinder ── */}
+      {/* ── Viewfinder (fullscreen) ── */}
       <div
         ref={viewfinderRef}
-        className="relative flex-1 overflow-hidden"
+        className="absolute inset-0 overflow-hidden"
         onTouchStart={(e) => {
           handleTouchStart(e);
           handleSwipeStart(e);
