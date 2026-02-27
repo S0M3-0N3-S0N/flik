@@ -616,7 +616,7 @@ export default function CameraPage() {
         </AnimatePresence>
 
         {/* Top controls */}
-        {!photo && !isRecording && (
+        {!photo && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5" style={{ transform: `rotate(${orientation}deg)` }}>
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }}
               className="md:hidden w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
