@@ -82,6 +82,7 @@ export default function Profile() {
     return localStorage.getItem('profile_stats_expanded') === 'true';
   });
   const [imageErrors, setImageErrors] = useState({});
+  const [showGradientEditor, setShowGradientEditor] = useState(false);
 
   // Data Fetching
   const { data: user } = useQuery({
