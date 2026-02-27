@@ -745,12 +745,12 @@ export default function CameraPage() {
         {/* Zoom capsule */}
         {!photo && (
           <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: mode === 'VIDEO' ? 130 : 150 }}>
-            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-2 py-1.5 border border-white/10">
+            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
                 return (
                   <motion.button key={z} whileTap={{ scale: 0.85 }} onClick={() => setZoomPreset(z)}
-                    className={`w-10 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white/20 text-white' : 'text-white/50'}`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white/20 text-white' : 'text-white/50'}`}
                     style={isActive ? { boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.5)' } : {}}>
                     {z}
                   </motion.button>
