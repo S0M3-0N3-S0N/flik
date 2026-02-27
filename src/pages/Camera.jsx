@@ -729,6 +729,25 @@ export default function CameraPage() {
       >
         {!photo ? (
           <>
+            {/* Recording timer */}
+            <AnimatePresence>
+              {isRecording && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-2 bg-black/60 backdrop-blur-md rounded-full px-4 py-1.5"
+                >
+                  <motion.div
+                    animate={{ opacity: isPaused ? 0.3 : [1, 0.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.2 }}
+                    className="w-2 h-2 rounded-full bg-red-500"
+                  />
+                  <span className="text-white text-sm font-mono font-semibold">{formatTime(recordingTime)}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Mode selector */}
             <div className="flex items-center gap-1 bg-white/10 rounded-full p-1">
               {MODES.map((m, i) => (
