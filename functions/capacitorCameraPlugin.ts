@@ -25,6 +25,7 @@ export const CapacitorCameraAPI = {
       return await FlikCamera.stopCamera();
     } catch (error) {
       console.error('Failed to stop native camera:', error);
+      throw error;
     }
   },
 
