@@ -130,6 +130,23 @@ export default function CameraPage() {
 
   useEffect(() => {
     startCamera();
+    
+    // Fetch latest creation for gallery thumbnail
+    base44.entities.Creation.list('-updated_date', 1)
+      .then(creations => {
+        if (creations && creations.length > 0) {
+          setLatestCreation(creations[0]);
+        }
+      })
+      .catch(() => {});
+
+    // Subscribe to new creations
+    const unsubscribe = base44.entities.Creation.subscribe((event) => {
+      if (event.type === 'create') {
+        setLatestCreation(event.data);
+      }
+    });
+    
     return () => {
       initializingRef.current = false;
       streamRef.current?.getTracks().forEach(t => t.stop());
@@ -137,6 +154,7 @@ export default function CameraPage() {
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
+      unsubscribe();
     };
   }, []);
 
