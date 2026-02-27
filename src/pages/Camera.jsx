@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { FlipHorizontal, Download, RefreshCcw } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Camera, RefreshCcw, Download, FlipHorizontal } from 'lucide-react';
 import { toast } from "sonner";
 
 export default function CameraPage() {
@@ -8,8 +9,7 @@ export default function CameraPage() {
   const streamRef = useRef(null);
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
-  const [facingMode, setFacingMode] = useState('environment');
-  const [mode, setMode] = useState('PHOTO');
+  const [facingMode, setFacingMode] = useState('user');
 
   const startCamera = async (facing = facingMode) => {
     if (streamRef.current) {
@@ -45,10 +45,9 @@ export default function CameraPage() {
     if (!video || !canvas) return;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
     setPhoto(canvas.toDataURL('image/png'));
-    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-    setHasStream(false);
   };
 
   const retake = () => {
@@ -71,11 +70,12 @@ export default function CameraPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col" style={{ paddingTop: '64px' }}>
-      {/* Viewfinder */}
-      <div className="relative flex-1 overflow-hidden bg-black">
+    <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center pt-16 pb-24 px-4">
+      <h1 className="text-2xl font-bold gradient-text mb-6">Camera</h1>
+
+      <div className="relative w-full max-w-2xl aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
         {photo ? (
-          <img src={photo} alt="Captured" className="w-full h-full object-cover" />
+          <img src={photo} alt="Captured" className="w-full h-full object-contain" />
         ) : (
           <video
             ref={videoRef}
@@ -85,87 +85,52 @@ export default function CameraPage() {
             muted
           />
         )}
-        <canvas ref={canvasRef} className="hidden" />
-
-        {/* Rule of Thirds Grid */}
-        {!photo && (
-          <div className="absolute inset-0 pointer-events-none">
-            {/* Vertical lines */}
-            <div className="absolute inset-0" style={{
-              backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.15) 1px, transparent 1px)',
-              backgroundSize: '33.33% 33.33%'
-            }} />
+        {!hasStream && !photo && (
+          <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
+            Waiting for camera access...
           </div>
         )}
+        <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {/* Bottom Controls */}
-      <div className="bg-[#111111] pt-4 pb-8" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}>
-        {/* Mode Selector */}
-        {!photo && (
-          <div className="flex justify-center mb-5">
-            <div className="flex items-center gap-1 bg-white/10 rounded-full p-1">
-              {['VIDEO', 'PHOTO'].map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                    mode === m
-                      ? 'bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white shadow-lg'
-                      : 'text-white/60'
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Shutter Row */}
-        <div className="flex items-center justify-between px-10">
-          {/* Left: last photo thumbnail or empty */}
-          <div className="w-14 h-14">
-            {photo && (
-              <button onClick={download} className="w-14 h-14 rounded-xl overflow-hidden border-2 border-white/30">
-                <img src={photo} alt="last" className="w-full h-full object-cover" />
-              </button>
-            )}
-          </div>
-
-          {/* Center: Shutter / Retake */}
-          {!photo ? (
-            <button
+      <div className="mt-8 flex items-center gap-4">
+        {!photo ? (
+          <>
+            <Button
+              onClick={flipCamera}
+              variant="outline"
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10 px-5 py-3 rounded-xl"
+            >
+              <FlipHorizontal className="w-5 h-5" />
+            </Button>
+            <Button
               onClick={takePhoto}
               disabled={!hasStream}
-              className="relative w-20 h-20 rounded-full flex items-center justify-center disabled:opacity-40"
+              className="btn-gradient px-8 py-3 rounded-xl text-base font-semibold flex items-center gap-2"
             >
-              {/* Gradient ring */}
-              <div className="absolute inset-0 rounded-full p-[3px] bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800]">
-                <div className="w-full h-full rounded-full bg-white" />
-              </div>
-            </button>
-          ) : (
-            <button
+              <Camera className="w-5 h-5" />
+              Capture
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
               onClick={retake}
-              className="relative w-20 h-20 rounded-full flex items-center justify-center"
+              variant="outline"
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10 px-6 py-3 rounded-xl flex items-center gap-2"
             >
-              <div className="absolute inset-0 rounded-full p-[3px] bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800]">
-                <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
-                  <RefreshCcw className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </button>
-          )}
-
-          {/* Right: Flip camera */}
-          <button
-            onClick={flipCamera}
-            className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-          >
-            <FlipHorizontal className="w-6 h-6" />
-          </button>
-        </div>
+              <RefreshCcw className="w-4 h-4" />
+              Retake
+            </Button>
+            <Button
+              onClick={download}
+              className="btn-gradient px-8 py-3 rounded-xl text-base font-semibold flex items-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Save Photo
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
