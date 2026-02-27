@@ -21,6 +21,7 @@ function settingsReducer(state, action) {
 
 export default function CameraPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
