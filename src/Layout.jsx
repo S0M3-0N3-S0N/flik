@@ -289,7 +289,7 @@ function LayoutContent({ children, currentPageName }) {
 
         
         {/* Main Content */}
-        <main className="pb-20 md:pb-0 md:pt-14">
+        <main className="pb-20 md:pb-0 md:pt-14 md:mt-0 mt-12">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
