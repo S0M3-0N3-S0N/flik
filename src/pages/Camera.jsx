@@ -61,8 +61,25 @@ export default function CameraPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
+  const [orientation, setOrientation] = useState(0);
 
   const mode = MODES[modeIndex];
+
+  // Handle device orientation changes
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      const angle = window.innerHeight > window.innerWidth ? 0 : 90;
+      setOrientation(angle);
+    };
+
+    handleOrientationChange();
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  }, []);
 
   // ─── Safe camera initialization with guard ───────────────────────────────────
   const startCamera = useCallback(async (facing = facingMode, res = settings.resolution, fps = settings.fps) => {
