@@ -380,14 +380,15 @@ export default function CameraPage() {
         toast.loading("Saving video to gallery...", { id: 'video-save' });
         try {
           const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          await base44.entities.Creation.create({
+          const creation = await base44.entities.Creation.create({
             type: 'video',
             url: file_url,
             title: `Video ${new Date().toLocaleDateString()}`,
             metadata: { source: 'camera', facing_mode: facingMode, duration: recordingTime },
           });
           toast.success("Video saved to gallery!", { id: 'video-save' });
-        } catch {
+        } catch (err) {
+          console.error('Video save error:', err);
           toast.error("Failed to save video.", { id: 'video-save' });
         }
       };
