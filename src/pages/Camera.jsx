@@ -682,7 +682,6 @@ export default function CameraPage() {
           </>
         ) : (
           <>
-            <p className="text-white/40 text-xs tracking-widest uppercase">Photo captured</p>
             <div className="w-full flex flex-col items-center gap-3 px-8">
               <div className="flex items-center justify-around w-full">
                 <motion.button whileTap={{ scale: 0.85 }} onClick={retake} className="flex flex-col items-center gap-1">
