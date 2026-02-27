@@ -689,13 +689,24 @@ export default function Profile() {
               </div>
             </div>
             
-            <Button 
-              onClick={handleLogout}
-              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base w-full md:w-auto"
-            >
-              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-              {t("profile.sign_out")}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              {user?.role === 'admin' && (
+                <Button
+                  onClick={() => setShowGradientEditor(true)}
+                  className="bg-[#FF6B35]/10 hover:bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/20 hover:border-[#FF6B35]/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base w-full sm:w-auto"
+                >
+                  <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                  Theme
+                </Button>
+              )}
+              <Button 
+                onClick={handleLogout}
+                className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base w-full sm:w-auto"
+              >
+                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                {t("profile.sign_out")}
+              </Button>
+            </div>
           </div>
 
           <div className="relative grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
