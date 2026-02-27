@@ -77,8 +77,8 @@ export default function CameraPage() {
     setHasStream(false);
 
     try {
-      // Only request audio for video mode (not photo)
-      const audioNeeded = modeIndex === 0; // VIDEO mode
+      // No audio needed for photo mode
+      const audioNeeded = false;
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
