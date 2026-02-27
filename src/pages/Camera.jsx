@@ -966,11 +966,21 @@ export default function CameraPage() {
               </div>
 
               {/* Shutter */}
-              <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
+              <motion.button
+                onMouseDown={() => !isBursting && startBurstCapture()}
+                onMouseUp={() => clearInterval(burstIntervalRef.current)}
+                onTouchStart={() => !isBursting && startBurstCapture()}
+                onTouchEnd={() => clearInterval(burstIntervalRef.current)}
+                whileTap={{ scale: 0.9 }}
+                onClick={takePhoto}
                 disabled={!hasStream || countdown > 0 || cameraLoading}
-                className="w-20 h-20 rounded-full disabled:opacity-40"
-                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
+                className="w-20 h-20 rounded-full disabled:opacity-40 relative"
+                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}
+              >
                 <div className="w-full h-full rounded-full bg-white" />
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-white/40 text-xs whitespace-nowrap">
+                  Hold for burst
+                </span>
               </motion.button>
 
               {/* Flip */}
