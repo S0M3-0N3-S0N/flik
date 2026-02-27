@@ -220,7 +220,57 @@ function LayoutContent({ children, currentPageName }) {
             animation: pulse-glow 2s ease-in-out infinite;
           }
         `}</style>
-        
+
+        {/* Top Desktop Navigation */}
+        <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="w-full flex items-center justify-between px-8 py-4">
+            <div className="flex items-center gap-8">
+              <button
+                onClick={() => navigate(currentPageName === "Editor" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Editor"))}
+                className={`flex items-center gap-2 transition-all ${
+                  currentPageName === "Editor" 
+                    ? "text-[#FF6B35]" 
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Image className="w-5 h-5" />
+                <span className="text-sm font-semibold">Photo Studio</span>
+              </button>
+
+              <button
+                onClick={() => navigate(currentPageName === "Generate" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Generate"))}
+                className={`flex items-center gap-2 transition-all ${
+                  currentPageName === "Generate" 
+                    ? "text-[#FF6B35]" 
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Wand2 className="w-5 h-5" />
+                <span className="text-sm font-semibold">Imagine AI</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => navigate(currentPageName === "Profile" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Profile"))}
+              className={`flex items-center gap-2 transition-all ${
+                currentPageName === "Profile" 
+                  ? "text-[#FF6B35]" 
+                  : "text-white/60 hover:text-white"
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
+                currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
+              }`}>
+                {user?.profile_picture ? (
+                  <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  user?.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />
+                )}
+              </div>
+              <span className="text-sm font-semibold">Profile</span>
+            </button>
+          </div>
+        </nav>
 
         
         {/* Main Content */}
