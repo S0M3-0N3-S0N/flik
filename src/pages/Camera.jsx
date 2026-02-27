@@ -602,6 +602,12 @@ export default function CameraPage() {
             handleViewfinderTap(e);
           }
         }}
+        onMouseMove={(e) => {
+          if (pinchStartDistRef.current) handleTouchMove(e);
+        }}
+        onMouseUp={(e) => {
+          if (pinchStartDistRef.current) handleTouchEnd(e);
+        }}
         onClick={(e) => {
           if (e.pointerType !== 'touch') {
             handleViewfinderTap(e);
