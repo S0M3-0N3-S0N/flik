@@ -673,7 +673,7 @@ export default function CameraPage() {
               {/* Flip */}
               <motion.button whileTap={{ scale: 0.85, rotate: 180 }} onClick={flipCamera}
                 className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <FlipHorizontal className="w-6 h-6 text-white" />
+                <RefreshCw className="w-6 h-6 text-white" />
               </motion.button>
             </div>
           </>
