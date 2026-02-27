@@ -771,7 +771,7 @@ export default function CameraPage() {
         {!photo ? (
           <>
             {/* Mode selector */}
-            <div className="flex items-center gap-1 bg-white/10 rounded-full p-1">
+            <div className="flex items-center gap-0.5 bg-white/10 rounded-full p-0.5">
               {MODES.map((m, i) => (
                 <motion.button key={m} whileTap={{ scale: 0.92 }} onClick={() => switchMode(i)}
                   className={`px-6 py-1.5 rounded-full text-sm font-semibold transition-all ${modeIndex === i ? 'bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white shadow-lg' : 'text-white/50'}`}>
