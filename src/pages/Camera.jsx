@@ -833,6 +833,11 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
+        {/* Camera Mode Tabs */}
+        {!photo && !isRecording && cameraMode === 'photo' && (
+          <CameraModeTabs activeMode={cameraMode} onModeChange={setCameraMode} />
+        )}
+
         {/* Top controls */}
         {!photo && !isRecording && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5" style={{ transform: `rotate(${orientation}deg)` }}>
