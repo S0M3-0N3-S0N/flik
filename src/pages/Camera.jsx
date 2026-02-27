@@ -317,7 +317,7 @@ export default function CameraPage() {
   // ─── Photo capture ────────────────────────────────────────────────────────────
   const takePhoto = () => {
     haptic([10, 5, 30]);
-    runCountdown(async () => {
+    runCountdown(() => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas) return;
@@ -326,25 +326,7 @@ export default function CameraPage() {
       canvas.getContext('2d').drawImage(video, 0, 0);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       setPhoto(dataUrl);
-      
-      // Auto-save photo
-      try {
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        const file = new File([blob], `flik_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        await base44.entities.Creation.create({
-          type: 'image',
-          url: file_url,
-          thumbnail_url: file_url,
-          title: `Photo ${new Date().toLocaleDateString()}`,
-          metadata: { source: 'camera', facing_mode: facingMode },
-        });
-        setSavedPhoto(true);
-        toast.success("Saved to gallery!");
-      } catch (err) {
-        toast.error("Failed to save. Please try again.");
-      }
+      setSavedPhoto(null);
     });
   };
 
