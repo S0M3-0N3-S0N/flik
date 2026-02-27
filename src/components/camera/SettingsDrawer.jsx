@@ -44,24 +44,6 @@ export default function SettingsDrawer({ open, onClose, settings, onChange }) {
                 onChange={v => onChange('timer', v)}
               />
             </SettingRow>
-
-            {/* Resolution */}
-            <SettingRow label="Video Resolution">
-              <SegmentControl
-                options={resOptions}
-                value={settings.resolution}
-                onChange={v => onChange('resolution', v)}
-              />
-            </SettingRow>
-
-            {/* FPS */}
-            <SettingRow label="Frame Rate">
-              <SegmentControl
-                options={fpsOptions}
-                value={settings.fps}
-                onChange={v => onChange('fps', v)}
-              />
-            </SettingRow>
           </motion.div>
         </>
       )}
