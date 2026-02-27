@@ -440,8 +440,9 @@ export default function CameraPage() {
     try {
       const res = await fetch(photo);
       const blob = await res.blob();
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: blob });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
       await base44.entities.Creation.create({
         type: 'image',
