@@ -27,7 +27,7 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
   };
 
   const handlePointerMove = (e) => {
-    if (!isDragging && e.type !== 'touchmove') return;
+    if (!isDragging) return;
     e.stopPropagation();
     getValueFromEvent(e);
   };

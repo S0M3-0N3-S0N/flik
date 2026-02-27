@@ -16,6 +16,13 @@ const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
 const MODES = ['PHOTO'];
 const initialSettings = { showGrid: false, timer: 0 };
+const ZOOM_PRESETS = ['.5', '1x', '2'];
+const ZOOM_PRESET_MAP = { '.5': 0.5, '1x': 1, '2': 2 };
+const FLASH_ICONS = {
+  off: <ZapOff className="w-4 h-4 text-white/70" />,
+  on: <Zap className="w-4 h-4 text-[#FFB800]" fill="currentColor" />,
+  auto: <Zap className="w-4 h-4 text-white" />,
+};
 
 function settingsReducer(state, action) {
   return { ...state, [action.key]: action.value };
@@ -58,6 +65,7 @@ export default function CameraPage() {
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
+  const photoRef = useRef(null);
 
   const mode = MODES[modeIndex];
 
@@ -162,7 +170,7 @@ export default function CameraPage() {
       initializingRef.current = false;
       setCameraLoading(false);
     }
-  }, [facingMode, modeIndex]);
+  }, [facingMode]);
 
   useEffect(() => {
     startCamera();
@@ -192,9 +200,10 @@ export default function CameraPage() {
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
+      clearTimeout(pinchThrottleRef.current);
       unsubscribe();
     };
-  }, []);
+  }, [startCamera]);
 
   // ─── Flash torch ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -236,8 +245,7 @@ export default function CameraPage() {
 
   const setZoomPreset = (preset) => {
     haptic(6);
-    const map = { '.5': 0.5, '1x': 1, '2': 2 };
-    applyZoom(map[preset] ?? 1);
+    applyZoom(ZOOM_PRESET_MAP[preset] ?? 1);
     setShowZoomOverlay(true);
     setTimeout(() => setShowZoomOverlay(false), 1200);
   };
@@ -463,19 +471,12 @@ export default function CameraPage() {
     if (!photo || isSaving) return;
     haptic(15);
     setIsSaving(true);
+    photoRef.current = photo; // Capture current photo ref
     toast.loading("Saving photo to gallery...", { id: 'photo-save' });
     try {
-      let blob;
-      
-      // Handle native file URL vs data URL
-      if (CapacitorCameraAPI?.isNative?.() && photo.startsWith('file://')) {
-        const res = await fetch(photo);
-        blob = await res.blob();
-      } else {
-        // Data URL conversion
-        const res = await fetch(photo);
-        blob = await res.blob();
-      }
+      const photoToSave = photoRef.current;
+      const res = await fetch(photoToSave);
+      const blob = await res.blob();
       
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -512,6 +513,7 @@ export default function CameraPage() {
       videoRef.current.style.transform = '';
     }
     setZoomValue(1);
+    photoRef.current = null;
     startCamera(facingMode);
   };
 
@@ -527,16 +529,8 @@ export default function CameraPage() {
     dispatchSettings({ key, value });
   };
 
-  const flashIcon = {
-    off: <ZapOff className="w-4 h-4 text-white/70" />,
-    on: <Zap className="w-4 h-4 text-[#FFB800]" fill="currentColor" />,
-    auto: <Zap className="w-4 h-4 text-white" />,
-  };
-
-  const zoomPresets = ['.5', '1x', '2'];
-  const activePreset = zoomPresets.find(p => {
-    const map = { '.5': 0.5, '1x': 1, '2': 2 };
-    return Math.abs(map[p] - zoomValue) < 0.08;
+  const activePreset = ZOOM_PRESETS.find(p => {
+    return Math.abs(ZOOM_PRESET_MAP[p] - zoomValue) < 0.08;
   });
 
   // ─── FLIK Actions Registration ───────────────────────────────────────────────
@@ -691,7 +685,7 @@ export default function CameraPage() {
 
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'); }}
               className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-              {flashIcon[flashMode]}
+              {FLASH_ICONS[flashMode]}
             </motion.button>
 
             <div className="flex items-center gap-3">
@@ -711,22 +705,22 @@ export default function CameraPage() {
         )}
 
         {/* Zoom capsule */}
-        {!photo && (
-          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%)` }}>
-            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
-              {zoomPresets.map(z => {
-                const isActive = z === activePreset;
-                return (
-                  <motion.button key={z} whileTap={{ scale: 0.85 }} onClick={() => setZoomPreset(z)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white/20 text-white' : 'text-white/50'}`}
-                    style={isActive ? { boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.5)' } : {}}>
-                    {z}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+         {!photo && (
+           <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%)` }}>
+             <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
+               {ZOOM_PRESETS.map(z => {
+                 const isActive = z === activePreset;
+                 return (
+                   <motion.button key={z} whileTap={{ scale: 0.85 }} onClick={() => setZoomPreset(z)}
+                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white/20 text-white' : 'text-white/50'}`}
+                     style={isActive ? { boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.5)' } : {}}>
+                     {z}
+                   </motion.button>
+                 );
+               })}
+             </div>
+           </div>
+         )}
       </div>
 
       {/* ── Bottom controls (floating overlay) ── */}
@@ -758,12 +752,12 @@ export default function CameraPage() {
               </button>
 
               {/* Shutter */}
-              <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
-                disabled={!hasStream || countdown > 0 || cameraLoading}
-                className="w-20 h-20 rounded-full disabled:opacity-40"
-                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
-                <div className="w-full h-full rounded-full bg-white" />
-              </motion.button>
+               <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
+                 disabled={!hasStream || countdown > 0 || cameraLoading || isSaving}
+                 className="w-20 h-20 rounded-full disabled:opacity-40"
+                 style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
+                 <div className="w-full h-full rounded-full bg-white" />
+               </motion.button>
 
               {/* Flip */}
               <motion.button whileTap={{ scale: 0.85, rotate: 180 }} onClick={flipCamera}
