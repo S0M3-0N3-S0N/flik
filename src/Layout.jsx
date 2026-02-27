@@ -250,6 +250,20 @@ function LayoutContent({ children, currentPageName }) {
                 <Wand2 className="w-5 h-5" />
                 <span className="text-sm font-medium">Imagine AI</span>
               </button>
+
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => navigate(createPageUrl("Camera"))}
+                  className={`flex items-center gap-2 transition-all ${
+                    currentPageName === "Camera" 
+                      ? "text-white" 
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  <Video className="w-5 h-5" />
+                  <span className="text-sm font-medium">Camera</span>
+                </button>
+              )}
             </div>
 
             <button
