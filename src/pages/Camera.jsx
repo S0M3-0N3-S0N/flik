@@ -19,7 +19,14 @@ import AspectRatioSelector from '../components/camera/AspectRatioSelector';
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
 const MODES = ['PHOTO'];
-const initialSettings = { showGrid: false, timer: 0 };
+const initialSettings = {
+  showGrid: false,
+  timer: 0,
+  showLevel: false,
+  aspectRatio: '4:3',
+  autoEnhance: false,
+  jpegQuality: 0.92,
+};
 
 function settingsReducer(state, action) {
   return { ...state, [action.key]: action.value };
