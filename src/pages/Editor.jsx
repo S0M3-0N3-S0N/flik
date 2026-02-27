@@ -1329,7 +1329,7 @@ export default function Editor() {
                 {/* Toggle Button */}
                 <motion.button
                   onClick={() => setIsToolboxExpanded(!isToolboxExpanded)}
-                  className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFB800] via-[#FF6B35] to-[#FF8A50] hover:from-[#FFC820] hover:via-[#FF7B55] hover:to-[#FFA060] text-white shadow-md hover:shadow-[#FFB800]/40 backdrop-blur-sm border border-white/20 transition-all flex items-center justify-center"
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-md hover:shadow-[#FF6B35]/40 transition-all flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
