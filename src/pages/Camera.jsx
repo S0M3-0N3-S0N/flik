@@ -706,7 +706,12 @@ export default function CameraPage() {
                   </div>
                 </motion.button>
 
-                <div className="w-14 h-14" />
+                <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }} className="flex flex-col items-center gap-1">
+                  <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
+                    <X className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-white/50 text-xs">Exit</span>
+                </motion.button>
               </div>
 
               <div className="flex gap-3 w-full max-w-sm justify-center">
