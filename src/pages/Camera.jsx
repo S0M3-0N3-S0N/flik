@@ -434,7 +434,7 @@ export default function CameraPage() {
   const takePhoto = () => {
     haptic([10, 5, 30]);
     runCountdown(async () => {
-      if (CapacitorCameraAPI.isNative()) {
+      if (CapacitorCameraAPI?.isNative?.()) {
         try {
           const result = await CapacitorCameraAPI.capturePhoto({ quality: 0.95 });
           setPhoto(result.fileUrl);
