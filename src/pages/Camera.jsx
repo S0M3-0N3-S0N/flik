@@ -1,11 +1,14 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { RotateCcw, Zap, ZapOff, Grid3X3, FlipHorizontal } from 'lucide-react';
+import { RotateCcw, Zap, ZapOff, Grid3X3, FlipHorizontal, Circle, Square } from 'lucide-react';
 import { toast } from "sonner";
 
 export default function CameraPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
   const [facingMode, setFacingMode] = useState('environment');
@@ -13,18 +16,18 @@ export default function CameraPage() {
   const [showGrid, setShowGrid] = useState(false);
   const [zoom, setZoom] = useState('1x');
   const [flashOn, setFlashOn] = useState(false);
-  const [flashSupported, setFlashSupported] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const timerRef = useRef(null);
 
   const applyZoom = useCallback((stream, zoomLevel) => {
     const track = stream?.getVideoTracks()[0];
     if (!track) return;
     const caps = track.getCapabilities?.();
     if (caps?.zoom) {
-      const min = caps.zoom.min;
-      const max = caps.zoom.max;
       const zoomMap = { '.5': 0.5, '1x': 1, '2': 2 };
       const desired = zoomMap[zoomLevel] || 1;
-      const clamped = Math.max(min, Math.min(max, desired));
+      const clamped = Math.max(caps.zoom.min, Math.min(caps.zoom.max, desired));
       track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
     }
   }, []);
@@ -37,11 +40,8 @@ export default function CameraPage() {
     setHasStream(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: facing,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
+        video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: true
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -49,10 +49,6 @@ export default function CameraPage() {
         videoRef.current.play();
         setHasStream(true);
       }
-      // Check flash support
-      const track = stream.getVideoTracks()[0];
-      const caps = track.getCapabilities?.();
-      setFlashSupported(!!(caps?.torch));
     } catch (err) {
       toast.error("Could not access camera. Please check permissions.");
     }
@@ -61,17 +57,13 @@ export default function CameraPage() {
   useEffect(() => {
     startCamera();
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-      }
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
-  // Apply zoom when it changes
   useEffect(() => {
-    if (streamRef.current) {
-      applyZoom(streamRef.current, zoom);
-    }
+    if (streamRef.current) applyZoom(streamRef.current, zoom);
   }, [zoom, applyZoom]);
 
   const toggleFlash = async () => {
@@ -92,9 +84,52 @@ export default function CameraPage() {
     if (!video || !canvas) return;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
+    canvas.getContext('2d').drawImage(video, 0, 0);
     setPhoto(canvas.toDataURL('image/png'));
+  };
+
+  const startRecording = () => {
+    if (!streamRef.current) return;
+    recordedChunksRef.current = [];
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : MediaRecorder.isTypeSupported('video/webm')
+      ? 'video/webm'
+      : 'video/mp4';
+
+    const recorder = new MediaRecorder(streamRef.current, { mimeType });
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+    };
+    recorder.onstop = () => {
+      const blob = new Blob(recordedChunksRef.current, { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `flik_video_${Date.now()}.webm`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("Video saved!");
+    };
+    mediaRecorderRef.current = recorder;
+    recorder.start(100);
+    setIsRecording(true);
+    setRecordingTime(0);
+    timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+    clearInterval(timerRef.current);
+    setRecordingTime(0);
+  };
+
+  const flipCamera = () => {
+    if (isRecording) stopRecording();
+    const next = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(next);
+    startCamera(next);
   };
 
   const retake = () => {
@@ -110,11 +145,7 @@ export default function CameraPage() {
     toast.success("Photo saved!");
   };
 
-  const flipCamera = () => {
-    const next = facingMode === 'user' ? 'environment' : 'user';
-    setFacingMode(next);
-    startCamera(next);
-  };
+  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const zoomLevels = ['.5', '1x', '2'];
 
@@ -126,13 +157,7 @@ export default function CameraPage() {
         {photo ? (
           <img src={photo} alt="Captured" className="w-full h-full object-cover" />
         ) : (
-          <video
-            ref={videoRef}
-            className="w-full h-full object-cover"
-            autoPlay
-            playsInline
-            muted
-          />
+          <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
         )}
         <canvas ref={canvasRef} className="hidden" />
 
@@ -140,10 +165,16 @@ export default function CameraPage() {
         {showGrid && !photo && (
           <div className="absolute inset-0 pointer-events-none">
             <div className="w-full h-full grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
-              {[...Array(9)].map((_, i) => (
-                <div key={i} className="border border-white/25" />
-              ))}
+              {[...Array(9)].map((_, i) => <div key={i} className="border border-white/25" />)}
             </div>
+          </div>
+        )}
+
+        {/* Recording timer */}
+        {isRecording && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md rounded-full px-4 py-1.5">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-white text-sm font-mono font-semibold">{formatTime(recordingTime)}</span>
           </div>
         )}
 
@@ -168,7 +199,7 @@ export default function CameraPage() {
           </div>
         )}
 
-        {/* Zoom selector — sits just above the bottom panel */}
+        {/* Zoom selector */}
         {!photo && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
             <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5">
@@ -177,9 +208,7 @@ export default function CameraPage() {
                   key={z}
                   onClick={() => setZoom(z)}
                   className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                    zoom === z
-                      ? 'bg-black/60 text-[#FF6B35]'
-                      : 'text-white/70'
+                    zoom === z ? 'bg-black/60 text-[#FF6B35]' : 'text-white/70'
                   }`}
                 >
                   {z}
@@ -202,7 +231,10 @@ export default function CameraPage() {
               {['VIDEO', 'PHOTO'].map(m => (
                 <button
                   key={m}
-                  onClick={() => setMode(m)}
+                  onClick={() => {
+                    if (isRecording) stopRecording();
+                    setMode(m);
+                  }}
                   className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all ${
                     mode === m
                       ? 'bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white shadow-lg'
@@ -216,25 +248,35 @@ export default function CameraPage() {
 
             {/* Shutter row */}
             <div className="w-full flex items-center justify-around px-8">
-              {/* Last photo thumbnail (placeholder) */}
               <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 overflow-hidden" />
 
-              {/* Shutter button */}
-              <button
-                onClick={takePhoto}
-                disabled={!hasStream}
-                className="w-20 h-20 rounded-full flex items-center justify-center disabled:opacity-40"
-                style={{
-                  background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)',
-                  padding: '3px'
-                }}
-              >
-                <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-white" />
-                </div>
-              </button>
+              {mode === 'PHOTO' ? (
+                /* Photo shutter */
+                <button
+                  onClick={takePhoto}
+                  disabled={!hasStream}
+                  className="w-20 h-20 rounded-full flex items-center justify-center disabled:opacity-40"
+                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: '3px' }}
+                >
+                  <div className="w-full h-full rounded-full bg-white" />
+                </button>
+              ) : (
+                /* Video record / stop button */
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={!hasStream}
+                  className="w-20 h-20 rounded-full flex items-center justify-center disabled:opacity-40"
+                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: '3px' }}
+                >
+                  <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
+                    {isRecording
+                      ? <Square className="w-7 h-7 text-red-500" fill="currentColor" />
+                      : <Circle className="w-10 h-10 text-red-500" fill="currentColor" />
+                    }
+                  </div>
+                </button>
+              )}
 
-              {/* Flip camera */}
               <button
                 onClick={flipCamera}
                 className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center"
@@ -257,13 +299,10 @@ export default function CameraPage() {
               <button
                 onClick={download}
                 className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{
-                  background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)',
-                  padding: '3px'
-                }}
+                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: '3px' }}
               >
                 <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
-                  <span className="text-white font-bold text-xs text-center leading-tight">SAVE</span>
+                  <span className="text-white font-bold text-xs">SAVE</span>
                 </div>
               </button>
 
