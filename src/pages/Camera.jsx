@@ -809,33 +809,12 @@ export default function CameraPage() {
               </div>
 
               {/* Shutter */}
-              {mode === 'PHOTO' ? (
-                <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
-                  disabled={!hasStream || countdown > 0 || cameraLoading}
-                  className="w-20 h-20 rounded-full disabled:opacity-40"
-                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
-                  <div className="w-full h-full rounded-full bg-white" />
-                </motion.button>
-              ) : (
-                <motion.button whileTap={{ scale: 0.9 }} onClick={isRecording ? stopRecording : startRecording}
-                  disabled={!hasStream || countdown > 0 || cameraLoading}
-                  className="w-20 h-20 rounded-full disabled:opacity-40"
-                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
-                  <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
-                    <AnimatePresence mode="wait">
-                      {isRecording ? (
-                        <motion.div key="stop" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                          <Square className="w-7 h-7 text-red-500" fill="currentColor" />
-                        </motion.div>
-                      ) : (
-                        <motion.div key="rec" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                          <Circle className="w-10 h-10 text-red-500" fill="currentColor" />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </motion.button>
-              )}
+              <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
+                disabled={!hasStream || countdown > 0 || cameraLoading}
+                className="w-20 h-20 rounded-full disabled:opacity-40"
+                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
+                <div className="w-full h-full rounded-full bg-white" />
+              </motion.button>
 
               {/* Flip */}
               <motion.button whileTap={{ scale: 0.85, rotate: 180 }} onClick={flipCamera}
