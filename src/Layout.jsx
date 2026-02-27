@@ -222,6 +222,9 @@ function LayoutContent({ children, currentPageName }) {
           }
         `}</style>
 
+        {/* Mobile Header */}
+        <MobileHeader isChildRoute={isChildRoute} />
+
         {/* Top Desktop Navigation */}
         <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="w-full flex items-center justify-center px-8 py-4 relative">
