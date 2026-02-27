@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useReducer } from 'react';
-import { RotateCcw, Zap, ZapOff, Grid3X3, RefreshCw, Circle, Square, Settings, Timer, Check, X } from 'lucide-react';
+import { RotateCcw, Zap, ZapOff, RefreshCw, Settings, Timer, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -456,7 +456,6 @@ export default function CameraPage() {
 
   const flipCamera = () => {
     haptic(10);
-    if (isRecording) stopRecording();
     const next = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(next);
     startCamera(next);
@@ -465,15 +464,7 @@ export default function CameraPage() {
   // ─── Handle settings changes safely ────────────────────────────────────────────
   const handleSettingChange = (key, value) => {
     dispatchSettings({ key, value });
-
-    if ((key === 'resolution' || key === 'fps') && !isRecording) {
-      const newRes = key === 'resolution' ? value : settings.resolution;
-      const newFps = key === 'fps' ? value : settings.fps;
-      startCamera(facingMode, newRes, newFps);
-    }
   };
-
-  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const flashIcon = {
     off: <ZapOff className="w-4 h-4 text-white/70" />,
