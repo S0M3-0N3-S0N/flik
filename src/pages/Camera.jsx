@@ -48,6 +48,7 @@ export default function CameraPage() {
   const [showZoomOverlay, setShowZoomOverlay] = useState(false);
   const [focusPos, setFocusPos] = useState(null);
   const [afLocked, setAfLocked] = useState(false);
+  const [latestCreation, setLatestCreation] = useState(null);
   const [exposure, setExposure] = useState(0);
   const [exposureCaps, setExposureCaps] = useState({ min: -2, max: 2, supported: false });
   const [showExposure, setShowExposure] = useState(false);
