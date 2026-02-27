@@ -454,8 +454,19 @@ export default function CameraPage() {
       if (!video || !canvas) return;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
+      // Capture from filter pipeline or effects canvas
+      let dataUrl;
+      if (activeFilter !== 'none' && filterPipelineRef.current) {
+        dataUrl = filterPipelineRef.current.captureFrame();
+      } else if (activeEffect && effectsCanvasRef.current) {
+        dataUrl = effectsCanvasRef.current.toDataURL('image/jpeg', settings.jpegQuality || 0.92);
+      } else {
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+        dataUrl = canvas.toDataURL('image/jpeg', settings.jpegQuality || 0.92);
+      }
+
       setPhoto(dataUrl);
       setSavedPhoto(null);
     });
