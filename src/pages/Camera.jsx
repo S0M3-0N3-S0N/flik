@@ -659,31 +659,20 @@ export default function CameraPage() {
 
             {/* Shutter row */}
             <div className="w-full flex items-center justify-around px-8">
-              <div className="w-14 h-14 flex items-center justify-center">
-                {isRecording ? (
-                  <motion.button whileTap={{ scale: 0.85 }} onClick={togglePause}
-                    className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                    {isPaused
-                      ? <Play className="w-5 h-5 text-white" fill="currentColor" />
-                      : <Pause className="w-5 h-5 text-white" fill="currentColor" />}
-                  </motion.button>
+              <button 
+                onClick={() => navigate(createPageUrl("Profile"))}
+                className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
+              >
+                {latestCreation?.thumbnail_url || latestCreation?.url ? (
+                  <img 
+                    src={latestCreation.thumbnail_url || latestCreation.url} 
+                    alt="Latest" 
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <button 
-                    onClick={() => navigate(createPageUrl("Profile"))}
-                    className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
-                  >
-                    {latestCreation?.thumbnail_url || latestCreation?.url ? (
-                      <img 
-                        src={latestCreation.thumbnail_url || latestCreation.url} 
-                        alt="Latest" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-white/5" />
-                    )}
-                  </button>
+                  <div className="w-full h-full bg-white/5" />
                 )}
-              </div>
+              </button>
 
               {/* Shutter */}
               <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
