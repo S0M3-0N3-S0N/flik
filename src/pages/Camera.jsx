@@ -6,23 +6,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from '@/utils';
 import { toast } from "sonner";
 import { base44 } from '@/api/base44Client';
+import * as tf from '@tensorflow/tfjs';
+import * as faceDetection from '@tensorflow-models/face-detection';
 import FocusSquare from '../components/camera/FocusSquare';
 import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
 import { useFlikActions } from '../components/useFlikActions';
-import { CapacitorCameraAPI } from '@/functions/capacitorCameraPlugin';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
 const MODES = ['PHOTO'];
 const initialSettings = { showGrid: false, timer: 0 };
-const ZOOM_PRESETS = ['.5', '1x', '2'];
-const ZOOM_PRESET_MAP = { '.5': 0.5, '1x': 1, '2': 2 };
-const FLASH_ICONS = {
-  off: <ZapOff className="w-4 h-4 text-white/70" />,
-  on: <Zap className="w-4 h-4 text-[#FFB800]" fill="currentColor" />,
-  auto: <Zap className="w-4 h-4 text-white" />,
-};
 
 function settingsReducer(state, action) {
   return { ...state, [action.key]: action.value };
@@ -64,13 +58,108 @@ export default function CameraPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
-   const photoRef = useRef(null);
+  const [orientation, setOrientation] = useState(0);
+  const [detector, setDetector] = useState(null);
+  const [detectedFace, setDetectedFace] = useState(null);
+  const detectionFrameRef = useRef(null);
 
   const mode = MODES[modeIndex];
 
+  // ─── Initialize Face Detection ──────────────────────────────────────────────
+  useEffect(() => {
+    let mounted = true;
 
+    const initFaceDetection = async () => {
+      try {
+        const model = faceDetection.SupportedModels.BlazeFace;
+        const detectionConfig = {
+          maxFaces: 1,
+          scoreThreshold: 0.75,
+        };
+        const newDetector = await faceDetection.createDetector(model, detectionConfig);
+        if (mounted) setDetector(newDetector);
+      } catch (err) {
+        console.warn('Face detection init failed:', err);
+      }
+    };
 
+    initFaceDetection();
+    return () => { mounted = false; };
+  }, []);
 
+  // ─── Detect faces and auto-focus ────────────────────────────────────────────
+  const detectAndFocus = useCallback(async () => {
+    if (!videoRef.current || !detector || afLocked) return;
+
+    try {
+      const faces = await detector.estimateFaces(videoRef.current, false);
+
+      if (faces.length > 0) {
+        const face = faces[0];
+        const keypoints = face.landmarks;
+
+        // Calculate center of face from landmarks
+        const centerX = keypoints.reduce((sum, point) => sum + point[0], 0) / keypoints.length;
+        const centerY = keypoints.reduce((sum, point) => sum + point[1], 0) / keypoints.length;
+
+        // Get video dimensions
+        const videoWidth = videoRef.current.videoWidth;
+        const videoHeight = videoRef.current.videoHeight;
+
+        // Normalize to 0-1 range
+        const normX = centerX / videoWidth;
+        const normY = centerY / videoHeight;
+
+        // Store detected face for UI
+        setDetectedFace({ x: normX, y: normY, centerX, centerY });
+
+        // Auto-focus on face
+        const track = streamRef.current?.getVideoTracks()[0];
+        if (track) {
+          const caps = track.getCapabilities?.() || {};
+          const advanced = {};
+
+          if (caps.focusMode?.includes('continuous')) {
+            advanced.focusMode = 'continuous';
+          }
+
+          if (caps.focusPointOfInterest) {
+            advanced.focusPointOfInterest = { x: normX, y: normY };
+          }
+
+          if (Object.keys(advanced).length) {
+            track.applyConstraints({ advanced: [advanced] }).catch(() => {});
+          }
+        }
+      }
+    } catch (err) {
+      // Face detection errors are non-critical
+    }
+  }, [detector, afLocked]);
+
+  // ─── Continuous face detection loop ────────────────────────────────────────
+  useEffect(() => {
+    if (!detector || !hasStream) return;
+
+    const interval = setInterval(detectAndFocus, 300); // ~3 FPS for performance
+    return () => clearInterval(interval);
+  }, [detector, hasStream, detectAndFocus]);
+
+  // Handle device orientation changes
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      const angle = window.innerHeight > window.innerWidth ? 0 : 90;
+      setOrientation(angle);
+    };
+
+    handleOrientationChange();
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  }, []);
 
   // ─── Safe camera initialization with guard ───────────────────────────────────
   const startCamera = useCallback(async (facing = facingMode) => {
@@ -85,32 +174,7 @@ export default function CameraPage() {
     setHasStream(false);
 
     try {
-      // Try native camera first on iOS
-      if (CapacitorCameraAPI?.isNative?.()) {
-        const capabilities = await CapacitorCameraAPI.startCamera({ 
-          facing: facing === 'user' ? 'front' : 'back' 
-        });
-        setZoomCaps({
-          min: capabilities.minZoom || 1,
-          max: capabilities.maxZoom || 5,
-          supported: true
-        });
-        setExposureCaps({
-          min: capabilities.minEV || -2,
-          max: capabilities.maxEV || 2,
-          supported: true
-        });
-        setSupported({
-          res4k: true,
-          fps60: true,
-        });
-        setHasStream(true);
-        setZoomValue(1);
-        setExposure(0);
-        return;
-      }
-
-      // Fallback to web camera
+      // No audio needed for photo mode
       const audioNeeded = false;
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -123,6 +187,7 @@ export default function CameraPage() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Safe play with error handling
         try {
           await videoRef.current.play();
         } catch (playErr) {
@@ -136,6 +201,7 @@ export default function CameraPage() {
       const track = stream.getVideoTracks()[0];
       const caps = track.getCapabilities?.() || {};
 
+      // Detect hardware capabilities
       setZoomCaps(caps.zoom ? { min: caps.zoom.min, max: caps.zoom.max, supported: true } : { min: 1, max: 4, supported: false });
       setExposureCaps(caps.exposureCompensation
         ? { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, supported: true }
@@ -146,6 +212,7 @@ export default function CameraPage() {
         fps60: !!(caps.frameRate?.max >= 60),
       });
 
+      // Reset zoom and exposure
       setZoomValue(1);
       setExposure(0);
     } catch (err) {
@@ -155,7 +222,7 @@ export default function CameraPage() {
       initializingRef.current = false;
       setCameraLoading(false);
     }
-  }, [facingMode]);
+  }, [facingMode, modeIndex]);
 
   useEffect(() => {
     startCamera();
@@ -179,33 +246,18 @@ export default function CameraPage() {
     return () => {
       initializingRef.current = false;
       streamRef.current?.getTracks().forEach(t => t.stop());
-      if (CapacitorCameraAPI?.isNative?.()) {
-        CapacitorCameraAPI.stopCamera().catch(() => {});
-      }
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
-      clearTimeout(pinchThrottleRef.current);
       unsubscribe();
     };
   }, []);
 
   // ─── Flash torch ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (CapacitorCameraAPI?.isNative?.()) {
-      CapacitorCameraAPI.setTorch(flashMode === 'on').catch(() => {});
-      return;
-    }
-
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
-    
-    track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {
-      // Fallback: simulate torch with brightness filter
-      if (videoRef.current) {
-        videoRef.current.style.filter = flashMode === 'on' ? 'brightness(1.8)' : '';
-      }
-    });
+    track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
   }, [flashMode]);
 
   // ─── Zoom with throttling ────────────────────────────────────────────────────
@@ -230,7 +282,8 @@ export default function CameraPage() {
 
   const setZoomPreset = (preset) => {
     haptic(6);
-    applyZoom(ZOOM_PRESET_MAP[preset] ?? 1);
+    const map = { '.5': 0.5, '1x': 1, '2': 2 };
+    applyZoom(map[preset] ?? 1);
     setShowZoomOverlay(true);
     setTimeout(() => setShowZoomOverlay(false), 1200);
   };
@@ -277,6 +330,7 @@ export default function CameraPage() {
     if (afLocked) {
       setAfLocked(false);
       setFocusPos(null);
+      setDetectedFace(null); // Clear face detection on unlock
       setShowExposure(false);
       return;
     }
@@ -293,8 +347,8 @@ export default function CameraPage() {
     const y = (clientY - rect.top) / zoomScale;
 
     setFocusPos({ x, y });
+    setDetectedFace(null); // Clear auto-detection when user taps
     setShowExposure(true);
-    setAfLocked(true);
     haptic(8);
 
     const track = streamRef.current?.getVideoTracks()[0];
@@ -426,19 +480,7 @@ export default function CameraPage() {
   // ─── Photo capture ────────────────────────────────────────────────────────────
   const takePhoto = () => {
     haptic([10, 5, 30]);
-    runCountdown(async () => {
-      if (CapacitorCameraAPI?.isNative?.()) {
-        try {
-          const result = await CapacitorCameraAPI.capturePhoto({ quality: 0.95 });
-          setPhoto(result.fileUrl);
-          setSavedPhoto(null);
-        } catch (err) {
-          console.error('Native capture failed:', err);
-          toast.error('Failed to capture photo');
-        }
-        return;
-      }
-
+    runCountdown(() => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas) return;
@@ -456,14 +498,12 @@ export default function CameraPage() {
     if (!photo || isSaving) return;
     haptic(15);
     setIsSaving(true);
-    photoRef.current = photo; // Capture current photo ref
     toast.loading("Saving photo to gallery...", { id: 'photo-save' });
     try {
-      const photoToSave = photoRef.current;
-      const res = await fetch(photoToSave);
+      const res = await fetch(photo);
       const blob = await res.blob();
-      
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
       await base44.entities.Creation.create({
@@ -474,6 +514,7 @@ export default function CameraPage() {
         metadata: { source: 'camera', facing_mode: facingMode },
       });
 
+      // Invalidate creations query to refresh gallery
       queryClient.invalidateQueries({ queryKey: ['creations'] });
 
       setSavedPhoto(true);
@@ -498,7 +539,6 @@ export default function CameraPage() {
       videoRef.current.style.transform = '';
     }
     setZoomValue(1);
-    photoRef.current = null;
     startCamera(facingMode);
   };
 
@@ -514,8 +554,16 @@ export default function CameraPage() {
     dispatchSettings({ key, value });
   };
 
-  const activePreset = ZOOM_PRESETS.find(p => {
-    return Math.abs(ZOOM_PRESET_MAP[p] - zoomValue) < 0.08;
+  const flashIcon = {
+    off: <ZapOff className="w-4 h-4 text-white/70" />,
+    on: <Zap className="w-4 h-4 text-[#FFB800]" fill="currentColor" />,
+    auto: <Zap className="w-4 h-4 text-white" />,
+  };
+
+  const zoomPresets = ['.5', '1x', '2'];
+  const activePreset = zoomPresets.find(p => {
+    const map = { '.5': 0.5, '1x': 1, '2': 2 };
+    return Math.abs(map[p] - zoomValue) < 0.08;
   });
 
   // ─── FLIK Actions Registration ───────────────────────────────────────────────
@@ -581,12 +629,6 @@ export default function CameraPage() {
             handleViewfinderTap(e);
           }
         }}
-        onMouseMove={(e) => {
-          if (pinchStartDistRef.current) handleTouchMove(e);
-        }}
-        onMouseUp={(e) => {
-          if (pinchStartDistRef.current) handleTouchEnd(e);
-        }}
         onClick={(e) => {
           if (e.pointerType !== 'touch') {
             handleViewfinderTap(e);
@@ -613,8 +655,8 @@ export default function CameraPage() {
           </div>
         )}
 
-        {/* Focus square */}
-        {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
+        {/* Focus square - shows manual tap or auto-detected face */}
+        {!photo && <FocusSquare position={focusPos || detectedFace} locked={afLocked} />}
 
         {/* Exposure slider */}
         <AnimatePresence>
@@ -670,7 +712,7 @@ export default function CameraPage() {
 
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'); }}
               className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-              {FLASH_ICONS[flashMode]}
+              {flashIcon[flashMode]}
             </motion.button>
 
             <div className="flex items-center gap-3">
@@ -690,22 +732,22 @@ export default function CameraPage() {
         )}
 
         {/* Zoom capsule */}
-         {!photo && (
-           <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%)` }}>
-             <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
-               {ZOOM_PRESETS.map(z => {
-                 const isActive = z === activePreset;
-                 return (
-                   <motion.button key={z} whileTap={{ scale: 0.85 }} onClick={() => setZoomPreset(z)}
-                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white/20 text-white' : 'text-white/50'}`}
-                     style={isActive ? { boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.5)' } : {}}>
-                     {z}
-                   </motion.button>
-                 );
-               })}
-             </div>
-           </div>
-         )}
+        {!photo && (
+          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%)` }}>
+            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
+              {zoomPresets.map(z => {
+                const isActive = z === activePreset;
+                return (
+                  <motion.button key={z} whileTap={{ scale: 0.85 }} onClick={() => setZoomPreset(z)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white/20 text-white' : 'text-white/50'}`}
+                    style={isActive ? { boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.5)' } : {}}>
+                    {z}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Bottom controls (floating overlay) ── */}
@@ -737,12 +779,12 @@ export default function CameraPage() {
               </button>
 
               {/* Shutter */}
-               <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
-                 disabled={!hasStream || countdown > 0 || cameraLoading || isSaving}
-                 className="w-20 h-20 rounded-full disabled:opacity-40"
-                 style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
-                 <div className="w-full h-full rounded-full bg-white" />
-               </motion.button>
+              <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
+                disabled={!hasStream || countdown > 0 || cameraLoading}
+                className="w-20 h-20 rounded-full disabled:opacity-40"
+                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
+                <div className="w-full h-full rounded-full bg-white" />
+              </motion.button>
 
               {/* Flip */}
               <motion.button whileTap={{ scale: 0.85, rotate: 180 }} onClick={flipCamera}

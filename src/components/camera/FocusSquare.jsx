@@ -25,22 +25,23 @@ export default function FocusSquare({ position, locked }) {
           'bottom-0 left-0 border-b-2 border-l-2 rounded-bl',
           'bottom-0 right-0 border-b-2 border-r-2 rounded-br',
         ].map((cls, i) => (
-          <motion.div
+          <div
             key={i}
             className={`absolute w-4 h-4 ${cls}`}
             style={{ borderColor: locked ? '#FFB800' : '#FF6B35' }}
-            animate={locked ? { borderColor: '#FFB800' } : { borderColor: '#FF6B35' }}
-            transition={{ duration: 0.3 }}
           />
         ))}
 
-        {/* Center dot pulse - stronger when locked */}
-        <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: locked ? '#FFB800' : '#FF6B35' }}
-          animate={locked ? { scale: [1, 1.2, 1], opacity: 1 } : { scale: 0.8, opacity: 0.5 }}
-          transition={locked ? { duration: 0.6, repeat: Infinity } : { duration: 0.3 }}
-        />
+        {locked && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-widest"
+            style={{ color: '#FFB800' }}
+          >
+            AE/AF LOCK
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );
