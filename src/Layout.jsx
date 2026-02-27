@@ -8,7 +8,6 @@ import { FlikProvider, useFlik } from "@/components/FlikContext";
 import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
 import { base44 } from "@/api/base44Client";
-import { applyGradientColors } from "@/components/admin/GradientEditor";
 
 export const LanguageContext = React.createContext();
 
@@ -46,15 +45,6 @@ function LayoutContent({ children, currentPageName }) {
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
-  }, []);
-
-  // Load saved gradient colors on mount
-  useEffect(() => {
-    base44.entities.AppConfiguration.filter({ key: "gradient_colors" }).then((configs) => {
-      if (configs.length > 0) {
-        applyGradientColors(configs[0].value);
-      }
-    }).catch(() => {});
   }, []);
 
   // Global keyboard shortcut for FLIK
