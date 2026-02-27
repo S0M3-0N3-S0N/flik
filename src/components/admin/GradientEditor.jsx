@@ -126,10 +126,78 @@ export function applyGradientColors(colors) {
   const root = document.documentElement;
   const { color1, color2, color3 } = colors;
   const gradient = `linear-gradient(135deg, ${color1} 0%, ${color2} 50%, ${color3} 100%)`;
+  const gradientSecondary = `linear-gradient(135deg, ${color3} 0%, ${color1} 100%)`;
+  const gradientAccent = `linear-gradient(135deg, ${color2} 0%, ${color1} 50%, ${color3} 100%)`;
+
   root.style.setProperty("--app-color1", color1);
   root.style.setProperty("--app-color2", color2);
   root.style.setProperty("--app-color3", color3);
   root.style.setProperty("--gradient-primary", gradient);
-  root.style.setProperty("--gradient-secondary", `linear-gradient(135deg, ${color3} 0%, ${color1} 100%)`);
-  root.style.setProperty("--gradient-accent", `linear-gradient(135deg, ${color2} 0%, ${color1} 50%, ${color3} 100%)`);
+  root.style.setProperty("--gradient-secondary", gradientSecondary);
+  root.style.setProperty("--gradient-accent", gradientAccent);
+
+  // Remove existing override style if any
+  const existing = document.getElementById("flik-theme-override");
+  if (existing) existing.remove();
+
+  // Inject a style tag that overrides all hardcoded color usages
+  const style = document.createElement("style");
+  style.id = "flik-theme-override";
+  style.innerHTML = `
+    /* Gradient text */
+    .gradient-text {
+      background: ${gradient} !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+
+    /* Gradient buttons */
+    .btn-gradient {
+      background: ${gradient} !important;
+    }
+
+    /* Gradient border pseudo-element */
+    .gradient-border::before {
+      background: ${gradient} !important;
+    }
+
+    /* Primary color usages - text */
+    [class*="text-[#FF6B35]"] { color: ${color1} !important; }
+    [class*="text-[#F72C25]"] { color: ${color2} !important; }
+    [class*="text-[#FFB800]"] { color: ${color3} !important; }
+
+    /* Primary color usages - backgrounds */
+    [class*="bg-[#FF6B35]"] { background-color: ${color1} !important; }
+    [class*="bg-[#F72C25]"] { background-color: ${color2} !important; }
+    [class*="bg-[#FFB800]"] { background-color: ${color3} !important; }
+
+    /* Opacity variants for bg */
+    [class*="bg-[#FF6B35]/"] { --tw-bg-opacity: 1; }
+    [class*="from-[#FF6B35]"] { --tw-gradient-from: ${color1} !important; }
+    [class*="from-[#F72C25]"] { --tw-gradient-from: ${color2} !important; }
+    [class*="from-[#FFB800]"] { --tw-gradient-from: ${color3} !important; }
+    [class*="via-[#FF6B35]"] { --tw-gradient-via: ${color1} !important; }
+    [class*="via-[#F72C25]"] { --tw-gradient-via: ${color2} !important; }
+    [class*="via-[#FFB800]"] { --tw-gradient-via: ${color3} !important; }
+    [class*="to-[#FF6B35]"] { --tw-gradient-to: ${color1} !important; }
+    [class*="to-[#F72C25]"] { --tw-gradient-to: ${color2} !important; }
+    [class*="to-[#FFB800]"] { --tw-gradient-to: ${color3} !important; }
+
+    /* Border colors */
+    [class*="border-[#FF6B35]"] { border-color: ${color1} !important; }
+    [class*="border-[#F72C25]"] { border-color: ${color2} !important; }
+    [class*="border-[#FFB800]"] { border-color: ${color3} !important; }
+
+    /* Ring colors */
+    [class*="ring-[#FF6B35]"] { --tw-ring-color: ${color1} !important; }
+
+    /* Shadow colors */
+    [class*="shadow-[#FF6B35]"] { --tw-shadow-color: ${color1} !important; }
+
+    /* Specific active nav states */
+    [class*="data-[state=active]:from-[#FF6B35]"] { --tw-gradient-from: ${color1} !important; }
+    [class*="data-[state=active]:to-[#FFB800]"] { --tw-gradient-to: ${color3} !important; }
+  `;
+  document.head.appendChild(style);
 }
