@@ -703,8 +703,11 @@ export default function CameraPage() {
 
         {/* Zoom capsule */}
         {!photo && (
-          <div className="absolute left-1/2 -translate-x-1/2 top-24">
-            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-2 py-1.5 border border-white/10">
+          <div className="absolute left-1/2 -translate-x-1/2 top-36">
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-2 py-1.5 border border-white/10">
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
                 return (
@@ -715,7 +718,7 @@ export default function CameraPage() {
                   </motion.button>
                 );
               })}
-            </div>
+            </motion.div>
           </div>
         )}
       </div>
