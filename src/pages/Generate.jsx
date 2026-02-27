@@ -423,17 +423,16 @@ export default function Generate() {
               </div>
 
               {/* Toolbar */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-1.5 sm:p-2 mt-2 bg-white/5 rounded-xl sm:rounded-2xl gap-2">
-                <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2 flex-wrap">
-
-
+              <div className="flex items-center gap-2 p-2 mt-2 bg-[#1a1a1a] rounded-2xl">
+                {/* Left Tools */}
+                <div className="flex items-center gap-1 flex-1">
+                  {/* Model Select */}
                   <Select value={aiModel} onValueChange={(value) => {
                     setAiModel(value);
                     base44.analytics.track({ eventName: 'generate_ai_model_changed', properties: { model: value } });
                   }}>
-                    <SelectTrigger className="h-8 sm:h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-[11px] sm:text-xs rounded-full gap-1.5 sm:gap-2 px-2.5 sm:px-3 focus:ring-0">
-                      <Zap className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${aiModel === AI_MODEL_OPTIONS.GEMINI ? 'text-[#FF6B35]' : 'text-white/50'}`} />
-                      <SelectValue />
+                    <SelectTrigger className="h-9 w-9 bg-[#2a2a2a] hover:bg-[#333] border-0 text-white rounded-full p-0 flex items-center justify-center focus:ring-0 shrink-0" title="AI Model">
+                      <Zap className={`w-4 h-4 ${aiModel === AI_MODEL_OPTIONS.GEMINI ? 'text-[#FF6B35]' : 'text-white/60'}`} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={AI_MODEL_OPTIONS.DEFAULT}>Standard</SelectItem>
@@ -441,38 +440,34 @@ export default function Generate() {
                     </SelectContent>
                   </Select>
 
-                  <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
-
+                  {/* Upload */}
                   <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
+                    className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shrink-0 ${
                       uploadedImages.length > 0
-                        ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        ? 'bg-[#FF6B35]/20 text-[#FF6B35]' 
+                        : 'bg-[#2a2a2a] hover:bg-[#333] text-white/60 hover:text-white'
                     }`}
+                    title={uploadedImages.length > 0 ? `${uploadedImages.length} image(s) added` : 'Upload images'}
                   >
-                    <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="hidden xs:inline">{uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}</span>
-                    <span className="xs:hidden">{uploadedImages.length > 0 ? uploadedImages.length : 'Add'}</span>
+                    {uploadedImages.length > 0 ? (
+                      <span className="text-[11px] font-bold">{uploadedImages.length}</span>
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
                   </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
+                  <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
 
+                  {/* Gallery */}
                   <button
                     onClick={handleGalleryPick}
-                    className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
+                    className="h-9 w-9 rounded-full flex items-center justify-center bg-[#2a2a2a] hover:bg-[#333] text-white/60 hover:text-white transition-all shrink-0"
                     title="Add from gallery"
                   >
-                    <Grid3x3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="hidden xs:inline">Gallery</span>
+                    <Grid3x3 className="w-4 h-4" />
                   </button>
 
+                  {/* Advanced Settings */}
                   <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
                     <PopoverTrigger asChild>
                       <button 
@@ -482,15 +477,19 @@ export default function Generate() {
                             setShowAdvancedSettings(true);
                           }
                         }}
-                        className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
+                        className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shrink-0 relative ${
                           (aspectRatio !== "1:1" || negativePrompt || imageCount !== 1) 
-                            ? 'bg-[#FF6B35]/10 text-[#FF6B35]' 
-                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                            ? 'bg-[#FF6B35]/20 text-[#FF6B35]' 
+                            : 'bg-[#2a2a2a] hover:bg-[#333] text-white/60 hover:text-white'
                         }`}
                         title="Advanced Settings"
                       >
-                        <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        {imageCount > 1 && <span className="font-bold text-[11px] sm:text-xs">×{imageCount}</span>}
+                        <Settings2 className="w-4 h-4" />
+                        {imageCount > 1 && (
+                          <span className="absolute -top-0.5 -right-0.5 text-[9px] font-bold bg-[#FF6B35] text-white rounded-full w-3.5 h-3.5 flex items-center justify-center leading-none">
+                            {imageCount}
+                          </span>
+                        )}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-80 bg-[#141414] border border-white/10 p-4 shadow-xl hidden md:block">
@@ -516,7 +515,6 @@ export default function Generate() {
                            ))}
                          </div>
                        </div>
-
                        <div className="space-y-2">
                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Aspect Ratio</Label>
                          <div className="grid grid-cols-3 gap-2">
@@ -542,57 +540,46 @@ export default function Generate() {
                            })}
                          </div>
                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
-                          <Input 
-                            value={negativePrompt}
-                            onChange={(e) => setNegativePrompt(e.target.value)}
-                            placeholder="Things to avoid (e.g. blurry, ugly)..."
-                            className="bg-black/20 border-white/10 h-8 text-xs text-white"
-                          />
-                        </div>
-
-                        {uploadedImages.length > 0 && (
-                          <div className="space-y-3">
-                             <div className="flex justify-between">
-                                <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
-                                <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
-                             </div>
-                             <Slider 
-                               value={[imageStrength]} 
-                               min={0.1} 
-                               max={0.9} 
-                               step={0.1} 
-                               onValueChange={(v) => setImageStrength(v[0])}
-                               className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
-                             />
-                             <p className="text-[10px] text-white/40 leading-tight">
-                               Higher values make the result look more like your reference images.
-                             </p>
-                          </div>
-                        )}
-                      </div>
+                       <div className="space-y-2">
+                         <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Negative Prompt</Label>
+                         <Input 
+                           value={negativePrompt}
+                           onChange={(e) => setNegativePrompt(e.target.value)}
+                           placeholder="Things to avoid (e.g. blurry, ugly)..."
+                           className="bg-black/20 border-white/10 h-8 text-xs text-white"
+                         />
+                       </div>
+                       {uploadedImages.length > 0 && (
+                         <div className="space-y-3">
+                           <div className="flex justify-between">
+                             <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
+                             <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
+                           </div>
+                           <Slider 
+                             value={[imageStrength]} 
+                             min={0.1} max={0.9} step={0.1} 
+                             onValueChange={(v) => setImageStrength(v[0])}
+                             className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
+                           />
+                           <p className="text-[10px] text-white/40 leading-tight">Higher values make the result look more like your reference images.</p>
+                         </div>
+                       )}
+                     </div>
                     </PopoverContent>
                   </Popover>
-
                 </div>
 
+                {/* Generate Button */}
                 <Button
                   onClick={handleGenerate}
                   disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
-                  className="btn-gradient text-white rounded-lg sm:rounded-xl px-4 sm:px-6 h-9 sm:h-10 text-sm shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all w-full sm:w-auto sm:ml-auto"
+                  className="h-10 w-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-xl hover:shadow-2xl hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-50 shrink-0 p-0"
+                  title="Generate"
                 >
                   {isGenerating ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 animate-spin" />
-                      <span className="text-xs sm:text-sm">Generating</span>
-                    </>
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <>
-                      <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
-                      <span className="text-xs sm:text-sm">Generate</span>
-                    </>
+                    <Wand2 className="w-5 h-5" />
                   )}
                 </Button>
               </div>
