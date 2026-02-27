@@ -547,7 +547,7 @@ export default function CameraPage() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md rounded-full px-4 py-1.5"
+              className="absolute top-16 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md rounded-full px-4 py-1.5"
             >
               <motion.div
                 animate={{ opacity: isPaused ? 0.3 : [1, 0.2, 1] }}
