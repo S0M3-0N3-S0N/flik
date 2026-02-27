@@ -32,6 +32,8 @@ export default function CameraPage() {
   const pinchStartZoomRef = useRef(null);
   const viewfinderRef = useRef(null);
   const tapTimeoutRef = useRef(null);
+  const initializingRef = useRef(false);
+  const countdownTimerRef = useRef(null);
 
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
@@ -55,14 +57,26 @@ export default function CameraPage() {
   const [settings, dispatchSettings] = useReducer(settingsReducer, initialSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [savedPhoto, setSavedPhoto] = useState(null);
+  const [cameraLoading, setCameraLoading] = useState(false);
 
   const mode = MODES[modeIndex];
 
-  // ─── Camera start ────────────────────────────────────────────────────────────
+  // ─── Safe camera initialization with guard ───────────────────────────────────
   const startCamera = useCallback(async (facing = facingMode, res = settings.resolution, fps = settings.fps) => {
-    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    // Prevent double initialization
+    if (initializingRef.current) return;
+    initializingRef.current = true;
+    setCameraLoading(true);
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+    }
     setHasStream(false);
+
     try {
+      // Only request audio for video mode (not photo)
+      const audioNeeded = modeIndex === 0; // VIDEO mode
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: facing,
@@ -70,16 +84,27 @@ export default function CameraPage() {
           height: { ideal: res },
           frameRate: { ideal: fps },
         },
-        audio: true,
+        audio: audioNeeded,
       });
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        // Safe play with error handling
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.error('Video play failed:', playErr);
+          toast.error("Camera error. Please refresh.");
+          return;
+        }
         setHasStream(true);
       }
+
       const track = stream.getVideoTracks()[0];
       const caps = track.getCapabilities?.() || {};
+
+      // Detect hardware capabilities
       setZoomCaps(caps.zoom ? { min: caps.zoom.min, max: caps.zoom.max, supported: true } : { min: 1, max: 4, supported: false });
       setExposureCaps(caps.exposureCompensation
         ? { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, supported: true }
@@ -89,16 +114,28 @@ export default function CameraPage() {
         res4k: !!(caps.height?.max >= 2160),
         fps60: !!(caps.frameRate?.max >= 60),
       });
-    } catch {
-      toast.error("Could not access camera. Please check permissions.");
+
+      // Reset zoom and exposure
+      setZoomValue(1);
+      setExposure(0);
+    } catch (err) {
+      console.error('Camera error:', err);
+      toast.error("Camera access denied or unavailable.");
+    } finally {
+      initializingRef.current = false;
+      setCameraLoading(false);
     }
-  }, [facingMode, settings.resolution, settings.fps]);
+  }, [facingMode, settings.resolution, settings.fps, modeIndex]);
 
   useEffect(() => {
     startCamera();
     return () => {
+      initializingRef.current = false;
       streamRef.current?.getTracks().forEach(t => t.stop());
       clearInterval(timerRef.current);
+      clearTimeout(countdownTimerRef.current);
+      clearTimeout(tapTimeoutRef.current);
+      clearTimeout(exposureThrottleRef.current);
     };
   }, []);
 
@@ -109,27 +146,24 @@ export default function CameraPage() {
     track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
   }, [flashMode]);
 
-  const cycleFlash = () => {
-    haptic(8);
-    setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off');
-  };
-
-  // ─── Zoom ─────────────────────────────────────────────────────────────────────
+  // ─── Zoom with throttling ────────────────────────────────────────────────────
   const applyZoom = useCallback((val) => {
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
+
+    const clamped = zoomCaps.supported
+      ? Math.max(zoomCaps.min, Math.min(zoomCaps.max, val))
+      : Math.max(0.5, Math.min(4, val));
+
     if (zoomCaps.supported) {
-      const clamped = Math.max(zoomCaps.min, Math.min(zoomCaps.max, val));
       track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
-      setZoomValue(clamped);
     } else {
-      const clamped = Math.max(0.5, Math.min(4, val));
+      // CSS fallback - scale video without affecting overlays
       if (videoRef.current) {
         videoRef.current.style.transform = `scale(${clamped})`;
-        videoRef.current.style.transformOrigin = 'center center';
       }
-      setZoomValue(clamped);
     }
+    setZoomValue(clamped);
   }, [zoomCaps]);
 
   const setZoomPreset = (preset) => {
@@ -140,7 +174,8 @@ export default function CameraPage() {
     setTimeout(() => setShowZoomOverlay(false), 1200);
   };
 
-  // ─── Pinch to zoom ────────────────────────────────────────────────────────────
+  // ─── Pinch to zoom with throttling ───────────────────────────────────────────
+  const pinchThrottleRef = useRef(null);
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
       clearTimeout(tapTimeoutRef.current);
@@ -154,6 +189,10 @@ export default function CameraPage() {
 
   const handleTouchMove = (e) => {
     if (e.touches.length === 2 && pinchStartDistRef.current) {
+      // Throttle pinch updates to prevent jank
+      if (pinchThrottleRef.current) return;
+      pinchThrottleRef.current = setTimeout(() => { pinchThrottleRef.current = null; }, 16);
+
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
@@ -171,11 +210,9 @@ export default function CameraPage() {
     }
   };
 
-  // ─── Tap to focus ────────────────────────────────────────────────────────────
+  // ─── Tap to focus with proper position calculation ──────────────────────────
   const handleViewfinderTap = (e) => {
-    // Don't handle if pinching
-    if (pinchStartDistRef.current) return;
-
+    if (pinchStartDistRef.current) return; // Ignore tap if pinching
     if (afLocked) {
       setAfLocked(false);
       setFocusPos(null);
@@ -188,23 +225,24 @@ export default function CameraPage() {
 
     const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
     const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+
+    // Account for CSS zoom transform on video
+    const zoomScale = zoomCaps.supported ? 1 : zoomValue;
+    const x = (clientX - rect.left) / zoomScale;
+    const y = (clientY - rect.top) / zoomScale;
 
     setFocusPos({ x, y });
     setShowExposure(true);
     haptic(8);
 
-    // Apply focus + exposure point to camera
     const track = streamRef.current?.getVideoTracks()[0];
     if (track) {
       const caps = track.getCapabilities?.() || {};
-      const settings = {};
       const advanced = {};
 
-      // Normalized focus point (0-1 range)
-      const normX = (clientX - rect.left) / rect.width;
-      const normY = (clientY - rect.top) / rect.height;
+      // Normalize to 0-1 range and clamp
+      const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
 
       if (caps.focusMode?.includes('single-shot')) {
         advanced.focusMode = 'single-shot';
@@ -231,14 +269,13 @@ export default function CameraPage() {
       }
     }
 
-    // Auto-hide exposure after 4s of no interaction
     clearTimeout(tapTimeoutRef.current);
     tapTimeoutRef.current = setTimeout(() => {
       if (!afLocked) setShowExposure(false);
     }, 4000);
   };
 
-  // ─── Long press → AE/AF lock ─────────────────────────────────────────────────
+  // ─── Long press for AE/AF lock ────────────────────────────────────────────────
   const handleLongPressStart = (e) => {
     if (e.touches?.length > 1) return;
     longPressRef.current = setTimeout(() => {
@@ -249,42 +286,52 @@ export default function CameraPage() {
   };
   const handleLongPressEnd = () => clearTimeout(longPressRef.current);
 
-  // ─── Exposure ─────────────────────────────────────────────────────────────────
+  // ─── Exposure with proper throttling and cleanup ─────────────────────────────
   const handleExposureChange = useCallback((val) => {
     const min = exposureCaps.min;
     const max = exposureCaps.max;
     const clamped = Math.max(min, Math.min(max, val));
     setExposure(clamped);
 
-    // Reset auto-hide timer
     clearTimeout(tapTimeoutRef.current);
     tapTimeoutRef.current = setTimeout(() => {
       if (!afLocked) setShowExposure(false);
     }, 4000);
 
+    // Clear old throttle
     if (exposureThrottleRef.current) clearTimeout(exposureThrottleRef.current);
+
     exposureThrottleRef.current = setTimeout(() => {
       const track = streamRef.current?.getVideoTracks()[0];
       if (!track) return;
 
       if (exposureCaps.supported) {
-        // Hardware exposure compensation
         track.applyConstraints({ advanced: [{ exposureCompensation: clamped }] }).catch(() => {});
       } else {
-        // CSS brightness fallback for unsupported devices
-        const brightness = 1 + (clamped / 2) * 0.8; // 0.2 to 1.8 range
+        const brightness = 1 + (clamped / 2) * 0.8;
         if (videoRef.current) {
           videoRef.current.style.filter = `brightness(${brightness})`;
         }
       }
-    }, 30);
+    }, 50);
   }, [exposureCaps, afLocked]);
 
-  // ─── Mode switching ───────────────────────────────────────────────────────────
+  // ─── Mode switching with recording guard ──────────────────────────────────────
   const switchMode = (idx) => {
     if (idx === modeIndex) return;
     haptic(12);
-    if (isRecording) stopRecording();
+
+    // Stop recording before switching
+    if (isRecording) {
+      stopRecording();
+    }
+
+    // Clear any pending countdown
+    if (countdown > 0) {
+      clearTimeout(countdownTimerRef.current);
+      setCountdown(0);
+    }
+
     setModeIndex(idx);
   };
 
@@ -300,17 +347,22 @@ export default function CameraPage() {
     swipeStartX.current = null;
   };
 
-  // ─── Countdown ────────────────────────────────────────────────────────────────
+  // ─── Countdown with proper cleanup ────────────────────────────────────────────
   const runCountdown = (action) => {
     if (settings.timer === 0) { action(); return; }
     let remaining = settings.timer;
     setCountdown(remaining);
     haptic(20);
-    const interval = setInterval(() => {
+
+    countdownTimerRef.current = setInterval(() => {
       remaining -= 1;
       haptic(20);
       setCountdown(remaining);
-      if (remaining <= 0) { clearInterval(interval); setCountdown(0); action(); }
+      if (remaining <= 0) {
+        clearInterval(countdownTimerRef.current);
+        setCountdown(0);
+        action();
+      }
     }, 1000);
   };
 
@@ -337,14 +389,13 @@ export default function CameraPage() {
     setIsSaving(true);
     toast.loading("Saving photo to gallery...", { id: 'photo-save' });
     try {
-      // Convert dataURL → Blob → File
       const res = await fetch(photo);
       const blob = await res.blob();
       const file = new File([blob], `flik_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      const creation = await base44.entities.Creation.create({
+      await base44.entities.Creation.create({
         type: 'image',
         url: file_url,
         thumbnail_url: file_url,
@@ -357,53 +408,73 @@ export default function CameraPage() {
     } catch (err) {
       console.error('Save error:', err);
       toast.error("Failed to save. Please try again.", { id: 'photo-save' });
+      setSavedPhoto(null);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // ─── Video recording ──────────────────────────────────────────────────────────
+  // ─── Video recording with guards ──────────────────────────────────────────────
   const startRecording = () => {
     if (!streamRef.current) return;
+    if (mediaRecorderRef.current) return; // Guard against double start
+
     haptic([15, 10, 15]);
     runCountdown(() => {
+      // Clear old chunks
       recordedChunksRef.current = [];
+
       const mimeType = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm']
         .find(t => MediaRecorder.isTypeSupported(t)) || 'video/webm';
-      const recorder = new MediaRecorder(streamRef.current, { mimeType });
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
-      recorder.onstop = async () => {
-        const blob = new Blob(recordedChunksRef.current, { type: mimeType });
-        const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-        const file = new File([blob], `flik_video_${Date.now()}.${ext}`, { type: mimeType });
 
-        toast.loading("Saving video to gallery...", { id: 'video-save' });
-        try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          const creation = await base44.entities.Creation.create({
-            type: 'video',
-            url: file_url,
-            title: `Video ${new Date().toLocaleDateString()}`,
-            metadata: { source: 'camera', facing_mode: facingMode, duration: recordingTime },
-          });
-          toast.success("Video saved to gallery!", { id: 'video-save' });
-        } catch (err) {
-          console.error('Video save error:', err);
-          toast.error("Failed to save video.", { id: 'video-save' });
-        }
-      };
-      mediaRecorderRef.current = recorder;
-      recorder.start(100);
-      setIsRecording(true);
-      setIsPaused(false);
-      setRecordingTime(0);
-      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+      try {
+        const recorder = new MediaRecorder(streamRef.current, { mimeType });
+        recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
+        recorder.onstop = async () => {
+          const blob = new Blob(recordedChunksRef.current, { type: mimeType });
+          const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+          const file = new File([blob], `flik_video_${Date.now()}.${ext}`, { type: mimeType });
+
+          toast.loading("Saving video to gallery...", { id: 'video-save' });
+          try {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            await base44.entities.Creation.create({
+              type: 'video',
+              url: file_url,
+              title: `Video ${new Date().toLocaleDateString()}`,
+              metadata: { source: 'camera', facing_mode: facingMode, duration: recordingTime },
+            });
+            toast.success("Video saved to gallery!", { id: 'video-save' });
+          } catch (err) {
+            console.error('Video save error:', err);
+            toast.error("Failed to save video.", { id: 'video-save' });
+          } finally {
+            mediaRecorderRef.current = null;
+            recordedChunksRef.current = [];
+          }
+        };
+
+        mediaRecorderRef.current = recorder;
+        recorder.start(100);
+        setIsRecording(true);
+        setIsPaused(false);
+        setRecordingTime(0);
+        timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+      } catch (err) {
+        console.error('MediaRecorder error:', err);
+        toast.error("Recording failed.");
+        mediaRecorderRef.current = null;
+      }
     });
   };
 
   const stopRecording = () => {
     haptic([15, 10, 15]);
-    mediaRecorderRef.current?.stop();
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== 'inactive') {
+      rec.stop();
+    }
+    mediaRecorderRef.current = null;
     setIsRecording(false);
     setIsPaused(false);
     clearInterval(timerRef.current);
@@ -411,13 +482,14 @@ export default function CameraPage() {
 
   const togglePause = () => {
     const rec = mediaRecorderRef.current;
-    if (!rec) return;
+    if (!rec || rec.state === 'inactive') return;
     haptic(8);
-    if (isPaused) {
+
+    if (rec.state === 'paused') {
       rec.resume();
       setIsPaused(false);
       timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
-    } else {
+    } else if (rec.state === 'recording') {
       rec.pause();
       setIsPaused(true);
       clearInterval(timerRef.current);
@@ -428,7 +500,11 @@ export default function CameraPage() {
     setPhoto(null);
     setSavedPhoto(null);
     setExposure(0);
-    if (videoRef.current) videoRef.current.style.filter = '';
+    if (videoRef.current) {
+      videoRef.current.style.filter = '';
+      videoRef.current.style.transform = '';
+    }
+    setZoomValue(1);
     startCamera(facingMode);
   };
 
@@ -438,6 +514,17 @@ export default function CameraPage() {
     const next = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(next);
     startCamera(next);
+  };
+
+  // ─── Handle settings changes safely ────────────────────────────────────────────
+  const handleSettingChange = (key, value) => {
+    dispatchSettings({ key, value });
+
+    if ((key === 'resolution' || key === 'fps') && !isRecording) {
+      const newRes = key === 'resolution' ? value : settings.resolution;
+      const newFps = key === 'fps' ? value : settings.fps;
+      startCamera(facingMode, newRes, newFps);
+    }
   };
 
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -457,6 +544,23 @@ export default function CameraPage() {
   return (
     <div className="fixed inset-0 bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
 
+      {/* Loading state */}
+      <AnimatePresence>
+        {cameraLoading && !hasStream && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/80 flex items-center justify-center z-50"
+          >
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="text-white text-sm">Starting camera...</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Viewfinder (fullscreen) ── */}
       <div
         ref={viewfinderRef}
@@ -471,13 +575,11 @@ export default function CameraPage() {
           handleTouchEnd(e);
           handleSwipeEnd(e);
           handleLongPressEnd();
-          // Only fire tap if it was a single-finger tap (not a pinch)
           if (!pinchStartDistRef.current && e.changedTouches.length === 1 && e.touches.length === 0) {
             handleViewfinderTap(e);
           }
         }}
         onClick={(e) => {
-          // For desktop/mouse
           if (e.pointerType !== 'touch') handleViewfinderTap(e);
         }}
       >
@@ -573,7 +675,7 @@ export default function CameraPage() {
               <X className="w-5 h-5 text-white" />
             </motion.button>
 
-            <motion.button whileTap={{ scale: 0.85 }} onClick={cycleFlash}
+            <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'); }}
               className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
               {flashIcon[flashMode]}
             </motion.button>
@@ -655,14 +757,14 @@ export default function CameraPage() {
               {/* Shutter */}
               {mode === 'PHOTO' ? (
                 <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
-                  disabled={!hasStream || countdown > 0}
+                  disabled={!hasStream || countdown > 0 || cameraLoading}
                   className="w-20 h-20 rounded-full disabled:opacity-40"
                   style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
                   <div className="w-full h-full rounded-full bg-white" />
                 </motion.button>
               ) : (
                 <motion.button whileTap={{ scale: 0.9 }} onClick={isRecording ? stopRecording : startRecording}
-                  disabled={!hasStream || countdown > 0}
+                  disabled={!hasStream || countdown > 0 || cameraLoading}
                   className="w-20 h-20 rounded-full disabled:opacity-40"
                   style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
                   <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
@@ -723,12 +825,7 @@ export default function CameraPage() {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         settings={settings}
-        onChange={(key, value) => {
-          dispatchSettings({ key, value });
-          if (key === 'resolution' || key === 'fps') {
-            startCamera(facingMode, key === 'resolution' ? value : settings.resolution, key === 'fps' ? value : settings.fps);
-          }
-        }}
+        onChange={handleSettingChange}
         supported={supported}
       />
     </div>
