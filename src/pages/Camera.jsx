@@ -344,15 +344,10 @@ export default function CameraPage() {
     }, 50);
   }, [exposureCaps, afLocked]);
 
-  // ─── Mode switching with recording guard ──────────────────────────────────────
+  // ─── Mode switching ──────────────────────────────────────────────────────────
   const switchMode = (idx) => {
     if (idx === modeIndex) return;
     haptic(12);
-
-    // Stop recording before switching
-    if (isRecording) {
-      stopRecording();
-    }
 
     // Clear any pending countdown
     if (countdown > 0) {
