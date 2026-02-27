@@ -239,100 +239,102 @@ function LayoutContent({ children, currentPageName }) {
         </main>
 
         {/* Bottom Navigation Bar - Mobile Only */}
-        {currentPageName !== "Camera" && <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>}
-          <div className="flex items-center justify-around px-4 py-3">
-            <button
-              onClick={(e) => {
-                if (currentPageName === "Editor") {
-                  e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                  navigate(createPageUrl("Editor"));
-                }
-              }}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
-                currentPageName === "Editor" 
-                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                  : "text-white/60"
-              }`}
-            >
-              <Image className="w-6 h-6" />
-              <span className="text-[10px] font-medium">Editor</span>
-            </button>
-
-            <button
-              onClick={(e) => {
-                if (currentPageName === "Generate") {
-                  e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                  navigate(createPageUrl("Generate"));
-                }
-              }}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
-                currentPageName === "Generate" 
-                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                  : "text-white/60"
-              }`}
-            >
-              <Wand2 className="w-6 h-6" />
-              <span className="text-[10px] font-medium">Generate</span>
-            </button>
-
-            {user?.role === 'admin' && (
+        {currentPageName !== "Camera" && (
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
+            <div className="flex items-center justify-around px-4 py-3">
               <button
-                onClick={() => navigate(createPageUrl("Camera"))}
+                onClick={(e) => {
+                  if (currentPageName === "Editor") {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    navigate(createPageUrl("Editor"));
+                  }
+                }}
                 className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
-                  currentPageName === "Camera"
-                    ? "text-[#FF6B35] bg-[#FF6B35]/10"
+                  currentPageName === "Editor" 
+                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                     : "text-white/60"
                 }`}
               >
-                <Video className="w-6 h-6" />
-                <span className="text-[10px] font-medium">Camera</span>
+                <Image className="w-6 h-6" />
+                <span className="text-[10px] font-medium">Editor</span>
               </button>
-            )}
 
-            <button
-              onClick={() => setIsOpen(true)}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
-                isOpen 
-                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                  : "text-white/60"
-              }`}
-            >
-              <Sparkles className="w-6 h-6" />
-              <span className="text-[10px] font-medium">FLIK</span>
-            </button>
+              <button
+                onClick={(e) => {
+                  if (currentPageName === "Generate") {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    navigate(createPageUrl("Generate"));
+                  }
+                }}
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                  currentPageName === "Generate" 
+                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
+                    : "text-white/60"
+                }`}
+              >
+                <Wand2 className="w-6 h-6" />
+                <span className="text-[10px] font-medium">Generate</span>
+              </button>
 
-            <button
-              onClick={(e) => {
-                if (currentPageName === "Profile") {
-                  e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                  navigate(createPageUrl("Profile"));
-                }
-              }}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
-                currentPageName === "Profile" 
-                  ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                  : "text-white/60"
-              }`}
-            >
-              <div className={`w-6 h-6 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
-                currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
-              }`}>
-                {user?.profile_picture ? (
-                  <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
-                ) : (
-                  user?.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />
-                )}
-              </div>
-              <span className="text-[10px] font-medium">Profile</span>
-            </button>
-          </div>
-        </nav>
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => navigate(createPageUrl("Camera"))}
+                  className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                    currentPageName === "Camera"
+                      ? "text-[#FF6B35] bg-[#FF6B35]/10"
+                      : "text-white/60"
+                  }`}
+                >
+                  <Video className="w-6 h-6" />
+                  <span className="text-[10px] font-medium">Camera</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setIsOpen(true)}
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                  isOpen 
+                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
+                    : "text-white/60"
+                }`}
+              >
+                <Sparkles className="w-6 h-6" />
+                <span className="text-[10px] font-medium">FLIK</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  if (currentPageName === "Profile") {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    navigate(createPageUrl("Profile"));
+                  }
+                }}
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                  currentPageName === "Profile" 
+                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
+                    : "text-white/60"
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
+                  currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
+                }`}>
+                  {user?.profile_picture ? (
+                    <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    user?.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />
+                  )}
+                </div>
+                <span className="text-[10px] font-medium">Profile</span>
+              </button>
+            </div>
+          </nav>
+        )}
 
         {/* Global FLIK Button - Draggable (Desktop Only) */}
         <motion.button
