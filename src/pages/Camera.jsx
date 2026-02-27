@@ -6,6 +6,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from '@/utils';
 import { toast } from "sonner";
 import { base44 } from '@/api/base44Client';
+import * as tf from '@tensorflow/tfjs';
+import * as faceDetection from '@tensorflow-models/face-detection';
 import FocusSquare from '../components/camera/FocusSquare';
 import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
