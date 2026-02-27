@@ -239,18 +239,6 @@ function LayoutContent({ children, currentPageName }) {
                 <span className="text-sm font-medium">Photo Studio</span>
               </button>
 
-              <button
-                onClick={() => navigate(currentPageName === "Generate" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Generate"))}
-                className={`flex items-center gap-2 transition-all ${
-                  currentPageName === "Generate" 
-                    ? "text-white" 
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Wand2 className="w-5 h-5" />
-                <span className="text-sm font-medium">Imagine AI</span>
-              </button>
-
               {user?.role === 'admin' && (
                 <button
                   onClick={() => navigate(createPageUrl("Camera"))}
@@ -264,6 +252,18 @@ function LayoutContent({ children, currentPageName }) {
                   <span className="text-sm font-medium">Camera</span>
                 </button>
               )}
+
+              <button
+                onClick={() => navigate(currentPageName === "Generate" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Generate"))}
+                className={`flex items-center gap-2 transition-all ${
+                  currentPageName === "Generate" 
+                    ? "text-white" 
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Wand2 className="w-5 h-5" />
+                <span className="text-sm font-medium">Imagine AI</span>
+              </button>
             </div>
 
             <button
