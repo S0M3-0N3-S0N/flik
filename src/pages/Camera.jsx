@@ -465,10 +465,19 @@ export default function CameraPage() {
     setIsSaving(true);
     toast.loading("Saving photo to gallery...", { id: 'photo-save' });
     try {
-      const res = await fetch(photo);
-      const blob = await res.blob();
+      let blob;
+      
+      // Handle native file URL vs data URL
+      if (CapacitorCameraAPI.isNative() && photo.startsWith('file://')) {
+        const res = await fetch(photo);
+        blob = await res.blob();
+      } else {
+        // Data URL conversion
+        const res = await fetch(photo);
+        blob = await res.blob();
+      }
+      
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
       await base44.entities.Creation.create({
@@ -479,7 +488,6 @@ export default function CameraPage() {
         metadata: { source: 'camera', facing_mode: facingMode },
       });
 
-      // Invalidate creations query to refresh gallery
       queryClient.invalidateQueries({ queryKey: ['creations'] });
 
       setSavedPhoto(true);
