@@ -200,6 +200,9 @@ export default function CameraPage() {
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
+      clearInterval(burstIntervalRef.current);
+      filterPipelineRef.current?.cleanup();
+      arEngineRef.current?.cleanup();
       unsubscribe();
     };
   }, []);
