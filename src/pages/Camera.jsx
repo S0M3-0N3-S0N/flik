@@ -93,7 +93,7 @@ export default function CameraPage() {
 
     try {
       // Try native camera first on iOS
-      if (CapacitorCameraAPI.isNative()) {
+      if (CapacitorCameraAPI?.isNative?.()) {
         const capabilities = await CapacitorCameraAPI.startCamera({ 
           facing: facing === 'user' ? 'front' : 'back' 
         });
