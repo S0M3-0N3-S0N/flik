@@ -844,14 +844,14 @@ export default function Profile() {
               />
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin">
-               <Tabs value={filterType} onValueChange={setFilterType} className="flex-shrink-0">
-                <TabsList className="bg-white/5 border border-white/10 h-9 sm:h-10 rounded-xl p-0.5 sm:p-1 gap-0.5 sm:gap-1">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Tabs value={filterType} onValueChange={setFilterType} className="w-full sm:flex-shrink-0 sm:w-auto">
+                <TabsList className="bg-white/5 border border-white/10 h-9 sm:h-10 rounded-xl p-0.5 sm:p-1 gap-0.5 sm:gap-1 w-full sm:w-auto">
                   {FILTER_TYPES.map(filter => (
                     <TabsTrigger 
                       key={filter.value}
                       value={filter.value} 
-                      className="px-2.5 sm:px-5 h-8 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap"
+                      className="flex-1 sm:flex-none px-2.5 sm:px-5 h-8 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800] data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap"
                     >
                       {filter.label}
                     </TabsTrigger>
@@ -859,21 +859,23 @@ export default function Profile() {
                 </TabsList>
               </Tabs>
 
-              <MobileSelect 
-                value={dateFilter} 
-                onValueChange={setDateFilter}
-                options={DATE_FILTERS}
-                className="w-[100px] sm:w-[140px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all"
-                label="Date Filter"
-              />
+              <div className="flex gap-2 sm:ml-auto">
+                <MobileSelect 
+                  value={dateFilter} 
+                  onValueChange={setDateFilter}
+                  options={DATE_FILTERS}
+                  className="flex-1 sm:flex-none sm:w-[140px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm hover:bg-white/10 transition-all"
+                  label="Date Filter"
+                />
 
-              <MobileSelect 
-                value={sortBy} 
-                onValueChange={setSortBy}
-                options={SORT_OPTIONS}
-                className="w-[105px] sm:w-[160px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm flex-shrink-0 hover:bg-white/10 transition-all"
-                label="Sort By"
-              />
+                <MobileSelect 
+                  value={sortBy} 
+                  onValueChange={setSortBy}
+                  options={SORT_OPTIONS}
+                  className="flex-1 sm:flex-none sm:w-[160px] bg-white/5 border-white/10 text-white h-9 sm:h-10 rounded-xl text-[11px] sm:text-sm hover:bg-white/10 transition-all"
+                  label="Sort By"
+                />
+              </div>
             </div>
           </div>
 
