@@ -402,16 +402,17 @@ export default function CameraPage() {
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       setPhoto(dataUrl);
       setSavedPhoto(null);
-      // Auto-save to gallery
-      autoSavePhoto(dataUrl);
     });
   };
 
-  const autoSavePhoto = async (photoData) => {
+  // ─── Save photo to gallery ────────────────────────────────────────────────────
+  const savePhoto = async () => {
+    if (!photo || isSaving) return;
+    haptic(15);
     setIsSaving(true);
-    toast.loading("Saving to gallery...", { id: 'photo-save' });
+    toast.loading("Saving photo to gallery...", { id: 'photo-save' });
     try {
-      const res = await fetch(photoData);
+      const res = await fetch(photo);
       const blob = await res.blob();
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
@@ -425,19 +426,19 @@ export default function CameraPage() {
         metadata: { source: 'camera', facing_mode: facingMode },
       });
 
+      // Invalidate creations query to refresh gallery
       queryClient.invalidateQueries({ queryKey: ['creations'] });
+
       setSavedPhoto(true);
       toast.success("Saved to gallery!", { id: 'photo-save' });
     } catch (err) {
-      console.error('Auto-save error:', err);
-      toast.error("Failed to save. Try again manually.", { id: 'photo-save' });
+      console.error('Save error:', err);
+      toast.error("Failed to save. Please try again.", { id: 'photo-save' });
       setSavedPhoto(null);
     } finally {
       setIsSaving(false);
     }
   };
-
-
 
 
 
@@ -681,9 +682,9 @@ export default function CameraPage() {
           </>
         ) : (
           <>
-            <p className="text-white/40 text-xs tracking-widest uppercase">{isSaving ? 'Saving...' : 'Saved to gallery'}</p>
+            <p className="text-white/40 text-xs tracking-widest uppercase">Photo captured</p>
             <div className="w-full flex flex-col items-center gap-3 px-8">
-              <div className="flex items-center justify-center w-full gap-6">
+              <div className="flex items-center justify-around w-full">
                 <motion.button whileTap={{ scale: 0.85 }} onClick={retake} className="flex flex-col items-center gap-1">
                   <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
                     <RotateCcw className="w-6 h-6 text-white" />
@@ -691,15 +692,16 @@ export default function CameraPage() {
                   <span className="text-white/50 text-xs">Retake</span>
                 </motion.button>
 
-                <motion.button whileTap={{ scale: 0.9 }}
-                  className="w-20 h-20 rounded-full"
-                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}
-                  disabled>
+                <motion.button whileTap={{ scale: 0.9 }} onClick={savePhoto} disabled={isSaving || !!savedPhoto}
+                  className="w-20 h-20 rounded-full disabled:opacity-70"
+                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
                   <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
                     {isSaving ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
+                    ) : savedPhoto ? (
                       <Check className="w-7 h-7 text-green-400" />
+                    ) : (
+                      <span className="text-white font-bold text-xs tracking-wide">SAVE</span>
                     )}
                   </div>
                 </motion.button>
