@@ -100,9 +100,6 @@ export default function CameraPage() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: facing,
-          width: { ideal: res === 2160 ? 3840 : res === 720 ? 1280 : 1920 },
-          height: { ideal: res },
-          frameRate: { ideal: fps },
         },
         audio: audioNeeded,
       });
