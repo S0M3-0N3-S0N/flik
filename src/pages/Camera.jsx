@@ -34,6 +34,8 @@ export default function CameraPage() {
   const tapTimeoutRef = useRef(null);
   const initializingRef = useRef(false);
   const countdownTimerRef = useRef(null);
+  const tapCountRef = useRef(0);
+  const doubleTapTimeoutRef = useRef(null);
 
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
