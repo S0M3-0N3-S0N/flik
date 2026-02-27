@@ -468,7 +468,7 @@ export default function CameraPage() {
       let blob;
       
       // Handle native file URL vs data URL
-      if (CapacitorCameraAPI.isNative() && photo.startsWith('file://')) {
+      if (CapacitorCameraAPI?.isNative?.() && photo.startsWith('file://')) {
         const res = await fetch(photo);
         blob = await res.blob();
       } else {
