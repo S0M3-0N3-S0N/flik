@@ -330,6 +330,7 @@ export default function CameraPage() {
     if (afLocked) {
       setAfLocked(false);
       setFocusPos(null);
+      setDetectedFace(null); // Clear face detection on unlock
       setShowExposure(false);
       return;
     }
@@ -346,6 +347,7 @@ export default function CameraPage() {
     const y = (clientY - rect.top) / zoomScale;
 
     setFocusPos({ x, y });
+    setDetectedFace(null); // Clear auto-detection when user taps
     setShowExposure(true);
     haptic(8);
 
