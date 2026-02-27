@@ -591,7 +591,7 @@ export default function CameraPage() {
 
         {/* Top controls */}
         {!photo && (
-          <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5" style={{ transform: `rotate(${orientation}deg)` }}>
+          <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5">
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }}
               className="md:hidden w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
               <X className="w-5 h-5 text-white" />
@@ -620,7 +620,7 @@ export default function CameraPage() {
 
         {/* Zoom capsule */}
         {!photo && (
-          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%) rotate(${orientation}deg)` }}>
+          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%)` }}>
             <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
@@ -640,7 +640,7 @@ export default function CameraPage() {
       {/* ── Bottom controls (floating overlay) ── */}
       <div
         className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 transition-all duration-300 ease-out bg-transparent pt-3"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', transform: `rotate(${orientation}deg)` }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
       >
