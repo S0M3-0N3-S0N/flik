@@ -1159,6 +1159,8 @@ export default function Profile() {
         </div>
       </div>
 
+      <GradientEditor open={showGradientEditor} onOpenChange={setShowGradientEditor} />
+
       {/* Dialogs */}
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent className="bg-[#1a1a1a] border-white/10 text-white sm:max-w-md">
