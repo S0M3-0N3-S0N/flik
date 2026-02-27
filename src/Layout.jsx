@@ -8,6 +8,7 @@ import { FlikProvider, useFlik } from "@/components/FlikContext";
 import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
 import { base44 } from "@/api/base44Client";
+import { applyGradientColors } from "@/components/admin/GradientEditor";
 
 export const LanguageContext = React.createContext();
 
