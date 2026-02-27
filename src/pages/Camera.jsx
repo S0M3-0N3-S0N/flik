@@ -419,7 +419,19 @@ export default function CameraPage() {
   // ─── Photo capture ────────────────────────────────────────────────────────────
   const takePhoto = () => {
     haptic([10, 5, 30]);
-    runCountdown(() => {
+    runCountdown(async () => {
+      if (CapacitorCameraAPI.isNative()) {
+        try {
+          const result = await CapacitorCameraAPI.capturePhoto({ quality: 0.95 });
+          setPhoto(result.fileUrl);
+          setSavedPhoto(null);
+        } catch (err) {
+          console.error('Native capture failed:', err);
+          toast.error('Failed to capture photo');
+        }
+        return;
+      }
+
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas) return;
