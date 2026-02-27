@@ -48,6 +48,15 @@ function LayoutContent({ children, currentPageName }) {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
+  // Load saved gradient colors on mount
+  useEffect(() => {
+    base44.entities.AppConfiguration.filter({ key: "gradient_colors" }).then((configs) => {
+      if (configs.length > 0) {
+        applyGradientColors(configs[0].value);
+      }
+    }).catch(() => {});
+  }, []);
+
   // Global keyboard shortcut for FLIK
   useEffect(() => {
     const handleKeyDown = (e) => {
