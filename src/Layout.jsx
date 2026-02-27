@@ -223,7 +223,7 @@ function LayoutContent({ children, currentPageName }) {
         
         {/* Header */}
         <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="px-6 h-16 flex items-center justify-between">
             {isChildRoute ? (
               <button 
                 onClick={() => navigate(-1)}
