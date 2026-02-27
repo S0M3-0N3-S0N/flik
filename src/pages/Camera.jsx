@@ -615,7 +615,18 @@ export default function CameraPage() {
           }
         }}
         onClick={(e) => {
-          if (e.pointerType !== 'touch') handleViewfinderTap(e);
+          if (e.pointerType !== 'touch') {
+            tapCountRef.current += 1;
+            clearTimeout(doubleTapTimeoutRef.current);
+            if (tapCountRef.current === 2) {
+              handleViewfinderTap(e);
+              tapCountRef.current = 0;
+            } else {
+              doubleTapTimeoutRef.current = setTimeout(() => {
+                tapCountRef.current = 0;
+              }, 300);
+            }
+          }
         }}
       >
         {photo ? (
