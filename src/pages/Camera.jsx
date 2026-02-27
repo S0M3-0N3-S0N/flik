@@ -186,6 +186,9 @@ export default function CameraPage() {
     return () => {
       initializingRef.current = false;
       streamRef.current?.getTracks().forEach(t => t.stop());
+      if (CapacitorCameraAPI.isNative()) {
+        CapacitorCameraAPI.stopCamera().catch(() => {});
+      }
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
