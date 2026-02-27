@@ -160,7 +160,6 @@ export default function CameraPage() {
     return () => {
       initializingRef.current = false;
       streamRef.current?.getTracks().forEach(t => t.stop());
-      clearInterval(timerRef.current);
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
