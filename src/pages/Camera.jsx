@@ -479,6 +479,31 @@ export default function CameraPage() {
     return Math.abs(map[p] - zoomValue) < 0.08;
   });
 
+  // ─── FLIK Actions Registration ───────────────────────────────────────────────
+  useFlikActions('Camera', {
+    takePhoto,
+    flipCamera,
+    setFlashMode,
+    toggleGrid: () => dispatchSettings({ key: 'showGrid', value: !settings.showGrid }),
+    setTimer: (seconds) => dispatchSettings({ key: 'timer', value: seconds }),
+    setZoom: (value) => applyZoom(value),
+    savePhoto,
+    retake,
+    openSettings: () => setSettingsOpen(true),
+    closeSettings: () => setSettingsOpen(false),
+  }, () => ({
+    photo,
+    flashMode,
+    zoomValue,
+    settings,
+    hasStream,
+    facingMode,
+    exposure,
+    countdown,
+    isSaving,
+    savedPhoto,
+  }));
+
   return (
     <div className="fixed inset-0 bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
 
