@@ -198,9 +198,20 @@ export default function CameraPage() {
 
   // ─── Flash torch ─────────────────────────────────────────────────────────────
   useEffect(() => {
+    if (CapacitorCameraAPI.isNative()) {
+      CapacitorCameraAPI.setTorch(flashMode === 'on').catch(() => {});
+      return;
+    }
+
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
-    track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
+    
+    track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {
+      // Fallback: simulate torch with brightness filter
+      if (videoRef.current) {
+        videoRef.current.style.filter = flashMode === 'on' ? 'brightness(1.8)' : '';
+      }
+    });
   }, [flashMode]);
 
   // ─── Zoom with throttling ────────────────────────────────────────────────────
