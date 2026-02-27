@@ -402,17 +402,16 @@ export default function CameraPage() {
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       setPhoto(dataUrl);
       setSavedPhoto(null);
+      // Auto-save to gallery
+      autoSavePhoto(dataUrl);
     });
   };
 
-  // ─── Save photo to gallery ────────────────────────────────────────────────────
-  const savePhoto = async () => {
-    if (!photo || isSaving) return;
-    haptic(15);
+  const autoSavePhoto = async (photoData) => {
     setIsSaving(true);
-    toast.loading("Saving photo to gallery...", { id: 'photo-save' });
+    toast.loading("Saving to gallery...", { id: 'photo-save' });
     try {
-      const res = await fetch(photo);
+      const res = await fetch(photoData);
       const blob = await res.blob();
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
@@ -426,19 +425,19 @@ export default function CameraPage() {
         metadata: { source: 'camera', facing_mode: facingMode },
       });
 
-      // Invalidate creations query to refresh gallery
       queryClient.invalidateQueries({ queryKey: ['creations'] });
-
       setSavedPhoto(true);
       toast.success("Saved to gallery!", { id: 'photo-save' });
     } catch (err) {
-      console.error('Save error:', err);
-      toast.error("Failed to save. Please try again.", { id: 'photo-save' });
+      console.error('Auto-save error:', err);
+      toast.error("Failed to save. Try again manually.", { id: 'photo-save' });
       setSavedPhoto(null);
     } finally {
       setIsSaving(false);
     }
   };
+
+
 
 
 
