@@ -707,11 +707,6 @@ export default function CameraPage() {
                 </div>
               )}
               <motion.button whileTap={{ scale: 0.85 }}
-                onClick={() => { haptic(8); dispatchSettings({ key: 'showGrid', value: !settings.showGrid }); }}
-                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-                <Grid3X3 className={`w-4 h-4 ${settings.showGrid ? 'text-[#FF6B35]' : 'text-white/70'}`} />
-              </motion.button>
-              <motion.button whileTap={{ scale: 0.85 }}
                 onClick={() => setSettingsOpen(true)}
                 className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
                 <Settings className="w-4 h-4 text-white/70" />
