@@ -60,31 +60,6 @@ export default function CameraPage() {
 
   const mode = MODES[modeIndex];
 
-  // ─── FLIK Actions Registration ───────────────────────────────────────────────
-  useFlikActions('Camera', {
-    takePhoto,
-    flipCamera,
-    setFlashMode,
-    toggleGrid: () => dispatchSettings({ key: 'showGrid', value: !settings.showGrid }),
-    setTimer: (seconds) => dispatchSettings({ key: 'timer', value: seconds }),
-    setZoom: (value) => applyZoom(value),
-    savePhoto,
-    retake,
-    openSettings: () => setSettingsOpen(true),
-    closeSettings: () => setSettingsOpen(false),
-  }, () => ({
-    photo,
-    flashMode,
-    zoomValue,
-    settings,
-    hasStream,
-    facingMode,
-    exposure,
-    countdown,
-    isSaving,
-    savedPhoto,
-  }));
-
   // Handle device orientation changes
   useEffect(() => {
     const handleOrientationChange = () => {
