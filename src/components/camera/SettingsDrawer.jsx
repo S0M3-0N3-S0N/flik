@@ -1,18 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-export default function SettingsDrawer({ open, onClose, settings, onChange, supported }) {
+export default function SettingsDrawer({ open, onClose, settings, onChange }) {
   const timerOptions = [{ label: 'Off', value: 0 }, { label: '3s', value: 3 }, { label: '10s', value: 10 }];
-  const resOptions = [
-    { label: '720p', value: 720 },
-    { label: '1080p', value: 1080 },
-    ...(supported.res4k ? [{ label: '4K', value: 2160 }] : []),
-  ];
-  const fpsOptions = [
-    { label: '24', value: 24 },
-    { label: '30', value: 30 },
-    ...(supported.fps60 ? [{ label: '60', value: 60 }] : []),
-  ];
 
   return (
     <AnimatePresence>
