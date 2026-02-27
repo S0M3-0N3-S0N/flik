@@ -472,6 +472,47 @@ export default function CameraPage() {
     });
   };
 
+  // ─── Burst mode capture ───────────────────────────────────────────────────────
+  const startBurstCapture = () => {
+    if (!hasStream) return;
+    haptic([10, 5, 30]);
+    setIsBursting(true);
+    setBurstCount(0);
+    setBurstPhotos([]);
+
+    const photos = [];
+    let count = 0;
+    const maxBursts = 20;
+
+    burstIntervalRef.current = setInterval(() => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas) return;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      photos.push(canvas.toDataURL('image/jpeg', 0.85));
+
+      count++;
+      setBurstCount(count);
+
+      if (count >= maxBursts) {
+        clearInterval(burstIntervalRef.current);
+        setIsBursting(false);
+        setBurstPhotos(photos);
+      }
+    }, 100);
+  };
+
+  const selectBurstPhoto = async (photoDataUrl) => {
+    setPhoto(photoDataUrl);
+    setSavedPhoto(null);
+    setBurstPhotos([]);
+    setBurstCount(0);
+  };
+
   // ─── Save photo to gallery ────────────────────────────────────────────────────
   const savePhoto = async () => {
     if (!photo || isSaving) return;
@@ -485,12 +526,21 @@ export default function CameraPage() {
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
+      const metadata = {
+        source: 'camera',
+        facing_mode: facingMode,
+        filter: activeFilter !== 'none' ? activeFilter : undefined,
+        effect: activeEffect || undefined,
+        zoom: zoomValue,
+        exposure: exposure,
+      };
+
       await base44.entities.Creation.create({
         type: 'image',
         url: file_url,
         thumbnail_url: file_url,
         title: `Photo ${new Date().toLocaleDateString()}`,
-        metadata: { source: 'camera', facing_mode: facingMode },
+        metadata,
       });
 
       // Invalidate creations query to refresh gallery
