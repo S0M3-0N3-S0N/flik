@@ -9,6 +9,12 @@ import { base44 } from '@/api/base44Client';
 import FocusSquare from '../components/camera/FocusSquare';
 import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
+import CameraModeTabs from '../components/camera/CameraModeTabs';
+import CameraFilterCarousel from '../components/camera/CameraFilterCarousel';
+import { CameraFilterPipeline } from '../components/camera/CameraFilterPipeline';
+import AREffectsEngine, { EFFECTS } from '../components/camera/AREffectsEngine';
+import BurstModeUI from '../components/camera/BurstModeUI';
+import AspectRatioSelector from '../components/camera/AspectRatioSelector';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
