@@ -769,7 +769,20 @@ export default function CameraPage() {
                       : <Pause className="w-5 h-5 text-white" fill="currentColor" />}
                   </motion.button>
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10" />
+                  <button 
+                    onClick={() => navigate(createPageUrl("Profile"))}
+                    className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
+                  >
+                    {latestCreation?.thumbnail_url || latestCreation?.url ? (
+                      <img 
+                        src={latestCreation.thumbnail_url || latestCreation.url} 
+                        alt="Latest" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-white/5" />
+                    )}
+                  </button>
                 )}
               </div>
 
