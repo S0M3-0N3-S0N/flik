@@ -762,7 +762,7 @@ export default function CameraPage() {
 
 
             {/* Shutter row */}
-            <div className="w-full flex items-center justify-around px-8">
+            <div className="w-full flex items-center justify-center px-8">
               <button 
                 onClick={() => navigate(createPageUrl("Profile"))}
                 className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
