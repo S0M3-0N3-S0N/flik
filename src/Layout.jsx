@@ -284,19 +284,30 @@ function LayoutContent({ children, currentPageName }) {
         </nav>
 
         
+        {/* Mobile Top Navigation - Only on child routes */}
+        {isChildRoute && (
+          <div className="md:hidden fixed top-0 left-0 right-0 z-40 glass-card border-b border-white/5 backdrop-blur-xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+            <div className="flex items-center px-4 py-3">
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-white/60 hover:text-white transition-all"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
-        <main className="pb-20 md:pb-0 md:pt-14">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+        <main className={`pb-20 md:pb-0 md:pt-14 ${isChildRoute ? 'pt-20' : ''}`} style={isChildRoute ? { paddingTop: 'calc(env(safe-area-inset-top) + 56px)' } : {}}>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            {children}
+          </motion.div>
         </main>
 
         {/* Bottom Navigation Bar - Mobile Only */}
