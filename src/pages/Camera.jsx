@@ -826,7 +826,7 @@ export default function CameraPage() {
                 </motion.button>
               </div>
 
-              <div className="flex gap-2 w-full max-w-xs justify-center mx-auto">
+              <div className="flex gap-2 w-full max-w-xs justify-center">
                 <motion.button whileTap={{ scale: 0.95 }} 
                   onClick={() => { haptic(10); localStorage.setItem('capturedPhoto', photo); navigate(createPageUrl('Editor')); }}
                   className="flex-1 py-2 px-3 rounded-lg bg-gradient-to-r from-white/15 to-white/5 hover:from-white/25 hover:to-white/10 border border-white/20 hover:border-white/40 text-white text-sm font-medium transition-all flex items-center justify-center gap-2 backdrop-blur-sm">
