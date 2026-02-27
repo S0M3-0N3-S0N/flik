@@ -198,7 +198,7 @@ export default function CameraPage() {
 
   // ─── Flash torch ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (CapacitorCameraAPI.isNative()) {
+    if (CapacitorCameraAPI?.isNative?.()) {
       CapacitorCameraAPI.setTorch(flashMode === 'on').catch(() => {});
       return;
     }
