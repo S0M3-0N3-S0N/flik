@@ -59,6 +59,9 @@ export default function CameraPage() {
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
+  const [detector, setDetector] = useState(null);
+  const [detectedFace, setDetectedFace] = useState(null);
+  const detectionFrameRef = useRef(null);
 
   const mode = MODES[modeIndex];
 
