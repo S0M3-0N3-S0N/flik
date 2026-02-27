@@ -112,14 +112,18 @@ export default function Editor() {
     hasImage: !!currentImage
   }));
 
+  const location = useLocation();
+
   // Load image from URL parameter
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(location.search);
     const loadUrl = urlParams.get('load');
     if (loadUrl) {
-      setCurrentImage({ url: loadUrl, preview: loadUrl, name: 'loaded_image.png' });
+      const decodedUrl = decodeURIComponent(loadUrl);
+      setCurrentImage({ url: decodedUrl, preview: decodedUrl, name: 'loaded_image.png' });
+      setLoadedImages([{ url: decodedUrl, preview: decodedUrl, name: 'loaded_image.png' }]);
     }
-  }, []);
+  }, [location.search]);
 
   // Cleanup all object URLs on unmount
   useEffect(() => {
