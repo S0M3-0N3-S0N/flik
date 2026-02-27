@@ -865,7 +865,6 @@ export default function CameraPage() {
         onClose={() => setSettingsOpen(false)}
         settings={settings}
         onChange={handleSettingChange}
-        supported={supported}
       />
     </div>
   );
