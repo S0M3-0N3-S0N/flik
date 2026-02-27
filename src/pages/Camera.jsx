@@ -142,7 +142,7 @@ export default function CameraPage() {
       initializingRef.current = false;
       setCameraLoading(false);
     }
-  }, [facingMode, settings.resolution, settings.fps, modeIndex]);
+  }, [facingMode, modeIndex]);
 
   useEffect(() => {
     startCamera();
