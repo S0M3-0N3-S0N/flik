@@ -221,61 +221,7 @@ function LayoutContent({ children, currentPageName }) {
           }
         `}</style>
         
-        {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <div className="px-6 h-16 flex items-center justify-between">
-            {isChildRoute ? (
-              <button 
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="text-sm font-medium">Back</span>
-              </button>
-            ) : (
-              <Link to={createPageUrl("Editor")} className="flex items-center gap-3 flex-1 justify-center md:flex-none md:justify-start">
-                <span className="text-2xl font-bold gradient-text">FLIK</span>
-              </Link>
-            )}
-            
-            <nav className="hidden md:flex items-center gap-8">
-              <Link 
-                to={createPageUrl("Editor")} 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Editor" ? "text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Image className="w-4 h-4" />
-                {t("nav.photo_studio")}
-              </Link>
 
-              <Link 
-                to={createPageUrl("Generate")} 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                  currentPageName === "Generate" ? "text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Wand2 className="w-4 h-4" />
-                {t("nav.imagine_ai")}
-                </Link>
-              </nav>
-            
-            <div className="flex items-center gap-4">
-              <Link 
-                to={createPageUrl("Profile")} 
-                className="hidden md:block"
-              >
-                <div className="w-9 h-9 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-sm hover:scale-105 transition-transform border border-white/10">
-                  {user?.profile_picture ? (
-                    <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
-                  ) : (
-                    user?.full_name?.charAt(0).toUpperCase() || <User className="w-5 h-5" />
-                  )}
-                </div>
-              </Link>
-            </div>
-          </div>
-        </header>
         
         {/* Main Content */}
         <main className="pt-16 pb-20 md:pb-0">
