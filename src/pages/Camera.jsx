@@ -207,6 +207,24 @@ export default function CameraPage() {
     };
   }, []);
 
+  // ─── Real-time filter pipeline ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!hasStream || !videoRef.current || activeFilter === 'none') return;
+
+    const canvas = effectsCanvasRef.current;
+    if (!canvas || !filterPipelineRef.current) return;
+
+    const updateFilter = () => {
+      if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+        filterPipelineRef.current?.setIntensity(filterIntensity);
+      }
+      requestAnimationFrame(updateFilter);
+    };
+
+    const frameId = requestAnimationFrame(updateFilter);
+    return () => cancelAnimationFrame(frameId);
+  }, [hasStream, activeFilter, filterIntensity]);
+
   // ─── Flash torch ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const track = streamRef.current?.getVideoTracks()[0];
