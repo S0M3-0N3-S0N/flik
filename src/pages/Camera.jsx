@@ -77,6 +77,21 @@ export default function CameraPage() {
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
+  const [cameraMode, setCameraMode] = useState('photo');
+  const [activeFilter, setActiveFilter] = useState('none');
+  const [filterIntensity, setFilterIntensity] = useState(1.0);
+  const [activeEffect, setActiveEffect] = useState(null);
+  const [effectIntensity, setEffectIntensity] = useState(0.5);
+  const [isBursting, setIsBursting] = useState(false);
+  const [burstCount, setBurstCount] = useState(0);
+  const [burstPhotos, setBurstPhotos] = useState([]);
+  const [aspectRatio, setAspectRatio] = useState('4:3');
+  const [showLevelHint, setShowLevelHint] = useState(false);
+
+  const filterPipelineRef = useRef(null);
+  const arEngineRef = useRef(null);
+  const burstIntervalRef = useRef(null);
+  const effectsCanvasRef = useRef(null);
 
   const mode = MODES[modeIndex];
 
