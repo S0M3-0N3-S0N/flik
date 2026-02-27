@@ -5,8 +5,9 @@ import { debounce } from "lodash";
 import { 
   Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, 
   Pencil, Check, X, Lock, Globe, Search, Trash2, Download, Edit, Wand2, Sparkles,
-  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff
+  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff, Palette
 } from "lucide-react";
+import GradientEditor from "@/components/admin/GradientEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
