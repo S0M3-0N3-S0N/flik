@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback, useReducer } from 'react';
-import { RotateCcw, Zap, ZapOff, Grid3X3, FlipHorizontal, Circle, Square, Settings, Timer, Pause, Play } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { RotateCcw, Zap, ZapOff, Grid3X3, FlipHorizontal, Circle, Square, Settings, Timer, Pause, Play, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from "sonner";
+import { base44 } from '@/api/base44Client';
 import FocusSquare from '../components/camera/FocusSquare';
 import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
@@ -9,7 +10,6 @@ import SettingsDrawer from '../components/camera/SettingsDrawer';
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
 const MODES = ['VIDEO', 'PHOTO'];
-
 const initialSettings = { showGrid: false, timer: 0, resolution: 1080, fps: 30 };
 
 function settingsReducer(state, action) {
@@ -28,12 +28,13 @@ export default function CameraPage() {
   const pinchStartDistRef = useRef(null);
   const pinchStartZoomRef = useRef(null);
   const viewfinderRef = useRef(null);
+  const tapTimeoutRef = useRef(null);
 
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
   const [facingMode, setFacingMode] = useState('environment');
-  const [modeIndex, setModeIndex] = useState(1); // 0=VIDEO, 1=PHOTO
-  const [flashMode, setFlashMode] = useState('off'); // 'off' | 'on' | 'auto'
+  const [modeIndex, setModeIndex] = useState(1);
+  const [flashMode, setFlashMode] = useState('off');
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -49,6 +50,8 @@ export default function CameraPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [supported, setSupported] = useState({ res4k: false, fps60: false });
   const [settings, dispatchSettings] = useReducer(settingsReducer, initialSettings);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedPhoto, setSavedPhoto] = useState(null);
 
   const mode = MODES[modeIndex];
 
@@ -57,12 +60,11 @@ export default function CameraPage() {
     if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     setHasStream(false);
     try {
-      const heightMap = { 720: 720, 1080: 1080, 2160: 2160 };
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: facing,
-          width: { ideal: heightMap[res] === 720 ? 1280 : heightMap[res] === 2160 ? 3840 : 1920 },
-          height: { ideal: heightMap[res] },
+          width: { ideal: res === 2160 ? 3840 : res === 720 ? 1280 : 1920 },
+          height: { ideal: res },
           frameRate: { ideal: fps },
         },
         audio: true,
@@ -73,16 +75,13 @@ export default function CameraPage() {
         videoRef.current.play();
         setHasStream(true);
       }
-      // Detect capabilities
       const track = stream.getVideoTracks()[0];
       const caps = track.getCapabilities?.() || {};
-      if (caps.zoom) {
-        setZoomCaps({ min: caps.zoom.min, max: caps.zoom.max, supported: true });
-      }
-      if (caps.exposureCompensation) {
-        setExposureCaps({ min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, supported: true });
-      }
-      // Check 4K / 60fps support
+      setZoomCaps(caps.zoom ? { min: caps.zoom.min, max: caps.zoom.max, supported: true } : { min: 1, max: 4, supported: false });
+      setExposureCaps(caps.exposureCompensation
+        ? { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, supported: true }
+        : { min: -2, max: 2, supported: false }
+      );
       setSupported({
         res4k: !!(caps.height?.max >= 2160),
         fps60: !!(caps.frameRate?.max >= 60),
@@ -104,8 +103,7 @@ export default function CameraPage() {
   useEffect(() => {
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
-    const on = flashMode === 'on';
-    track.applyConstraints({ advanced: [{ torch: on }] }).catch(() => {});
+    track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
   }, [flashMode]);
 
   const cycleFlash = () => {
@@ -122,21 +120,19 @@ export default function CameraPage() {
       track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
       setZoomValue(clamped);
     } else {
-      // CSS digital zoom fallback
+      const clamped = Math.max(0.5, Math.min(4, val));
       if (videoRef.current) {
-        videoRef.current.style.transform = `scale(${val})`;
+        videoRef.current.style.transform = `scale(${clamped})`;
         videoRef.current.style.transformOrigin = 'center center';
       }
-      setZoomValue(val);
+      setZoomValue(clamped);
     }
   }, [zoomCaps]);
 
   const setZoomPreset = (preset) => {
     haptic(6);
     const map = { '.5': 0.5, '1x': 1, '2': 2 };
-    const v = map[preset] || 1;
-    const clamped = Math.max(zoomCaps.supported ? zoomCaps.min : 0.5, Math.min(zoomCaps.supported ? zoomCaps.max : 4, v));
-    applyZoom(clamped);
+    applyZoom(map[preset] ?? 1);
     setShowZoomOverlay(true);
     setTimeout(() => setShowZoomOverlay(false), 1200);
   };
@@ -144,12 +140,12 @@ export default function CameraPage() {
   // ─── Pinch to zoom ────────────────────────────────────────────────────────────
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
+      clearTimeout(tapTimeoutRef.current);
       pinchStartDistRef.current = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
       pinchStartZoomRef.current = zoomValue;
-      e.preventDefault();
     }
   };
 
@@ -159,79 +155,127 @@ export default function CameraPage() {
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
-      const scale = dist / pinchStartDistRef.current;
-      const newZoom = Math.max(0.5, Math.min(zoomCaps.supported ? zoomCaps.max : 4, pinchStartZoomRef.current * scale));
-      // Snap to presets
-      const snapped = [0.5, 1, 2].reduce((prev, curr) =>
-        Math.abs(curr - newZoom) < 0.12 ? curr : prev, newZoom
-      );
-      applyZoom(snapped);
+      const newZoom = Math.max(0.5, Math.min(zoomCaps.supported ? zoomCaps.max : 4, pinchStartZoomRef.current * (dist / pinchStartDistRef.current)));
+      applyZoom(newZoom);
       setShowZoomOverlay(true);
-      e.preventDefault();
     }
   };
 
   const handleTouchEnd = (e) => {
-    if (e.touches.length < 2) {
+    if (pinchStartDistRef.current && e.touches.length < 2) {
       pinchStartDistRef.current = null;
       setTimeout(() => setShowZoomOverlay(false), 1200);
     }
   };
 
-  // ─── Tap to focus + exposure ──────────────────────────────────────────────────
+  // ─── Tap to focus ────────────────────────────────────────────────────────────
   const handleViewfinderTap = (e) => {
+    // Don't handle if pinching
+    if (pinchStartDistRef.current) return;
+
     if (afLocked) {
       setAfLocked(false);
       setFocusPos(null);
       setShowExposure(false);
-      clearTimeout(longPressRef.current);
       return;
     }
+
     const rect = viewfinderRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
     const x = clientX - rect.left;
     const y = clientY - rect.top;
+
     setFocusPos({ x, y });
     setShowExposure(true);
     haptic(8);
 
-    // Apply focus constraints
+    // Apply focus + exposure point to camera
     const track = streamRef.current?.getVideoTracks()[0];
     if (track) {
       const caps = track.getCapabilities?.() || {};
-      const constraints = {};
-      if (caps.focusMode?.includes('manual') || caps.focusMode?.includes('single-shot')) {
-        constraints.focusMode = 'single-shot';
-        constraints.focusDistance = 0.5;
+      const settings = {};
+      const advanced = {};
+
+      // Normalized focus point (0-1 range)
+      const normX = (clientX - rect.left) / rect.width;
+      const normY = (clientY - rect.top) / rect.height;
+
+      if (caps.focusMode?.includes('single-shot')) {
+        advanced.focusMode = 'single-shot';
+      } else if (caps.focusMode?.includes('manual')) {
+        advanced.focusMode = 'manual';
       }
-      if (Object.keys(constraints).length) {
-        track.applyConstraints({ advanced: [constraints] }).catch(() => {});
+
+      if (caps.focusPointOfInterest) {
+        advanced.focusPointOfInterest = { x: normX, y: normY };
+      }
+
+      if (caps.exposureMode?.includes('manual')) {
+        advanced.exposureMode = 'manual';
+      } else if (caps.exposureMode?.includes('continuous')) {
+        advanced.exposureMode = 'continuous';
+      }
+
+      if (caps.exposurePointOfInterest) {
+        advanced.exposurePointOfInterest = { x: normX, y: normY };
+      }
+
+      if (Object.keys(advanced).length) {
+        track.applyConstraints({ advanced: [advanced] }).catch(() => {});
       }
     }
+
+    // Auto-hide exposure after 4s of no interaction
+    clearTimeout(tapTimeoutRef.current);
+    tapTimeoutRef.current = setTimeout(() => {
+      if (!afLocked) setShowExposure(false);
+    }, 4000);
   };
 
-  const handleLongPress = (e) => {
+  // ─── Long press → AE/AF lock ─────────────────────────────────────────────────
+  const handleLongPressStart = (e) => {
+    if (e.touches?.length > 1) return;
     longPressRef.current = setTimeout(() => {
       haptic([30, 20, 30]);
       setAfLocked(true);
+      clearTimeout(tapTimeoutRef.current);
     }, 800);
   };
   const handleLongPressEnd = () => clearTimeout(longPressRef.current);
 
   // ─── Exposure ─────────────────────────────────────────────────────────────────
   const handleExposureChange = useCallback((val) => {
-    const clamped = Math.max(exposureCaps.min, Math.min(exposureCaps.max, val));
+    const min = exposureCaps.min;
+    const max = exposureCaps.max;
+    const clamped = Math.max(min, Math.min(max, val));
     setExposure(clamped);
+
+    // Reset auto-hide timer
+    clearTimeout(tapTimeoutRef.current);
+    tapTimeoutRef.current = setTimeout(() => {
+      if (!afLocked) setShowExposure(false);
+    }, 4000);
+
     if (exposureThrottleRef.current) clearTimeout(exposureThrottleRef.current);
     exposureThrottleRef.current = setTimeout(() => {
       const track = streamRef.current?.getVideoTracks()[0];
-      if (track && exposureCaps.supported) {
+      if (!track) return;
+
+      if (exposureCaps.supported) {
+        // Hardware exposure compensation
         track.applyConstraints({ advanced: [{ exposureCompensation: clamped }] }).catch(() => {});
+      } else {
+        // CSS brightness fallback for unsupported devices
+        const brightness = 1 + (clamped / 2) * 0.8; // 0.2 to 1.8 range
+        if (videoRef.current) {
+          videoRef.current.style.filter = `brightness(${brightness})`;
+        }
       }
-    }, 50);
-  }, [exposureCaps]);
+    }, 30);
+  }, [exposureCaps, afLocked]);
 
   // ─── Mode switching ───────────────────────────────────────────────────────────
   const switchMode = (idx) => {
@@ -241,16 +285,14 @@ export default function CameraPage() {
     setModeIndex(idx);
   };
 
-  // ─── Swipe to change mode ─────────────────────────────────────────────────────
   const swipeStartX = useRef(null);
   const handleSwipeStart = (e) => { swipeStartX.current = e.touches?.[0]?.clientX ?? e.clientX; };
   const handleSwipeEnd = (e) => {
     if (swipeStartX.current === null) return;
     const endX = e.changedTouches?.[0]?.clientX ?? e.clientX;
     const diff = swipeStartX.current - endX;
-    if (Math.abs(diff) > 50) {
-      const next = diff > 0 ? Math.min(MODES.length - 1, modeIndex + 1) : Math.max(0, modeIndex - 1);
-      switchMode(next);
+    if (Math.abs(diff) > 60) {
+      switchMode(diff > 0 ? Math.min(MODES.length - 1, modeIndex + 1) : Math.max(0, modeIndex - 1));
     }
     swipeStartX.current = null;
   };
@@ -265,11 +307,7 @@ export default function CameraPage() {
       remaining -= 1;
       haptic(20);
       setCountdown(remaining);
-      if (remaining <= 0) {
-        clearInterval(interval);
-        setCountdown(0);
-        action();
-      }
+      if (remaining <= 0) { clearInterval(interval); setCountdown(0); action(); }
     }, 1000);
   };
 
@@ -283,8 +321,40 @@ export default function CameraPage() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       canvas.getContext('2d').drawImage(video, 0, 0);
-      setPhoto(canvas.toDataURL('image/png'));
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      setPhoto(dataUrl);
+      setSavedPhoto(null);
     });
+  };
+
+  // ─── Save photo to gallery ────────────────────────────────────────────────────
+  const savePhoto = async () => {
+    if (!photo || isSaving) return;
+    haptic(15);
+    setIsSaving(true);
+    try {
+      // Convert dataURL → Blob → File
+      const res = await fetch(photo);
+      const blob = await res.blob();
+      const file = new File([blob], `flik_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+      await base44.entities.Creation.create({
+        type: 'image',
+        url: file_url,
+        thumbnail_url: file_url,
+        title: `Photo ${new Date().toLocaleDateString()}`,
+        metadata: { source: 'camera', facing_mode: facingMode },
+      });
+
+      setSavedPhoto(true);
+      toast.success("Saved to gallery!");
+    } catch (err) {
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // ─── Video recording ──────────────────────────────────────────────────────────
@@ -297,16 +367,24 @@ export default function CameraPage() {
         .find(t => MediaRecorder.isTypeSupported(t)) || 'video/webm';
       const recorder = new MediaRecorder(streamRef.current, { mimeType });
       recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(recordedChunksRef.current, { type: mimeType });
-        const url = URL.createObjectURL(blob);
         const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `flik_video_${Date.now()}.${ext}`;
-        link.click();
-        URL.revokeObjectURL(url);
-        toast.success("Video saved!");
+        const file = new File([blob], `flik_video_${Date.now()}.${ext}`, { type: mimeType });
+
+        toast.loading("Saving video to gallery...", { id: 'video-save' });
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          await base44.entities.Creation.create({
+            type: 'video',
+            url: file_url,
+            title: `Video ${new Date().toLocaleDateString()}`,
+            metadata: { source: 'camera', facing_mode: facingMode, duration: recordingTime },
+          });
+          toast.success("Video saved to gallery!", { id: 'video-save' });
+        } catch {
+          toast.error("Failed to save video.", { id: 'video-save' });
+        }
       };
       mediaRecorderRef.current = recorder;
       recorder.start(100);
@@ -323,7 +401,6 @@ export default function CameraPage() {
     setIsRecording(false);
     setIsPaused(false);
     clearInterval(timerRef.current);
-    setRecordingTime(0);
   };
 
   const togglePause = () => {
@@ -341,15 +418,12 @@ export default function CameraPage() {
     }
   };
 
-  // ─── Retake / download ────────────────────────────────────────────────────────
-  const retake = () => { setPhoto(null); startCamera(facingMode); };
-  const download = () => {
-    haptic(15);
-    const link = document.createElement('a');
-    link.href = photo;
-    link.download = `flik_photo_${Date.now()}.png`;
-    link.click();
-    toast.success("Photo saved!");
+  const retake = () => {
+    setPhoto(null);
+    setSavedPhoto(null);
+    setExposure(0);
+    if (videoRef.current) videoRef.current.style.filter = '';
+    startCamera(facingMode);
   };
 
   const flipCamera = () => {
@@ -362,7 +436,11 @@ export default function CameraPage() {
 
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-  const flashIcon = { off: <ZapOff className="w-4 h-4 text-white/70" />, on: <Zap className="w-4 h-4 text-[#FFB800]" fill="currentColor" />, auto: <Zap className="w-4 h-4 text-white" /> };
+  const flashIcon = {
+    off: <ZapOff className="w-4 h-4 text-white/70" />,
+    on: <Zap className="w-4 h-4 text-[#FFB800]" fill="currentColor" />,
+    auto: <Zap className="w-4 h-4 text-white" />,
+  };
 
   const zoomPresets = ['.5', '1x', '2'];
   const activePreset = zoomPresets.find(p => {
@@ -377,32 +455,59 @@ export default function CameraPage() {
       <div
         ref={viewfinderRef}
         className="relative flex-1 overflow-hidden"
-        onTouchStart={(e) => { handleTouchStart(e); handleSwipeStart(e); handleLongPress(e); if (e.touches.length === 1) handleViewfinderTap(e); }}
+        onTouchStart={(e) => {
+          handleTouchStart(e);
+          handleSwipeStart(e);
+          handleLongPressStart(e);
+        }}
         onTouchMove={handleTouchMove}
-        onTouchEnd={(e) => { handleTouchEnd(e); handleSwipeEnd(e); handleLongPressEnd(); }}
-        onClick={handleViewfinderTap}
+        onTouchEnd={(e) => {
+          handleTouchEnd(e);
+          handleSwipeEnd(e);
+          handleLongPressEnd();
+          // Only fire tap if it was a single-finger tap (not a pinch)
+          if (!pinchStartDistRef.current && e.changedTouches.length === 1 && e.touches.length === 0) {
+            handleViewfinderTap(e);
+          }
+        }}
+        onClick={(e) => {
+          // For desktop/mouse
+          if (e.pointerType !== 'touch') handleViewfinderTap(e);
+        }}
       >
         {photo ? (
           <img src={photo} alt="Captured" className="w-full h-full object-cover" />
         ) : (
-          <video ref={videoRef} className="w-full h-full object-cover transition-transform duration-300" autoPlay playsInline muted />
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover transition-all duration-300"
+            autoPlay
+            playsInline
+            muted
+          />
         )}
         <canvas ref={canvasRef} className="hidden" />
 
         {/* Grid */}
         {settings.showGrid && !photo && (
-          <div className="absolute inset-0 pointer-events-none grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
+          <div className="absolute inset-0 pointer-events-none" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
             {[...Array(9)].map((_, i) => <div key={i} className="border border-white/20" />)}
           </div>
         )}
 
         {/* Focus square */}
-        <FocusSquare position={focusPos} locked={afLocked} />
+        {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
 
         {/* Exposure slider */}
         <AnimatePresence>
           {showExposure && focusPos && !photo && (
-            <ExposureSlider position={focusPos} value={exposure} onChange={handleExposureChange} />
+            <ExposureSlider
+              position={focusPos}
+              value={exposure}
+              min={exposureCaps.min}
+              max={exposureCaps.max}
+              onChange={handleExposureChange}
+            />
           )}
         </AnimatePresence>
 
@@ -421,7 +526,7 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
-        {/* Zoom overlay while pinching */}
+        {/* Zoom bubble */}
         <AnimatePresence>
           {showZoomOverlay && (
             <motion.div
@@ -454,42 +559,29 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
-        {/* Top control bar */}
+        {/* Top controls */}
         {!photo && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5">
-            {/* Flash */}
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              onClick={cycleFlash}
-              className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center"
-            >
+            <motion.button whileTap={{ scale: 0.85 }} onClick={cycleFlash}
+              className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
               {flashIcon[flashMode]}
             </motion.button>
 
             <div className="flex items-center gap-3">
-              {/* Timer indicator */}
               {settings.timer > 0 && (
                 <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-full px-2.5 py-1">
                   <Timer className="w-3 h-3 text-[#FF6B35]" />
                   <span className="text-[#FF6B35] text-xs font-bold">{settings.timer}s</span>
                 </div>
               )}
-
-              {/* Grid toggle */}
-              <motion.button
-                whileTap={{ scale: 0.85 }}
+              <motion.button whileTap={{ scale: 0.85 }}
                 onClick={() => { haptic(8); dispatchSettings({ key: 'showGrid', value: !settings.showGrid }); }}
-                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center"
-              >
+                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
                 <Grid3X3 className={`w-4 h-4 ${settings.showGrid ? 'text-[#FF6B35]' : 'text-white/70'}`} />
               </motion.button>
-
-              {/* Settings */}
-              <motion.button
-                whileTap={{ scale: 0.85 }}
+              <motion.button whileTap={{ scale: 0.85 }}
                 onClick={() => setSettingsOpen(true)}
-                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center"
-              >
+                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
                 <Settings className="w-4 h-4 text-white/70" />
               </motion.button>
             </div>
@@ -503,15 +595,9 @@ export default function CameraPage() {
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
                 return (
-                  <motion.button
-                    key={z}
-                    whileTap={{ scale: 0.85 }}
-                    onClick={() => setZoomPreset(z)}
-                    className={`w-10 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      isActive ? 'bg-white/20 text-white shadow-inner' : 'text-white/50'
-                    }`}
-                    style={isActive ? { boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.5)' } : {}}
-                  >
+                  <motion.button key={z} whileTap={{ scale: 0.85 }} onClick={() => setZoomPreset(z)}
+                    className={`w-10 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white/20 text-white' : 'text-white/50'}`}
+                    style={isActive ? { boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.5)' } : {}}>
                     {z}
                   </motion.button>
                 );
@@ -531,64 +617,43 @@ export default function CameraPage() {
         {!photo ? (
           <>
             {/* Mode selector */}
-            <div className="relative flex items-center">
-              <div className="flex items-center gap-1 bg-white/10 rounded-full p-1">
-                {MODES.map((m, i) => (
-                  <motion.button
-                    key={m}
-                    whileTap={{ scale: 0.92 }}
-                    onClick={() => switchMode(i)}
-                    className={`px-6 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                      modeIndex === i
-                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white shadow-lg'
-                        : 'text-white/50'
-                    }`}
-                  >
-                    {m}
-                  </motion.button>
-                ))}
-              </div>
+            <div className="flex items-center gap-1 bg-white/10 rounded-full p-1">
+              {MODES.map((m, i) => (
+                <motion.button key={m} whileTap={{ scale: 0.92 }} onClick={() => switchMode(i)}
+                  className={`px-6 py-1.5 rounded-full text-sm font-semibold transition-all ${modeIndex === i ? 'bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white shadow-lg' : 'text-white/50'}`}>
+                  {m}
+                </motion.button>
+              ))}
             </div>
 
             {/* Shutter row */}
             <div className="w-full flex items-center justify-around px-8">
-              {/* Thumbnail / pause-resume */}
               <div className="w-14 h-14 flex items-center justify-center">
                 {isRecording ? (
-                  <motion.button
-                    whileTap={{ scale: 0.85 }}
-                    onClick={togglePause}
-                    className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center"
-                  >
+                  <motion.button whileTap={{ scale: 0.85 }} onClick={togglePause}
+                    className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
                     {isPaused
                       ? <Play className="w-5 h-5 text-white" fill="currentColor" />
-                      : <Pause className="w-5 h-5 text-white" fill="currentColor" />
-                    }
+                      : <Pause className="w-5 h-5 text-white" fill="currentColor" />}
                   </motion.button>
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10" />
                 )}
               </div>
 
-              {/* Main shutter */}
+              {/* Shutter */}
               {mode === 'PHOTO' ? (
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={takePhoto}
+                <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
                   disabled={!hasStream || countdown > 0}
                   className="w-20 h-20 rounded-full disabled:opacity-40"
-                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}
-                >
+                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
                   <div className="w-full h-full rounded-full bg-white" />
                 </motion.button>
               ) : (
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={isRecording ? stopRecording : startRecording}
+                <motion.button whileTap={{ scale: 0.9 }} onClick={isRecording ? stopRecording : startRecording}
                   disabled={!hasStream || countdown > 0}
                   className="w-20 h-20 rounded-full disabled:opacity-40"
-                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}
-                >
+                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
                   <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
                     <AnimatePresence mode="wait">
                       {isRecording ? (
@@ -606,11 +671,8 @@ export default function CameraPage() {
               )}
 
               {/* Flip */}
-              <motion.button
-                whileTap={{ scale: 0.85, rotate: 180 }}
-                onClick={flipCamera}
-                className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center"
-              >
+              <motion.button whileTap={{ scale: 0.85, rotate: 180 }} onClick={flipCamera}
+                className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
                 <FlipHorizontal className="w-6 h-6 text-white" />
               </motion.button>
             </div>
@@ -626,14 +688,17 @@ export default function CameraPage() {
                 <span className="text-white/50 text-xs">Retake</span>
               </motion.button>
 
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={download}
-                className="w-20 h-20 rounded-full"
-                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}
-              >
+              <motion.button whileTap={{ scale: 0.9 }} onClick={savePhoto} disabled={isSaving || !!savedPhoto}
+                className="w-20 h-20 rounded-full disabled:opacity-70"
+                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
                 <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
-                  <span className="text-white font-bold text-xs tracking-wide">SAVE</span>
+                  {isSaving ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : savedPhoto ? (
+                    <Check className="w-7 h-7 text-green-400" />
+                  ) : (
+                    <span className="text-white font-bold text-xs tracking-wide">SAVE</span>
+                  )}
                 </div>
               </motion.button>
 
@@ -643,12 +708,16 @@ export default function CameraPage() {
         )}
       </div>
 
-      {/* Settings drawer */}
       <SettingsDrawer
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         settings={settings}
-        onChange={(key, value) => { dispatchSettings({ key, value }); if (key === 'resolution' || key === 'fps') startCamera(facingMode, key === 'resolution' ? value : settings.resolution, key === 'fps' ? value : settings.fps); }}
+        onChange={(key, value) => {
+          dispatchSettings({ key, value });
+          if (key === 'resolution' || key === 'fps') {
+            startCamera(facingMode, key === 'resolution' ? value : settings.resolution, key === 'fps' ? value : settings.fps);
+          }
+        }}
         supported={supported}
       />
     </div>
