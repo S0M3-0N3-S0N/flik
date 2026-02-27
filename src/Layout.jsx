@@ -333,6 +333,20 @@ function LayoutContent({ children, currentPageName }) {
               <span className="text-[10px] font-medium">Generate</span>
             </button>
 
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => navigate(createPageUrl("Camera"))}
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                  currentPageName === "Camera"
+                    ? "text-[#FF6B35] bg-[#FF6B35]/10"
+                    : "text-white/60"
+                }`}
+              >
+                <Video className="w-6 h-6" />
+                <span className="text-[10px] font-medium">Camera</span>
+              </button>
+            )}
+
             <button
               onClick={() => setIsOpen(true)}
               className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
