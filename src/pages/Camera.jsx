@@ -752,6 +752,15 @@ export default function CameraPage() {
           />
         )}
         <canvas ref={canvasRef} className="hidden" />
+        <canvas ref={effectsCanvasRef} className="hidden" />
+
+        {/* Filter Pipeline Canvas for WebGL */}
+        {!photo && activeFilter !== 'none' && (
+          <div
+            id="filter-canvas-wrapper"
+            className="absolute inset-0 pointer-events-none"
+          />
+        )}
 
         {/* Grid */}
         {settings.showGrid && !photo && (
