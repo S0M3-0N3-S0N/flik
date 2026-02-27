@@ -763,7 +763,7 @@ export default function CameraPage() {
 
         {/* Zoom capsule */}
         {!photo && (
-          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 170, transform: `translateX(-50%) rotate(${orientation}deg)` }}>
+          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 150, transform: `translateX(-50%) rotate(${orientation}deg)` }}>
             <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
