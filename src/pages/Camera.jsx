@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { RotateCcw, Zap, Grid3X3, FlipHorizontal } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { RotateCcw, Zap, ZapOff, Grid3X3, FlipHorizontal } from 'lucide-react';
 import { toast } from "sonner";
 
 export default function CameraPage() {
@@ -12,11 +12,29 @@ export default function CameraPage() {
   const [mode, setMode] = useState('PHOTO');
   const [showGrid, setShowGrid] = useState(false);
   const [zoom, setZoom] = useState('1x');
+  const [flashOn, setFlashOn] = useState(false);
+  const [flashSupported, setFlashSupported] = useState(false);
+
+  const applyZoom = useCallback((stream, zoomLevel) => {
+    const track = stream?.getVideoTracks()[0];
+    if (!track) return;
+    const caps = track.getCapabilities?.();
+    if (caps?.zoom) {
+      const min = caps.zoom.min;
+      const max = caps.zoom.max;
+      const zoomMap = { '.5': 0.5, '1x': 1, '2': 2 };
+      const desired = zoomMap[zoomLevel] || 1;
+      const clamped = Math.max(min, Math.min(max, desired));
+      track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
+    }
+  }, []);
 
   const startCamera = async (facing = facingMode) => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
     }
+    setFlashOn(false);
+    setHasStream(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -31,6 +49,10 @@ export default function CameraPage() {
         videoRef.current.play();
         setHasStream(true);
       }
+      // Check flash support
+      const track = stream.getVideoTracks()[0];
+      const caps = track.getCapabilities?.();
+      setFlashSupported(!!(caps?.torch));
     } catch (err) {
       toast.error("Could not access camera. Please check permissions.");
     }
@@ -44,6 +66,25 @@ export default function CameraPage() {
       }
     };
   }, []);
+
+  // Apply zoom when it changes
+  useEffect(() => {
+    if (streamRef.current) {
+      applyZoom(streamRef.current, zoom);
+    }
+  }, [zoom, applyZoom]);
+
+  const toggleFlash = async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    const newState = !flashOn;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: newState }] });
+      setFlashOn(newState);
+    } catch {
+      toast.error("Flash not supported on this device.");
+    }
+  };
 
   const takePhoto = () => {
     const video = videoRef.current;
@@ -115,16 +156,22 @@ export default function CameraPage() {
             >
               <Grid3X3 className={`w-5 h-5 ${showGrid ? 'text-[#FF6B35]' : 'text-white'}`} />
             </button>
-            <button className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+            <button
+              onClick={toggleFlash}
+              className={`w-10 h-10 rounded-full backdrop-blur-md flex items-center justify-center ${flashOn ? 'bg-[#FFB800]/80' : 'bg-black/50'}`}
+            >
+              {flashOn
+                ? <Zap className="w-5 h-5 text-black" fill="currentColor" />
+                : <ZapOff className="w-5 h-5 text-white" />
+              }
             </button>
           </div>
         )}
 
-        {/* Zoom selector */}
+        {/* Zoom selector — sits just above the bottom panel */}
         {!photo && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-            <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+            <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5">
               {zoomLevels.map(z => (
                 <button
                   key={z}
@@ -200,10 +247,7 @@ export default function CameraPage() {
           <>
             <p className="text-white/50 text-sm">Photo captured</p>
             <div className="w-full flex items-center justify-around px-8">
-              <button
-                onClick={retake}
-                className="flex flex-col items-center gap-1"
-              >
+              <button onClick={retake} className="flex flex-col items-center gap-1">
                 <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
                   <RotateCcw className="w-6 h-6 text-white" />
                 </div>
