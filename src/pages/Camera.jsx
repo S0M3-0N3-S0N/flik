@@ -668,7 +668,7 @@ export default function CameraPage() {
         </AnimatePresence>
 
         {/* Top controls */}
-        {!photo && !isRecording && (
+        {!photo && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5">
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }}
               className="md:hidden w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
@@ -703,7 +703,7 @@ export default function CameraPage() {
 
         {/* Zoom capsule */}
         {!photo && (
-          <div className="absolute left-1/2 -translate-x-1/2 top-24">
+          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: mode === 'VIDEO' ? 190 : 210 }}>
             <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-2 py-1.5 border border-white/10">
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
