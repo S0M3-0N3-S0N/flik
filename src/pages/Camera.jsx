@@ -335,6 +335,7 @@ export default function CameraPage() {
     if (!photo || isSaving) return;
     haptic(15);
     setIsSaving(true);
+    toast.loading("Saving photo to gallery...", { id: 'photo-save' });
     try {
       // Convert dataURL → Blob → File
       const res = await fetch(photo);
@@ -343,7 +344,7 @@ export default function CameraPage() {
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      await base44.entities.Creation.create({
+      const creation = await base44.entities.Creation.create({
         type: 'image',
         url: file_url,
         thumbnail_url: file_url,
@@ -352,9 +353,10 @@ export default function CameraPage() {
       });
 
       setSavedPhoto(true);
-      toast.success("Saved to gallery!");
+      toast.success("Saved to gallery!", { id: 'photo-save' });
     } catch (err) {
-      toast.error("Failed to save. Please try again.");
+      console.error('Save error:', err);
+      toast.error("Failed to save. Please try again.", { id: 'photo-save' });
     } finally {
       setIsSaving(false);
     }
