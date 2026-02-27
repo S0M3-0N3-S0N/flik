@@ -82,7 +82,7 @@ export default function CameraPage() {
   }, []);
 
   // ─── Safe camera initialization with guard ───────────────────────────────────
-  const startCamera = useCallback(async (facing = facingMode, res = settings.resolution, fps = settings.fps) => {
+  const startCamera = useCallback(async (facing = facingMode) => {
     // Prevent double initialization
     if (initializingRef.current) return;
     initializingRef.current = true;
