@@ -95,6 +95,13 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
     }
   };
 
+  const handleApplyFont = (font) => {
+    setTextContent(font.text);
+    setStylePrompt(font.style);
+    setShowLibrary(false);
+    base44.entities.Font.update(font.id, { usageCount: (font.usageCount || 0) + 1 }).catch(() => {});
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
