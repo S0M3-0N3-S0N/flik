@@ -967,7 +967,7 @@ export default function Editor() {
           onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
           onWheel={handleWheel}
-          style={{ touchAction: (loadedImages.length > 1 && !isCropping && activeTab !== 'remove') ? 'pan-y' : 'none' }}
+          style={{ touchAction: (loadedImages.length > 1 && !isCropping && activeTab !== 'remove' && !isDragging) ? 'pan-y' : 'none' }}
         >
           {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
