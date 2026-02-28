@@ -410,7 +410,14 @@ export default function CameraPage() {
       if (!video || !canvas) return;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
+      const ctx = canvas.getContext('2d');
+      // Apply CSS brightness filter to canvas if hardware exposure not supported
+      if (!exposureCaps.supported && exposure !== 0) {
+        const brightness = 1 + (exposure / 2) * 0.8;
+        ctx.filter = `brightness(${brightness})`;
+      }
+      ctx.drawImage(video, 0, 0);
+      ctx.filter = 'none';
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       setPhoto(dataUrl);
       setSavedPhoto(null);
