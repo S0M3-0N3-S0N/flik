@@ -675,7 +675,6 @@ export default function CameraPage() {
                 <button
                   onClick={() => navigate(createPageUrl("Profile"))}
                   className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
-                  style={iconRot}
                 >
                   {latestCreation?.thumbnail_url || latestCreation?.url ? (
                     <img
