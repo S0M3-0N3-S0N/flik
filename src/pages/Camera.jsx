@@ -433,16 +433,6 @@ export default function CameraPage() {
     }
   };
 
-  const stopRecording = () => {
-    haptic([15, 10, 15]);
-    const rec = mediaRecorderRef.current;
-    if (rec && rec.state !== 'inactive') rec.stop();
-    mediaRecorderRef.current = null;
-    setIsRecording(false);
-    setIsPaused(false);
-    clearInterval(timerRef.current);
-  };
-
   const retake = () => {
     setPhoto(null);
     setSavedPhoto(null);
