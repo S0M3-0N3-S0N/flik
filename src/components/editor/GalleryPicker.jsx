@@ -221,18 +221,7 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
         {selectedIds.length > 0 && (
           <div className="px-5 sm:px-7 py-4 sm:py-5 border-t-2 border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] backdrop-blur-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 flex-shrink-0 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
-            <div className="relative z-10 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center">
-                <Check className="w-5 h-5 text-green-400" />
-              </div>
-              <div>
-                <p className="text-white text-sm font-semibold">
-                  {selectedIds.length} Image{selectedIds.length !== 1 ? 's' : ''} Selected
-                </p>
-                <p className="text-white/50 text-xs">Ready to load into editor</p>
-              </div>
-            </div>
-            <div className="flex gap-2 sm:gap-3 relative z-10">
+            <div className="flex gap-2 sm:gap-3 relative z-10 ml-auto">
               <Button
                 onClick={() => setSelectedIds([])}
                 className="flex-1 sm:flex-none bg-white/10 border border-white/30 text-white hover:bg-white/20 hover:border-white/50 text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
