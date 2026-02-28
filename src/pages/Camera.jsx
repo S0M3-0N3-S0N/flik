@@ -344,7 +344,7 @@ export default function CameraPage() {
       if (exposureCaps.supported) {
         track.applyConstraints({ advanced: [{ exposureCompensation: clamped }] }).catch(() => {});
       } else {
-        const brightness = 1 + (clamped / 2) * 0.8;
+        const brightness = 1 + (clamped / exposureCaps.max) * 0.8;
         if (videoRef.current) {
           videoRef.current.style.filter = `brightness(${brightness})`;
         }
