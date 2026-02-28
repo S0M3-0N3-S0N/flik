@@ -31,9 +31,6 @@ export default function CameraPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const recordedChunksRef = useRef([]);
-  const timerRef = useRef(null);
   const longPressRef = useRef(null);
   const exposureThrottleRef = useRef(null);
   const pinchStartDistRef = useRef(null);
