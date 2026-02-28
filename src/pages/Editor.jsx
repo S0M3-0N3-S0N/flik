@@ -942,26 +942,24 @@ export default function Editor() {
             )}
           </div>
           
-          <div className="flex items-center gap-2 lg:gap-3">
-            <div className="flex items-center gap-1">
-              <Button onClick={handleUndo} variant="ghost" size="sm" disabled={undoHistory.length === 0} className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4" title="Undo (Ctrl+Z)">
-                <RotateCcw className="w-4 h-4 lg:mr-2" />
-                <span className="hidden lg:inline">Undo</span>
+          <div className="flex items-center gap-3 lg:gap-4">
+            <div className="flex items-center gap-0.5 bg-white/5 backdrop-blur rounded-lg p-1">
+              <Button onClick={handleUndo} variant="ghost" size="sm" disabled={undoHistory.length === 0} className="text-white hover:bg-white/10 disabled:opacity-30 px-2" title="Undo (Ctrl+Z)">
+                <RotateCcw className="w-4 h-4" />
               </Button>
-              <Button onClick={handleRedo} variant="ghost" size="sm" disabled={redoHistory.length === 0} className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4" title="Redo (Ctrl+Shift+Z)">
-                <RotateCw className="w-4 h-4 lg:mr-2 scale-x-[-1]" />
-                <span className="hidden lg:inline">Redo</span>
+              <Button onClick={handleRedo} variant="ghost" size="sm" disabled={redoHistory.length === 0} className="text-white hover:bg-white/10 disabled:opacity-30 px-2" title="Redo (Ctrl+Shift+Z)">
+                <RotateCw className="w-4 h-4 scale-x-[-1]" />
               </Button>
             </div>
             {currentImage && (
-              <Button onClick={handleSaveToGallery} disabled={isSaving} className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20" title="Save to Gallery">
-                {isSaving ? <Loader2 className="w-4 h-4 lg:mr-2 animate-spin" /> : <Save className="w-4 h-4 lg:mr-2" />}
-                <span className="hidden lg:inline">{isSaving ? "Saving..." : "Save"}</span>
+              <Button onClick={handleSaveToGallery} disabled={isSaving} className="text-xs text-white border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all px-3" title="Save to Gallery">
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span className="hidden sm:inline ml-1">{isSaving ? "Saving..." : "Save"}</span>
               </Button>
             )}
-            <Button disabled={!currentImage} onClick={handleDownload} className="btn-gradient text-white text-sm disabled:opacity-30 px-3 lg:px-4" title="Download">
-              <Download className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Export</span>
+            <Button disabled={!currentImage} onClick={handleDownload} className="btn-gradient text-white text-xs disabled:opacity-30 px-3" title="Download">
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline ml-1">Export</span>
             </Button>
           </div>
         </motion.div>
