@@ -73,19 +73,30 @@ export default function CameraPage() {
 
   const mode = MODES[modeIndex];
 
-  // Handle device orientation changes — only rotate buttons, not the whole UI
+  // Lock to portrait and detect orientation for counter-rotating icons
   useEffect(() => {
-    const handleOrientationChange = () => {
-      const angle = window.innerHeight > window.innerWidth ? 0 : 90;
-      setOrientation(angle);
+    // Try to lock screen to portrait so the video feed stays upright
+    try {
+      screen.orientation?.lock('portrait').catch(() => {});
+    } catch {}
+
+    const getAngle = () => {
+      const angle = screen.orientation?.angle ?? window.orientation ?? 0;
+      // Normalize: landscape-left = 90, landscape-right = -90/270
+      if (angle === 90) return -90;
+      if (angle === -90 || angle === 270) return 90;
+      return 0;
     };
 
-    handleOrientationChange();
-    window.addEventListener('orientationchange', handleOrientationChange);
-    window.addEventListener('resize', handleOrientationChange);
+    const update = () => setOrientation(getAngle());
+    update();
+
+    window.addEventListener('orientationchange', update);
+    window.addEventListener('resize', update);
     return () => {
-      window.removeEventListener('orientationchange', handleOrientationChange);
-      window.removeEventListener('resize', handleOrientationChange);
+      window.removeEventListener('orientationchange', update);
+      window.removeEventListener('resize', update);
+      try { screen.orientation?.unlock(); } catch {}
     };
   }, []);
 
