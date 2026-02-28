@@ -61,7 +61,7 @@ export default function CameraPage() {
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
 
-  const mode = MODES[modeIndex];
+
 
   // Lock to portrait and detect orientation for counter-rotating icons
   useEffect(() => {
