@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Wand2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 
@@ -21,12 +22,6 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
 
     setIsGenerating(true);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Generate an image of stylized text. The text should say: "${textContent}". The style should be: ${stylePrompt}. Create visually appealing, artistic text that matches the description. Make sure the text is clearly readable and visually striking.`,
-        add_context_from_internet: false,
-      });
-
-      // Use GenerateImage to create the actual styled text image
       const imageResult = await base44.integrations.Core.GenerateImage({
         prompt: `Create an image with stylized text that says "${textContent}". Style: ${stylePrompt}. Make the text visually striking, readable, and artistic. Transparent or white background preferred.`,
       });
@@ -48,37 +43,48 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">
-          Text Content
-        </label>
-        <input
-          type="text"
-          value={textContent}
-          onChange={(e) => setTextContent(e.target.value)}
-          placeholder="Enter text to stylize..."
-          className="w-full mt-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[#FF6B35]"
-        />
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
+    >
+      <div className="relative bg-[#141414]/80 backdrop-blur-xl rounded-2xl border border-white/10 p-4 space-y-4">
+        <div>
+          <label className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-2 block">
+            Text Content
+          </label>
+          <input
+            type="text"
+            value={textContent}
+            onChange={(e) => setTextContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                handleGenerateText();
+              }
+            }}
+            placeholder="Enter text to stylize..."
+            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white placeholder-white/30 text-base focus:outline-none focus:border-[#FF6B35] transition-colors"
+          />
+        </div>
 
-      <div>
-        <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">
-          Style Description
-        </label>
-        <textarea
-          value={stylePrompt}
-          onChange={(e) => setStylePrompt(e.target.value)}
-          placeholder="Describe the font style (e.g., 'glowing neon, cyberpunk', 'elegant gold with flowers', 'fiery red script')..."
-          rows={4}
-          className="w-full mt-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[#FF6B35] resize-none"
-        />
+        <div>
+          <label className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-2 block">
+            Style Description
+          </label>
+          <textarea
+            value={stylePrompt}
+            onChange={(e) => setStylePrompt(e.target.value)}
+            placeholder="Describe the font style (e.g., 'glowing neon, cyberpunk', 'elegant gold with flowers', 'fiery red script')..."
+            rows={4}
+            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white placeholder-white/30 text-base focus:outline-none focus:border-[#FF6B35] transition-colors resize-none"
+          />
+        </div>
       </div>
 
       <Button
         onClick={handleGenerateText}
         disabled={isGenerating || isProcessing || !textContent.trim() || !stylePrompt.trim()}
-        className="btn-gradient w-full text-white disabled:opacity-30"
+        className="btn-gradient w-full text-white rounded-lg h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-30"
       >
         {isGenerating ? (
           <>
@@ -86,9 +92,12 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
             Generating...
           </>
         ) : (
-          "Generate Text"
+          <>
+            <Wand2 className="w-4 h-4 mr-2" />
+            Generate Text
+          </>
         )}
       </Button>
-    </div>
+    </motion.div>
   );
 }
