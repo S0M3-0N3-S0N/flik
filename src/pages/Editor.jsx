@@ -1006,10 +1006,10 @@ export default function Editor() {
                      {idx === currentImageIndex && (
                        <button
                          onClick={() => setIsImageLocked(!isImageLocked)}
-                         className={`absolute top-4 right-4 z-30 transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`}
+                         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`}
                          title={isImageLocked ? 'Unlock image' : 'Lock image'}
                        >
-                         {isImageLocked ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+                         {isImageLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
                        </button>
                      )}
                      <div
