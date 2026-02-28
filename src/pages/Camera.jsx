@@ -19,6 +19,12 @@ function settingsReducer(state, action) {
   return { ...state, [action.key]: action.value };
 }
 
+// Rotate individual UI elements (buttons/icons) but NOT the whole layout
+const rotateStyle = (deg) => ({
+  transition: 'transform 0.3s ease',
+  transform: `rotate(${deg}deg)`,
+});
+
 export default function CameraPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -67,7 +73,7 @@ export default function CameraPage() {
 
   const mode = MODES[modeIndex];
 
-  // Handle device orientation changes
+  // Handle device orientation changes — only rotate buttons, not the whole UI
   useEffect(() => {
     const handleOrientationChange = () => {
       const angle = window.innerHeight > window.innerWidth ? 0 : 90;
@@ -85,7 +91,6 @@ export default function CameraPage() {
 
   // ─── Safe camera initialization with guard ───────────────────────────────────
   const startCamera = useCallback(async (facing = facingMode) => {
-    // Prevent double initialization
     if (initializingRef.current) return;
     initializingRef.current = true;
     setCameraLoading(true);
@@ -96,20 +101,14 @@ export default function CameraPage() {
     setHasStream(false);
 
     try {
-      // No audio needed for photo mode
-      const audioNeeded = false;
-
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: facing,
-        },
-        audio: audioNeeded,
+        video: { facingMode: facing },
+        audio: false,
       });
 
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Safe play with error handling
         try {
           await videoRef.current.play();
         } catch (playErr) {
@@ -123,7 +122,6 @@ export default function CameraPage() {
       const track = stream.getVideoTracks()[0];
       const caps = track.getCapabilities?.() || {};
 
-      // Detect hardware capabilities
       setZoomCaps(caps.zoom ? { min: caps.zoom.min, max: caps.zoom.max, supported: true } : { min: 1, max: 4, supported: false });
       setExposureCaps(caps.exposureCompensation
         ? { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, supported: true }
@@ -134,7 +132,6 @@ export default function CameraPage() {
         fps60: !!(caps.frameRate?.max >= 60),
       });
 
-      // Reset zoom and exposure
       setZoomValue(1);
       setExposure(0);
     } catch (err) {
@@ -149,20 +146,14 @@ export default function CameraPage() {
   useEffect(() => {
     startCamera();
     
-    // Fetch latest creation for gallery thumbnail
     base44.entities.Creation.list('-updated_date', 1)
       .then(creations => {
-        if (creations && creations.length > 0) {
-          setLatestCreation(creations[0]);
-        }
+        if (creations && creations.length > 0) setLatestCreation(creations[0]);
       })
       .catch(() => {});
 
-    // Subscribe to new creations
     const unsubscribe = base44.entities.Creation.subscribe((event) => {
-      if (event.type === 'create') {
-        setLatestCreation(event.data);
-      }
+      if (event.type === 'create') setLatestCreation(event.data);
     });
     
     return () => {
@@ -176,14 +167,12 @@ export default function CameraPage() {
     };
   }, []);
 
-  // ─── Flash torch ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
     track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
   }, [flashMode]);
 
-  // ─── Zoom with throttling ────────────────────────────────────────────────────
   const applyZoom = useCallback((val) => {
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
@@ -193,13 +182,12 @@ export default function CameraPage() {
       : Math.max(0.5, Math.min(4, val));
 
     if (zoomCaps.supported) {
-    track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
+      track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
     } else {
-    // CSS fallback - scale video without affecting overlays
-    if (videoRef.current) {
-      const mirror = facingMode === 'user' ? ' scaleX(-1)' : '';
-      videoRef.current.style.transform = `scale(${clamped})${mirror}`;
-    }
+      if (videoRef.current) {
+        const mirror = facingMode === 'user' ? ' scaleX(-1)' : '';
+        videoRef.current.style.transform = `scale(${clamped})${mirror}`;
+      }
     }
     setZoomValue(clamped);
   }, [zoomCaps]);
@@ -212,7 +200,6 @@ export default function CameraPage() {
     setTimeout(() => setShowZoomOverlay(false), 1200);
   };
 
-  // ─── Pinch to zoom with throttling ───────────────────────────────────────────
   const pinchThrottleRef = useRef(null);
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
@@ -227,7 +214,6 @@ export default function CameraPage() {
 
   const handleTouchMove = (e) => {
     if (e.touches.length === 2 && pinchStartDistRef.current) {
-      // Throttle pinch updates to prevent jank
       if (pinchThrottleRef.current) return;
       pinchThrottleRef.current = setTimeout(() => { pinchThrottleRef.current = null; }, 16);
 
@@ -248,9 +234,8 @@ export default function CameraPage() {
     }
   };
 
-  // ─── Single tap to focus ───────────────────────────────────────────────────────
   const handleViewfinderTap = (e) => {
-    if (pinchStartDistRef.current) return; // Ignore tap if pinching
+    if (pinchStartDistRef.current) return;
     if (afLocked) {
       setAfLocked(false);
       setFocusPos(null);
@@ -280,25 +265,13 @@ export default function CameraPage() {
       const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
       const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
 
-      if (caps.focusMode?.includes('single-shot')) {
-        advanced.focusMode = 'single-shot';
-      } else if (caps.focusMode?.includes('manual')) {
-        advanced.focusMode = 'manual';
-      }
+      if (caps.focusMode?.includes('single-shot')) advanced.focusMode = 'single-shot';
+      else if (caps.focusMode?.includes('manual')) advanced.focusMode = 'manual';
 
-      if (caps.focusPointOfInterest) {
-        advanced.focusPointOfInterest = { x: normX, y: normY };
-      }
-
-      if (caps.exposureMode?.includes('manual')) {
-        advanced.exposureMode = 'manual';
-      } else if (caps.exposureMode?.includes('continuous')) {
-        advanced.exposureMode = 'continuous';
-      }
-
-      if (caps.exposurePointOfInterest) {
-        advanced.exposurePointOfInterest = { x: normX, y: normY };
-      }
+      if (caps.focusPointOfInterest) advanced.focusPointOfInterest = { x: normX, y: normY };
+      if (caps.exposureMode?.includes('manual')) advanced.exposureMode = 'manual';
+      else if (caps.exposureMode?.includes('continuous')) advanced.exposureMode = 'continuous';
+      if (caps.exposurePointOfInterest) advanced.exposurePointOfInterest = { x: normX, y: normY };
 
       if (Object.keys(advanced).length) {
         track.applyConstraints({ advanced: [advanced] }).catch(() => {});
@@ -311,7 +284,6 @@ export default function CameraPage() {
     }, 4000);
   };
 
-  // ─── Long press for AE/AF lock ────────────────────────────────────────────────
   const handleLongPressStart = (e) => {
     if (e.touches?.length > 1) return;
     longPressRef.current = setTimeout(() => {
@@ -322,7 +294,6 @@ export default function CameraPage() {
   };
   const handleLongPressEnd = () => clearTimeout(longPressRef.current);
 
-  // ─── Exposure with proper throttling and cleanup ─────────────────────────────
   const handleExposureChange = useCallback((val) => {
     const min = exposureCaps.min;
     const max = exposureCaps.max;
@@ -334,7 +305,6 @@ export default function CameraPage() {
       if (!afLocked) setShowExposure(false);
     }, 4000);
 
-    // Clear old throttle
     if (exposureThrottleRef.current) clearTimeout(exposureThrottleRef.current);
 
     exposureThrottleRef.current = setTimeout(() => {
@@ -352,22 +322,14 @@ export default function CameraPage() {
     }, 50);
   }, [exposureCaps, afLocked]);
 
-  // ─── Mode switching with recording guard ──────────────────────────────────────
   const switchMode = (idx) => {
     if (idx === modeIndex) return;
     haptic(12);
-
-    // Stop recording before switching
-    if (isRecording) {
-      stopRecording();
-    }
-
-    // Clear any pending countdown
+    if (isRecording) stopRecording();
     if (countdown > 0) {
       clearTimeout(countdownTimerRef.current);
       setCountdown(0);
     }
-
     setModeIndex(idx);
   };
 
@@ -383,7 +345,6 @@ export default function CameraPage() {
     swipeStartX.current = null;
   };
 
-  // ─── Countdown with proper cleanup ────────────────────────────────────────────
   const runCountdown = (action) => {
     if (settings.timer === 0) { action(); return; }
     let remaining = settings.timer;
@@ -402,7 +363,6 @@ export default function CameraPage() {
     }, 1000);
   };
 
-  // ─── Photo capture ────────────────────────────────────────────────────────────
   const takePhoto = () => {
     haptic([10, 5, 30]);
     runCountdown(() => {
@@ -412,7 +372,6 @@ export default function CameraPage() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
-      // Apply CSS brightness filter to canvas if hardware exposure not supported
       if (!exposureCaps.supported && exposure !== 0) {
         const brightness = 1 + (exposure / 2) * 0.8;
         ctx.filter = `brightness(${brightness})`;
@@ -425,7 +384,6 @@ export default function CameraPage() {
     });
   };
 
-  // ─── Save photo to gallery ────────────────────────────────────────────────────
   const savePhoto = async () => {
     if (!photo || isSaving) return;
     haptic(15);
@@ -446,9 +404,7 @@ export default function CameraPage() {
         metadata: { source: 'camera', facing_mode: facingMode },
       });
 
-      // Invalidate creations query to refresh gallery
       queryClient.invalidateQueries({ queryKey: ['creations'] });
-
       setSavedPhoto(true);
       toast.success("Saved to gallery!", { id: 'photo-save' });
     } catch (err) {
@@ -460,86 +416,14 @@ export default function CameraPage() {
     }
   };
 
-  // ─── Video recording with guards ──────────────────────────────────────────────
-  const startRecording = () => {
-    if (!streamRef.current) return;
-    if (mediaRecorderRef.current) return; // Guard against double start
-
-    haptic([15, 10, 15]);
-    runCountdown(() => {
-      // Clear old chunks
-      recordedChunksRef.current = [];
-
-      const mimeType = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm']
-        .find(t => MediaRecorder.isTypeSupported(t)) || 'video/webm';
-
-      try {
-        const recorder = new MediaRecorder(streamRef.current, { mimeType });
-        recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
-        recorder.onstop = async () => {
-          const blob = new Blob(recordedChunksRef.current, { type: mimeType });
-          const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-          const file = new File([blob], `flik_video_${Date.now()}.${ext}`, { type: mimeType });
-
-          toast.loading("Saving video to gallery...", { id: 'video-save' });
-          try {
-            const { file_url } = await base44.integrations.Core.UploadFile({ file });
-            await base44.entities.Creation.create({
-              type: 'video',
-              url: file_url,
-              title: `Video ${new Date().toLocaleDateString()}`,
-              metadata: { source: 'camera', facing_mode: facingMode, duration: recordingTime },
-            });
-            toast.success("Video saved to gallery!", { id: 'video-save' });
-          } catch (err) {
-            console.error('Video save error:', err);
-            toast.error("Failed to save video.", { id: 'video-save' });
-          } finally {
-            mediaRecorderRef.current = null;
-            recordedChunksRef.current = [];
-          }
-        };
-
-        mediaRecorderRef.current = recorder;
-        recorder.start(100);
-        setIsRecording(true);
-        setIsPaused(false);
-        setRecordingTime(0);
-        timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
-      } catch (err) {
-        console.error('MediaRecorder error:', err);
-        toast.error("Recording failed.");
-        mediaRecorderRef.current = null;
-      }
-    });
-  };
-
   const stopRecording = () => {
     haptic([15, 10, 15]);
     const rec = mediaRecorderRef.current;
-    if (rec && rec.state !== 'inactive') {
-      rec.stop();
-    }
+    if (rec && rec.state !== 'inactive') rec.stop();
     mediaRecorderRef.current = null;
     setIsRecording(false);
     setIsPaused(false);
     clearInterval(timerRef.current);
-  };
-
-  const togglePause = () => {
-    const rec = mediaRecorderRef.current;
-    if (!rec || rec.state === 'inactive') return;
-    haptic(8);
-
-    if (rec.state === 'paused') {
-      rec.resume();
-      setIsPaused(false);
-      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
-    } else if (rec.state === 'recording') {
-      rec.pause();
-      setIsPaused(true);
-      clearInterval(timerRef.current);
-    }
   };
 
   const retake = () => {
@@ -562,14 +446,10 @@ export default function CameraPage() {
     startCamera(next);
   };
 
-  // ─── Handle settings changes safely ────────────────────────────────────────────
   const handleSettingChange = (key, value) => {
     dispatchSettings({ key, value });
-
     if ((key === 'resolution' || key === 'fps') && !isRecording) {
-      const newRes = key === 'resolution' ? value : settings.resolution;
-      const newFps = key === 'fps' ? value : settings.fps;
-      startCamera(facingMode, newRes, newFps);
+      startCamera(facingMode);
     }
   };
 
@@ -586,6 +466,9 @@ export default function CameraPage() {
     const map = { '.5': 0.5, '1x': 1, '2': 2 };
     return Math.abs(map[p] - zoomValue) < 0.08;
   });
+
+  // icon rotation style — applied only to inner icon content, NOT the button container
+  const iconRot = rotateStyle(orientation);
 
   return (
     <div className="fixed inset-0 bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
@@ -626,9 +509,7 @@ export default function CameraPage() {
           }
         }}
         onClick={(e) => {
-          if (e.pointerType !== 'touch') {
-            handleViewfinderTap(e);
-          }
+          if (e.pointerType !== 'touch') handleViewfinderTap(e);
         }}
       >
         {photo ? (
@@ -697,7 +578,7 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
-        {/* Recording timer - Prominent red pill */}
+        {/* Recording timer */}
         <AnimatePresence>
           {isRecording && (
             <motion.div
@@ -716,22 +597,22 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
-        {/* Top controls */}
+        {/* Top controls — positions are fixed, only icons rotate */}
         {!photo && !isRecording && (
-          <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5" style={{ transform: `rotate(${orientation}deg)` }}>
+          <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5">
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }}
               className="md:hidden w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-              <X className="w-5 h-5 text-white" />
+              <span style={iconRot}><X className="w-5 h-5 text-white" /></span>
             </motion.button>
 
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'); }}
               className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-              {flashIcon[flashMode]}
+              <span style={iconRot}>{flashIcon[flashMode]}</span>
             </motion.button>
 
             <div className="flex items-center gap-3">
               {settings.timer > 0 && (
-                <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-full px-2.5 py-1">
+                <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-full px-2.5 py-1" style={iconRot}>
                   <Timer className="w-3 h-3 text-[#FF6B35]" />
                   <span className="text-[#FF6B35] text-xs font-bold">{settings.timer}s</span>
                 </div>
@@ -739,16 +620,16 @@ export default function CameraPage() {
               <motion.button whileTap={{ scale: 0.85 }}
                 onClick={() => setSettingsOpen(true)}
                 className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white/70" />
+                <span style={iconRot}><Settings className="w-4 h-4 text-white/70" /></span>
               </motion.button>
             </div>
           </div>
         )}
 
-        {/* Zoom capsule */}
+        {/* Zoom capsule — position stays, pills rotate */}
         {!photo && (
-          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%) rotate(${orientation}deg)` }}>
-            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
+          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110 }}>
+            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10" style={iconRot}>
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
                 return (
@@ -764,43 +645,34 @@ export default function CameraPage() {
         )}
       </div>
 
-      {/* ── Bottom controls (floating overlay) ── */}
+      {/* ── Bottom controls — layout stays fixed, icons rotate ── */}
       <div
-        className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 transition-all duration-300 ease-out bg-transparent pt-3"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', transform: `rotate(${orientation}deg)` }}
+        className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 bg-transparent pt-3"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
       >
         {!photo ? (
           <>
-
-
             {/* Shutter row */}
             <div className="w-full flex items-center justify-around px-8">
+              {/* Gallery thumbnail */}
               <div className="w-14 h-14 flex items-center justify-center">
-                {isRecording ? (
-                  <motion.button whileTap={{ scale: 0.85 }} onClick={togglePause}
-                    className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                    {isPaused
-                      ? <Play className="w-5 h-5 text-white" fill="currentColor" />
-                      : <Pause className="w-5 h-5 text-white" fill="currentColor" />}
-                  </motion.button>
-                ) : (
-                  <button 
-                    onClick={() => navigate(createPageUrl("Profile"))}
-                    className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
-                  >
-                    {latestCreation?.thumbnail_url || latestCreation?.url ? (
-                      <img 
-                        src={latestCreation.thumbnail_url || latestCreation.url} 
-                        alt="Latest" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-white/5" />
-                    )}
-                  </button>
-                )}
+                <button
+                  onClick={() => navigate(createPageUrl("Profile"))}
+                  className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
+                  style={iconRot}
+                >
+                  {latestCreation?.thumbnail_url || latestCreation?.url ? (
+                    <img
+                      src={latestCreation.thumbnail_url || latestCreation.url}
+                      alt="Latest"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-white/5" />
+                  )}
+                </button>
               </div>
 
               {/* Shutter */}
@@ -814,7 +686,7 @@ export default function CameraPage() {
               {/* Flip */}
               <motion.button whileTap={{ scale: 0.85, rotate: 180 }} onClick={flipCamera}
                 className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <RefreshCw className="w-6 h-6 text-white" />
+                <span style={iconRot}><RefreshCw className="w-6 h-6 text-white" /></span>
               </motion.button>
             </div>
           </>
@@ -822,27 +694,25 @@ export default function CameraPage() {
           <>
             {/* Save / Retake row */}
             <div className="w-full flex items-center justify-around px-8">
-              {/* Retake */}
               <motion.button whileTap={{ scale: 0.85 }} onClick={retake}
                 className="flex flex-col items-center gap-1.5">
                 <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <RotateCcw className="w-6 h-6 text-white" />
+                  <span style={iconRot}><RotateCcw className="w-6 h-6 text-white" /></span>
                 </div>
                 <span className="text-white/50 text-[10px] font-medium tracking-wide">Retake</span>
               </motion.button>
 
-              {/* Save */}
               <motion.button whileTap={{ scale: 0.9 }} onClick={savePhoto} disabled={isSaving || !!savedPhoto}
                 className="flex flex-col items-center gap-1.5">
-                <div className="w-20 h-20 rounded-full disabled:opacity-70"
+                <div className="w-20 h-20 rounded-full"
                   style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
                   <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
                     {isSaving ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : savedPhoto ? (
-                      <Check className="w-7 h-7 text-green-400" />
+                      <span style={iconRot}><Check className="w-7 h-7 text-green-400" /></span>
                     ) : (
-                      <span className="text-white font-bold text-xs tracking-widest">SAVE</span>
+                      <span className="text-white font-bold text-xs tracking-widest" style={iconRot}>SAVE</span>
                     )}
                   </div>
                 </div>
@@ -851,11 +721,10 @@ export default function CameraPage() {
                 </span>
               </motion.button>
 
-              {/* Exit */}
               <motion.button whileTap={{ scale: 0.85 }} onClick={() => navigate(createPageUrl('Editor'))}
                 className="flex flex-col items-center gap-1.5">
                 <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <X className="w-6 h-6 text-white/70" />
+                  <span style={iconRot}><X className="w-6 h-6 text-white/70" /></span>
                 </div>
                 <span className="text-white/50 text-[10px] font-medium tracking-wide">Exit</span>
               </motion.button>
@@ -866,13 +735,13 @@ export default function CameraPage() {
               <motion.button whileTap={{ scale: 0.95 }}
                 onClick={() => navigate(createPageUrl('Editor'))}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                <Image className="w-4 h-4 text-[#FF6B35]" />
+                <span style={iconRot}><Image className="w-4 h-4 text-[#FF6B35]" /></span>
                 <span className="text-white text-xs font-semibold">Photo Studio</span>
               </motion.button>
               <motion.button whileTap={{ scale: 0.95 }}
                 onClick={() => navigate(createPageUrl('Generate'))}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                <Wand2 className="w-4 h-4 text-[#FFB800]" />
+                <span style={iconRot}><Wand2 className="w-4 h-4 text-[#FFB800]" /></span>
                 <span className="text-white text-xs font-semibold">Imagine AI</span>
               </motion.button>
             </div>
