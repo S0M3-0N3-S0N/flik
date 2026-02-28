@@ -2,8 +2,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { motion } from "framer-motion";
-
-import { Sun, Contrast, Droplets, Activity, Palette, Ghost, Aperture } from "lucide-react";
+import { Sun, SlidersHorizontal, Droplets, Activity, Palette, Ghost, Layers } from "lucide-react";
 
 export default function AdjustmentsPanel({ adjustments, onChange }) {
   const handleChange = (key, value) => {
@@ -12,9 +11,9 @@ export default function AdjustmentsPanel({ adjustments, onChange }) {
 
   const controls = [
     { key: "brightness", label: "Brightness", icon: Sun, min: -100, max: 100, step: 1 },
-    { key: "contrast", label: "Contrast", icon: Contrast, min: -100, max: 100, step: 1 },
+    { key: "contrast", label: "Contrast", icon: SlidersHorizontal, min: -100, max: 100, step: 1 },
     { key: "saturation", label: "Saturation", icon: Droplets, min: -100, max: 100, step: 1 },
-    { key: "blur", label: "Blur", icon: Aperture, min: 0, max: 20, step: 1 },
+    { key: "blur", label: "Blur", icon: Layers, min: 0, max: 20, step: 1 },
     { key: "hue", label: "Hue", icon: Palette, min: 0, max: 360, step: 1 },
     { key: "sepia", label: "Sepia", icon: Ghost, min: 0, max: 100, step: 1 },
     { key: "grayscale", label: "B&W", icon: Activity, min: 0, max: 100, step: 1 },
@@ -38,11 +37,11 @@ export default function AdjustmentsPanel({ adjustments, onChange }) {
               <Label className="text-white/90 text-sm font-medium">{item.label}</Label>
             </div>
             <span className="text-xs font-mono text-white/50 bg-black/20 px-2 py-1 rounded-md min-w-[3rem] text-center">
-              {adjustments[item.key] || 0}
+              {adjustments[item.key] ?? 0}
             </span>
           </div>
           <Slider
-            value={[adjustments[item.key] || 0]}
+            value={[adjustments[item.key] ?? 0]}
             onValueChange={(value) => handleChange(item.key, value)}
             min={item.min}
             max={item.max}

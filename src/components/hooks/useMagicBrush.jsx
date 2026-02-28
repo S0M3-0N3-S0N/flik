@@ -22,15 +22,22 @@ export function useMagicBrush() {
     setIsProcessing(true);
     if (setActiveTool) setActiveTool({ label: "Magic Brush" });
     
+    let blobUrl = null;
+    
     try {
       // Bake the current image state
       const blob = await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
       
       // Load the baked image
       const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = URL.createObjectURL(blob);
-      await new Promise(r => img.onload = r);
+      blobUrl = URL.createObjectURL(blob);
+      img.src = blobUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error('Failed to load baked image'));
+      });
+      URL.revokeObjectURL(blobUrl);
+      blobUrl = null;
 
       // HELPER: Draw strokes function
       const drawStrokes = (ctx, color = 'red', composite = 'source-over', sizeMult = 1.0) => {
@@ -48,13 +55,17 @@ export function useMagicBrush() {
           let scaledSize = size;
           if (imageRef.current) {
              const domWidth = imageRef.current.getBoundingClientRect().width;
-             const scale = ctx.canvas.width / domWidth;
-             scaledSize = size * scale;
+             if (domWidth > 0) {
+               const scale = ctx.canvas.width / domWidth;
+               scaledSize = size * scale;
+             } else {
+               scaledSize = size * (ctx.canvas.width / 800);
+             }
           } else {
              scaledSize = size * (ctx.canvas.width / 800);
           }
 
-          ctx.lineWidth = scaledSize;
+          ctx.lineWidth = Math.max(1, scaledSize);
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
 
@@ -88,13 +99,15 @@ export function useMagicBrush() {
       alphaCanvas.height = img.height;
       const alphaCtx = alphaCanvas.getContext('2d');
       alphaCtx.drawImage(img, 0, 0);
-      drawStrokes(alphaCtx, 'rgba(0,0,0,1)', 'destination-out', 1.1); // ERASE to transparent with dilation
+      drawStrokes(alphaCtx, 'rgba(0,0,0,1)', 'destination-out', 1.1);
 
       // Convert to blobs/files
       const [redBlob, alphaBlob] = await Promise.all([
         new Promise(r => redCanvas.toBlob(r, 'image/png')),
         new Promise(r => alphaCanvas.toBlob(r, 'image/png'))
       ]);
+
+      if (!redBlob || !alphaBlob) throw new Error('Failed to create mask blobs');
 
       const redFile = new File([redBlob], "visual_mask.png", { type: "image/png" });
       const alphaFile = new File([alphaBlob], "gen_input.png", { type: "image/png" });
@@ -142,19 +155,22 @@ export function useMagicBrush() {
         
         OUTPUT:
         Return ONLY the raw prompt string.`,
-        file_urls: [redUpload.file_url, cleanUpload.file_url, ...magicBrushImages]
+        file_urls: [redUpload.file_url, cleanUpload.file_url, ...(magicBrushImages || [])]
       });
 
       // 4. Generate
       if (setActiveTool) setActiveTool({ label: "Applying Magic..." });
       const result = await base44.integrations.Core.GenerateImage({
         prompt: llmResponse,
-        existing_image_urls: [alphaUpload.file_url, ...magicBrushImages]
+        existing_image_urls: [alphaUpload.file_url, ...(magicBrushImages || [])]
       });
+
+      if (!result?.url) throw new Error('No result URL from image generation');
 
       return result.url;
     } catch (error) {
       console.error("Error executing magic brush:", error);
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
       throw error;
     } finally {
       setIsProcessing(false);

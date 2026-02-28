@@ -1,9 +1,32 @@
 import React, { useCallback, useState } from "react";
 import { Upload, Image, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
-export default function ImageUploader({ onImageSelect, currentImage, multiple = false }) {
+export default function ImageUploader({ onImageSelect, multiple = false }) {
   const [isDragging, setIsDragging] = useState(false);
+
+  const processFile = useCallback((file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      onImageSelect({
+        file,
+        url: e.target.result,
+        preview: e.target.result,
+        name: file.name
+      });
+    };
+    reader.readAsDataURL(file);
+  }, [onImageSelect]);
+
+  const processFiles = useCallback((files) => {
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    const readers = imageFiles.map(file => new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve({ file, url: e.target.result, preview: e.target.result, name: file.name });
+      reader.readAsDataURL(file);
+    }));
+    Promise.all(readers).then(images => onImageSelect(images));
+  }, [onImageSelect]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -19,7 +42,6 @@ export default function ImageUploader({ onImageSelect, currentImage, multiple = 
     e.preventDefault();
     setIsDragging(false);
     const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith("image/"));
-    
     if (files.length > 0) {
       if (multiple) {
         processFiles(files);
@@ -27,10 +49,10 @@ export default function ImageUploader({ onImageSelect, currentImage, multiple = 
         processFile(files[0]);
       }
     }
-  }, [multiple]);
+  }, [multiple, processFile, processFiles]);
 
-  const handleFileInput = (e) => {
-    const files = Array.from(e.target.files);
+  const handleFileInput = useCallback((e) => {
+    const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       if (multiple) {
         processFiles(files);
@@ -38,55 +60,9 @@ export default function ImageUploader({ onImageSelect, currentImage, multiple = 
         processFile(files[0]);
       }
     }
-  };
-
-  const processFile = (file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      onImageSelect({
-        file,
-        url: e.target.result,
-        preview: e.target.result,
-        name: file.name
-      });
-    };
-    reader.onerror = () => {};
-    reader.readAsDataURL(file);
-  };
-
-  const processFiles = (files) => {
-    const imageFiles = files.filter(f => f.type.startsWith('image/'));
-    const readers = imageFiles.map(file => new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve({ file, url: e.target.result, preview: e.target.result, name: file.name });
-      reader.readAsDataURL(file);
-    }));
-    Promise.all(readers).then(images => onImageSelect(images));
-  };
-
-  if (currentImage) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full h-full flex items-center justify-center p-8"
-      >
-        <div className="relative max-w-full max-h-full">
-          <img 
-            src={currentImage.preview || currentImage.url} 
-            alt="Uploaded" 
-            className="max-w-full max-h-[60vh] object-contain rounded-2xl shadow-2xl"
-          />
-          <button
-            onClick={() => onImageSelect(null)}
-            className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors shadow-lg"
-          >
-            <X className="w-4 h-4 text-white" />
-          </button>
-        </div>
-      </motion.div>
-    );
-  }
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  }, [multiple, processFile, processFiles]);
 
   return (
     <motion.div
@@ -143,7 +119,6 @@ export default function ImageUploader({ onImageSelect, currentImage, multiple = 
           <span>Up to 10MB</span>
         </div>
         
-        {/* Gradient border effect */}
         <div className="absolute inset-0 rounded-3xl opacity-50 pointer-events-none"
           style={{
             background: isDragging 
