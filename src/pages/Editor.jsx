@@ -933,11 +933,11 @@ export default function Editor() {
         </Tabs>
       </motion.aside>
       
-      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
+      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[calc(100dvh-7rem)] md:h-[60dvh] lg:h-auto relative min-h-0 md:min-h-0">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="h-14 border-b border-white/5 flex items-center justify-between px-4 lg:px-6 glass-card flex-shrink-0"
+          className="hidden md:flex h-14 border-b border-white/5 items-center justify-between px-4 lg:px-6 glass-card flex-shrink-0"
         >
           <div className="flex items-center gap-2">
             {activeTab === "remove" && currentImage && (
