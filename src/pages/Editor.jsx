@@ -483,7 +483,7 @@ export default function Editor() {
     if (!currentImage) return;
     setIsSaving(true);
     try {
-      const blob = await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
+      const blob = await handleGetProcessedBlob();
       if (!blob) { toast.error("Could not get image data to save."); return; }
       const file = new File([blob], `flik_creation_${Date.now()}.png`, { type: blob.type });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
@@ -498,7 +498,7 @@ export default function Editor() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
+  }, [currentImage, handleGetProcessedBlob]);
 
   const handleFileUpload = useCallback((e) => {
     const files = Array.from(e.target.files || []);
