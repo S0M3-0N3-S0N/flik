@@ -422,7 +422,6 @@ export default function CameraPage() {
         metadata: { source: 'camera', facing_mode: facingMode },
       });
 
-      queryClient.invalidateQueries({ queryKey: ['creations'] });
       setSavedPhoto(true);
       toast.success("Saved to gallery!", { id: 'photo-save' });
     } catch (err) {
