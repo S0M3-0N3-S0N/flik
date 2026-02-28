@@ -98,12 +98,15 @@ export default function CameraPage() {
   }, []);
 
   // ─── Safe camera initialization with guard ───────────────────────────────────
-  const startCamera = useCallback(async (facing = facingMode) => {
+  const startCamera = useCallback(async (facing) => {
     if (initializingRef.current) return;
     initializingRef.current = true;
     setCameraLoading(true);
 
-    if (streamRef.current) {
+    // Turn off torch before stopping old stream
+    const oldTrack = streamRef.current?.getVideoTracks()[0];
+    if (oldTrack) {
+      oldTrack.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
       streamRef.current.getTracks().forEach(t => t.stop());
     }
     setHasStream(false);
@@ -117,6 +120,8 @@ export default function CameraPage() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.style.filter = '';
+        videoRef.current.style.transform = '';
         try {
           await videoRef.current.play();
         } catch (playErr) {
@@ -135,10 +140,6 @@ export default function CameraPage() {
         ? { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, supported: true }
         : { min: -2, max: 2, supported: false }
       );
-      setSupported({
-        res4k: !!(caps.height?.max >= 2160),
-        fps60: !!(caps.frameRate?.max >= 60),
-      });
 
       setZoomValue(1);
       setExposure(0);
@@ -149,7 +150,7 @@ export default function CameraPage() {
       initializingRef.current = false;
       setCameraLoading(false);
     }
-  }, [facingMode, modeIndex]);
+  }, []);
 
   useEffect(() => {
     startCamera();
