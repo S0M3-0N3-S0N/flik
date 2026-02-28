@@ -1042,6 +1042,8 @@ export default function Editor() {
                 <CropPanel
                   onApplyCrop={handleApplyCrop}
                   onCancelCrop={handleCancelCrop}
+                  onStartCrop={handleStartCrop}
+                  isCropping={isCropping}
                 />
               ) : (
                 <p className="text-white/40 text-sm">Upload an image to start</p>

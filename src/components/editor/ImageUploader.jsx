@@ -57,12 +57,13 @@ export default function ImageUploader({ onImageSelect, currentImage, multiple = 
   };
 
   const processFiles = (files) => {
-    // For multiple files, we might need to handle them differently depending on parent expectation
-    // If parent expects array, we should pass array.
-    // However, onImageSelect usually expects a single object in the legacy code.
-    // If multiple=true, we assume onImageSelect handles array OR we pass them one by one?
-    // Let's assume onImageSelect handles an array if multiple is true.
-    onImageSelect(files);
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    const readers = imageFiles.map(file => new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve({ file, url: e.target.result, preview: e.target.result, name: file.name });
+      reader.readAsDataURL(file);
+    }));
+    Promise.all(readers).then(images => onImageSelect(images));
   };
 
   if (currentImage) {
