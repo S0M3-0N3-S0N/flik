@@ -536,14 +536,12 @@ export default function Editor() {
   const handleAspectRatioSelect = useCallback((ratio) => {
     setActiveRatio(ratio);
     setIsCropping(true);
-    setZoom(1);
     setPan({ x: 0, y: 0 });
     applyCropAreaWithRatio(ratio);
   }, [applyCropAreaWithRatio]);
 
   const handleStartCrop = useCallback(() => {
     setIsCropping(true);
-    setZoom(1);
     setPan({ x: 0, y: 0 });
     setCropArea({ x: 10, y: 10, width: 80, height: 80 });
     if (activeRatio) applyCropAreaWithRatio(activeRatio);
