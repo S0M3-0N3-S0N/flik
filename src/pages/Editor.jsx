@@ -813,7 +813,7 @@ export default function Editor() {
   }, [transform]);
 
   return (
-    <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden overflow-x-hidden">
+    <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
