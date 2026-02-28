@@ -693,15 +693,16 @@ export default function Editor() {
       const imgH = img.naturalHeight;
       if (!imgW || !imgH) return;
 
+      const isMobile = window.innerWidth < 768;
       const rect = container.getBoundingClientRect();
-      const padding = window.innerWidth >= 768 ? 64 : 4;
-      const availW = rect.width - padding;
-      const availH = rect.height - padding;
+      // On mobile, use window dimensions since container height may report incorrectly
+      const availW = isMobile ? window.innerWidth - 8 : rect.width - 64;
+      const availH = isMobile ? window.innerHeight * 0.52 : rect.height - 64;
       if (availW <= 0 || availH <= 0) return;
 
-      const fitZoom = window.innerWidth >= 768
-        ? Math.min(availW / imgW, availH / imgH, 1)
-        : Math.min(availW / imgW, availH / imgH);
+      const fitZoom = isMobile
+        ? Math.min(availW / imgW, availH / imgH)
+        : Math.min(availW / imgW, availH / imgH, 1);
       setZoom(fitZoom);
       setPan({ x: 0, y: 0 });
     };
