@@ -20,6 +20,25 @@ export default function ResultModal({
   const [sliderPos, setSliderPos] = useState(50);
   const [userFeedback, setUserFeedback] = useState(null);
 
+  const handleDownloadResult = async () => {
+    if (!resultImage) return;
+    try {
+      const response = await fetch(resultImage);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `flik_result_${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch {
+      // fallback to original handler
+      onDownload();
+    }
+  };
+
   if (!isOpen) return null;
 
   const originalSrc = originalImage?.preview || originalImage?.url || originalImage;
@@ -246,7 +265,7 @@ export default function ResultModal({
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <Button
                 variant="outline"
-                onClick={onDownload}
+                onClick={handleDownloadResult}
                 className="w-full sm:w-auto bg-white/10 border-white/40 text-white hover:bg-white/20 hover:border-white/60 hover:text-white transition-all shadow-sm"
               >
                 <Download className="w-4 h-4 mr-2" />
