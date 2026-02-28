@@ -1,9 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback, useReducer } from 'react';
-// eslint-disable-next-line no-unused-vars
-import { RotateCcw, Zap, ZapOff, RefreshCw, Settings, Timer, Check, X, Image, Wand2 } from 'lucide-react';
+import { RotateCcw, Zap, ZapOff, Grid3X3, RefreshCw, Settings, Timer, Check, X, Image, Wand2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-
+import { useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from '@/utils';
 import { toast } from "sonner";
 import { base44 } from '@/api/base44Client';
@@ -13,6 +12,7 @@ import SettingsDrawer from '../components/camera/SettingsDrawer';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
+const MODES = ['PHOTO'];
 const initialSettings = { showGrid: false, timer: 0 };
 
 function settingsReducer(state, action) {
@@ -27,9 +27,13 @@ const rotateStyle = (deg) => ({
 
 export default function CameraPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const timerRef = useRef(null);
   const longPressRef = useRef(null);
   const exposureThrottleRef = useRef(null);
   const pinchStartDistRef = useRef(null);
@@ -38,11 +42,17 @@ export default function CameraPage() {
   const tapTimeoutRef = useRef(null);
   const initializingRef = useRef(false);
   const countdownTimerRef = useRef(null);
+  const tapCountRef = useRef(0);
+  const doubleTapTimeoutRef = useRef(null);
+
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
   const [facingMode, setFacingMode] = useState('environment');
-
+  const [modeIndex, setModeIndex] = useState(0);
   const [flashMode, setFlashMode] = useState('off');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const [zoomValue, setZoomValue] = useState(1);
   const [zoomCaps, setZoomCaps] = useState({ min: 1, max: 1, supported: false });
   const [showZoomOverlay, setShowZoomOverlay] = useState(false);
@@ -54,14 +64,14 @@ export default function CameraPage() {
   const [showExposure, setShowExposure] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
+  const [supported, setSupported] = useState({ res4k: false, fps60: false });
   const [settings, dispatchSettings] = useReducer(settingsReducer, initialSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
 
-
+  const mode = MODES[modeIndex];
 
   // Lock to portrait and detect orientation for counter-rotating icons
   useEffect(() => {
@@ -91,15 +101,12 @@ export default function CameraPage() {
   }, []);
 
   // ─── Safe camera initialization with guard ───────────────────────────────────
-  const startCamera = useCallback(async (facing) => {
+  const startCamera = useCallback(async (facing = facingMode) => {
     if (initializingRef.current) return;
     initializingRef.current = true;
     setCameraLoading(true);
 
-    // Turn off torch before stopping old stream
-    const oldTrack = streamRef.current?.getVideoTracks()[0];
-    if (oldTrack) {
-      oldTrack.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+    if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
     }
     setHasStream(false);
@@ -113,8 +120,6 @@ export default function CameraPage() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.style.filter = '';
-        videoRef.current.style.transform = '';
         try {
           await videoRef.current.play();
         } catch (playErr) {
@@ -133,6 +138,10 @@ export default function CameraPage() {
         ? { min: caps.exposureCompensation.min, max: caps.exposureCompensation.max, supported: true }
         : { min: -2, max: 2, supported: false }
       );
+      setSupported({
+        res4k: !!(caps.height?.max >= 2160),
+        fps60: !!(caps.frameRate?.max >= 60),
+      });
 
       setZoomValue(1);
       setExposure(0);
@@ -143,10 +152,10 @@ export default function CameraPage() {
       initializingRef.current = false;
       setCameraLoading(false);
     }
-  }, []);
+  }, [facingMode, modeIndex]);
 
   useEffect(() => {
-    startCamera('environment');
+    startCamera();
     
     base44.entities.Creation.list('-updated_date', 1)
       .then(creations => {
@@ -161,6 +170,7 @@ export default function CameraPage() {
     return () => {
       initializingRef.current = false;
       streamRef.current?.getTracks().forEach(t => t.stop());
+      clearInterval(timerRef.current);
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
@@ -168,16 +178,11 @@ export default function CameraPage() {
     };
   }, []);
 
-  // Apply torch when flash mode changes (only if stream is active)
   useEffect(() => {
-    if (!hasStream) return;
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
-    const caps = track.getCapabilities?.() || {};
-    if (caps.torch) {
-      track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
-    }
-  }, [flashMode, hasStream]);
+    track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
+  }, [flashMode]);
 
   const applyZoom = useCallback((val) => {
     const track = streamRef.current?.getVideoTracks()[0];
@@ -328,9 +333,28 @@ export default function CameraPage() {
     }, 50);
   }, [exposureCaps, afLocked]);
 
+  const switchMode = (idx) => {
+    if (idx === modeIndex) return;
+    haptic(12);
+    if (isRecording) stopRecording();
+    if (countdown > 0) {
+      clearTimeout(countdownTimerRef.current);
+      setCountdown(0);
+    }
+    setModeIndex(idx);
+  };
+
   const swipeStartX = useRef(null);
   const handleSwipeStart = (e) => { swipeStartX.current = e.touches?.[0]?.clientX ?? e.clientX; };
-  const handleSwipeEnd = (e) => { swipeStartX.current = null; };
+  const handleSwipeEnd = (e) => {
+    if (swipeStartX.current === null) return;
+    const endX = e.changedTouches?.[0]?.clientX ?? e.clientX;
+    const diff = swipeStartX.current - endX;
+    if (Math.abs(diff) > 60) {
+      switchMode(diff > 0 ? Math.min(MODES.length - 1, modeIndex + 1) : Math.max(0, modeIndex - 1));
+    }
+    swipeStartX.current = null;
+  };
 
   const runCountdown = (action) => {
     if (settings.timer === 0) { action(); return; }
@@ -363,20 +387,9 @@ export default function CameraPage() {
         const brightness = 1 + (exposure / 2) * 0.8;
         ctx.filter = `brightness(${brightness})`;
       }
-      // Mirror front camera photo to match preview
-      if (facingMode === 'user') {
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-      }
       ctx.drawImage(video, 0, 0);
-      // Reset transforms/filters after draw
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.filter = 'none';
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-      // Clear focus/exposure UI on photo capture
-      setFocusPos(null);
-      setAfLocked(false);
-      setShowExposure(false);
       setPhoto(dataUrl);
       setSavedPhoto(null);
     });
@@ -402,6 +415,7 @@ export default function CameraPage() {
         metadata: { source: 'camera', facing_mode: facingMode },
       });
 
+      queryClient.invalidateQueries({ queryKey: ['creations'] });
       setSavedPhoto(true);
       toast.success("Saved to gallery!", { id: 'photo-save' });
     } catch (err) {
@@ -413,29 +427,44 @@ export default function CameraPage() {
     }
   };
 
+  const stopRecording = () => {
+    haptic([15, 10, 15]);
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== 'inactive') rec.stop();
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+    setIsPaused(false);
+    clearInterval(timerRef.current);
+  };
+
   const retake = () => {
     setPhoto(null);
     setSavedPhoto(null);
-    setFocusPos(null);
-    setAfLocked(false);
-    setShowExposure(false);
     setExposure(0);
+    if (videoRef.current) {
+      videoRef.current.style.filter = '';
+      videoRef.current.style.transform = '';
+    }
     setZoomValue(1);
     startCamera(facingMode);
   };
 
   const flipCamera = () => {
     haptic(10);
+    if (isRecording) stopRecording();
     const next = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(next);
-    // Reset flash to off when switching cameras (front camera has no torch)
-    if (next === 'user') setFlashMode('off');
     startCamera(next);
   };
 
   const handleSettingChange = (key, value) => {
     dispatchSettings({ key, value });
+    if ((key === 'resolution' || key === 'fps') && !isRecording) {
+      startCamera(facingMode);
+    }
   };
+
+  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const flashIcon = {
     off: <ZapOff className="w-4 h-4 text-white/70" />,
@@ -560,8 +589,27 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
+        {/* Recording timer */}
+        <AnimatePresence>
+          {isRecording && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-red-500 rounded-xl px-6 py-2 shadow-lg shadow-red-500/40"
+            >
+              <motion.div
+                animate={{ opacity: isPaused ? 0.3 : [1, 0.3, 1] }}
+                transition={{ repeat: Infinity, duration: 1.2 }}
+                className="w-2.5 h-2.5 rounded-full bg-white"
+              />
+              <span className="text-white text-lg font-mono font-bold tracking-wider">{formatTime(recordingTime)}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Top controls — positions are fixed, only icons rotate */}
-        {!photo && (
+        {!photo && !isRecording && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5">
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }}
               className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
