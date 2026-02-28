@@ -54,7 +54,7 @@ export default function Editor() {
   const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
   const [magicBrushImages, setMagicBrushImages] = useState([]);
   
-  const [zoom, setZoom] = useState(0);
+  const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -164,7 +164,7 @@ export default function Editor() {
     setLoadedImages([image]);
     setCurrentImageIndex(0);
     if (image) {
-      setZoom(0);
+      setZoom(1);
       setPan({ x: 0, y: 0 });
       setAdjustments({
         brightness: 0,
@@ -191,7 +191,7 @@ export default function Editor() {
       setLoadedImages(images);
       setCurrentImageIndex(0);
       setCurrentImage(images[0]);
-      setZoom(0);
+      setZoom(1);
       setPan({ x: 0, y: 0 });
       setAdjustments({
         brightness: 0,
@@ -217,7 +217,7 @@ export default function Editor() {
     if (index >= 0 && index < loadedImages.length) {
       setCurrentImageIndex(index);
       setCurrentImage(loadedImages[index]);
-      setZoom(0);
+      setZoom(1);
       setPan({ x: 0, y: 0 });
       setAdjustments({
         brightness: 0,
@@ -536,12 +536,14 @@ export default function Editor() {
   const handleAspectRatioSelect = useCallback((ratio) => {
     setActiveRatio(ratio);
     setIsCropping(true);
+    setZoom(1);
     setPan({ x: 0, y: 0 });
     applyCropAreaWithRatio(ratio);
   }, [applyCropAreaWithRatio]);
 
   const handleStartCrop = useCallback(() => {
     setIsCropping(true);
+    setZoom(1);
     setPan({ x: 0, y: 0 });
     setCropArea({ x: 10, y: 10, width: 80, height: 80 });
     if (activeRatio) applyCropAreaWithRatio(activeRatio);
@@ -680,39 +682,6 @@ export default function Editor() {
 
 
 
-
-  // Fit image to container when zoom is 0 (on new image load)
-  useEffect(() => {
-    if (!currentImage || zoom !== 0) return;
-
-    const fitImage = () => {
-      if (!imageRef.current || !containerRef.current) return;
-      const img = imageRef.current;
-      const container = containerRef.current;
-      const imgW = img.naturalWidth;
-      const imgH = img.naturalHeight;
-      if (!imgW || !imgH) return;
-
-      const isMobile = window.innerWidth < 768;
-      const rect = container.getBoundingClientRect();
-      // On mobile, use window dimensions since container height may report incorrectly
-      const availW = isMobile ? window.innerWidth - 8 : rect.width - 64;
-      const availH = isMobile ? window.innerHeight * 0.52 : rect.height - 64;
-      if (availW <= 0 || availH <= 0) return;
-
-      const fitZoom = isMobile
-        ? Math.min(availW / imgW, availH / imgH)
-        : Math.min(availW / imgW, availH / imgH, 1);
-      setZoom(fitZoom);
-      setPan({ x: 0, y: 0 });
-    };
-
-    if (imageRef.current?.complete) {
-      fitImage();
-    } else if (imageRef.current) {
-      imageRef.current.onload = fitImage;
-    }
-  }, [currentImage, zoom]);
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -1402,7 +1371,7 @@ export default function Editor() {
                           <ZoomOut className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => { setZoom(0); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
+                          onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
                           className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
                           title="Reset"
                         >
