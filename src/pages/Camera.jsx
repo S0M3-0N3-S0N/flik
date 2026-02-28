@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useReducer } from 'react';
-import { RotateCcw, Zap, ZapOff, Grid3X3, RefreshCw, Settings, Timer, Check, X, Image, Wand2 } from 'lucide-react';
+import { RotateCcw, Zap, ZapOff, RefreshCw, Settings, Timer, Check, X, Image, Wand2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
