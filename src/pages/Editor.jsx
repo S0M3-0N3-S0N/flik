@@ -826,42 +826,35 @@ export default function Editor() {
           return newStrokes;
         });
       }
-    } else if (isCropping && isDragging && dragStart && dragType) {
+    } else if (isCropping && isDragging && dragType && dragInitialCropRef.current && dragInitialPosRef.current) {
       const pos = getRelativePosition(e);
       if (pos) {
-        const deltaX = pos.x - dragStart.x;
-        const deltaY = pos.y - dragStart.y;
-        let newCrop = { ...cropArea };
+        const initial = dragInitialCropRef.current;
+        const initPos = dragInitialPosRef.current;
+        const deltaX = pos.x - initPos.x;
+        const deltaY = pos.y - initPos.y;
+        const minSize = 5;
+        let newCrop = { ...initial };
 
         if (dragType === 'move') {
-          newCrop.x = Math.max(0, Math.min(100 - cropArea.width, cropArea.x + deltaX));
-          newCrop.y = Math.max(0, Math.min(100 - cropArea.height, cropArea.y + deltaY));
-        } else if (dragType === 'nw') {
-          const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 15, cropArea.x + deltaX));
-          const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 15, cropArea.y + deltaY));
-          newCrop.width = cropArea.width + (cropArea.x - newX);
-          newCrop.height = cropArea.height + (cropArea.y - newY);
-          newCrop.x = newX;
-          newCrop.y = newY;
-        } else if (dragType === 'ne') {
-          const newWidth = Math.max(15, Math.min(100 - cropArea.x, cropArea.width + deltaX));
-          const newY = Math.max(0, Math.min(cropArea.y + cropArea.height - 15, cropArea.y + deltaY));
-          newCrop.width = newWidth;
-          newCrop.height = cropArea.height + (cropArea.y - newY);
-          newCrop.y = newY;
-        } else if (dragType === 'sw') {
-          const newX = Math.max(0, Math.min(cropArea.x + cropArea.width - 15, cropArea.x + deltaX));
-          const newHeight = Math.max(15, Math.min(100 - cropArea.y, cropArea.height + deltaY));
-          newCrop.width = cropArea.width + (cropArea.x - newX);
-          newCrop.height = newHeight;
-          newCrop.x = newX;
-        } else if (dragType === 'se') {
-          newCrop.width = Math.max(15, Math.min(100 - cropArea.x, cropArea.width + deltaX));
-          newCrop.height = Math.max(15, Math.min(100 - cropArea.y, cropArea.height + deltaY));
+          newCrop.x = Math.max(0, Math.min(100 - initial.width, initial.x + deltaX));
+          newCrop.y = Math.max(0, Math.min(100 - initial.height, initial.y + deltaY));
+        } else {
+          if (dragType.includes('n')) {
+            newCrop.y = Math.max(0, Math.min(initial.y + initial.height - minSize, initial.y + deltaY));
+            newCrop.height = initial.height + (initial.y - newCrop.y);
+          } else if (dragType.includes('s')) {
+            newCrop.height = Math.max(minSize, Math.min(100 - initial.y, initial.height + deltaY));
+          }
+          if (dragType.includes('w')) {
+            newCrop.x = Math.max(0, Math.min(initial.x + initial.width - minSize, initial.x + deltaX));
+            newCrop.width = initial.width + (initial.x - newCrop.x);
+          } else if (dragType.includes('e')) {
+            newCrop.width = Math.max(minSize, Math.min(100 - initial.x, initial.width + deltaX));
+          }
         }
 
         setCropArea(newCrop);
-        setDragStart(pos);
       }
     }
   }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, isDragging, dragStart, dragType, cropArea, isPanning, pan]);
