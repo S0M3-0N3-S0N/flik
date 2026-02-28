@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3 } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
@@ -74,6 +75,8 @@ export default function Editor() {
   const adjustmentUndoTimerRef = useRef(null);
   const objectURLsRef = useRef(new Set());
   const fileInputRef = useRef(null);
+  
+  const [emblaRef, emblaApi] = useEmblaCarousel({ skipSnaps: false, containScroll: false });
 
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
@@ -114,8 +117,9 @@ export default function Editor() {
       setCurrentImage(img);
       setLoadedImages([img]);
       setNeedsFit(true);
+      setTimeout(() => emblaApi?.scrollTo(0), 0);
     }
-  }, [location.search]);
+  }, [location.search, emblaApi]);
 
   // Cleanup all object URLs on unmount
   useEffect(() => {
@@ -127,6 +131,21 @@ export default function Editor() {
       if (adjustmentUndoTimerRef.current) clearTimeout(adjustmentUndoTimerRef.current);
     };
   }, []);
+
+  // Handle carousel slide changes
+  useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => {
+      const idx = emblaApi.selectedScrollSnap();
+      if (idx !== currentImageIndex && idx >= 0 && idx < loadedImages.length) {
+        setCurrentImageIndex(idx);
+        setCurrentImage(loadedImages[idx]);
+        resetImageState();
+      }
+    };
+    emblaApi.on('select', onSelect);
+    return () => emblaApi.off('select', onSelect);
+  }, [emblaApi, currentImageIndex, loadedImages, resetImageState]);
 
   // Fit image to container when needsFit is true
   useEffect(() => {
@@ -196,7 +215,8 @@ export default function Editor() {
     setLoadedImages([image]);
     setCurrentImageIndex(0);
     if (image) resetImageState();
-  }, [resetImageState]);
+    setTimeout(() => emblaApi?.scrollTo(0), 0);
+  }, [resetImageState, emblaApi]);
 
   const handleMultipleImagesSelect = useCallback((images) => {
     if (images && images.length > 0) {
@@ -204,16 +224,18 @@ export default function Editor() {
       setCurrentImageIndex(0);
       setCurrentImage(images[0]);
       resetImageState();
+      setTimeout(() => emblaApi?.scrollTo(0), 0);
     }
-  }, [resetImageState]);
+  }, [resetImageState, emblaApi]);
 
   const switchToImage = useCallback((index) => {
     if (index >= 0 && index < loadedImages.length) {
       setCurrentImageIndex(index);
       setCurrentImage(loadedImages[index]);
       resetImageState();
+      setTimeout(() => emblaApi?.scrollTo(index), 0);
     }
-  }, [loadedImages, resetImageState]);
+  }, [loadedImages, resetImageState, emblaApi]);
 
   const handleGenerateCanvas = useCallback(
     () => generateCanvas(currentImage, adjustments, transform, selectedFilter),
@@ -918,7 +940,7 @@ export default function Editor() {
           onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
           onWheel={handleWheel}
-          style={{ touchAction: 'none' }}
+          style={{ touchAction: loadedImages.length > 1 ? 'pan-y' : 'none' }}
         >
           {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
@@ -939,19 +961,12 @@ export default function Editor() {
           {!currentImage ? (
             <ImageUploader onImageSelect={handleImageSelect} />
           ) : (
-            <>
-              {loadedImages.length > 1 && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1.5 rounded-full">
-                  {loadedImages.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => switchToImage(idx)}
-                      className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-[#FF6B35] w-4' : 'bg-white/30 hover:bg-white/50'}`}
-                    />
-                  ))}
-                </div>
-              )}
-              <div className="w-full h-full flex items-center justify-center overflow-hidden">
+           <>
+             <div ref={emblaRef} className="w-full h-full overflow-hidden">
+               <div className="flex h-full">
+                 {loadedImages.map((img, idx) => (
+                   <div key={idx} className="min-w-full h-full flex items-center justify-center">
+                     {idx === currentImageIndex && (
                 <div
                   className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${(isPanning || isSpacePressed) ? 'cursor-move' : ''}`}
                   style={{
