@@ -8,9 +8,9 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
   const [isDragging, setIsDragging] = useState(false);
 
   const getValueFromEvent = (e) => {
-    if (!trackRef.current) return;
+    if (!e || !trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientY = e.touches?.length > 0 ? e.touches[0].clientY : e.clientY;
     const ratio = 1 - Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
     onChange(min + ratio * (max - min));
   };
@@ -25,7 +25,7 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
 
   useEffect(() => {
     if (!isDragging) return;
-    const onMove = (e) => { e.stopPropagation(); getValueFromEvent(e); };
+    const onMove = (e) => { if (e) { e.stopPropagation(); getValueFromEvent(e); } };
     const onUp = () => setIsDragging(false);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
@@ -37,7 +37,7 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onUp);
     };
-  }, [isDragging]);
+  }, [isDragging, min, max]);
 
   const fillPercent = ((value - min) / (max - min)) * 100;
 

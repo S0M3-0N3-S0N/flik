@@ -226,7 +226,7 @@ export default function CameraPage() {
 
   const pinchThrottleRef = useRef(null);
   const handleTouchStart = (e) => {
-    if (e.touches.length === 2) {
+    if (e?.touches?.length === 2) {
       clearTimeout(tapTimeoutRef.current);
       pinchStartDistRef.current = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
@@ -237,7 +237,7 @@ export default function CameraPage() {
   };
 
   const handleTouchMove = (e) => {
-    if (e.touches.length === 2 && pinchStartDistRef.current) {
+    if (e?.touches?.length === 2 && pinchStartDistRef.current) {
       if (pinchThrottleRef.current) return;
       pinchThrottleRef.current = setTimeout(() => { pinchThrottleRef.current = null; }, 16);
 
@@ -252,14 +252,14 @@ export default function CameraPage() {
   };
 
   const handleTouchEnd = (e) => {
-    if (pinchStartDistRef.current && e.touches.length < 2) {
+    if (pinchStartDistRef.current && e?.touches?.length < 2) {
       pinchStartDistRef.current = null;
       setTimeout(() => setShowZoomOverlay(false), 1200);
     }
   };
 
   const handleViewfinderTap = (e) => {
-    if (pinchStartDistRef.current) return;
+    if (!e || pinchStartDistRef.current) return;
     if (afLocked) {
       setAfLocked(false);
       setFocusPos(null);
@@ -270,8 +270,8 @@ export default function CameraPage() {
     const rect = viewfinderRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const clientX = e.changedTouches?.length > 0 ? e.changedTouches[0].clientX : e.clientX;
+    const clientY = e.changedTouches?.length > 0 ? e.changedTouches[0].clientY : e.clientY;
 
     const zoomScale = zoomCaps.supported ? 1 : zoomValue;
     const x = (clientX - rect.left) / zoomScale;
@@ -466,8 +466,8 @@ export default function CameraPage() {
     setSavedPhoto(null);
     setExposure(0);
     if (videoRef.current) {
-      videoRef.current.style.filter = '';
-      videoRef.current.style.transform = '';
+      videoRef.current.style.filter = 'none';
+      videoRef.current.style.transform = 'none';
     }
     setZoomValue(1);
     startCamera(facingMode);
@@ -584,7 +584,7 @@ export default function CameraPage() {
           handleTouchEnd(e);
           handleSwipeEnd(e);
           handleLongPressEnd();
-          if (!pinchStartDistRef.current && e.changedTouches.length === 1 && e.touches.length === 0) {
+          if (!pinchStartDistRef.current && e?.changedTouches?.length === 1 && e?.touches?.length === 0) {
             handleViewfinderTap(e);
           }
         }}
