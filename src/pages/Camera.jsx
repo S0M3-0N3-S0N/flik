@@ -438,8 +438,6 @@ export default function CameraPage() {
     dispatchSettings({ key, value });
   };
 
-  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-
   const flashIcon = {
     off: <ZapOff className="w-4 h-4 text-white/70" />,
     on: <Zap className="w-4 h-4 text-[#FFB800]" fill="currentColor" />,
