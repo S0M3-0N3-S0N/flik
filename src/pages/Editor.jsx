@@ -785,6 +785,8 @@ export default function Editor() {
           setDragType(type);
           setIsDragging(true);
           setDragStart(pos);
+          dragInitialCropRef.current = { ...cropArea };
+          dragInitialPosRef.current = { ...pos };
         }
       }
     }
