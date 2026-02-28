@@ -448,11 +448,10 @@ export default function CameraPage() {
   const retake = () => {
     setPhoto(null);
     setSavedPhoto(null);
+    setFocusPos(null);
+    setAfLocked(false);
+    setShowExposure(false);
     setExposure(0);
-    if (videoRef.current) {
-      videoRef.current.style.filter = '';
-      videoRef.current.style.transform = '';
-    }
     setZoomValue(1);
     startCamera(facingMode);
   };
