@@ -13,7 +13,13 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
   const [isGenerating, setIsGenerating] = useState(false);
   const [referenceImages, setReferenceImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const fileInputRef = useRef(null);
+
+  const { data: fontLibrary = [], isLoading: isLoadingLibrary } = useQuery({
+    queryKey: ['fontLibrary'],
+    queryFn: () => base44.entities.Font.list('-created_date', 100),
+  });
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('image/'));
