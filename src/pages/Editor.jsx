@@ -75,6 +75,7 @@ export default function Editor() {
   const adjustmentUndoTimerRef = useRef(null);
   const objectURLsRef = useRef(new Set());
   const fileInputRef = useRef(null);
+  const imageEditStateRef = useRef({}); // Store edit state per image
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ skipSnaps: false, containScroll: false });
 
