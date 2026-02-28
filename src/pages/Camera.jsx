@@ -176,11 +176,16 @@ export default function CameraPage() {
     };
   }, []);
 
+  // Apply torch when flash mode changes (only if stream is active)
   useEffect(() => {
+    if (!hasStream) return;
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
-    track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
-  }, [flashMode]);
+    const caps = track.getCapabilities?.() || {};
+    if (caps.torch) {
+      track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
+    }
+  }, [flashMode, hasStream]);
 
   const applyZoom = useCallback((val) => {
     const track = streamRef.current?.getVideoTracks()[0];
