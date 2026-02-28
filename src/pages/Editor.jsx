@@ -88,6 +88,7 @@ export default function Editor() {
   const [regenerateAction, setRegenerateAction] = useState(null);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
+  const [isToolsModalOpen, setIsToolsModalOpen] = useState(false);
 
   const location = useLocation();
 
