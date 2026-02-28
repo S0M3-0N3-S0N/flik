@@ -156,8 +156,8 @@ export default function Editor() {
       const container = containerRef.current;
       if (!img || !container) return;
 
-      const imgW = img.naturalWidth;
-      const imgH = img.naturalHeight;
+      const imgW = img?.naturalWidth;
+      const imgH = img?.naturalHeight;
       if (!imgW || !imgH) return;
 
       const rect = container.getBoundingClientRect();
@@ -173,10 +173,10 @@ export default function Editor() {
       setNeedsFit(false);
     };
 
-    if (imageRef.current.complete && imageRef.current.naturalWidth > 0) {
+    const img = imageRef.current;
+    if (img?.complete && img?.naturalWidth > 0) {
       fitImage();
-    } else {
-      const img = imageRef.current;
+    } else if (img) {
       img.addEventListener('load', fitImage, { once: true });
       return () => img.removeEventListener('load', fitImage);
     }
