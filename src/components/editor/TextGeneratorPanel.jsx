@@ -203,23 +203,81 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
         </div>
       </div>
 
-      <Button
-        onClick={handleGenerateText}
-        disabled={isGenerating || isProcessing || !textContent.trim() || !stylePrompt.trim()}
-        className="btn-gradient w-full text-white rounded-lg h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-30"
-      >
-        {isGenerating ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            Generating...
-          </>
-        ) : (
-          <>
-            <Wand2 className="w-4 h-4 mr-2" />
-            Generate Text
-          </>
-        )}
-      </Button>
+      <div className="flex gap-3">
+        <Button
+          onClick={handleGenerateText}
+          disabled={isGenerating || isProcessing || !textContent.trim() || !stylePrompt.trim()}
+          className="flex-1 btn-gradient text-white rounded-lg h-10 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-30"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Wand2 className="w-4 h-4 mr-2" />
+              Generate Text
+            </>
+          )}
+        </Button>
+        <Button
+          onClick={() => setShowLibrary(true)}
+          className="px-4 text-white rounded-lg h-10 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#FF6B35]/50 transition-colors"
+        >
+          <Library className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <Dialog open={showLibrary} onOpenChange={setShowLibrary}>
+        <DialogContent className="max-w-5xl h-[80vh] bg-[#0a0a0a] border border-white/10 text-white p-0 gap-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-[#FF6B35]/5 to-[#FFB800]/5">
+            <DialogTitle className="text-white text-lg font-semibold">Font Library</DialogTitle>
+            <p className="text-xs text-white/50 mt-1">Browse and apply fonts saved by the community</p>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto px-6 py-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {isLoadingLibrary ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <div key={idx} className="aspect-square rounded-lg bg-white/5 animate-pulse" />
+                ))}
+              </div>
+            ) : fontLibrary.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <Library className="w-12 h-12 text-white/20 mb-4" />
+                <p className="text-white/60 text-sm">No fonts saved yet</p>
+                <p className="text-white/40 text-xs mt-1">Create a font and it will appear here</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {fontLibrary.map((font) => (
+                  <button
+                    key={font.id}
+                    onClick={() => handleApplyFont(font)}
+                    className="relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35]/50 transition-all group"
+                  >
+                    <img
+                      src={font.imageUrl}
+                      alt={font.text}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                      <div className="w-full">
+                        <p className="text-xs text-white font-semibold truncate">{font.text}</p>
+                        <p className="text-[10px] text-white/60 truncate">{font.style}</p>
+                        {font.usageCount > 0 && (
+                          <p className="text-[10px] text-[#FF6B35] mt-1">Used {font.usageCount}x</p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
