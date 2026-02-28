@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback, useReducer } from 'rea
 import { RotateCcw, Zap, ZapOff, RefreshCw, Settings, Timer, Check, X, Image, Wand2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+
 import { createPageUrl } from '@/utils';
 import { toast } from "sonner";
 import { base44 } from '@/api/base44Client';
