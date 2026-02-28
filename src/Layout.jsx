@@ -396,7 +396,7 @@ function LayoutContent({ children, currentPageName }) {
                 </div>
                 <span className="text-[10px] font-medium">Profile</span>
               </button>
-          </nav>
+            </nav>
         )}
 
         {/* Global FLIK Button - Draggable (Desktop Only) */}
