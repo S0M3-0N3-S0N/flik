@@ -98,26 +98,16 @@ Return ONLY the 3 suggestions, nothing else.`,
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
-    console.log("Files selected:", files.length);
-    
-    if (files.length === 0) {
-      console.log("No files selected");
-      return;
-    }
+    if (files.length === 0) return;
 
     setIsUploading(true);
     try {
-      console.log("Starting upload of", files.length, "files");
       const newImages = await Promise.all(files.map(async (file) => {
-        console.log("Uploading file:", file.name);
         const result = await base44.integrations.Core.UploadFile({ file });
-        console.log("Upload result:", result);
         return result.file_url;
       }));
-      
-      console.log("All uploads complete, new images:", newImages);
+
       const updatedImages = [...referenceImages, ...newImages];
-      console.log("Updated reference images:", updatedImages);
       onReferenceImagesChange(updatedImages);
       toast.success(`${files.length} image${files.length > 1 ? 's' : ''} uploaded successfully!`);
       e.target.value = '';
@@ -176,12 +166,12 @@ Return ONLY the 3 suggestions, nothing else.`,
       await base44.entities.PromptLearning.create({
         prompt: prompt,
         tool_type: 'magic_brush',
-        was_successful: true, // We'll assume success for now, can be updated later
+        was_successful: true,
         context: {
           reference_images_count: referenceImages.length,
           timestamp: new Date().toISOString()
         }
-      }, { data_env: "dev" });
+      });
     } catch (error) {
       console.error("Failed to save prompt for learning:", error);
     }
