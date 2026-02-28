@@ -999,7 +999,7 @@ export default function Editor() {
             <ImageUploader onImageSelect={handleImageSelect} />
           ) : (
            <>
-             <div ref={emblaRef} className="w-full h-full overflow-hidden">
+             <div ref={emblaRef} className={`w-full h-full overflow-hidden ${isImageLocked ? 'pointer-events-none' : ''}`}>
                <div className="flex h-full">
                  {loadedImages.map((img, idx) => (
                    <div key={idx} className="min-w-full h-full flex items-center justify-center overflow-hidden">
