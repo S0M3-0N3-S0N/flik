@@ -1087,6 +1087,8 @@ export default function Editor() {
                   onCancelCrop={handleCancelCrop}
                   onStartCrop={handleStartCrop}
                   isCropping={isCropping}
+                  onAspectRatioSelect={handleAspectRatioSelect}
+                  activeRatio={activeRatio}
                 />
               ) : (
                 <p className="text-white/40 text-sm">Upload an image to start</p>
