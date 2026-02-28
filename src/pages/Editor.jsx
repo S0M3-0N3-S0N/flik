@@ -681,6 +681,36 @@ export default function Editor() {
 
 
 
+  // Fit image to container when zoom is 0 (on new image load)
+  useEffect(() => {
+    if (!currentImage || zoom !== 0) return;
+
+    const fitImage = () => {
+      if (!imageRef.current || !containerRef.current) return;
+      const img = imageRef.current;
+      const container = containerRef.current;
+      const imgW = img.naturalWidth;
+      const imgH = img.naturalHeight;
+      if (!imgW || !imgH) return;
+
+      const rect = container.getBoundingClientRect();
+      const padding = window.innerWidth >= 768 ? 64 : 16;
+      const availW = rect.width - padding;
+      const availH = rect.height - padding;
+      if (availW <= 0 || availH <= 0) return;
+
+      const fitZoom = Math.min(availW / imgW, availH / imgH, 1);
+      setZoom(fitZoom);
+      setPan({ x: 0, y: 0 });
+    };
+
+    if (imageRef.current?.complete) {
+      fitImage();
+    } else if (imageRef.current) {
+      imageRef.current.onload = fitImage;
+    }
+  }, [currentImage, zoom]);
+
   useEffect(() => {
     const handleKeyPress = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
