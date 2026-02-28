@@ -89,8 +89,18 @@ export default function Editor() {
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
   const [generatedTextImage, setGeneratedTextImage] = useState(null);
+  const [user, setUser] = useState(null);
 
   const location = useLocation();
+
+  // Fetch user on mount
+  useEffect(() => {
+    let isMounted = true;
+    base44.auth.me()
+      .then(u => isMounted && setUser(u))
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
 
   // Define resetImageState early so it can be used in useEffect dependencies
   const resetImageState = useCallback(() => {
@@ -847,9 +857,11 @@ export default function Editor() {
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Type className="w-4 h-4" />
-            </TabsTrigger>
+            {user?.role === 'admin' && (
+              <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+                <Type className="w-4 h-4" />
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="px-4 pb-4">
