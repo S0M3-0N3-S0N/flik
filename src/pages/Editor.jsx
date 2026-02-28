@@ -178,6 +178,7 @@ export default function Editor() {
       setBrushStrokes([]);
       setIsCropping(false);
       setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+      setActiveRatio(null);
       setUndoHistory([]);
       setRedoHistory([]);
     }
