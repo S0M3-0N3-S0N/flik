@@ -64,6 +64,14 @@ export default function CameraPage() {
 
   const mode = MODES[modeIndex];
 
+  // Unused recording state kept for potential future video mode
+  const isRecording = false;
+  const isPaused = false;
+  const recordingTime = 0;
+  const timerRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+
   // Lock to portrait and detect orientation for counter-rotating icons
   useEffect(() => {
     // Try to lock screen to portrait so the video feed stays upright
