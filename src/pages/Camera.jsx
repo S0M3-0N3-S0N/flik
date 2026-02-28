@@ -636,6 +636,7 @@ export default function CameraPage() {
           <video
             ref={videoRef}
             className="w-full h-full object-cover transition-all duration-300"
+            style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : undefined }}
             autoPlay
             playsInline
             muted
