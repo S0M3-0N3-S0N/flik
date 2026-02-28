@@ -699,7 +699,8 @@ export default function Editor() {
       const availH = rect.height - padding;
       if (availW <= 0 || availH <= 0) return;
 
-      const fitZoom = Math.min(availW / imgW, availH / imgH, 1);
+      const maxZoom = window.innerWidth >= 768 ? 1 : 3;
+      const fitZoom = Math.min(availW / imgW, availH / imgH, maxZoom);
       setZoom(fitZoom);
       setPan({ x: 0, y: 0 });
     };
