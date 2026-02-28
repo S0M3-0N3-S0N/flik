@@ -815,7 +815,17 @@ export default function Editor() {
   }, [transform]);
 
   return (
-    <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-[calc(100dvh)] md:h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
+      {/* Mobile Header */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="md:hidden h-14 bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800] flex items-center justify-center px-4 flex-shrink-0 z-40"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <div className="text-white font-bold text-lg tracking-wider">Photo Studio</div>
+      </motion.div>
+
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
