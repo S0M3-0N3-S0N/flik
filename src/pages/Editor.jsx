@@ -1399,7 +1399,7 @@ export default function Editor() {
                           <ZoomOut className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
+                          onClick={() => { setZoom(0); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
                           className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
                           title="Reset"
                         >
