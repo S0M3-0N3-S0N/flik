@@ -507,8 +507,7 @@ export default function Editor() {
 
   const applyCropAreaWithRatio = useCallback((ratio) => {
     if (!ratio) {
-      // Free: reset to default
-      setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+      // Free: keep current crop area as-is, just start cropping
       return;
     }
     if (!imageRef.current) {
