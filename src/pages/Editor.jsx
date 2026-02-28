@@ -217,7 +217,7 @@ export default function Editor() {
     if (index >= 0 && index < loadedImages.length) {
       setCurrentImageIndex(index);
       setCurrentImage(loadedImages[index]);
-      setZoom(1);
+      setZoom(0);
       setPan({ x: 0, y: 0 });
       setAdjustments({
         brightness: 0,
