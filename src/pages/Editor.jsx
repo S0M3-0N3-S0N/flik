@@ -1002,7 +1002,16 @@ export default function Editor() {
              <div ref={emblaRef} className={`w-full h-full overflow-hidden ${isImageLocked ? 'pointer-events-none' : ''}`}>
                <div className="flex h-full">
                  {loadedImages.map((img, idx) => (
-                   <div key={idx} className="min-w-full h-full flex items-center justify-center overflow-hidden">
+                   <div key={idx} className="min-w-full h-full flex items-center justify-center overflow-hidden relative">
+                     {idx === currentImageIndex && (
+                       <button
+                         onClick={() => setIsImageLocked(!isImageLocked)}
+                         className={`absolute top-4 right-4 z-30 transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`}
+                         title={isImageLocked ? 'Unlock image' : 'Lock image'}
+                       >
+                         {isImageLocked ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+                       </button>
+                     )}
                      <div
                        className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${(isPanning || isSpacePressed) ? 'cursor-move' : ''}`}
                        style={{
