@@ -329,17 +329,6 @@ export default function CameraPage() {
     }, 50);
   }, [exposureCaps, afLocked]);
 
-  const switchMode = (idx) => {
-    if (idx === modeIndex) return;
-    haptic(12);
-    if (isRecording) stopRecording();
-    if (countdown > 0) {
-      clearTimeout(countdownTimerRef.current);
-      setCountdown(0);
-    }
-    setModeIndex(idx);
-  };
-
   const swipeStartX = useRef(null);
   const handleSwipeStart = (e) => { swipeStartX.current = e.touches?.[0]?.clientX ?? e.clientX; };
   const handleSwipeEnd = (e) => {
