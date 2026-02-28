@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
   const [loadedImages, setLoadedImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isImageLocked, setIsImageLocked] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
@@ -76,6 +78,7 @@ export default function Editor() {
   const objectURLsRef = useRef(new Set());
   const fileInputRef = useRef(null);
   const imageEditStateRef = useRef({}); // Store edit state per image
+  const MAX_EDIT_CACHE_SIZE = 50; // Prevent unbounded memory growth
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ skipSnaps: false, containScroll: false });
 
@@ -149,7 +152,7 @@ export default function Editor() {
 
   // Handle carousel slide changes - save/restore edit state per image
   useEffect(() => {
-    if (!emblaApi) return;
+    if (!emblaApi || isImageLocked) return;
     const onSelect = () => {
       const idx = emblaApi.selectedScrollSnap();
       if (idx !== currentImageIndex && idx >= 0 && idx < loadedImages.length) {
@@ -159,6 +162,12 @@ export default function Editor() {
           imageEditStateRef.current[imgKey] = {
             adjustments, selectedFilter, transform, brushStrokes, zoom, pan
           };
+          
+          // Keep cache size bounded
+          const keys = Object.keys(imageEditStateRef.current);
+          if (keys.length > MAX_EDIT_CACHE_SIZE) {
+            delete imageEditStateRef.current[keys[0]];
+          }
         }
         
         // Switch to new image
@@ -184,7 +193,7 @@ export default function Editor() {
     };
     emblaApi.on('select', onSelect);
     return () => emblaApi.off('select', onSelect);
-  }, [emblaApi, currentImageIndex, loadedImages, currentImage, adjustments, selectedFilter, transform, brushStrokes, zoom, pan, resetImageState]);
+  }, [emblaApi, currentImageIndex, loadedImages, currentImage, adjustments, selectedFilter, transform, brushStrokes, zoom, pan, resetImageState, isImageLocked]);
 
   // Fit image to container when needsFit is true
   useEffect(() => {
@@ -245,10 +254,13 @@ export default function Editor() {
   }, [resetImageState, emblaApi]);
 
   const handleMultipleImagesSelect = useCallback((images) => {
-    if (images && images.length > 0) {
-      setLoadedImages(images);
+    if (images && Array.isArray(images) && images.length > 0) {
+      const processedImages = images.map(img => 
+        img.url ? img : { url: img, preview: img, name: 'image' }
+      );
+      setLoadedImages(processedImages);
       setCurrentImageIndex(0);
-      setCurrentImage(images[0]);
+      setCurrentImage(processedImages[0]);
       resetImageState();
       setTimeout(() => emblaApi?.scrollTo(0), 0);
     }
@@ -1045,13 +1057,15 @@ export default function Editor() {
 
                            {loadedImages.length > 1 && (
                            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
-                           <button onClick={() => switchToImage(Math.max(0, currentImageIndex - 1))} className="text-white/60 hover:text-white transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                           <button onClick={() => switchToImage(Math.max(0, currentImageIndex - 1))} disabled={isImageLocked} className="text-white/60 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
                            <div className="flex items-center gap-1">
                            {loadedImages.map((_, idx) => (
-                           <button key={idx} onClick={() => switchToImage(idx)} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-[#FF6B35] w-4' : 'bg-white/30 hover:bg-white/50'}`} />
+                           <button key={idx} onClick={() => switchToImage(idx)} disabled={isImageLocked} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-[#FF6B35] w-4' : 'bg-white/30 hover:bg-white/50'} disabled:opacity-40 disabled:cursor-not-allowed`} />
                            ))}
                            </div>
-                           <button onClick={() => switchToImage(Math.min(loadedImages.length - 1, currentImageIndex + 1))} className="text-white/60 hover:text-white transition-colors"><ChevronRight className="w-4 h-4" /></button>
+                           <button onClick={() => switchToImage(Math.min(loadedImages.length - 1, currentImageIndex + 1))} disabled={isImageLocked} className="text-white/60 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+                           <div className="h-4 w-px bg-white/20" />
+                           <button onClick={() => setIsImageLocked(!isImageLocked)} className={`transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`} title={isImageLocked ? 'Unlock image' : 'Lock image'}>{isImageLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}</button>
                            </div>
                            )}
                            </>
