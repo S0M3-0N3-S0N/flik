@@ -836,8 +836,7 @@ export default function CameraPage() {
           </>
         ) : (
           <>
-            <p className="text-white/40 text-xs tracking-widest uppercase">Photo captured</p>
-            <div className="w-full flex items-center justify-around px-8">
+<div className="w-full flex items-center justify-around px-8">
               <motion.button whileTap={{ scale: 0.85 }} onClick={retake} className="flex flex-col items-center gap-1">
                 <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
                   <RotateCcw className="w-6 h-6 text-white" />
