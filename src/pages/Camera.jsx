@@ -19,10 +19,13 @@ function settingsReducer(state, action) {
   return { ...state, [action.key]: action.value };
 }
 
-// Rotate individual UI elements (buttons/icons) but NOT the whole layout
+// Rotate only inner icon content — use display:flex to prevent layout shift
 const rotateStyle = (deg) => ({
   transition: 'transform 0.3s ease',
   transform: `rotate(${deg}deg)`,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 });
 
 export default function CameraPage() {
