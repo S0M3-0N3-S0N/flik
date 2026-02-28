@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useReducer } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { RotateCcw, Zap, ZapOff, RefreshCw, Settings, Timer, Check, X, Image, Wand2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
