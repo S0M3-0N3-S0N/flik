@@ -19,6 +19,7 @@ import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
+import ToolsModal from "@/components/editor/ToolsModal";
 import { useFlikActions } from "@/components/useFlikActions";
 
 const DEFAULT_ADJUSTMENTS = {
