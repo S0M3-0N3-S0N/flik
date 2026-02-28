@@ -55,6 +55,12 @@ export default function CameraPage() {
   const [showExposure, setShowExposure] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const timerRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
   const [supported, setSupported] = useState({ res4k: false, fps60: false });
   const [settings, dispatchSettings] = useReducer(settingsReducer, initialSettings);
   const [isSaving, setIsSaving] = useState(false);
