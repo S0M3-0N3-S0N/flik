@@ -1010,7 +1010,7 @@ export default function Editor() {
                             className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
                             title="Undo last stroke"
                           >
-                            <RotateCw className="w-3 h-3" />
+                            <RotateCcw className="w-3 h-3" />
                           </Button>
                           <Button
                             size="sm"
@@ -1077,7 +1077,7 @@ export default function Editor() {
                 className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4"
                 title="Undo (Ctrl+Z)"
               >
-                <RotateCw className="w-4 h-4 lg:mr-2" />
+                <RotateCcw className="w-4 h-4 lg:mr-2" />
                 <span className="hidden lg:inline">Undo</span>
               </Button>
               <Button
