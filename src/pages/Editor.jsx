@@ -500,12 +500,49 @@ export default function Editor() {
     }
   }, [brushStrokes, brushSize, magicBrushPrompt, magicBrushImages, getProcessedImageBlob, currentImage, adjustments, transform, selectedFilter, processMagicBrush]);
 
-  const handleStartCrop = useCallback(() => {
+  const applyCropAreaWithRatio = useCallback((ratio) => {
+    if (!ratio) {
+      // Free: reset to default
+      setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+      return;
+    }
+    if (!imageRef.current) {
+      setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+      return;
+    }
+    const { naturalWidth: imgW, naturalHeight: imgH } = imageRef.current;
+    const imageAspect = imgW / imgH;
+
+    // Compute crop box in % that fits within the image and matches the ratio
+    let cropW, cropH;
+    if (ratio > imageAspect) {
+      // Ratio is wider than image — constrain by width
+      cropW = 80;
+      cropH = cropW * (imageAspect / ratio);
+    } else {
+      // Ratio is taller than image — constrain by height
+      cropH = 80;
+      cropW = cropH * ratio / imageAspect;
+    }
+    const cropX = (100 - cropW) / 2;
+    const cropY = (100 - cropH) / 2;
+    setCropArea({ x: cropX, y: cropY, width: cropW, height: cropH });
+  }, []);
+
+  const handleAspectRatioSelect = useCallback((ratio) => {
+    setActiveRatio(ratio);
     setIsCropping(true);
-    setCropArea({ x: 10, y: 10, width: 80, height: 80 });
     setZoom(1);
     setPan({ x: 0, y: 0 });
-  }, []);
+    applyCropAreaWithRatio(ratio);
+  }, [applyCropAreaWithRatio]);
+
+  const handleStartCrop = useCallback(() => {
+    setIsCropping(true);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    applyCropAreaWithRatio(activeRatio);
+  }, [activeRatio, applyCropAreaWithRatio]);
 
   const handleCancelCrop = useCallback(() => {
     setIsCropping(false);
