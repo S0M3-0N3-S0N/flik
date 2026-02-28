@@ -12,7 +12,6 @@ import SettingsDrawer from '../components/camera/SettingsDrawer';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
-const MODES = ['PHOTO'];
 const initialSettings = { showGrid: false, timer: 0 };
 
 function settingsReducer(state, action) {
