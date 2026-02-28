@@ -643,14 +643,14 @@ export default function CameraPage() {
         {/* Zoom capsule — position stays, pills rotate */}
         {!photo && (
           <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110 }}>
-            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10" style={iconRot}>
+            <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
                 return (
                   <motion.button key={z} whileTap={{ scale: 0.85 }} onClick={() => setZoomPreset(z)}
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white/20 text-white' : 'text-white/50'}`}
                     style={isActive ? { boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.5)' } : {}}>
-                    {z}
+                    <span style={iconRot}>{z}</span>
                   </motion.button>
                 );
               })}
