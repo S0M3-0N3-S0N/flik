@@ -545,7 +545,8 @@ export default function Editor() {
     setIsCropping(true);
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    applyCropAreaWithRatio(activeRatio);
+    setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+    if (activeRatio) applyCropAreaWithRatio(activeRatio);
   }, [activeRatio, applyCropAreaWithRatio]);
 
   const handleCancelCrop = useCallback(() => {
