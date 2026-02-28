@@ -490,6 +490,42 @@ export default function CameraPage() {
   // icon rotation style — applied only to inner icon content, NOT the button container
   const iconRot = rotateStyle(orientation);
 
+  // Give FLIK full camera control
+  useFlikActions('Camera', {
+    takePhoto: () => takePhoto(),
+    savePhoto: () => savePhoto(),
+    retake: () => retake(),
+    flipCamera: () => flipCamera(),
+    setFlashMode: (mode) => setFlashMode(mode),
+    toggleFlash: () => setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'),
+    setZoom: (val) => applyZoom(val),
+    setZoomPreset: (preset) => setZoomPreset(preset),
+    toggleGrid: () => dispatchSettings({ key: 'showGrid', value: !settings.showGrid }),
+    setTimer: (seconds) => dispatchSettings({ key: 'timer', value: seconds }),
+    openSettings: () => setSettingsOpen(true),
+    closeSettings: () => setSettingsOpen(false),
+    exitCamera: () => navigate(createPageUrl('Editor')),
+  }, () => ({
+    isActive: true,
+    hasStream,
+    facingMode,
+    flashMode,
+    zoomValue,
+    zoomCaps,
+    exposure,
+    exposureCaps,
+    showGrid: settings.showGrid,
+    timer: settings.timer,
+    isRecording,
+    countdown,
+    hasPhoto: !!photo,
+    isSaving,
+    savedPhoto: !!savedPhoto,
+    cameraLoading,
+    orientation,
+    supported,
+  }));
+
   return (
     <div className="fixed inset-0 bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
 
