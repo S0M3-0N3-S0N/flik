@@ -384,6 +384,11 @@ export default function CameraPage() {
         const brightness = 1 + (exposure / 2) * 0.8;
         ctx.filter = `brightness(${brightness})`;
       }
+      // Mirror front camera photo to match preview
+      if (facingMode === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
       ctx.drawImage(video, 0, 0);
       ctx.filter = 'none';
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
