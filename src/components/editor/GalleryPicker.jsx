@@ -235,15 +235,15 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
             <div className="flex gap-2 sm:gap-3 relative z-10">
               <Button
                 onClick={() => setSelectedIds([])}
-                className="flex-1 sm:flex-none bg-white/10 border border-white/30 text-white hover:bg-white/20 hover:border-white/50 text-sm px-6 py-2.5 rounded-xl transition-all font-medium"
+                className="flex-1 sm:flex-none bg-white/10 border border-white/30 text-white hover:bg-white/20 hover:border-white/50 text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
               >
-                Clear Selection
+                Clear
               </Button>
               <Button
                 onClick={handleLoadSelected}
-                className="flex-1 sm:flex-none bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-sm px-8 py-2.5 rounded-xl shadow-xl hover:shadow-2xl transition-all font-semibold"
+                className="flex-1 sm:flex-none bg-gradient-to-r from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white text-xs px-4 py-1.5 rounded-lg shadow-xl hover:shadow-2xl transition-all font-semibold"
               >
-                Load Selected →
+                Load →
               </Button>
             </div>
           </div>
