@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -21,13 +21,23 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
     getValueFromEvent(e);
   };
 
-  const handlePointerMove = (e) => {
-    if (!isDragging && e.type !== 'touchmove') return;
-    e.stopPropagation();
-    getValueFromEvent(e);
-  };
-
   const handlePointerUp = () => setIsDragging(false);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e) => { e.stopPropagation(); getValueFromEvent(e); };
+    const onUp = () => setIsDragging(false);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+    };
+  }, [isDragging]);
 
   const fillPercent = ((value - min) / (max - min)) * 100;
 
