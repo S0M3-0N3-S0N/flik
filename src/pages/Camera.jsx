@@ -153,7 +153,7 @@ export default function CameraPage() {
   }, []);
 
   useEffect(() => {
-    startCamera();
+    startCamera('environment');
     
     base44.entities.Creation.list('-updated_date', 1)
       .then(creations => {
