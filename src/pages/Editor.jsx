@@ -1217,14 +1217,21 @@ export default function Editor() {
 
                 {isCropping && (
                   <>
-                    <div className="absolute inset-0 bg-black/50 pointer-events-none rounded-2xl" />
+                    {/* Four dark overlay strips around the crop area (outside only) */}
+                    <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.55)' }} />
+                    <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: 0, width: `${cropArea.x}%`, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
+                    <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: `${cropArea.x + cropArea.width}%`, right: 0, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
+                    <div className="absolute pointer-events-none rounded-2xl" style={{ top: `${cropArea.y + cropArea.height}%`, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.55)' }} />
                     <div
-                      className="absolute border-2 border-[#FF6B35] bg-transparent"
+                      className="absolute border-2 border-[#FF6B35]"
                       style={{
                         left: `${cropArea.x}%`,
                         top: `${cropArea.y}%`,
                         width: `${cropArea.width}%`,
                         height: `${cropArea.height}%`,
+                        background: 'transparent',
+                        backgroundImage: 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)',
+                        backgroundSize: '33.33% 33.33%',
                       }}
                     >
                       <div className="absolute -top-3 -left-3 w-8 h-8 flex items-center justify-center cursor-nw-resize z-10 touch-none">
