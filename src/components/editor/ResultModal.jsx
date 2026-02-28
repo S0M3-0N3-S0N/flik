@@ -77,7 +77,6 @@ export default function ResultModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex items-center justify-center p-4"
-        onClick={handleDiscardWithFeedback}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}

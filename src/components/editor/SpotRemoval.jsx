@@ -20,7 +20,7 @@ export default function SpotRemoval({
   referenceImages = [],
   onReferenceImagesChange
 }) {
-  console.log("SpotRemoval render - referenceImages:", referenceImages);
+
   const [isUploading, setIsUploading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
