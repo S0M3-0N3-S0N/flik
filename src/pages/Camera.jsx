@@ -612,7 +612,7 @@ export default function CameraPage() {
         {!photo && !isRecording && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5">
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }}
-              className="md:hidden w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
+              className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
               <span style={iconRot}><X className="w-5 h-5 text-white" /></span>
             </motion.button>
 
