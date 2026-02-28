@@ -970,24 +970,25 @@ export default function Editor() {
 
                   {isCropping && (
                     <>
-                      <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.55)' }} />
-                      <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: 0, width: `${cropArea.x}%`, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
-                      <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: `${cropArea.x + cropArea.width}%`, right: 0, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
-                      <div className="absolute pointer-events-none rounded-2xl" style={{ top: `${cropArea.y + cropArea.height}%`, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.55)' }} />
+                      <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.65)' }} />
+                      <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: 0, width: `${cropArea.x}%`, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.65)' }} />
+                      <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: `${cropArea.x + cropArea.width}%`, right: 0, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.65)' }} />
+                      <div className="absolute pointer-events-none rounded-2xl" style={{ top: `${cropArea.y + cropArea.height}%`, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.65)' }} />
                       <div
-                        className="absolute border-2 border-[#FF6B35]"
+                        className="absolute border-[3px] border-[#FF6B35] shadow-lg shadow-[#FF6B35]/30"
                         style={{
                           left: `${cropArea.x}%`, top: `${cropArea.y}%`,
                           width: `${cropArea.width}%`, height: `${cropArea.height}%`,
                           background: 'transparent',
-                          backgroundImage: 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)',
+                          backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
                           backgroundSize: '33.33% 33.33%',
+                          boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.3)',
                         }}
                       >
-                        <div className="absolute -top-3 -left-3 w-8 h-8 flex items-center justify-center cursor-nw-resize z-10 touch-none"><div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" /></div>
-                        <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center cursor-ne-resize z-10 touch-none"><div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" /></div>
-                        <div className="absolute -bottom-3 -left-3 w-8 h-8 flex items-center justify-center cursor-sw-resize z-10 touch-none"><div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" /></div>
-                        <div className="absolute -bottom-3 -right-3 w-8 h-8 flex items-center justify-center cursor-se-resize z-10 touch-none"><div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" /></div>
+                        <div className="absolute -top-4 -left-4 w-10 h-10 flex items-center justify-center cursor-nw-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
+                        <div className="absolute -top-4 -right-4 w-10 h-10 flex items-center justify-center cursor-ne-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
+                        <div className="absolute -bottom-4 -left-4 w-10 h-10 flex items-center justify-center cursor-sw-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
+                        <div className="absolute -bottom-4 -right-4 w-10 h-10 flex items-center justify-center cursor-se-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
                       </div>
                     </>
                   )}
