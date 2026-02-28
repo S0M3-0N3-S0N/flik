@@ -191,7 +191,7 @@ export default function Editor() {
       setLoadedImages(images);
       setCurrentImageIndex(0);
       setCurrentImage(images[0]);
-      setZoom(1);
+      setZoom(0);
       setPan({ x: 0, y: 0 });
       setAdjustments({
         brightness: 0,
