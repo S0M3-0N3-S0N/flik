@@ -393,8 +393,13 @@ export default function Editor() {
 
 
 
+  const adjustmentUndoTimerRef = useRef(null);
   const handleAdjustmentChange = useCallback((newAdjustments) => {
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    // Debounce undo pushes so rapid slider drags only create one undo entry
+    if (adjustmentUndoTimerRef.current) clearTimeout(adjustmentUndoTimerRef.current);
+    adjustmentUndoTimerRef.current = setTimeout(() => {
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    }, 500);
     setAdjustments(newAdjustments);
     setRedoHistory([]);
   }, [currentImage, adjustments, selectedFilter, transform]);
@@ -646,7 +651,7 @@ export default function Editor() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        handleDownload();
+        handleSaveToGallery();
       }
     };
 
