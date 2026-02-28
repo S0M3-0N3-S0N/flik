@@ -507,7 +507,6 @@ export default function Editor() {
 
   const applyCropAreaWithRatio = useCallback((ratio) => {
     if (!ratio) {
-      // Free: keep current crop area as-is, just start cropping
       return;
     }
     if (!imageRef.current) {
@@ -517,14 +516,11 @@ export default function Editor() {
     const { naturalWidth: imgW, naturalHeight: imgH } = imageRef.current;
     const imageAspect = imgW / imgH;
 
-    // Compute crop box in % that fits within the image and matches the ratio
     let cropW, cropH;
     if (ratio > imageAspect) {
-      // Ratio is wider than image — constrain by width
       cropW = 80;
       cropH = cropW * (imageAspect / ratio);
     } else {
-      // Ratio is taller than image — constrain by height
       cropH = 80;
       cropW = cropH * ratio / imageAspect;
     }
@@ -677,10 +673,6 @@ export default function Editor() {
     }
   }, [handleImageSelect, handleMultipleImagesSelect]);
 
-
-
-
-
   // Fit image to container when zoom is 0 (on new image load)
   useEffect(() => {
     if (!currentImage || zoom !== 0) return;
@@ -694,7 +686,9 @@ export default function Editor() {
       if (!imgW || !imgH) return;
 
       const rect = container.getBoundingClientRect();
-      const padding = window.innerWidth >= 768 ? 64 : 16;
+      // Use minimal padding on mobile so images fill the space
+      const isMobile = window.innerWidth < 768;
+      const padding = isMobile ? 8 : 64;
       const availW = rect.width - padding;
       const availH = rect.height - padding;
       if (availW <= 0 || availH <= 0) return;
@@ -704,7 +698,7 @@ export default function Editor() {
       setPan({ x: 0, y: 0 });
     };
 
-    if (imageRef.current?.complete) {
+    if (imageRef.current?.complete && imageRef.current?.naturalWidth) {
       fitImage();
     } else if (imageRef.current) {
       imageRef.current.onload = fitImage;
@@ -1254,7 +1248,7 @@ export default function Editor() {
                   ))}
                 </div>
               )}
-              <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
+              <div className="w-full h-full flex items-center justify-center overflow-hidden">
                 <div 
                   className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${
                     (isPanning || isSpacePressed) ? 'cursor-move' : ''
@@ -1288,7 +1282,6 @@ export default function Editor() {
 
                 {isCropping && (
                   <>
-                    {/* Four dark overlay strips around the crop area (outside only) */}
                     <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.55)' }} />
                     <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: 0, width: `${cropArea.x}%`, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
                     <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: `${cropArea.x + cropArea.width}%`, right: 0, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
