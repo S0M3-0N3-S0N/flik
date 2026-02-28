@@ -77,12 +77,15 @@ export default function CameraPage() {
 
   const mode = MODES[modeIndex];
 
-  // Lock to portrait and detect orientation for counter-rotating icons
-  useEffect(() => {
-    // Try to lock screen to portrait so the video feed stays upright
-    try {
-      screen.orientation?.lock('portrait').catch(() => {});
-    } catch {}
+  // Lock to portrait on mobile and detect orientation for counter-rotating icons
+   useEffect(() => {
+     // Try to lock screen to portrait on mobile only
+     const isMobile = window.innerWidth < 768;
+     if (isMobile) {
+       try {
+         screen.orientation?.lock('portrait').catch(() => {});
+       } catch {}
+     }
 
     const getAngle = () => {
       const angle = screen.orientation?.angle ?? window.orientation ?? 0;
@@ -540,7 +543,7 @@ export default function CameraPage() {
   }));
 
   return (
-    <div className="fixed inset-0 bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className="fixed inset-0 md:relative md:h-[calc(100dvh-4rem)] bg-black select-none md:flex md:flex-col" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
 
       {/* Loading state */}
       <AnimatePresence>
@@ -549,7 +552,7 @@ export default function CameraPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/80 flex items-center justify-center z-50"
+            className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 rounded-lg md:rounded-none"
           >
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -562,7 +565,7 @@ export default function CameraPage() {
       {/* ── Viewfinder (fullscreen) ── */}
       <div
         ref={viewfinderRef}
-        className="absolute inset-0 overflow-hidden"
+        className="absolute inset-0 overflow-hidden md:relative md:flex-1"
         onTouchStart={(e) => {
           handleTouchStart(e);
           handleSwipeStart(e);
@@ -716,8 +719,8 @@ export default function CameraPage() {
 
       {/* ── Bottom controls — layout stays fixed, icons rotate ── */}
       <div
-        className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 bg-transparent pt-3"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
+        className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 bg-transparent pt-3 md:relative md:bottom-auto md:justify-center md:bg-black/50 md:backdrop-blur-sm md:border-t md:border-white/5"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', paddingTop: 'env(safe-area-inset-bottom)' }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
       >
