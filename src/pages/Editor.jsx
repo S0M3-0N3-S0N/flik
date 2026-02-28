@@ -694,7 +694,7 @@ export default function Editor() {
       if (!imgW || !imgH) return;
 
       const rect = container.getBoundingClientRect();
-      const padding = window.innerWidth >= 768 ? 64 : 16;
+      const padding = window.innerWidth >= 768 ? 64 : 4;
       const availW = rect.width - padding;
       const availH = rect.height - padding;
       if (availW <= 0 || availH <= 0) return;
