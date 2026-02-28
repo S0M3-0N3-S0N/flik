@@ -117,52 +117,65 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
           />
         </div>
 
-        <div>
-          <label className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-2 block">
-            Reference Images
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#FF6B35]/50 text-white text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
-            >
-              <Upload className="w-4 h-4" />
-              {isUploading ? "Uploading..." : "Add Reference Images"}
-            </button>
+        <div className="space-y-3">
+          <label className="text-white/60 text-xs font-medium uppercase tracking-wider block">Reference Images (Optional)</label>
+          <label className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-white/10 text-xs text-white/80 transition-colors h-[36px] whitespace-nowrap w-full cursor-pointer ${
+            isUploading 
+              ? 'bg-white/5 cursor-not-allowed opacity-50' 
+              : 'bg-white/5 hover:bg-white/10'
+          }`}>
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Uploading...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                <span>Add Reference Images</span>
+              </>
+            )}
             <input
               ref={fileInputRef}
               type="file"
-              multiple
               accept="image/*"
+              multiple
               onChange={handleImageUpload}
               className="hidden"
+              disabled={isUploading}
             />
-            
-            <AnimatePresence>
-              {referenceImages.map((img) => (
-                <motion.div
-                  key={img.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 group"
-                >
-                  <img src={img.url} alt="Reference" className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => handleRemoveImage(img.id)}
-                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+          </label>
+
           {referenceImages.length > 0 && (
-            <p className="text-xs text-white/40 mt-2">
-              {referenceImages.length} reference image{referenceImages.length !== 1 ? 's' : ''} added
-            </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center min-w-[36px] h-[36px] rounded-lg bg-[#FF6B35]/20 border border-[#FF6B35]/40 px-2">
+                  <span className="text-xs text-[#FF6B35] font-semibold">{referenceImages.length}</span>
+                </div>
+                <p className="text-xs text-white/50">{referenceImages.length} image{referenceImages.length !== 1 ? 's' : ''} added</p>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <AnimatePresence>
+                  {referenceImages.map((img) => (
+                    <motion.div
+                      key={img.id}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 group border border-white/10 bg-white/5"
+                    >
+                      <img src={img.url} alt="Reference" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => handleRemoveImage(img.id)}
+                        className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                      >
+                        <X className="w-5 h-5 text-white" />
+                      </button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
           )}
         </div>
       </div>
