@@ -60,8 +60,6 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
         className="relative w-1.5 h-36 bg-white/20 rounded-full cursor-pointer touch-none select-none"
         onMouseDown={handlePointerDown}
         onTouchStart={handlePointerDown}
-        onTouchMove={handlePointerMove}
-        onTouchEnd={handlePointerUp}
       >
         {/* Fill */}
         <div
