@@ -66,6 +66,8 @@ export default function Editor() {
   const [dragStart, setDragStart] = useState(null);
   const [dragType, setDragType] = useState(null);
   const [activeRatio, setActiveRatio] = useState(null);
+  const dragInitialCropRef = useRef(null);
+  const dragInitialPosRef = useRef(null);
 
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const toolbarHideTimeoutRef = useRef(null);
