@@ -1095,9 +1095,21 @@ export default function Editor() {
             {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
           </AnimatePresence>
           
+          {/* Mobile Tools Button */}
+          {currentImage && (
+            <motion.button
+              onClick={() => setIsToolsModalOpen(true)}
+              className="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-30 px-6 py-3 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white font-medium shadow-lg hover:shadow-[#FF6B35]/40 transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Tools
+            </motion.button>
+          )}
+
           {currentImage && (
             <motion.div
-              className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30"
+              className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30 hidden md:block"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2 }}
