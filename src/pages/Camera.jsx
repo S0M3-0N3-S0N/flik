@@ -396,8 +396,14 @@ export default function CameraPage() {
         ctx.scale(-1, 1);
       }
       ctx.drawImage(video, 0, 0);
+      // Reset transforms/filters after draw
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.filter = 'none';
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      // Clear focus/exposure UI on photo capture
+      setFocusPos(null);
+      setAfLocked(false);
+      setShowExposure(false);
       setPhoto(dataUrl);
       setSavedPhoto(null);
     });
