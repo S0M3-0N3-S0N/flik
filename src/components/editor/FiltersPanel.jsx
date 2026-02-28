@@ -39,7 +39,7 @@ export default function FiltersPanel({ selectedFilter, onFilterSelect, previewIm
             <div 
               className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
               style={{ 
-                backgroundImage: previewImage ? `url(${previewImage})` : undefined,
+                backgroundImage: previewImage ? `url(${previewImage})` : 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
                 filter: filter.filter || 'none'
               }}
             />

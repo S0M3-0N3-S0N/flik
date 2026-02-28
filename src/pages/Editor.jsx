@@ -677,7 +677,7 @@ export default function Editor() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleUndo, handleRedo, handleDownload]);
+  }, [handleUndo, handleRedo, handleDownload, handleSaveToGallery]);
 
   const handleWheel = useCallback((e) => {
     if (currentImage) {

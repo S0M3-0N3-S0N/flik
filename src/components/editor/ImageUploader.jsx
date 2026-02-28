@@ -50,9 +50,7 @@ export default function ImageUploader({ onImageSelect, currentImage, multiple = 
         name: file.name
       });
     };
-    reader.onerror = () => {
-      console.error('Error reading file');
-    };
+    reader.onerror = () => {};
     reader.readAsDataURL(file);
   };
 

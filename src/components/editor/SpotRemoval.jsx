@@ -160,23 +160,8 @@ Return ONLY the 3 suggestions, nothing else.`,
     }
   };
 
-  const handleGenerateWithLearning = async () => {
-    // Save the prompt for learning
-    try {
-      await base44.entities.PromptLearning.create({
-        prompt: prompt,
-        tool_type: 'magic_brush',
-        was_successful: true,
-        context: {
-          reference_images_count: referenceImages.length,
-          timestamp: new Date().toISOString()
-        }
-      });
-    } catch (error) {
-      console.error("Failed to save prompt for learning:", error);
-    }
-
-    // Proceed with the actual generation
+  const handleGenerateWithLearning = () => {
+    // Proceed with the actual generation (learning is logged in useMagicBrush)
     onRemoveSpot();
   };
 

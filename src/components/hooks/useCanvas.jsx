@@ -47,6 +47,7 @@ export function useCanvas() {
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
     if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
     if (adjustments.saturation !== 0) filters.push(`saturate(${100 + adjustments.saturation}%)`);
+    // Note: canvas 2D filter blur is supported in modern browsers (Chrome 76+, Firefox 72+, Safari 18+)
     if (adjustments.blur > 0) filters.push(`blur(${adjustments.blur}px)`);
     if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
     if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);

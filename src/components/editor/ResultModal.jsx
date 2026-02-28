@@ -47,45 +47,11 @@ export default function ResultModal({
     transform: `rotate(${transform.rotate}deg) scaleX(${transform.flipH ? -1 : 1}) scaleY(${transform.flipV ? -1 : 1})`
   } : {};
 
-  const handleApplyWithFeedback = async () => {
-    // Mark the result as successful in the learning database
-    try {
-      const recentPrompts = await base44.entities.PromptLearning.filter(
-        { tool_type: 'magic_brush' },
-        '-created_date',
-        1
-      );
-      
-      if (recentPrompts.length > 0) {
-        await base44.entities.PromptLearning.update(recentPrompts[0].id, {
-          was_successful: true
-        });
-      }
-    } catch (error) {
-      console.error("Failed to update learning data:", error);
-    }
-
+  const handleApplyWithFeedback = () => {
     onApply();
   };
 
-  const handleDiscardWithFeedback = async () => {
-    // Mark the result as unsuccessful
-    try {
-      const recentPrompts = await base44.entities.PromptLearning.filter(
-        { tool_type: 'magic_brush' },
-        '-created_date',
-        1
-      );
-      
-      if (recentPrompts.length > 0) {
-        await base44.entities.PromptLearning.update(recentPrompts[0].id, {
-          was_successful: false
-        });
-      }
-    } catch (error) {
-      console.error("Failed to update learning data:", error);
-    }
-
+  const handleDiscardWithFeedback = () => {
     onClose();
   };
 
