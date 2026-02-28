@@ -396,8 +396,9 @@ export default function CameraPage() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
-      if (!exposureCaps.supported && exposure !== 0) {
-        const brightness = 1 + (exposure / 2) * 0.8;
+      // Apply brightness adjustment to canvas (works for both supported & fallback cases)
+      if (exposure !== 0) {
+        const brightness = 1 + (exposure / Math.max(Math.abs(exposureCaps.min), exposureCaps.max)) * 0.8;
         ctx.filter = `brightness(${brightness})`;
       }
       ctx.drawImage(video, 0, 0);
