@@ -561,25 +561,6 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
-        {/* Recording timer */}
-        <AnimatePresence>
-          {isRecording && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-red-500 rounded-xl px-6 py-2 shadow-lg shadow-red-500/40"
-            >
-              <motion.div
-                animate={{ opacity: isPaused ? 0.3 : [1, 0.3, 1] }}
-                transition={{ repeat: Infinity, duration: 1.2 }}
-                className="w-2.5 h-2.5 rounded-full bg-white"
-              />
-              <span className="text-white text-lg font-mono font-bold tracking-wider">{formatTime(recordingTime)}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Top controls — positions are fixed, only icons rotate */}
         {!photo && !isRecording && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5">
