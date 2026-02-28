@@ -52,8 +52,6 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
       exit={{ opacity: 0, x: 10 }}
       className="absolute flex flex-col items-center gap-1.5 pointer-events-auto z-20"
       style={{ left: sliderLeft, top: sliderTop }}
-      onMouseMove={handlePointerMove}
-      onMouseUp={handlePointerUp}
     >
       <Sun className="w-4 h-4 text-[#FFB800]" />
 
