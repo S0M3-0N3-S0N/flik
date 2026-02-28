@@ -13,8 +13,6 @@ export default function SpotRemoval({
   isProcessing, 
   brushSize, 
   onBrushSizeChange,
-  brushOpacity,
-  onBrushOpacityChange,
   brushMode,
   onBrushModeChange,
   prompt,
@@ -216,34 +214,19 @@ export default function SpotRemoval({
         </div>
 
         <div>
-           <div className="flex items-center justify-between mb-3">
-             <Label className="text-white/80 text-xs font-medium uppercase tracking-wider">Brush Size</Label>
-             <span className="text-xs font-mono text-white/50 bg-white/5 px-2 py-1 rounded">{brushSize}px</span>
-           </div>
-           <Slider
-             value={[brushSize]}
-             onValueChange={(value) => onBrushSizeChange(value[0])}
-             min={10}
-             max={100}
-             step={5}
-             className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35] [&_span]:border-none [&_span]:shadow-lg"
-           />
-         </div>
-
-         <div>
-           <div className="flex items-center justify-between mb-3">
-             <Label className="text-white/80 text-xs font-medium uppercase tracking-wider">Opacity</Label>
-             <span className="text-xs font-mono text-white/50 bg-white/5 px-2 py-1 rounded">{Math.round(brushOpacity * 100)}%</span>
-           </div>
-           <Slider
-             value={[brushOpacity * 100]}
-             onValueChange={(value) => onBrushOpacityChange(value[0] / 100)}
-             min={10}
-             max={100}
-             step={5}
-             className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35] [&_span]:border-none [&_span]:shadow-lg"
-           />
-         </div>
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-white/80 text-xs font-medium uppercase tracking-wider">Brush Size</Label>
+            <span className="text-xs font-mono text-white/50 bg-white/5 px-2 py-1 rounded">{brushSize}px</span>
+          </div>
+          <Slider
+            value={[brushSize]}
+            onValueChange={(value) => onBrushSizeChange(value[0])}
+            min={10}
+            max={100}
+            step={5}
+            className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35] [&_span]:border-none [&_span]:shadow-lg"
+          />
+        </div>
 
         <div>
           <div className="flex justify-between items-center mb-3">

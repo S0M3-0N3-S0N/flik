@@ -75,8 +75,7 @@ export default function Editor() {
   const adjustmentUndoTimerRef = useRef(null);
   const objectURLsRef = useRef(new Set());
   const fileInputRef = useRef(null);
-  const imageEditStateRef = useRef({}); // Store edit state per image (max 50 entries)
-  const maxCacheSize = 50;
+  const imageEditStateRef = useRef({}); // Store edit state per image
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ skipSnaps: false, containScroll: false });
 
@@ -154,17 +153,12 @@ export default function Editor() {
     const onSelect = () => {
       const idx = emblaApi.selectedScrollSnap();
       if (idx !== currentImageIndex && idx >= 0 && idx < loadedImages.length) {
-        // Save current image edit state before switching (with cache limit)
+        // Save current image edit state before switching
         if (currentImage) {
           const imgKey = currentImage.url || currentImage.id;
           imageEditStateRef.current[imgKey] = {
             adjustments, selectedFilter, transform, brushStrokes, zoom, pan
           };
-          // Prevent memory leak by limiting cache size
-          const keys = Object.keys(imageEditStateRef.current);
-          if (keys.length > maxCacheSize) {
-            delete imageEditStateRef.current[keys[0]];
-          }
         }
         
         // Switch to new image
@@ -564,23 +558,28 @@ export default function Editor() {
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     if (imageFiles.length === 0) { toast.error('Please select image files'); return; }
     if (imageFiles.length === 1) {
-       const reader = new FileReader();
-       reader.onload = (ev) => {
-         handleImageSelect({ url: ev.target.result, preview: ev.target.result, name: imageFiles[0].name });
-         toast.success('Image uploaded');
-       };
-       reader.readAsDataURL(imageFiles[0]);
-     } else {
-       const readers = imageFiles.map(file => new Promise(resolve => {
-         const reader = new FileReader();
-         reader.onload = (ev) => resolve({ url: ev.target.result, preview: ev.target.result, name: file.name });
-         reader.readAsDataURL(file);
-       }));
-       Promise.all(readers).then(loadedImgs => {
-         handleMultipleImagesSelect(loadedImgs);
-         toast.success(`${imageFiles.length} images uploaded`);
-       });
-     }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        handleImageSelect({ url: ev.target.result, preview: ev.target.result, name: imageFiles[0].name });
+        toast.success('Image uploaded');
+      };
+      reader.readAsDataURL(imageFiles[0]);
+    } else {
+      const loadedImgs = [];
+      let loadedCount = 0;
+      imageFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          loadedImgs[index] = { url: ev.target.result, preview: ev.target.result, name: file.name };
+          loadedCount++;
+          if (loadedCount === imageFiles.length) {
+            handleMultipleImagesSelect(loadedImgs);
+            toast.success(`${imageFiles.length} images uploaded`);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
   }, [handleImageSelect, handleMultipleImagesSelect]);
 
   // Keyboard shortcuts
@@ -639,7 +638,7 @@ export default function Editor() {
   const handleMouseDown = useCallback((e) => {
     const clientX = e.touches?.length > 0 ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches?.length > 0 ? e.touches[0].clientY : e.clientY;
-    if (!isCropping && (isSpacePressed || e.button === 1 || isPanToolActive)) {
+    if (isSpacePressed || e.button === 1 || isPanToolActive) {
       setIsPanning(true);
       setDragStart({ x: clientX, y: clientY });
       return;
@@ -967,7 +966,7 @@ export default function Editor() {
           onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
           onWheel={handleWheel}
-          style={{ touchAction: (loadedImages.length > 1 && !isCropping && activeTab !== 'remove' && !isDragging) ? 'pan-y' : 'none' }}
+          style={{ touchAction: loadedImages.length > 1 ? 'pan-y' : 'none' }}
         >
           {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div

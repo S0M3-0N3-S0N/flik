@@ -22,21 +22,20 @@ export default function ResultModal({
 
   const handleDownloadResult = async () => {
     if (!resultImage) return;
-    let url = null;
     try {
       const response = await fetch(resultImage);
       const blob = await response.blob();
-      url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `flik_result_${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (e) {
+      URL.revokeObjectURL(url);
+    } catch {
+      // fallback to original handler
       onDownload();
-    } finally {
-      if (url) URL.revokeObjectURL(url);
     }
   };
 
