@@ -97,20 +97,28 @@ export default function Generate() {
   });
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const loadUrl = params.get('load');
-    if (loadUrl) {
-      setUploadedImages([{ url: loadUrl, id: Date.now() }]);
-    }
+     const params = new URLSearchParams(window.location.search);
+     const loadUrl = params.get('load');
+     if (loadUrl) {
+       setUploadedImages([{ url: loadUrl, id: Date.now() }]);
+     }
 
-    return () => {
-      // Cleanup uploaded image object URLs
-      uploadedImageURLsRef.current.forEach(url => {
-        URL.revokeObjectURL(url);
-      });
-      uploadedImageURLsRef.current.clear();
-    };
-  }, []);
+     return () => {
+       // Cleanup uploaded image object URLs
+       uploadedImageURLsRef.current.forEach(url => {
+         try {
+           URL.revokeObjectURL(url);
+         } catch (e) {
+           // Ignore errors from revoking URLs
+         }
+       });
+       uploadedImageURLsRef.current.clear();
+       // Cleanup abort controller
+       if (abortControllerRef.current) {
+         abortControllerRef.current.abort();
+       }
+     };
+   }, []);
 
   const handleImageUpload = async (filesOrEvent) => {
     // Handle both event (from hidden input) and direct file array (from ImageUploader)
@@ -149,7 +157,10 @@ export default function Generate() {
       setTimeout(() => setError(null), 3000);
       return;
     }
-    
+
+    // Setup abort controller
+    abortControllerRef.current = new AbortController();
+
     setIsGenerating(true);
     setError(null);
     
@@ -287,11 +298,14 @@ export default function Generate() {
       });
     } catch (err) {
       console.error("Error generating image:", err);
-      setError("Failed to generate. " + (err.message || "Please try again."));
+      if (err.name !== 'AbortError') {
+        setError("Failed to generate. " + (err.message || "Please try again."));
+      }
     } finally {
       setIsGenerating(false);
+      abortControllerRef.current = null;
     }
-  };
+    };
 
   const handleDeleteImage = useCallback((id) => {
     setGeneratedImages(prev => prev.filter(img => img.id !== id));

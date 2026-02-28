@@ -60,17 +60,16 @@ export default function SpotRemoval({
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are an expert image editing AI assistant. A user is using the Magic Brush tool and has written this prompt:
 
-"${userPrompt}"
+  "${userPrompt}"
 
-Based on successful prompts from other users:
-${learnedPrompts.map((p, i) => `${i + 1}. "${p.prompt}"`).join('\n')}
+  ${learnedPrompts.length > 0 ? `Based on successful prompts from other users:\n${learnedPrompts.map((p, i) => `${i + 1}. "${p.prompt}"`).join('\n')}` : ''}
 
-Provide 3 enhanced versions of their prompt that will give better results. Make them:
-- More specific and descriptive
-- Include better visual details
-- Maintain the user's original intent
+  Provide 3 enhanced versions of their prompt that will give better results. Make them:
+  - More specific and descriptive
+  - Include better visual details
+  - Maintain the user's original intent
 
-Return ONLY the 3 suggestions, nothing else.`,
+  Return ONLY the 3 suggestions, nothing else.`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -82,7 +81,7 @@ Return ONLY the 3 suggestions, nothing else.`,
         }
       });
 
-      if (response.suggestions && response.suggestions.length > 0) {
+      if (response?.suggestions && response.suggestions.length > 0) {
         setAiSuggestions(response.suggestions);
         setShowSuggestions(true);
       } else {

@@ -178,14 +178,18 @@ export default function CameraPage() {
     
     return () => {
       initializingRef.current = false;
-      streamRef.current?.getTracks().forEach(t => t.stop());
+      streamRef.current?.getTracks().forEach(t => {
+        try { t.stop(); } catch (e) { /* ignore */ }
+      });
       clearInterval(timerRef.current);
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
+      clearTimeout(longPressRef.current);
+      clearTimeout(pinchThrottleRef.current);
       unsubscribe();
     };
-  }, []);
+    }, []);
 
   useEffect(() => {
     const track = streamRef.current?.getVideoTracks()[0];
@@ -489,6 +493,15 @@ export default function CameraPage() {
 
   // icon rotation style — applied only to inner icon content, NOT the button container
   const iconRot = rotateStyle(orientation);
+
+  // Cleanup blob URLs from zoomed screenshots
+  useEffect(() => {
+    return () => {
+      if (photo?.startsWith('blob:')) {
+        URL.revokeObjectURL(photo);
+      }
+    };
+  }, [photo]);
 
   // Give FLIK full camera control
   useFlikActions('Camera', {
