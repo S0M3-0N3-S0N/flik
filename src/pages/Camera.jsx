@@ -397,7 +397,7 @@ export default function CameraPage() {
       }
       ctx.drawImage(video, 0, 0);
       ctx.filter = 'none';
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
       setPhoto(dataUrl);
       setSavedPhoto(null);
     });
