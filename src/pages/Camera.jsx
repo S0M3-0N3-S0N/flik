@@ -55,7 +55,7 @@ export default function CameraPage() {
   const [showExposure, setShowExposure] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [supported, setSupported] = useState({ res4k: false, fps60: false });
+
   const [settings, dispatchSettings] = useReducer(settingsReducer, initialSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [savedPhoto, setSavedPhoto] = useState(null);
