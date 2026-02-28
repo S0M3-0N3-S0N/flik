@@ -745,9 +745,12 @@ export default function Editor() {
   }, []);
 
   const handleMouseDown = useCallback((e) => {
+    const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+
     if (isSpacePressed || e.button === 1 || isPanToolActive) {
       setIsPanning(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
+      setDragStart({ x: clientX, y: clientY });
       return;
     }
 
