@@ -193,12 +193,13 @@ export default function CameraPage() {
       : Math.max(0.5, Math.min(4, val));
 
     if (zoomCaps.supported) {
-      track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
+    track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
     } else {
-      // CSS fallback - scale video without affecting overlays
-      if (videoRef.current) {
-        videoRef.current.style.transform = `scale(${clamped})`;
-      }
+    // CSS fallback - scale video without affecting overlays
+    if (videoRef.current) {
+      const mirror = facingMode === 'user' ? ' scaleX(-1)' : '';
+      videoRef.current.style.transform = `scale(${clamped})${mirror}`;
+    }
     }
     setZoomValue(clamped);
   }, [zoomCaps]);
