@@ -222,7 +222,6 @@ function LayoutContent({ children, currentPageName }) {
         `}</style>
 
         {/* Top Desktop Navigation */}
-        {currentPageName !== "Camera" && (
         <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="w-full flex items-center justify-center px-8 py-4 relative">
             <div className="absolute left-8 gradient-text font-bold text-lg tracking-wider">FLIK</div>
@@ -283,7 +282,6 @@ function LayoutContent({ children, currentPageName }) {
             </button>
           </div>
         </nav>
-        )}
 
         
         {/* Main Content */}

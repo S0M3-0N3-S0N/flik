@@ -1,17 +1,14 @@
 import React, { useRef, useEffect, useState, useCallback, useReducer } from 'react';
-import { RotateCcw, Zap, ZapOff, RefreshCw, Settings, Timer, Check, X, Image, Wand2 } from 'lucide-react';
+import { RotateCcw, Zap, ZapOff, Grid3X3, RefreshCw, Circle, Square, Settings, Timer, Pause, Play, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from '@/utils';
 import { toast } from "sonner";
 import { base44 } from '@/api/base44Client';
-import * as tf from '@tensorflow/tfjs';
-import * as faceDetection from '@tensorflow-models/face-detection';
 import FocusSquare from '../components/camera/FocusSquare';
 import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
-import { useFlikActions } from '../components/useFlikActions';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
@@ -28,6 +25,9 @@ export default function CameraPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const timerRef = useRef(null);
   const longPressRef = useRef(null);
   const exposureThrottleRef = useRef(null);
   const pinchStartDistRef = useRef(null);
@@ -36,12 +36,17 @@ export default function CameraPage() {
   const tapTimeoutRef = useRef(null);
   const initializingRef = useRef(false);
   const countdownTimerRef = useRef(null);
+  const tapCountRef = useRef(0);
+  const doubleTapTimeoutRef = useRef(null);
 
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
   const [facingMode, setFacingMode] = useState('environment');
   const [modeIndex, setModeIndex] = useState(0);
   const [flashMode, setFlashMode] = useState('off');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const [zoomValue, setZoomValue] = useState(1);
   const [zoomCaps, setZoomCaps] = useState({ min: 1, max: 1, supported: false });
   const [showZoomOverlay, setShowZoomOverlay] = useState(false);
@@ -59,91 +64,8 @@ export default function CameraPage() {
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
-  const [detector, setDetector] = useState(null);
-  const [detectedFace, setDetectedFace] = useState(null);
-  const detectionFrameRef = useRef(null);
 
   const mode = MODES[modeIndex];
-
-  // ─── Initialize Face Detection ──────────────────────────────────────────────
-  useEffect(() => {
-    let mounted = true;
-
-    const initFaceDetection = async () => {
-      try {
-        const model = faceDetection.SupportedModels.BlazeFace;
-        const detectionConfig = {
-          maxFaces: 1,
-          scoreThreshold: 0.75,
-        };
-        const newDetector = await faceDetection.createDetector(model, detectionConfig);
-        if (mounted) setDetector(newDetector);
-      } catch (err) {
-        console.warn('Face detection init failed:', err);
-      }
-    };
-
-    initFaceDetection();
-    return () => { mounted = false; };
-  }, []);
-
-  // ─── Detect faces and auto-focus ────────────────────────────────────────────
-  const detectAndFocus = useCallback(async () => {
-    if (!videoRef.current || !detector || afLocked) return;
-
-    try {
-      const faces = await detector.estimateFaces(videoRef.current, false);
-
-      if (faces.length > 0) {
-        const face = faces[0];
-        const keypoints = face.landmarks;
-
-        // Calculate center of face from landmarks
-        const centerX = keypoints.reduce((sum, point) => sum + point[0], 0) / keypoints.length;
-        const centerY = keypoints.reduce((sum, point) => sum + point[1], 0) / keypoints.length;
-
-        // Get video dimensions
-        const videoWidth = videoRef.current.videoWidth;
-        const videoHeight = videoRef.current.videoHeight;
-
-        // Normalize to 0-1 range
-        const normX = centerX / videoWidth;
-        const normY = centerY / videoHeight;
-
-        // Store detected face for UI
-        setDetectedFace({ x: normX, y: normY, centerX, centerY });
-
-        // Auto-focus on face
-        const track = streamRef.current?.getVideoTracks()[0];
-        if (track) {
-          const caps = track.getCapabilities?.() || {};
-          const advanced = {};
-
-          if (caps.focusMode?.includes('continuous')) {
-            advanced.focusMode = 'continuous';
-          }
-
-          if (caps.focusPointOfInterest) {
-            advanced.focusPointOfInterest = { x: normX, y: normY };
-          }
-
-          if (Object.keys(advanced).length) {
-            track.applyConstraints({ advanced: [advanced] }).catch(() => {});
-          }
-        }
-      }
-    } catch (err) {
-      // Face detection errors are non-critical
-    }
-  }, [detector, afLocked]);
-
-  // ─── Continuous face detection loop ────────────────────────────────────────
-  useEffect(() => {
-    if (!detector || !hasStream) return;
-
-    const interval = setInterval(detectAndFocus, 300); // ~3 FPS for performance
-    return () => clearInterval(interval);
-  }, [detector, hasStream, detectAndFocus]);
 
   // Handle device orientation changes
   useEffect(() => {
@@ -246,6 +168,7 @@ export default function CameraPage() {
     return () => {
       initializingRef.current = false;
       streamRef.current?.getTracks().forEach(t => t.stop());
+      clearInterval(timerRef.current);
       clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
@@ -324,16 +247,17 @@ export default function CameraPage() {
     }
   };
 
-  // ─── Single tap to focus ──────────────────────────────────────────────────
+  // ─── Double tap to focus with proper position calculation ──────────────────────────
   const handleViewfinderTap = (e) => {
     if (pinchStartDistRef.current) return; // Ignore tap if pinching
     if (afLocked) {
       setAfLocked(false);
       setFocusPos(null);
-      setDetectedFace(null); // Clear face detection on unlock
       setShowExposure(false);
       return;
     }
+
+    tapCountRef.current += 1;
 
     const rect = viewfinderRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -346,49 +270,60 @@ export default function CameraPage() {
     const x = (clientX - rect.left) / zoomScale;
     const y = (clientY - rect.top) / zoomScale;
 
-    setFocusPos({ x, y });
-    setDetectedFace(null); // Clear auto-detection when user taps
-    setShowExposure(true);
-    haptic(8);
+    clearTimeout(doubleTapTimeoutRef.current);
 
-    const track = streamRef.current?.getVideoTracks()[0];
-    if (track) {
-      const caps = track.getCapabilities?.() || {};
-      const advanced = {};
+    if (tapCountRef.current === 2) {
+      // Double tap detected - apply focus
+      tapCountRef.current = 0;
 
-      // Normalize to 0-1 range and clamp
-      const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+      setFocusPos({ x, y });
+      setShowExposure(true);
+      haptic(8);
 
-      if (caps.focusMode?.includes('single-shot')) {
-        advanced.focusMode = 'single-shot';
-      } else if (caps.focusMode?.includes('manual')) {
-        advanced.focusMode = 'manual';
+      const track = streamRef.current?.getVideoTracks()[0];
+      if (track) {
+        const caps = track.getCapabilities?.() || {};
+        const advanced = {};
+
+        // Normalize to 0-1 range and clamp
+        const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+
+        if (caps.focusMode?.includes('single-shot')) {
+          advanced.focusMode = 'single-shot';
+        } else if (caps.focusMode?.includes('manual')) {
+          advanced.focusMode = 'manual';
+        }
+
+        if (caps.focusPointOfInterest) {
+          advanced.focusPointOfInterest = { x: normX, y: normY };
+        }
+
+        if (caps.exposureMode?.includes('manual')) {
+          advanced.exposureMode = 'manual';
+        } else if (caps.exposureMode?.includes('continuous')) {
+          advanced.exposureMode = 'continuous';
+        }
+
+        if (caps.exposurePointOfInterest) {
+          advanced.exposurePointOfInterest = { x: normX, y: normY };
+        }
+
+        if (Object.keys(advanced).length) {
+          track.applyConstraints({ advanced: [advanced] }).catch(() => {});
+        }
       }
 
-      if (caps.focusPointOfInterest) {
-        advanced.focusPointOfInterest = { x: normX, y: normY };
-      }
-
-      if (caps.exposureMode?.includes('manual')) {
-        advanced.exposureMode = 'manual';
-      } else if (caps.exposureMode?.includes('continuous')) {
-        advanced.exposureMode = 'continuous';
-      }
-
-      if (caps.exposurePointOfInterest) {
-        advanced.exposurePointOfInterest = { x: normX, y: normY };
-      }
-
-      if (Object.keys(advanced).length) {
-        track.applyConstraints({ advanced: [advanced] }).catch(() => {});
-      }
+      clearTimeout(tapTimeoutRef.current);
+      tapTimeoutRef.current = setTimeout(() => {
+        if (!afLocked) setShowExposure(false);
+      }, 4000);
+    } else {
+      // Wait for second tap within 300ms
+      doubleTapTimeoutRef.current = setTimeout(() => {
+        tapCountRef.current = 0;
+      }, 300);
     }
-
-    clearTimeout(tapTimeoutRef.current);
-    tapTimeoutRef.current = setTimeout(() => {
-      if (!afLocked) setShowExposure(false);
-    }, 4000);
   };
 
   // ─── Long press for AE/AF lock ────────────────────────────────────────────────
@@ -432,10 +367,15 @@ export default function CameraPage() {
     }, 50);
   }, [exposureCaps, afLocked]);
 
-  // ─── Mode switching ──────────────────────────────────────────────────────────
+  // ─── Mode switching with recording guard ──────────────────────────────────────
   const switchMode = (idx) => {
     if (idx === modeIndex) return;
     haptic(12);
+
+    // Stop recording before switching
+    if (isRecording) {
+      stopRecording();
+    }
 
     // Clear any pending countdown
     if (countdown > 0) {
@@ -528,7 +468,87 @@ export default function CameraPage() {
     }
   };
 
+  // ─── Video recording with guards ──────────────────────────────────────────────
+  const startRecording = () => {
+    if (!streamRef.current) return;
+    if (mediaRecorderRef.current) return; // Guard against double start
 
+    haptic([15, 10, 15]);
+    runCountdown(() => {
+      // Clear old chunks
+      recordedChunksRef.current = [];
+
+      const mimeType = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm']
+        .find(t => MediaRecorder.isTypeSupported(t)) || 'video/webm';
+
+      try {
+        const recorder = new MediaRecorder(streamRef.current, { mimeType });
+        recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
+        recorder.onstop = async () => {
+          const blob = new Blob(recordedChunksRef.current, { type: mimeType });
+          const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+          const file = new File([blob], `flik_video_${Date.now()}.${ext}`, { type: mimeType });
+
+          toast.loading("Saving video to gallery...", { id: 'video-save' });
+          try {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            await base44.entities.Creation.create({
+              type: 'video',
+              url: file_url,
+              title: `Video ${new Date().toLocaleDateString()}`,
+              metadata: { source: 'camera', facing_mode: facingMode, duration: recordingTime },
+            });
+            toast.success("Video saved to gallery!", { id: 'video-save' });
+          } catch (err) {
+            console.error('Video save error:', err);
+            toast.error("Failed to save video.", { id: 'video-save' });
+          } finally {
+            mediaRecorderRef.current = null;
+            recordedChunksRef.current = [];
+          }
+        };
+
+        mediaRecorderRef.current = recorder;
+        recorder.start(100);
+        setIsRecording(true);
+        setIsPaused(false);
+        setRecordingTime(0);
+        timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+      } catch (err) {
+        console.error('MediaRecorder error:', err);
+        toast.error("Recording failed.");
+        mediaRecorderRef.current = null;
+      }
+    });
+  };
+
+  const stopRecording = () => {
+    haptic([15, 10, 15]);
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== 'inactive') {
+      rec.stop();
+    }
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+    setIsPaused(false);
+    clearInterval(timerRef.current);
+  };
+
+  const togglePause = () => {
+    const rec = mediaRecorderRef.current;
+    if (!rec || rec.state === 'inactive') return;
+    haptic(8);
+
+    if (rec.state === 'paused') {
+      rec.resume();
+      setIsPaused(false);
+      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+    } else if (rec.state === 'recording') {
+      rec.pause();
+      setIsPaused(true);
+      clearInterval(timerRef.current);
+    }
+  };
 
   const retake = () => {
     setPhoto(null);
@@ -544,6 +564,7 @@ export default function CameraPage() {
 
   const flipCamera = () => {
     haptic(10);
+    if (isRecording) stopRecording();
     const next = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(next);
     startCamera(next);
@@ -552,7 +573,15 @@ export default function CameraPage() {
   // ─── Handle settings changes safely ────────────────────────────────────────────
   const handleSettingChange = (key, value) => {
     dispatchSettings({ key, value });
+
+    if ((key === 'resolution' || key === 'fps') && !isRecording) {
+      const newRes = key === 'resolution' ? value : settings.resolution;
+      const newFps = key === 'fps' ? value : settings.fps;
+      startCamera(facingMode, newRes, newFps);
+    }
   };
+
+  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const flashIcon = {
     off: <ZapOff className="w-4 h-4 text-white/70" />,
@@ -565,31 +594,6 @@ export default function CameraPage() {
     const map = { '.5': 0.5, '1x': 1, '2': 2 };
     return Math.abs(map[p] - zoomValue) < 0.08;
   });
-
-  // ─── FLIK Actions Registration ───────────────────────────────────────────────
-  useFlikActions('Camera', {
-    takePhoto,
-    flipCamera,
-    setFlashMode,
-    toggleGrid: () => dispatchSettings({ key: 'showGrid', value: !settings.showGrid }),
-    setTimer: (seconds) => dispatchSettings({ key: 'timer', value: seconds }),
-    setZoom: (value) => applyZoom(value),
-    savePhoto,
-    retake,
-    openSettings: () => setSettingsOpen(true),
-    closeSettings: () => setSettingsOpen(false),
-  }, () => ({
-    photo,
-    flashMode,
-    zoomValue,
-    settings,
-    hasStream,
-    facingMode,
-    exposure,
-    countdown,
-    isSaving,
-    savedPhoto,
-  }));
 
   return (
     <div className="fixed inset-0 bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
@@ -631,7 +635,16 @@ export default function CameraPage() {
         }}
         onClick={(e) => {
           if (e.pointerType !== 'touch') {
-            handleViewfinderTap(e);
+            tapCountRef.current += 1;
+            clearTimeout(doubleTapTimeoutRef.current);
+            if (tapCountRef.current === 2) {
+              handleViewfinderTap(e);
+              tapCountRef.current = 0;
+            } else {
+              doubleTapTimeoutRef.current = setTimeout(() => {
+                tapCountRef.current = 0;
+              }, 300);
+            }
           }
         }}
       >
@@ -655,8 +668,8 @@ export default function CameraPage() {
           </div>
         )}
 
-        {/* Focus square - shows manual tap or auto-detected face */}
-        {!photo && <FocusSquare position={focusPos || detectedFace} locked={afLocked} />}
+        {/* Focus square */}
+        {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
 
         {/* Exposure slider */}
         <AnimatePresence>
@@ -700,13 +713,30 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
-
+        {/* Recording timer - Prominent red pill */}
+        <AnimatePresence>
+          {isRecording && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-red-500 rounded-xl px-6 py-2 shadow-lg shadow-red-500/40"
+            >
+              <motion.div
+                animate={{ opacity: isPaused ? 0.3 : [1, 0.3, 1] }}
+                transition={{ repeat: Infinity, duration: 1.2 }}
+                className="w-2.5 h-2.5 rounded-full bg-white"
+              />
+              <span className="text-white text-lg font-mono font-bold tracking-wider">{formatTime(recordingTime)}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Top controls */}
-        {!photo && (
-          <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5 z-50 pointer-events-auto">
+        {!photo && !isRecording && (
+          <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5" style={{ transform: `rotate(${orientation}deg)` }}>
             <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }}
-              className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
+              className="md:hidden w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
               <X className="w-5 h-5 text-white" />
             </motion.button>
 
@@ -733,7 +763,7 @@ export default function CameraPage() {
 
         {/* Zoom capsule */}
         {!photo && (
-          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%)` }}>
+          <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 110, transform: `translateX(-50%) rotate(${orientation}deg)` }}>
             <div className="flex items-center gap-0.5 bg-black/50 backdrop-blur-xl rounded-full px-1.5 py-1 border border-white/10">
               {zoomPresets.map(z => {
                 const isActive = z === activePreset;
@@ -753,7 +783,7 @@ export default function CameraPage() {
       {/* ── Bottom controls (floating overlay) ── */}
       <div
         className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3 transition-all duration-300 ease-out bg-transparent pt-3"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)', transform: `rotate(${orientation}deg)` }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
       >
@@ -763,20 +793,31 @@ export default function CameraPage() {
 
             {/* Shutter row */}
             <div className="w-full flex items-center justify-around px-8">
-              <button 
-                onClick={() => navigate(createPageUrl("Profile"))}
-                className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
-              >
-                {latestCreation?.thumbnail_url || latestCreation?.url ? (
-                  <img 
-                    src={latestCreation.thumbnail_url || latestCreation.url} 
-                    alt="Latest" 
-                    className="w-full h-full object-cover"
-                  />
+              <div className="w-14 h-14 flex items-center justify-center">
+                {isRecording ? (
+                  <motion.button whileTap={{ scale: 0.85 }} onClick={togglePause}
+                    className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
+                    {isPaused
+                      ? <Play className="w-5 h-5 text-white" fill="currentColor" />
+                      : <Pause className="w-5 h-5 text-white" fill="currentColor" />}
+                  </motion.button>
                 ) : (
-                  <div className="w-full h-full bg-white/5" />
+                  <button 
+                    onClick={() => navigate(createPageUrl("Profile"))}
+                    className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/30 transition-all"
+                  >
+                    {latestCreation?.thumbnail_url || latestCreation?.url ? (
+                      <img 
+                        src={latestCreation.thumbnail_url || latestCreation.url} 
+                        alt="Latest" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-white/5" />
+                    )}
+                  </button>
                 )}
-              </button>
+              </div>
 
               {/* Shutter */}
               <motion.button whileTap={{ scale: 0.9 }} onClick={takePhoto}
@@ -795,51 +836,30 @@ export default function CameraPage() {
           </>
         ) : (
           <>
-            <div className="w-full flex flex-col items-center gap-3 px-8">
-              <div className="flex items-center justify-around w-full">
-                <motion.button whileTap={{ scale: 0.85 }} onClick={retake} className="flex flex-col items-center gap-1">
-                  <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
-                    <RotateCcw className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-white/50 text-xs">Retake</span>
-                </motion.button>
+            <p className="text-white/40 text-xs tracking-widest uppercase">Photo captured</p>
+            <div className="w-full flex items-center justify-around px-8">
+              <motion.button whileTap={{ scale: 0.85 }} onClick={retake} className="flex flex-col items-center gap-1">
+                <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
+                  <RotateCcw className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-white/50 text-xs">Retake</span>
+              </motion.button>
 
-                <motion.button whileTap={{ scale: 0.9 }} onClick={savePhoto} disabled={isSaving || !!savedPhoto}
-                  className="w-20 h-20 rounded-full disabled:opacity-70"
-                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
-                  <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
-                    {isSaving ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : savedPhoto ? (
-                      <Check className="w-7 h-7 text-green-400" />
-                    ) : (
-                      <span className="text-white font-bold text-xs tracking-wide">SAVE</span>
-                    )}
-                  </div>
-                </motion.button>
+              <motion.button whileTap={{ scale: 0.9 }} onClick={savePhoto} disabled={isSaving || !!savedPhoto}
+                className="w-20 h-20 rounded-full disabled:opacity-70"
+                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
+                <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
+                  {isSaving ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : savedPhoto ? (
+                    <Check className="w-7 h-7 text-green-400" />
+                  ) : (
+                    <span className="text-white font-bold text-xs tracking-wide">SAVE</span>
+                  )}
+                </div>
+              </motion.button>
 
-                <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); navigate(createPageUrl('Editor')); }} className="flex flex-col items-center gap-1">
-                  <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
-                    <X className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-white/50 text-xs">Exit</span>
-                </motion.button>
-              </div>
-
-              <div className="flex gap-2 w-full max-w-xs justify-center">
-                <motion.button whileTap={{ scale: 0.95 }} 
-                  onClick={() => { haptic(10); localStorage.setItem('capturedPhoto', photo); navigate(createPageUrl('Editor')); }}
-                  className="flex-1 py-2 px-3 rounded-lg bg-gradient-to-r from-white/15 to-white/5 hover:from-white/25 hover:to-white/10 border border-white/20 hover:border-white/40 text-white text-sm font-medium transition-all flex items-center justify-center gap-2 backdrop-blur-sm">
-                  <Image className="w-3 h-3" />
-                  <span>Photo Studio</span>
-                </motion.button>
-                <motion.button whileTap={{ scale: 0.95 }} 
-                  onClick={() => { haptic(10); localStorage.setItem('capturedPhoto', photo); navigate(createPageUrl('Generate')); }}
-                  className="flex-1 py-2 px-3 rounded-lg bg-gradient-to-r from-[#FF6B35]/30 to-[#F72C25]/20 hover:from-[#FF6B35]/40 hover:to-[#F72C25]/30 border border-[#FF6B35]/50 hover:border-[#FF6B35]/70 text-white text-sm font-medium transition-all flex items-center justify-center gap-2 backdrop-blur-sm">
-                  <Wand2 className="w-3 h-3" />
-                  <span>Imagine AI</span>
-                </motion.button>
-              </div>
+              <div className="w-14 h-14" />
             </div>
           </>
         )}
