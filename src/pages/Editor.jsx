@@ -1009,27 +1009,27 @@ export default function Editor() {
                              <div className="absolute -bottom-4 -left-4 w-10 h-10 flex items-center justify-center cursor-sw-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
                              <div className="absolute -bottom-4 -right-4 w-10 h-10 flex items-center justify-center cursor-se-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
                            </div>
-                         </>
-                       )}
-                       </div>
-                       </div>
-                       ))}
-                       </div>
-                       </div>
+                           </>
+                           )}
+                           </div>
+                           </div>
+                           ))}
+                           </div>
+                           </div>
 
-                       {loadedImages.length > 1 && (
-                       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
-                       <button onClick={() => switchToImage(Math.max(0, currentImageIndex - 1))} className="text-white/60 hover:text-white transition-colors"><ChevronLeft className="w-4 h-4" /></button>
-                       <div className="flex items-center gap-1">
-                       {loadedImages.map((_, idx) => (
-                       <button key={idx} onClick={() => switchToImage(idx)} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-[#FF6B35] w-4' : 'bg-white/30 hover:bg-white/50'}`} />
-                       ))}
-                       </div>
-                       <button onClick={() => switchToImage(Math.min(loadedImages.length - 1, currentImageIndex + 1))} className="text-white/60 hover:text-white transition-colors"><ChevronRight className="w-4 h-4" /></button>
-                       </div>
-                       )}
-                       </>
-                       )}
+                           {loadedImages.length > 1 && (
+                           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
+                           <button onClick={() => switchToImage(Math.max(0, currentImageIndex - 1))} className="text-white/60 hover:text-white transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                           <div className="flex items-center gap-1">
+                           {loadedImages.map((_, idx) => (
+                           <button key={idx} onClick={() => switchToImage(idx)} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-[#FF6B35] w-4' : 'bg-white/30 hover:bg-white/50'}`} />
+                           ))}
+                           </div>
+                           <button onClick={() => switchToImage(Math.min(loadedImages.length - 1, currentImageIndex + 1))} className="text-white/60 hover:text-white transition-colors"><ChevronRight className="w-4 h-4" /></button>
+                           </div>
+                           )}
+                           </>
+                           )}
           
           <AnimatePresence>
             {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
