@@ -1,9 +1,11 @@
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Wand2, Upload, X } from "lucide-react";
+import { Loader2, Wand2, Upload, X, Library } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing }) {
   const [textContent, setTextContent] = useState("");
