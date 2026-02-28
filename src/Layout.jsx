@@ -305,8 +305,7 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Bottom Navigation Bar - Mobile Only */}
         {currentPageName !== "Camera" && (
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
-            <div className="flex items-center justify-around px-4 py-3">
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-4 py-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
               <button
                 onClick={(e) => {
                   if (currentPageName === "Editor") {
