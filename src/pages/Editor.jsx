@@ -945,7 +945,7 @@ export default function Editor() {
           <div className="flex items-center gap-3 lg:gap-4">
             <div className="flex items-center gap-0.5 bg-white/5 backdrop-blur rounded-lg p-1">
               <Button onClick={handleUndo} variant="ghost" size="sm" disabled={undoHistory.length === 0} className="text-white hover:bg-white/10 disabled:opacity-30 px-2" title="Undo (Ctrl+Z)">
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-4 h-4 scale-x-[-1]" />
               </Button>
               <Button onClick={handleRedo} variant="ghost" size="sm" disabled={redoHistory.length === 0} className="text-white hover:bg-white/10 disabled:opacity-30 px-2" title="Redo (Ctrl+Shift+Z)">
                 <RotateCw className="w-4 h-4 scale-x-[-1]" />
