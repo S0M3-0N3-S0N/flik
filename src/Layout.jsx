@@ -396,7 +396,6 @@ function LayoutContent({ children, currentPageName }) {
                 </div>
                 <span className="text-[10px] font-medium">Profile</span>
               </button>
-            </div>
           </nav>
         )}
 
