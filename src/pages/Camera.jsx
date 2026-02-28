@@ -836,31 +836,60 @@ export default function CameraPage() {
           </>
         ) : (
           <>
-<div className="w-full flex items-center justify-around px-8">
-              <motion.button whileTap={{ scale: 0.85 }} onClick={retake} className="flex flex-col items-center gap-1">
-                <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
+            {/* Save / Retake row */}
+            <div className="w-full flex items-center justify-around px-8">
+              {/* Retake */}
+              <motion.button whileTap={{ scale: 0.85 }} onClick={retake}
+                className="flex flex-col items-center gap-1.5">
+                <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <RotateCcw className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-white/50 text-xs">Retake</span>
+                <span className="text-white/50 text-[10px] font-medium tracking-wide">Retake</span>
               </motion.button>
 
+              {/* Save */}
               <motion.button whileTap={{ scale: 0.9 }} onClick={savePhoto} disabled={isSaving || !!savedPhoto}
-                className="w-20 h-20 rounded-full disabled:opacity-70"
-                style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
-                <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
-                  {isSaving ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : savedPhoto ? (
-                    <Check className="w-7 h-7 text-green-400" />
-                  ) : (
-                    <span className="text-white font-bold text-xs tracking-wide">SAVE</span>
-                  )}
+                className="flex flex-col items-center gap-1.5">
+                <div className="w-20 h-20 rounded-full disabled:opacity-70"
+                  style={{ background: 'conic-gradient(from 0deg, #FF6B35, #F72C25, #FFB800, #FF6B35)', padding: 3 }}>
+                  <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center">
+                    {isSaving ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : savedPhoto ? (
+                      <Check className="w-7 h-7 text-green-400" />
+                    ) : (
+                      <span className="text-white font-bold text-xs tracking-widest">SAVE</span>
+                    )}
+                  </div>
                 </div>
+                <span className="text-white/50 text-[10px] font-medium tracking-wide">
+                  {savedPhoto ? 'Saved!' : 'Save'}
+                </span>
               </motion.button>
 
+              {/* Discard */}
               <motion.button whileTap={{ scale: 0.85 }} onClick={retake}
-                className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <X className="w-6 h-6 text-white" />
+                className="flex flex-col items-center gap-1.5">
+                <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <X className="w-6 h-6 text-white/70" />
+                </div>
+                <span className="text-white/50 text-[10px] font-medium tracking-wide">Discard</span>
+              </motion.button>
+            </div>
+
+            {/* Edit shortcuts row */}
+            <div className="w-full flex items-center justify-center gap-3 px-8 mt-1">
+              <motion.button whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(createPageUrl('Editor'))}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                <Image className="w-4 h-4 text-[#FF6B35]" />
+                <span className="text-white text-xs font-semibold">Photo Studio</span>
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(createPageUrl('Generate'))}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                <Wand2 className="w-4 h-4 text-[#FFB800]" />
+                <span className="text-white text-xs font-semibold">Imagine AI</span>
               </motion.button>
             </div>
           </>
