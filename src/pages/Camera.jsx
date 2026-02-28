@@ -41,7 +41,7 @@ export default function CameraPage() {
   const [photo, setPhoto] = useState(null);
   const [hasStream, setHasStream] = useState(false);
   const [facingMode, setFacingMode] = useState('environment');
-  const [modeIndex, setModeIndex] = useState(0);
+
   const [flashMode, setFlashMode] = useState('off');
   const [zoomValue, setZoomValue] = useState(1);
   const [zoomCaps, setZoomCaps] = useState({ min: 1, max: 1, supported: false });
