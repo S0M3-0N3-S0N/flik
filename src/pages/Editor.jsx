@@ -1166,6 +1166,13 @@ export default function Editor() {
         onSelect={handleImageSelect}
         onSelectMultiple={handleMultipleImagesSelect}
       />
+
+      <ToolsModal
+        isOpen={isToolsModalOpen}
+        onClose={() => setIsToolsModalOpen(false)}
+        onSelectTool={setActiveTab}
+        hasImage={!!currentImage}
+      />
     </div>
   );
 }
