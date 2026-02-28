@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock, Type } from "lucide-react";
 import { toast } from "sonner";
 import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import FiltersPanel from "@/components/editor/FiltersPanel";
 import TransformPanel from "@/components/editor/TransformPanel";
 import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
+import TextGeneratorPanel from "@/components/editor/TextGeneratorPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import { useFlikActions } from "@/components/useFlikActions";
@@ -87,6 +88,7 @@ export default function Editor() {
   const [regenerateAction, setRegenerateAction] = useState(null);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
+  const [generatedTextImage, setGeneratedTextImage] = useState(null);
 
   const location = useLocation();
 
@@ -560,6 +562,12 @@ export default function Editor() {
     }
   }, [currentImage, handleGetProcessedBlob]);
 
+  const handleTextImageGenerated = useCallback((imageUrl) => {
+    setGeneratedTextImage(imageUrl);
+    setResultImage(imageUrl);
+    setShowResult(true);
+  }, []);
+
   const handleFileUpload = useCallback((e) => {
     if (!e?.target?.files) return;
     const files = Array.from(e.target.files);
@@ -839,6 +847,9 @@ export default function Editor() {
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
             </TabsTrigger>
+            <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+              <Type className="w-4 h-4" />
+            </TabsTrigger>
           </TabsList>
 
           <div className="px-4 pb-4">
@@ -914,6 +925,14 @@ export default function Editor() {
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
               {currentImage
                 ? <CropPanel onApplyCrop={handleApplyCrop} onCancelCrop={handleCancelCrop} onStartCrop={handleStartCrop} isCropping={isCropping} onAspectRatioSelect={handleAspectRatioSelect} activeRatio={activeRatio} />
+                : <p className="text-white/40 text-sm">Upload an image to start</p>
+              }
+            </TabsContent>
+
+            <TabsContent value="text" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">AI Text Generator</h3>
+              {currentImage
+                ? <TextGeneratorPanel onTextImageGenerated={handleTextImageGenerated} isProcessing={isProcessing} />
                 : <p className="text-white/40 text-sm">Upload an image to start</p>
               }
             </TabsContent>
