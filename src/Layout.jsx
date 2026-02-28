@@ -304,7 +304,7 @@ function LayoutContent({ children, currentPageName }) {
         </main>
 
         {/* Bottom Navigation Bar - Mobile Only */}
-        {currentPageName !== "Camera" && (
+        {currentPageName !== "Camera" && currentPageName !== "Editor" && (
           <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
             <div className="flex items-center justify-around px-4 py-3">
               <button
