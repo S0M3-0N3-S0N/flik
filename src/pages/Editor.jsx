@@ -19,7 +19,6 @@ import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
-import ToolsModal from "@/components/editor/ToolsModal";
 import { useFlikActions } from "@/components/useFlikActions";
 
 const DEFAULT_ADJUSTMENTS = {
@@ -88,7 +87,6 @@ export default function Editor() {
   const [regenerateAction, setRegenerateAction] = useState(null);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
-  const [isToolsModalOpen, setIsToolsModalOpen] = useState(false);
 
   const location = useLocation();
 
@@ -815,21 +813,11 @@ export default function Editor() {
   }, [transform]);
 
   return (
-    <div className="h-[calc(100dvh)] md:h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
-      {/* Mobile Header */}
-      <motion.div
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="md:hidden h-14 bg-gradient-to-r from-[#FF6B35] via-[#F72C25] to-[#FFB800] flex items-center justify-center px-4 flex-shrink-0 z-40"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
-      >
-        <div className="text-white font-bold text-lg tracking-wider">Photo Studio</div>
-      </motion.div>
-
+    <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="hidden lg:block order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
@@ -933,11 +921,11 @@ export default function Editor() {
         </Tabs>
       </motion.aside>
       
-      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[calc(100dvh-7rem)] md:h-[60dvh] lg:h-auto relative min-h-0 md:min-h-0">
+      <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="hidden md:flex h-14 border-b border-white/5 items-center justify-between px-4 lg:px-6 glass-card flex-shrink-0"
+          className="h-14 border-b border-white/5 flex items-center justify-between px-4 lg:px-6 glass-card flex-shrink-0"
         >
           <div className="flex items-center gap-2">
             {activeTab === "remove" && currentImage && (
@@ -1095,21 +1083,9 @@ export default function Editor() {
             {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
           </AnimatePresence>
           
-          {/* Mobile Tools Button */}
-          {currentImage && (
-            <motion.button
-              onClick={() => setIsToolsModalOpen(true)}
-              className="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-30 px-6 py-3 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white font-medium shadow-lg hover:shadow-[#FF6B35]/40 transition-all"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Tools
-            </motion.button>
-          )}
-
           {currentImage && (
             <motion.div
-              className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30 hidden md:block"
+              className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2 }}
@@ -1187,13 +1163,6 @@ export default function Editor() {
         onClose={() => setIsGalleryPickerOpen(false)}
         onSelect={handleImageSelect}
         onSelectMultiple={handleMultipleImagesSelect}
-      />
-
-      <ToolsModal
-        isOpen={isToolsModalOpen}
-        onClose={() => setIsToolsModalOpen(false)}
-        onSelectTool={setActiveTab}
-        hasImage={!!currentImage}
       />
     </div>
   );

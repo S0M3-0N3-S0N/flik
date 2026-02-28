@@ -226,7 +226,7 @@ function LayoutContent({ children, currentPageName }) {
         `}</style>
 
         {/* Top Desktop Navigation */}
-        <nav className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl ${currentPageName === 'Camera' || currentPageName === 'Editor' ? 'hidden' : 'hidden md:flex'}`} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <nav className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl ${currentPageName === 'Camera' ? 'hidden' : 'hidden md:flex'}`} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="w-full flex items-center justify-center px-8 py-4 relative">
             <div className="absolute left-8 gradient-text font-bold text-lg tracking-wider">FLIK</div>
             
@@ -304,7 +304,7 @@ function LayoutContent({ children, currentPageName }) {
         </main>
 
         {/* Bottom Navigation Bar - Mobile Only */}
-        {currentPageName !== "Camera" && currentPageName !== "Editor" && (
+        {currentPageName !== "Camera" && (
           <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}>
             <div className="flex items-center justify-around px-4 py-3">
               <button
