@@ -72,6 +72,14 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
       });
 
       if (imageResult?.url) {
+        // Save to font library
+        await base44.entities.Font.create({
+          text: textContent,
+          style: stylePrompt,
+          imageUrl: imageResult.url,
+          usageCount: 0
+        }).catch(() => {}); // Silently fail if save doesn't work
+
         onTextImageGenerated(imageResult.url);
         toast.success("Text generated successfully!");
         setTextContent("");
