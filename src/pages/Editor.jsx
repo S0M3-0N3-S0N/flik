@@ -54,7 +54,7 @@ export default function Editor() {
   const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
   const [magicBrushImages, setMagicBrushImages] = useState([]);
   
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
