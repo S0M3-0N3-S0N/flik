@@ -211,19 +211,6 @@ export default function Editor() {
     }
   }, []);
 
-  const resetImageState = useCallback(() => {
-    setAdjustments({ ...DEFAULT_ADJUSTMENTS });
-    setSelectedFilter(null);
-    setTransform({ rotate: 0, flipH: false, flipV: false });
-    setBrushStrokes([]);
-    setIsCropping(false);
-    setCropArea({ x: 10, y: 10, width: 80, height: 80 });
-    setActiveRatio(null);
-    setUndoHistory([]);
-    setRedoHistory([]);
-    setNeedsFit(true);
-  }, []);
-
   const handleImageSelect = useCallback((image) => {
     setCurrentImage(image);
     setLoadedImages([image]);
