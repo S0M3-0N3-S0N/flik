@@ -867,13 +867,13 @@ export default function CameraPage() {
                 </span>
               </motion.button>
 
-              {/* Discard */}
-              <motion.button whileTap={{ scale: 0.85 }} onClick={retake}
+              {/* Exit */}
+              <motion.button whileTap={{ scale: 0.85 }} onClick={() => navigate(createPageUrl('Editor'))}
                 className="flex flex-col items-center gap-1.5">
                 <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <X className="w-6 h-6 text-white/70" />
                 </div>
-                <span className="text-white/50 text-[10px] font-medium tracking-wide">Discard</span>
+                <span className="text-white/50 text-[10px] font-medium tracking-wide">Exit</span>
               </motion.button>
             </div>
 
