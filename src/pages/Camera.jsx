@@ -426,7 +426,6 @@ export default function CameraPage() {
 
   const flipCamera = () => {
     haptic(10);
-    if (isRecording) stopRecording();
     const next = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(next);
     // Reset flash to off when switching cameras (front camera has no torch)
