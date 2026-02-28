@@ -331,15 +331,7 @@ export default function CameraPage() {
 
   const swipeStartX = useRef(null);
   const handleSwipeStart = (e) => { swipeStartX.current = e.touches?.[0]?.clientX ?? e.clientX; };
-  const handleSwipeEnd = (e) => {
-    if (swipeStartX.current === null) return;
-    const endX = e.changedTouches?.[0]?.clientX ?? e.clientX;
-    const diff = swipeStartX.current - endX;
-    if (Math.abs(diff) > 60) {
-      switchMode(diff > 0 ? Math.min(MODES.length - 1, modeIndex + 1) : Math.max(0, modeIndex - 1));
-    }
-    swipeStartX.current = null;
-  };
+  const handleSwipeEnd = (e) => { swipeStartX.current = null; };
 
   const runCountdown = (action) => {
     if (settings.timer === 0) { action(); return; }
