@@ -626,8 +626,8 @@ export default function CameraPage() {
 
             <div className="flex items-center gap-3">
               {settings.timer > 0 && (
-                <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-full px-2.5 py-1" style={iconRot}>
-                  <Timer className="w-3 h-3 text-[#FF6B35]" />
+                <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-full px-2.5 py-1">
+                  <span style={iconRot}><Timer className="w-3 h-3 text-[#FF6B35]" /></span>
                   <span className="text-[#FF6B35] text-xs font-bold">{settings.timer}s</span>
                 </div>
               )}
