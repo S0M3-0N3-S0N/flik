@@ -87,6 +87,20 @@ export default function Editor() {
 
   const location = useLocation();
 
+  // Define resetImageState early so it can be used in useEffect dependencies
+  const resetImageState = useCallback(() => {
+    setAdjustments({ ...DEFAULT_ADJUSTMENTS });
+    setSelectedFilter(null);
+    setTransform({ rotate: 0, flipH: false, flipV: false });
+    setBrushStrokes([]);
+    setIsCropping(false);
+    setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+    setActiveRatio(null);
+    setUndoHistory([]);
+    setRedoHistory([]);
+    setNeedsFit(true);
+  }, []);
+
   // Register actions for FLIK
   useFlikActions('Editor', {
     tool: (payload) => { setActiveTab(payload.id); },
