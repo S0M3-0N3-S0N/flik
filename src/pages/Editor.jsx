@@ -1228,7 +1228,7 @@ export default function Editor() {
               )}
               <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
                 <div 
-                  className={`relative inline-flex max-w-full max-h-full no-invert transition-transform duration-75 ease-out ${
+                  className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${
                     (isPanning || isSpacePressed) ? 'cursor-move' : ''
                   }`}
                   style={{
