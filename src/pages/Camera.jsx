@@ -474,9 +474,6 @@ export default function CameraPage() {
 
   const handleSettingChange = (key, value) => {
     dispatchSettings({ key, value });
-    if ((key === 'resolution' || key === 'fps') && !isRecording) {
-      startCamera(facingMode);
-    }
   };
 
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
