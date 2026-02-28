@@ -147,20 +147,44 @@ export default function Editor() {
     };
   }, []);
 
-  // Handle carousel slide changes
+  // Handle carousel slide changes - save/restore edit state per image
   useEffect(() => {
     if (!emblaApi) return;
     const onSelect = () => {
       const idx = emblaApi.selectedScrollSnap();
       if (idx !== currentImageIndex && idx >= 0 && idx < loadedImages.length) {
+        // Save current image edit state before switching
+        if (currentImage) {
+          const imgKey = currentImage.url || currentImage.id;
+          imageEditStateRef.current[imgKey] = {
+            adjustments, selectedFilter, transform, brushStrokes, zoom, pan
+          };
+        }
+        
+        // Switch to new image
         setCurrentImageIndex(idx);
         setCurrentImage(loadedImages[idx]);
-        resetImageState();
+        
+        // Restore edit state for new image if it exists, otherwise reset
+        const newImgKey = loadedImages[idx].url || loadedImages[idx].id;
+        const savedState = imageEditStateRef.current[newImgKey];
+        
+        if (savedState) {
+          setAdjustments(savedState.adjustments);
+          setSelectedFilter(savedState.selectedFilter);
+          setTransform(savedState.transform);
+          setBrushStrokes(savedState.brushStrokes);
+          setZoom(savedState.zoom);
+          setPan(savedState.pan);
+          setNeedsFit(false);
+        } else {
+          resetImageState();
+        }
       }
     };
     emblaApi.on('select', onSelect);
     return () => emblaApi.off('select', onSelect);
-  }, [emblaApi, currentImageIndex, loadedImages, resetImageState]);
+  }, [emblaApi, currentImageIndex, loadedImages, currentImage, adjustments, selectedFilter, transform, brushStrokes, zoom, pan, resetImageState]);
 
   // Fit image to container when needsFit is true
   useEffect(() => {
