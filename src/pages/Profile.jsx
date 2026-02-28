@@ -105,13 +105,13 @@ export default function Profile() {
 
   useEffect(() => {
     const handleTouchStart = (e) => {
-      if (window.scrollY === 0) {
+      if (window.scrollY === 0 && e.touches?.length > 0) {
         touchStartY.current = e.touches[0].clientY;
       }
     };
 
     const handleTouchMove = (e) => {
-      if (window.scrollY === 0 && touchStartY.current > 0) {
+      if (window.scrollY === 0 && touchStartY.current > 0 && e.touches?.length > 0) {
         const touchY = e.touches[0].clientY;
         const distance = touchY - touchStartY.current;
         if (distance > 0 && distance < 150) {
@@ -177,6 +177,7 @@ export default function Profile() {
 
   // Profile Mutations
   const handleAvatarUpload = async (e) => {
+    if (!e?.target?.files?.length) return;
     const file = e.target.files[0];
     if (!file) return;
 

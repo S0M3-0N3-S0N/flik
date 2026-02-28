@@ -121,9 +121,10 @@ export default function Editor() {
   useEffect(() => {
     return () => {
       objectURLsRef.current.forEach(url => {
-        try { URL.revokeObjectURL(url); } catch {}
+        try { URL.revokeObjectURL(url); } catch (e) { /* ignore */ }
       });
       objectURLsRef.current.clear();
+      if (adjustmentUndoTimerRef.current) clearTimeout(adjustmentUndoTimerRef.current);
     };
   }, []);
 
@@ -501,7 +502,8 @@ export default function Editor() {
   }, [currentImage, handleGetProcessedBlob]);
 
   const handleFileUpload = useCallback((e) => {
-    const files = Array.from(e.target.files || []);
+    if (!e?.target?.files) return;
+    const files = Array.from(e.target.files);
     // Reset input so same file can be re-uploaded
     e.target.value = '';
     if (files.length === 0) return;
@@ -535,6 +537,7 @@ export default function Editor() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
+      if (!e) return;
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
         e.preventDefault(); handleRedo();
       } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
@@ -545,12 +548,14 @@ export default function Editor() {
       }
     };
     const handleKeyDown = (e) => {
-      if (e.code === 'Space' && !e.repeat && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      if (!e || e.code !== 'Space' || e.repeat) return;
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag !== 'INPUT' && activeTag !== 'TEXTAREA') {
         e.preventDefault(); setIsSpacePressed(true);
       }
     };
     const handleKeyUp = (e) => {
-      if (e.code === 'Space') { setIsSpacePressed(false); setIsPanning(false); }
+      if (e?.code === 'Space') { setIsSpacePressed(false); setIsPanning(false); }
     };
     window.addEventListener('keydown', handleKeyPress);
     window.addEventListener('keydown', handleKeyDown);

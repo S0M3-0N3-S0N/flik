@@ -44,7 +44,11 @@ function LayoutContent({ children, currentPageName }) {
   }, [language]);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    let isMounted = true;
+    base44.auth.me()
+      .then(u => isMounted && setUser(u))
+      .catch(() => {});
+    return () => { isMounted = false; };
   }, []);
 
   // Global keyboard shortcut for FLIK
@@ -78,8 +82,8 @@ function LayoutContent({ children, currentPageName }) {
 
   const handleFlikDrag = (e) => {
     if (!isDraggingFlik) return;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = e.touches?.length > 0 ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches?.length > 0 ? e.touches[0].clientY : e.clientY;
     
     const newRight = window.innerWidth - clientX - dragOffset.x;
     const newBottom = window.innerHeight - clientY - dragOffset.y;
