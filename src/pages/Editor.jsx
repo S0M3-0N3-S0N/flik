@@ -59,6 +59,7 @@ export default function Editor() {
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isPanToolActive, setIsPanToolActive] = useState(false);
+  const [needsFit, setNeedsFit] = useState(false);
 
   const [isCropping, setIsCropping] = useState(false);
   const [cropArea, setCropArea] = useState({ x: 10, y: 10, width: 80, height: 80 });
@@ -125,6 +126,7 @@ export default function Editor() {
       const decodedUrl = decodeURIComponent(loadUrl);
       setCurrentImage({ url: decodedUrl, preview: decodedUrl, name: 'loaded_image.png' });
       setLoadedImages([{ url: decodedUrl, preview: decodedUrl, name: 'loaded_image.png' }]);
+      setNeedsFit(true);
     }
   }, [location.search]);
 
@@ -141,6 +143,42 @@ export default function Editor() {
       objectURLsRef.current.clear();
     };
   }, []);
+
+  // Fit image to container when needsFit is true
+  useEffect(() => {
+    if (!needsFit || !currentImage || !imageRef.current || !containerRef.current) return;
+
+    const fitImage = () => {
+      const img = imageRef.current;
+      const container = containerRef.current;
+      if (!img || !container) return;
+
+      const imgW = img.naturalWidth;
+      const imgH = img.naturalHeight;
+      if (!imgW || !imgH) return;
+
+      const rect = container.getBoundingClientRect();
+      const padding = window.innerWidth >= 768 ? 64 : 16;
+      const availW = rect.width - padding;
+      const availH = rect.height - padding;
+
+      if (availW <= 0 || availH <= 0) return;
+
+      const fitZoom = Math.min(availW / imgW, availH / imgH, 1);
+      setZoom(fitZoom);
+      setPan({ x: 0, y: 0 });
+      setNeedsFit(false);
+    };
+
+    if (imageRef.current.complete && imageRef.current.naturalWidth > 0) {
+      fitImage();
+    } else {
+      const img = imageRef.current;
+      const handler = () => fitImage();
+      img.addEventListener('load', handler);
+      return () => img.removeEventListener('load', handler);
+    }
+  }, [needsFit, currentImage]);
 
   const createObjectURL = useCallback((blob) => {
     const url = URL.createObjectURL(blob);
@@ -159,85 +197,52 @@ export default function Editor() {
     }
   }, []);
 
+  const resetImageState = useCallback(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setAdjustments({
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+      blur: 0,
+      hue: 0,
+      sepia: 0,
+      grayscale: 0,
+    });
+    setSelectedFilter(null);
+    setTransform({ rotate: 0, flipH: false, flipV: false });
+    setBrushStrokes([]);
+    setIsCropping(false);
+    setCropArea({ x: 10, y: 10, width: 80, height: 80 });
+    setActiveRatio(null);
+    setUndoHistory([]);
+    setRedoHistory([]);
+    setNeedsFit(true);
+  }, []);
+
   const handleImageSelect = useCallback((image) => {
     setCurrentImage(image);
     setLoadedImages([image]);
     setCurrentImageIndex(0);
-    if (image) {
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      setAdjustments({
-        brightness: 0,
-        contrast: 0,
-        saturation: 0,
-        blur: 0,
-        hue: 0,
-        sepia: 0,
-        grayscale: 0,
-      });
-      setSelectedFilter(null);
-      setTransform({ rotate: 0, flipH: false, flipV: false });
-      setBrushStrokes([]);
-      setIsCropping(false);
-      setCropArea({ x: 10, y: 10, width: 80, height: 80 });
-      setActiveRatio(null);
-      setUndoHistory([]);
-      setRedoHistory([]);
-    }
-  }, []);
+    if (image) resetImageState();
+  }, [resetImageState]);
 
   const handleMultipleImagesSelect = useCallback((images) => {
     if (images && images.length > 0) {
       setLoadedImages(images);
       setCurrentImageIndex(0);
       setCurrentImage(images[0]);
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      setAdjustments({
-        brightness: 0,
-        contrast: 0,
-        saturation: 0,
-        blur: 0,
-        hue: 0,
-        sepia: 0,
-        grayscale: 0,
-      });
-      setSelectedFilter(null);
-      setTransform({ rotate: 0, flipH: false, flipV: false });
-      setBrushStrokes([]);
-      setIsCropping(false);
-      setCropArea({ x: 10, y: 10, width: 80, height: 80 });
-      setActiveRatio(null);
-      setUndoHistory([]);
-      setRedoHistory([]);
+      resetImageState();
     }
-  }, []);
+  }, [resetImageState]);
 
   const switchToImage = useCallback((index) => {
     if (index >= 0 && index < loadedImages.length) {
       setCurrentImageIndex(index);
       setCurrentImage(loadedImages[index]);
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      setAdjustments({
-        brightness: 0,
-        contrast: 0,
-        saturation: 0,
-        blur: 0,
-        hue: 0,
-        sepia: 0,
-        grayscale: 0,
-      });
-      setSelectedFilter(null);
-      setTransform({ rotate: 0, flipH: false, flipV: false });
-      setBrushStrokes([]);
-      setIsCropping(false);
-      setCropArea({ x: 10, y: 10, width: 80, height: 80 });
-      setActiveRatio(null);
-      setUndoHistory([]);
-      setRedoHistory([]);
+      resetImageState();
     }
-  }, [loadedImages]);
+  }, [loadedImages, resetImageState]);
 
 
 
@@ -329,6 +334,7 @@ export default function Editor() {
       setSelectedFilter(null);
       setBrushStrokes([]);
       setRedoHistory([]);
+      setNeedsFit(true);
     }
     setShowResult(false);
     setResultImage(null);
@@ -453,6 +459,7 @@ export default function Editor() {
         setBrushStrokes([]);
         setRedoHistory([]);
         setIsProcessing(false);
+        setNeedsFit(true);
       }, 'image/png');
     } catch (error) {
       console.error("Transform error:", error);
@@ -599,6 +606,7 @@ export default function Editor() {
         setIsCropping(false);
         setRedoHistory([]);
         setIsProcessing(false);
+        setNeedsFit(true);
         toast.success("Image cropped successfully!");
       }, 'image/png', 1.0);
     } catch (error) {
@@ -678,7 +686,6 @@ export default function Editor() {
       });
     }
   }, [handleImageSelect, handleMultipleImagesSelect]);
-
 
 
 
@@ -1226,7 +1233,7 @@ export default function Editor() {
                   ))}
                 </div>
               )}
-              <div className="w-full h-full flex items-center justify-center p-2 md:p-8 overflow-hidden">
+              <div className="w-full h-full flex items-center justify-center overflow-hidden">
                 <div 
                   className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${
                     (isPanning || isSpacePressed) ? 'cursor-move' : ''
@@ -1240,7 +1247,7 @@ export default function Editor() {
                   ref={imageRef}
                   src={currentImage.preview || currentImage.url}
                   alt="Editor"
-                  className={`max-w-full max-h-full object-contain rounded-lg md:rounded-2xl shadow-2xl ${
+                  className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${
                     activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
                   }`}
                   style={{
@@ -1371,9 +1378,9 @@ export default function Editor() {
                           <ZoomOut className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => { setZoom(1); setPan({x: 0, y: 0}); setIsPanToolActive(false); }}
+                          onClick={() => { setNeedsFit(true); setIsPanToolActive(false); }}
                           className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
-                          title="Reset"
+                          title="Fit to screen"
                         >
                           <Maximize2 className="w-3.5 h-3.5" />
                         </button>
