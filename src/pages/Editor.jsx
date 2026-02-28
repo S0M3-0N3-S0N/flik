@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, Sun, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3 } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import ImageUploader from "@/components/editor/ImageUploader";
@@ -19,9 +18,12 @@ import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
-
-
 import { useFlikActions } from "@/components/useFlikActions";
+
+const DEFAULT_ADJUSTMENTS = {
+  brightness: 0, contrast: 0, saturation: 0,
+  blur: 0, hue: 0, sepia: 0, grayscale: 0,
+};
 
 export default function Editor() {
   const [currentImage, setCurrentImage] = useState(null);
@@ -34,15 +36,7 @@ export default function Editor() {
   const [processedImage, setProcessedImage] = useState(null);
   const [showResult, setShowResult] = useState(false);
   
-  const [adjustments, setAdjustments] = useState({
-    brightness: 0,
-    contrast: 0,
-    saturation: 0,
-    blur: 0,
-    hue: 0,
-    sepia: 0,
-    grayscale: 0,
-  });
+  const [adjustments, setAdjustments] = useState({ ...DEFAULT_ADJUSTMENTS });
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [transform, setTransform] = useState({ rotate: 0, flipH: false, flipV: false });
   
@@ -70,17 +64,17 @@ export default function Editor() {
   const dragInitialCropRef = useRef(null);
   const dragInitialPosRef = useRef(null);
 
-  const [toolbarVisible, setToolbarVisible] = useState(true);
-  const toolbarHideTimeoutRef = useRef(null);
-
   const { generateCanvas, getProcessedImageBlob } = useCanvas();
   const { isProcessing: isMagicBrushProcessing, processMagicBrush } = useMagicBrush();
   
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
-
   const containerRef = useRef(null);
   const cursorRef = useRef(null);
+  const adjustmentUndoTimerRef = useRef(null);
+  const objectURLsRef = useRef(new Set());
+  const fileInputRef = useRef(null);
+
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
   const [redoHistory, setRedoHistory] = useState([]);
@@ -88,35 +82,27 @@ export default function Editor() {
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
 
-  // Track object URLs for proper cleanup
-  const objectURLsRef = useRef(new Set());
-  const fileInputRef = useRef(null);
+  const location = useLocation();
 
   // Register actions for FLIK
   useFlikActions('Editor', {
-    tool: (payload) => {
-      setActiveTab(payload.id);
-    },
+    tool: (payload) => { setActiveTab(payload.id); },
     adjustment: (payload) => {
       const newAdjustments = { ...adjustments, [payload.key]: payload.value };
       handleAdjustmentChange(newAdjustments);
       setActiveTab('adjust');
     },
-    filter: (payload) => {
-      setActiveTab('filters');
-    },
+    filter: () => { setActiveTab('filters'); },
     crop: (payload) => {
       setActiveTab('crop');
       if (payload.active) handleStartCrop();
     }
   }, () => ({
     currentTool: activeTab,
-    magicBrushPrompt: magicBrushPrompt,
+    magicBrushPrompt,
     hasMaskDrawn: brushStrokes.length > 0,
     hasImage: !!currentImage
   }));
-
-  const location = useLocation();
 
   // Load image from URL parameter
   useEffect(() => {
@@ -124,8 +110,9 @@ export default function Editor() {
     const loadUrl = urlParams.get('load');
     if (loadUrl) {
       const decodedUrl = decodeURIComponent(loadUrl);
-      setCurrentImage({ url: decodedUrl, preview: decodedUrl, name: 'loaded_image.png' });
-      setLoadedImages([{ url: decodedUrl, preview: decodedUrl, name: 'loaded_image.png' }]);
+      const img = { url: decodedUrl, preview: decodedUrl, name: 'loaded_image.png' };
+      setCurrentImage(img);
+      setLoadedImages([img]);
       setNeedsFit(true);
     }
   }, [location.search]);
@@ -134,11 +121,7 @@ export default function Editor() {
   useEffect(() => {
     return () => {
       objectURLsRef.current.forEach(url => {
-        try {
-          URL.revokeObjectURL(url);
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
+        try { URL.revokeObjectURL(url); } catch {}
       });
       objectURLsRef.current.clear();
     };
@@ -174,9 +157,8 @@ export default function Editor() {
       fitImage();
     } else {
       const img = imageRef.current;
-      const handler = () => fitImage();
-      img.addEventListener('load', handler);
-      return () => img.removeEventListener('load', handler);
+      img.addEventListener('load', fitImage, { once: true });
+      return () => img.removeEventListener('load', fitImage);
     }
   }, [needsFit, currentImage]);
 
@@ -191,24 +173,12 @@ export default function Editor() {
       try {
         URL.revokeObjectURL(url);
         objectURLsRef.current.delete(url);
-      } catch (e) {
-        // Ignore errors
-      }
+      } catch {}
     }
   }, []);
 
   const resetImageState = useCallback(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-    setAdjustments({
-      brightness: 0,
-      contrast: 0,
-      saturation: 0,
-      blur: 0,
-      hue: 0,
-      sepia: 0,
-      grayscale: 0,
-    });
+    setAdjustments({ ...DEFAULT_ADJUSTMENTS });
     setSelectedFilter(null);
     setTransform({ rotate: 0, flipH: false, flipV: false });
     setBrushStrokes([]);
@@ -244,69 +214,51 @@ export default function Editor() {
     }
   }, [loadedImages, resetImageState]);
 
-
-
-  const handleGenerateCanvas = useCallback(() => generateCanvas(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, generateCanvas]);
-  const handleGetProcessedBlob = useCallback(() => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter), [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]);
+  const handleGenerateCanvas = useCallback(
+    () => generateCanvas(currentImage, adjustments, transform, selectedFilter),
+    [currentImage, adjustments, transform, selectedFilter, generateCanvas]
+  );
+  const handleGetProcessedBlob = useCallback(
+    () => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter),
+    [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]
+  );
 
   const handleToolSelect = useCallback(async (tool) => {
     if (!currentImage) {
       toast.error("Please upload an image first");
       return;
     }
-    
     toast.loading(`Applying ${tool.label}...`, { id: `tool-${tool.id}` });
     setActiveTool(tool);
     setIsProcessing(true);
     setRegenerateAction(() => () => handleToolSelect(tool));
-    
     try {
       const blob = await handleGetProcessedBlob();
-      if (!blob) {
-        throw new Error("Failed to process image");
-      }
-      
+      if (!blob) throw new Error("Failed to process image");
       const processedUrl = createObjectURL(blob);
       setProcessedImage(processedUrl);
-      
       const file = new File([blob], "processed_input.png", { type: "image/png" });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
-      
-      if (!uploadResult?.file_url) {
-        throw new Error("Failed to upload image");
-      }
-      
+      if (!uploadResult?.file_url) throw new Error("Failed to upload image");
       const result = await base44.integrations.Core.GenerateImage({
         prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
         existing_image_urls: [uploadResult.file_url]
       });
-      
-      if (!result?.url) {
-        throw new Error("Failed to generate image");
-      }
-      
+      if (!result?.url) throw new Error("Failed to generate image");
       setResultImage(result.url);
       setShowResult(true);
       toast.success(`${tool.label} applied successfully!`, { id: `tool-${tool.id}` });
-      
-      // Log to PromptLearning
-      await base44.entities.PromptLearning.create({
-        prompt: tool.prompt,
-        tool_type: "ai_tool",
-        was_successful: true,
+      base44.entities.PromptLearning.create({
+        prompt: tool.prompt, tool_type: "ai_tool", was_successful: true,
         context: { tool_id: tool.id, tool_label: tool.label }
-      }).catch(err => console.error("Failed to log prompt learning:", err));
+      }).catch(() => {});
     } catch (error) {
       console.error("Error processing image:", error);
       toast.error(error.message || "Error processing image. Please try again.", { id: `tool-${tool.id}` });
-      
-      // Log failed attempt
-      await base44.entities.PromptLearning.create({
-        prompt: tool.prompt,
-        tool_type: "ai_tool",
-        was_successful: false,
+      base44.entities.PromptLearning.create({
+        prompt: tool.prompt, tool_type: "ai_tool", was_successful: false,
         context: { tool_id: tool.id, tool_label: tool.label, error: error.message }
-      }).catch(err => console.error("Failed to log prompt learning:", err));
+      }).catch(() => {});
     } finally {
       setIsProcessing(false);
       setActiveTool(null);
@@ -316,21 +268,8 @@ export default function Editor() {
   const handleApplyResult = useCallback(() => {
     if (resultImage) {
       setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-      setCurrentImage({ 
-        url: resultImage, 
-        preview: resultImage, 
-        name: "enhanced_image.png" 
-      });
-      
-      setAdjustments({
-        brightness: 0,
-        contrast: 0,
-        saturation: 0,
-        blur: 0,
-        hue: 0,
-        sepia: 0,
-        grayscale: 0,
-      });
+      setCurrentImage({ url: resultImage, preview: resultImage, name: "enhanced_image.png" });
+      setAdjustments({ ...DEFAULT_ADJUSTMENTS });
       setSelectedFilter(null);
       setBrushStrokes([]);
       setRedoHistory([]);
@@ -353,41 +292,32 @@ export default function Editor() {
   }, [processedImage, revokeObjectURL]);
 
   const handleUndo = useCallback(() => {
-    if (undoHistory.length > 0) {
-      const previous = undoHistory[undoHistory.length - 1];
-      setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-      
-      setCurrentImage(previous.image);
-      setAdjustments(previous.adjustments || { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 });
-      setSelectedFilter(previous.filter !== undefined ? previous.filter : null);
-      setTransform(previous.transform || { rotate: 0, flipH: false, flipV: false });
-      
-      setUndoHistory(prev => prev.slice(0, -1));
-    }
+    if (undoHistory.length === 0) return;
+    const previous = undoHistory[undoHistory.length - 1];
+    setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setCurrentImage(previous.image);
+    setAdjustments(previous.adjustments || { ...DEFAULT_ADJUSTMENTS });
+    setSelectedFilter(previous.filter !== undefined ? previous.filter : null);
+    setTransform(previous.transform || { rotate: 0, flipH: false, flipV: false });
+    setUndoHistory(prev => prev.slice(0, -1));
   }, [undoHistory, currentImage, adjustments, selectedFilter, transform]);
 
   const handleRedo = useCallback(() => {
-    if (redoHistory.length > 0) {
-      const next = redoHistory[redoHistory.length - 1];
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-
-      setCurrentImage(next.image);
-      setAdjustments(next.adjustments || { brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0 });
-      setSelectedFilter(next.filter !== undefined ? next.filter : null);
-      setTransform(next.transform || { rotate: 0, flipH: false, flipV: false });
-      
-      setRedoHistory(prev => prev.slice(0, -1));
-    }
+    if (redoHistory.length === 0) return;
+    const next = redoHistory[redoHistory.length - 1];
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setCurrentImage(next.image);
+    setAdjustments(next.adjustments || { ...DEFAULT_ADJUSTMENTS });
+    setSelectedFilter(next.filter !== undefined ? next.filter : null);
+    setTransform(next.transform || { rotate: 0, flipH: false, flipV: false });
+    setRedoHistory(prev => prev.slice(0, -1));
   }, [redoHistory, currentImage, adjustments, selectedFilter, transform]);
 
   const handleDownload = useCallback(async () => {
     if (!currentImage) return;
     try {
       const blob = await handleGetProcessedBlob();
-      if (!blob) {
-        toast.error("Could not get image data to download.");
-        return;
-      }
+      if (!blob) { toast.error("Could not get image data to download."); return; }
       const url = createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -403,11 +333,7 @@ export default function Editor() {
     }
   }, [currentImage, handleGetProcessedBlob, createObjectURL, revokeObjectURL]);
 
-
-
-  const adjustmentUndoTimerRef = useRef(null);
   const handleAdjustmentChange = useCallback((newAdjustments) => {
-    // Debounce undo pushes so rapid slider drags only create one undo entry
     if (adjustmentUndoTimerRef.current) clearTimeout(adjustmentUndoTimerRef.current);
     adjustmentUndoTimerRef.current = setTimeout(() => {
       setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
@@ -424,37 +350,20 @@ export default function Editor() {
 
   const handleTransform = useCallback(async (type) => {
     if (!currentImage) return;
-
     setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
     setIsProcessing(true);
-
     try {
       let tempTransform = { rotate: 0, flipH: false, flipV: false };
       if (type === 'rotate-right') tempTransform.rotate = 90;
       else if (type === 'rotate-left') tempTransform.rotate = -90;
       else if (type === 'flip-horizontal') tempTransform.flipH = true;
       else if (type === 'flip-vertical') tempTransform.flipV = true;
-
-      const canvas = await generateCanvas(
-        currentImage, 
-        adjustments, 
-        tempTransform, 
-        selectedFilter
-      );
-
-      if (!canvas) {
-        toast.error("Failed to generate canvas for transform.");
-        throw new Error("Failed to generate canvas");
-      }
-
+      const canvas = await generateCanvas(currentImage, adjustments, tempTransform, selectedFilter);
+      if (!canvas) { toast.error("Failed to generate canvas for transform."); throw new Error("Failed to generate canvas"); }
       canvas.toBlob((blob) => {
+        if (!blob) { setIsProcessing(false); toast.error("Transform failed."); return; }
         const url = createObjectURL(blob);
-        setCurrentImage({
-          ...currentImage,
-          url: url,
-          preview: url,
-          name: "transformed.png"
-        });
+        setCurrentImage({ ...currentImage, url, preview: url, name: "transformed.png" });
         setTransform({ rotate: 0, flipH: false, flipV: false });
         setBrushStrokes([]);
         setRedoHistory([]);
@@ -470,68 +379,43 @@ export default function Editor() {
 
   const handleMagicBrush = useCallback(async () => {
     setRegenerateAction(() => () => handleMagicBrush());
-
     try {
       const resultUrl = await processMagicBrush({
-        imageRef,
-        brushStrokes,
-        brushSize,
-        magicBrushPrompt,
-        magicBrushImages,
-        getProcessedImageBlob,
-        currentImage,
-        adjustments,
-        transform,
-        selectedFilter,
-        setActiveTool
+        imageRef, brushStrokes, brushSize, magicBrushPrompt, magicBrushImages,
+        getProcessedImageBlob, currentImage, adjustments, transform, selectedFilter, setActiveTool
       });
-
       if (resultUrl) {
         setResultImage(resultUrl);
         setShowResult(true);
-        
-        // Log to PromptLearning
-        await base44.entities.PromptLearning.create({
-          prompt: magicBrushPrompt,
-          tool_type: "magic_brush",
-          was_successful: true,
+        base44.entities.PromptLearning.create({
+          prompt: magicBrushPrompt, tool_type: "magic_brush", was_successful: true,
           context: { has_reference_images: magicBrushImages.length > 0 }
-        }).catch(err => console.error("Failed to log prompt learning:", err));
+        }).catch(() => {});
       }
     } catch (error) {
       console.error("Magic brush error:", error);
       toast.error("Error executing magic brush. Please try again.");
-      
-      // Log failed attempt
-      await base44.entities.PromptLearning.create({
-        prompt: magicBrushPrompt,
-        tool_type: "magic_brush",
-        was_successful: false,
+      base44.entities.PromptLearning.create({
+        prompt: magicBrushPrompt, tool_type: "magic_brush", was_successful: false,
         context: { has_reference_images: magicBrushImages.length > 0, error: error.message }
-      }).catch(err => console.error("Failed to log prompt learning:", err));
+      }).catch(() => {});
     }
   }, [brushStrokes, brushSize, magicBrushPrompt, magicBrushImages, getProcessedImageBlob, currentImage, adjustments, transform, selectedFilter, processMagicBrush]);
 
   const applyCropAreaWithRatio = useCallback((ratio) => {
-    if (!ratio) {
-      // Free: keep current crop area as-is, just start cropping
-      return;
-    }
-    if (!imageRef.current) {
+    if (!ratio || !imageRef.current) {
+      if (!ratio) return;
       setCropArea({ x: 10, y: 10, width: 80, height: 80 });
       return;
     }
     const { naturalWidth: imgW, naturalHeight: imgH } = imageRef.current;
+    if (!imgW || !imgH) return;
     const imageAspect = imgW / imgH;
-
-    // Compute crop box in % that fits within the image and matches the ratio
     let cropW, cropH;
     if (ratio > imageAspect) {
-      // Ratio is wider than image — constrain by width
       cropW = 80;
       cropH = cropW * (imageAspect / ratio);
     } else {
-      // Ratio is taller than image — constrain by height
       cropH = 80;
       cropW = cropH * ratio / imageAspect;
     }
@@ -556,52 +440,33 @@ export default function Editor() {
     if (activeRatio) applyCropAreaWithRatio(activeRatio);
   }, [activeRatio, applyCropAreaWithRatio]);
 
-  const handleCancelCrop = useCallback(() => {
-    setIsCropping(false);
-  }, []);
+  const handleCancelCrop = useCallback(() => { setIsCropping(false); }, []);
 
   const handleApplyCrop = useCallback(async () => {
     if (!currentImage) return;
-
     setIsProcessing(true);
     setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-
     try {
       const bakeCanvas = await handleGenerateCanvas();
-      if (!bakeCanvas) {
-        toast.error("Failed to generate canvas for cropping.");
-        throw new Error("Failed to generate canvas");
-      }
-
+      if (!bakeCanvas) { toast.error("Failed to generate canvas for cropping."); throw new Error("Failed to generate canvas"); }
       const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width - 1));
       const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height - 1));
-      let cropWidth = Math.max(2, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
-      let cropHeight = Math.max(2, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
-      
+      const cropWidth = Math.max(2, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
+      const cropHeight = Math.max(2, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
       if (cropWidth <= 0 || cropHeight <= 0) {
         toast.error("Crop area too small. Increase the selection.");
         setIsProcessing(false);
         return;
       }
-
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = cropWidth;
       finalCanvas.height = cropHeight;
-      const fCtx = finalCanvas.getContext('2d');
-
-      fCtx.drawImage(bakeCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-
+      finalCanvas.getContext('2d').drawImage(bakeCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
       finalCanvas.toBlob((blob) => {
+        if (!blob) { setIsProcessing(false); toast.error("Crop failed."); return; }
         const url = createObjectURL(blob);
-        setCurrentImage({
-          ...currentImage,
-          url: url,
-          preview: url,
-          name: "cropped_image.png"
-        });
-        setAdjustments({
-          brightness: 0, contrast: 0, saturation: 0, blur: 0, hue: 0, sepia: 0, grayscale: 0
-        });
+        setCurrentImage({ ...currentImage, url, preview: url, name: "cropped_image.png" });
+        setAdjustments({ ...DEFAULT_ADJUSTMENTS });
         setSelectedFilter(null);
         setIsCropping(false);
         setRedoHistory([]);
@@ -621,17 +486,12 @@ export default function Editor() {
     setIsSaving(true);
     try {
       const blob = await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
-      if (!blob) {
-        toast.error("Could not get image data to save.");
-        return;
-      }
+      if (!blob) { toast.error("Could not get image data to save."); return; }
       const file = new File([blob], `flik_creation_${Date.now()}.png`, { type: blob.type });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
       await base44.entities.Creation.create({
         title: `Edited Image (${new Date().toLocaleString()})`,
-        type: 'image',
-        url: uploadResult.file_url,
-        thumbnail_url: uploadResult.file_url
+        type: 'image', url: uploadResult.file_url, thumbnail_url: uploadResult.file_url
       });
       toast.success('Saved to Gallery!');
     } catch (err) {
@@ -644,39 +504,26 @@ export default function Editor() {
 
   const handleFileUpload = useCallback((e) => {
     const files = Array.from(e.target.files || []);
+    // Reset input so same file can be re-uploaded
+    e.target.value = '';
     if (files.length === 0) return;
-
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    if (imageFiles.length === 0) {
-      toast.error('Please select image files');
-      return;
-    }
-
+    if (imageFiles.length === 0) { toast.error('Please select image files'); return; }
     if (imageFiles.length === 1) {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        handleImageSelect({
-          url: ev.target.result,
-          preview: ev.target.result,
-          name: imageFiles[0].name
-        });
+        handleImageSelect({ url: ev.target.result, preview: ev.target.result, name: imageFiles[0].name });
         toast.success('Image uploaded');
       };
       reader.readAsDataURL(imageFiles[0]);
     } else {
       const loadedImgs = [];
       let loadedCount = 0;
-      
       imageFiles.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = (ev) => {
-          loadedImgs[index] = {
-            url: ev.target.result,
-            preview: ev.target.result,
-            name: file.name
-          };
+          loadedImgs[index] = { url: ev.target.result, preview: ev.target.result, name: file.name };
           loadedCount++;
-          
           if (loadedCount === imageFiles.length) {
             handleMultipleImagesSelect(loadedImgs);
             toast.success(`${imageFiles.length} images uploaded`);
@@ -687,38 +534,26 @@ export default function Editor() {
     }
   }, [handleImageSelect, handleMultipleImagesSelect]);
 
-
-
-
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
-        e.preventDefault();
-        handleRedo();
+        e.preventDefault(); handleRedo();
       } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault();
-        handleUndo();
+        e.preventDefault(); handleUndo();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleSaveToGallery();
+        e.preventDefault(); handleSaveToGallery();
       }
     };
-
     const handleKeyDown = (e) => {
       if (e.code === 'Space' && !e.repeat && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-        e.preventDefault();
-        setIsSpacePressed(true);
+        e.preventDefault(); setIsSpacePressed(true);
       }
     };
-
     const handleKeyUp = (e) => {
-      if (e.code === 'Space') {
-        setIsSpacePressed(false);
-        setIsPanning(false);
-      }
+      if (e.code === 'Space') { setIsSpacePressed(false); setIsPanning(false); }
     };
-
     window.addEventListener('keydown', handleKeyPress);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -727,7 +562,7 @@ export default function Editor() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleUndo, handleRedo, handleDownload, handleSaveToGallery]);
+  }, [handleUndo, handleRedo, handleSaveToGallery]);
 
   const handleWheel = useCallback((e) => {
     if (currentImage) {
@@ -739,31 +574,24 @@ export default function Editor() {
   const getRelativePosition = useCallback((e) => {
     if (!imageRef.current) return null;
     const rect = imageRef.current.getBoundingClientRect();
-    
-    const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
-    
+    const clientX = e.touches?.length > 0 ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches?.length > 0 ? e.touches[0].clientY : e.clientY;
     if (clientX === undefined || clientY === undefined) return null;
-
     const x = ((clientX - rect.left) / rect.width) * 100;
     const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    const tolerance = 5; 
+    const tolerance = 5;
     if (x < -tolerance || x > 100 + tolerance || y < -tolerance || y > 100 + tolerance) return null;
-    
     return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
   }, []);
 
   const handleMouseDown = useCallback((e) => {
-    const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
-
+    const clientX = e.touches?.length > 0 ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches?.length > 0 ? e.touches[0].clientY : e.clientY;
     if (isSpacePressed || e.button === 1 || isPanToolActive) {
       setIsPanning(true);
       setDragStart({ x: clientX, y: clientY });
       return;
     }
-
     if (activeTab === "remove" && currentImage) {
       const pos = getRelativePosition(e);
       if (pos) {
@@ -775,19 +603,11 @@ export default function Editor() {
       if (pos) {
         const handleSize = 8;
         let type = null;
-        
-        if (Math.abs(pos.x - cropArea.x) < handleSize && Math.abs(pos.y - cropArea.y) < handleSize) {
-          type = 'nw';
-        } else if (Math.abs(pos.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(pos.y - cropArea.y) < handleSize) {
-          type = 'ne';
-        } else if (Math.abs(pos.x - cropArea.x) < handleSize && Math.abs(pos.y - (cropArea.y + cropArea.height)) < handleSize) {
-          type = 'sw';
-        } else if (Math.abs(pos.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(pos.y - (cropArea.y + cropArea.height)) < handleSize) {
-          type = 'se';
-        } else if (pos.x >= cropArea.x && pos.x <= cropArea.x + cropArea.width && pos.y >= cropArea.y && pos.y <= cropArea.y + cropArea.height) {
-          type = 'move';
-        }
-        
+        if (Math.abs(pos.x - cropArea.x) < handleSize && Math.abs(pos.y - cropArea.y) < handleSize) type = 'nw';
+        else if (Math.abs(pos.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(pos.y - cropArea.y) < handleSize) type = 'ne';
+        else if (Math.abs(pos.x - cropArea.x) < handleSize && Math.abs(pos.y - (cropArea.y + cropArea.height)) < handleSize) type = 'sw';
+        else if (Math.abs(pos.x - (cropArea.x + cropArea.width)) < handleSize && Math.abs(pos.y - (cropArea.y + cropArea.height)) < handleSize) type = 'se';
+        else if (pos.x >= cropArea.x && pos.x <= cropArea.x + cropArea.width && pos.y >= cropArea.y && pos.y <= cropArea.y + cropArea.height) type = 'move';
         if (type) {
           setDragType(type);
           setIsDragging(true);
@@ -800,12 +620,9 @@ export default function Editor() {
   }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea]);
 
   const handleMouseMove = useCallback((e) => {
-    if (e.cancelable && (isDrawing || isDragging || isPanning)) {
-      e.preventDefault();
-    }
-
-    const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+    if (e.cancelable && (isDrawing || isDragging || isPanning)) e.preventDefault();
+    const clientX = e.touches?.length > 0 ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches?.length > 0 ? e.touches[0].clientY : e.clientY;
 
     if (isPanning && dragStart) {
       const deltaX = clientX - dragStart.x;
@@ -817,10 +634,8 @@ export default function Editor() {
 
     if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
-      cursorRef.current.style.left = `${x}px`;
-      cursorRef.current.style.top = `${y}px`;
+      cursorRef.current.style.left = `${clientX - rect.left}px`;
+      cursorRef.current.style.top = `${clientY - rect.top}px`;
       cursorRef.current.style.display = 'block';
     }
 
@@ -842,7 +657,6 @@ export default function Editor() {
         const deltaY = pos.y - initPos.y;
         const minSize = 5;
         let newCrop = { ...initial };
-
         if (dragType === 'move') {
           newCrop.x = Math.max(0, Math.min(100 - initial.width, initial.x + deltaX));
           newCrop.y = Math.max(0, Math.min(100 - initial.height, initial.y + deltaY));
@@ -860,11 +674,10 @@ export default function Editor() {
             newCrop.width = Math.max(minSize, Math.min(100 - initial.x, initial.width + deltaX));
           }
         }
-
         setCropArea(newCrop);
       }
     }
-  }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, isDragging, dragStart, dragType, cropArea, isPanning, pan]);
+  }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, isDragging, dragStart, dragType, isPanning]);
 
   const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
@@ -872,43 +685,34 @@ export default function Editor() {
     setIsPanning(false);
     setDragType(null);
   }, []);
-  
+
   const handleMouseLeave = useCallback(() => {
     handleMouseUp();
-    if (cursorRef.current) {
-      cursorRef.current.style.display = 'none';
-    }
+    if (cursorRef.current) cursorRef.current.style.display = 'none';
   }, [handleMouseUp]);
 
+  // Draw brush strokes on canvas overlay
   useEffect(() => {
     if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
-
     const canvas = canvasRef.current;
     const img = imageRef.current;
     const rect = img.getBoundingClientRect();
-    
     canvas.width = rect.width;
     canvas.height = rect.height;
-    
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
     if (brushStrokes.length === 0) return;
-
     brushStrokes.forEach(stroke => {
       const points = stroke.points || stroke;
       if (!points || points.length === 0) return;
-      
       const isErase = stroke.type === 'erase';
       const size = stroke.size || brushSize;
-      
       ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
       ctx.strokeStyle = `rgba(255, 107, 53, ${brushOpacity})`;
       ctx.fillStyle = `rgba(255, 107, 53, ${brushOpacity})`;
       ctx.lineWidth = size;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      
       if (points.length === 1) {
         ctx.beginPath();
         ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
@@ -916,22 +720,17 @@ export default function Editor() {
       } else {
         ctx.beginPath();
         ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
-        
         for (let i = 1; i < points.length; i++) {
           ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
         }
-        
         ctx.stroke();
       }
     });
     ctx.globalCompositeOperation = 'source-over';
   }, [brushStrokes, brushSize, brushOpacity, activeTab]);
 
-
-
   const getFilterStyle = useCallback(() => {
     const filters = [];
-    
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
     if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
     if (adjustments.saturation !== 0) filters.push(`saturate(${100 + adjustments.saturation}%)`);
@@ -939,21 +738,15 @@ export default function Editor() {
     if (adjustments.hue !== 0) filters.push(`hue-rotate(${adjustments.hue}deg)`);
     if (adjustments.sepia > 0) filters.push(`sepia(${adjustments.sepia}%)`);
     if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
-    
-    if (selectedFilter && selectedFilter.id !== "none") {
-      filters.push(selectedFilter.filter);
-    }
-    
+    if (selectedFilter && selectedFilter.id !== "none") filters.push(selectedFilter.filter);
     return filters.length > 0 ? filters.join(" ") : "none";
   }, [adjustments, selectedFilter]);
 
   const getTransformStyle = useCallback(() => {
     const transforms = [];
-    
     if (transform.rotate !== 0) transforms.push(`rotate(${transform.rotate}deg)`);
     if (transform.flipH) transforms.push(`scaleX(-1)`);
     if (transform.flipV) transforms.push(`scaleY(-1)`);
-    
     return transforms.length > 0 ? transforms.join(" ") : "none";
   }, [transform]);
 
@@ -988,52 +781,38 @@ export default function Editor() {
 
           <div className="px-4 pb-4">
             <TabsContent value="ai" className="mt-0">
-              <ToolPanel 
-                onToolSelect={handleToolSelect} 
-                isProcessing={isProcessing}
-                hasImage={!!currentImage}
-              />
+              <ToolPanel onToolSelect={handleToolSelect} isProcessing={isProcessing} hasImage={!!currentImage} />
             </TabsContent>
 
             <TabsContent value="adjust" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Adjustments</h3>
-              {currentImage ? (
-                <AdjustmentsPanel 
-                  adjustments={adjustments} 
-                  onChange={handleAdjustmentChange}
-                />
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
+              {currentImage
+                ? <AdjustmentsPanel adjustments={adjustments} onChange={handleAdjustmentChange} />
+                : <p className="text-white/40 text-sm">Upload an image to start</p>
+              }
             </TabsContent>
 
             <TabsContent value="filters" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Filters</h3>
-              {currentImage ? (
-                <FiltersPanel 
-                  selectedFilter={selectedFilter}
-                  onFilterSelect={handleFilterSelect}
-                  previewImage={currentImage?.preview || currentImage?.url}
-                />
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
+              {currentImage
+                ? <FiltersPanel selectedFilter={selectedFilter} onFilterSelect={handleFilterSelect} previewImage={currentImage?.preview || currentImage?.url} />
+                : <p className="text-white/40 text-sm">Upload an image to start</p>
+              }
             </TabsContent>
 
             <TabsContent value="transform" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Transform</h3>
-              {currentImage ? (
-                <TransformPanel onTransform={handleTransform} isProcessing={isProcessing} />
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
+              {currentImage
+                ? <TransformPanel onTransform={handleTransform} isProcessing={isProcessing} />
+                : <p className="text-white/40 text-sm">Upload an image to start</p>
+              }
             </TabsContent>
 
             <TabsContent value="remove" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Magic Brush</h3>
               {currentImage ? (
                 <>
-                  <SpotRemoval 
+                  <SpotRemoval
                     onRemoveSpot={handleMagicBrush}
                     isProcessing={isMagicBrushProcessing}
                     brushSize={brushSize}
@@ -1052,25 +831,10 @@ export default function Editor() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-white/80">{brushStrokes.length} stroke(s)</span>
                         <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (brushStrokes.length > 0) {
-                                setBrushStrokes(prev => prev.slice(0, -1));
-                              }
-                            }}
-                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
-                            title="Undo last stroke"
-                          >
+                          <Button size="sm" variant="ghost" onClick={() => setBrushStrokes(prev => prev.slice(0, -1))} className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10" title="Undo last stroke">
                             <RotateCcw className="w-3 h-3" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setBrushStrokes([])}
-                            className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10"
-                          >
+                          <Button size="sm" variant="ghost" onClick={() => setBrushStrokes([])} className="text-white/60 hover:text-white h-7 px-2 hover:bg-white/10">
                             <X className="w-3 h-3 mr-1" />
                             Clear
                           </Button>
@@ -1086,18 +850,10 @@ export default function Editor() {
 
             <TabsContent value="crop" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
-              {currentImage ? (
-                <CropPanel
-                  onApplyCrop={handleApplyCrop}
-                  onCancelCrop={handleCancelCrop}
-                  onStartCrop={handleStartCrop}
-                  isCropping={isCropping}
-                  onAspectRatioSelect={handleAspectRatioSelect}
-                  activeRatio={activeRatio}
-                />
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
+              {currentImage
+                ? <CropPanel onApplyCrop={handleApplyCrop} onCancelCrop={handleCancelCrop} onStartCrop={handleStartCrop} isCropping={isCropping} onAspectRatioSelect={handleAspectRatioSelect} activeRatio={activeRatio} />
+                : <p className="text-white/40 text-sm">Upload an image to start</p>
+              }
             </TabsContent>
           </div>
         </Tabs>
@@ -1126,57 +882,29 @@ export default function Editor() {
           
           <div className="flex items-center gap-2 lg:gap-3">
             <div className="flex items-center gap-1">
-              <Button
-                onClick={handleUndo}
-                variant="ghost"
-                size="sm"
-                disabled={undoHistory.length === 0}
-                className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4"
-                title="Undo (Ctrl+Z)"
-              >
+              <Button onClick={handleUndo} variant="ghost" size="sm" disabled={undoHistory.length === 0} className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4" title="Undo (Ctrl+Z)">
                 <RotateCcw className="w-4 h-4 lg:mr-2" />
                 <span className="hidden lg:inline">Undo</span>
               </Button>
-              <Button
-                onClick={handleRedo}
-                variant="ghost"
-                size="sm"
-                disabled={redoHistory.length === 0}
-                className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4"
-                title="Redo (Ctrl+Shift+Z)"
-              >
+              <Button onClick={handleRedo} variant="ghost" size="sm" disabled={redoHistory.length === 0} className="text-white hover:bg-white/10 disabled:opacity-30 px-2 lg:px-4" title="Redo (Ctrl+Shift+Z)">
                 <RotateCw className="w-4 h-4 lg:mr-2 scale-x-[-1]" />
                 <span className="hidden lg:inline">Redo</span>
               </Button>
             </div>
             {currentImage && (
-              <Button
-                onClick={handleSaveToGallery}
-                disabled={isSaving}
-                className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20"
-                title="Save to Gallery"
-              >
-                {isSaving ? (
-                  <Loader2 className="w-4 h-4 lg:mr-2 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4 lg:mr-2" />
-                )}
+              <Button onClick={handleSaveToGallery} disabled={isSaving} className="bg-white/10 hover:bg-white/20 text-white text-sm border border-white/20" title="Save to Gallery">
+                {isSaving ? <Loader2 className="w-4 h-4 lg:mr-2 animate-spin" /> : <Save className="w-4 h-4 lg:mr-2" />}
                 <span className="hidden lg:inline">{isSaving ? "Saving..." : "Save"}</span>
               </Button>
             )}
-            <Button
-              disabled={!currentImage}
-              onClick={handleDownload}
-              className="btn-gradient text-white text-sm disabled:opacity-30 px-3 lg:px-4"
-              title="Download (Ctrl+S)"
-            >
+            <Button disabled={!currentImage} onClick={handleDownload} className="btn-gradient text-white text-sm disabled:opacity-30 px-3 lg:px-4" title="Download">
               <Download className="w-4 h-4 lg:mr-2" />
               <span className="hidden lg:inline">Export</span>
             </Button>
           </div>
         </motion.div>
         
-        <div 
+        <div
           ref={containerRef}
           className="flex-1 relative overflow-hidden bg-[#0A0A0A]"
           onMouseDown={handleMouseDown}
@@ -1194,23 +922,14 @@ export default function Editor() {
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
               style={{
-                width: brushSize * zoom,
-                height: brushSize * zoom,
-                transform: 'translate(-50%, -50%)',
-                display: 'none',
-                borderColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 107, 53, 0.8)',
-                backgroundColor: brushMode === 'erase' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 107, 53, 0.2)'
+                width: brushSize * zoom, height: brushSize * zoom,
+                transform: 'translate(-50%, -50%)', display: 'none',
+                borderColor: brushMode === 'erase' ? 'rgba(255,255,255,0.8)' : 'rgba(255,107,53,0.8)',
+                backgroundColor: brushMode === 'erase' ? 'rgba(255,255,255,0.2)' : 'rgba(255,107,53,0.2)'
               }}
             />
           )}
-          <div 
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-              backgroundSize: "40px 40px"
-            }}
-          />
-          
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: "40px 40px" }} />
           <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#FF6B35]/5 blur-[100px] pointer-events-none" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#FFB800]/5 blur-[100px] pointer-events-none" />
           
@@ -1224,83 +943,58 @@ export default function Editor() {
                     <button
                       key={idx}
                       onClick={() => switchToImage(idx)}
-                      className={`w-1.5 h-1.5 rounded-full transition-all ${
-                        idx === currentImageIndex 
-                          ? 'bg-[#FF6B35] w-4' 
-                          : 'bg-white/30 hover:bg-white/50'
-                      }`}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-[#FF6B35] w-4' : 'bg-white/30 hover:bg-white/50'}`}
                     />
                   ))}
                 </div>
               )}
               <div className="w-full h-full flex items-center justify-center overflow-hidden">
-                <div 
-                  className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${
-                    (isPanning || isSpacePressed) ? 'cursor-move' : ''
-                  }`}
+                <div
+                  className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${(isPanning || isSpacePressed) ? 'cursor-move' : ''}`}
                   style={{
                     transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                     cursor: (isPanning || isSpacePressed || isPanToolActive) ? (isPanning ? 'grabbing' : 'grab') : undefined
                   }}
                 >
-                <img
-                  ref={imageRef}
-                  src={currentImage.preview || currentImage.url}
-                  alt="Editor"
-                  className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${
-                    activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""
-                  }`}
-                  style={{
-                    filter: getFilterStyle(),
-                    transform: getTransformStyle(),
-                  }}
-                  draggable={false}
-                />
-                
-                {activeTab === "remove" && currentImage && (
-                  <canvas
-                    ref={canvasRef}
-                    className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full"
-                    style={{ filter: 'none' }}
+                  <img
+                    ref={imageRef}
+                    src={currentImage.preview || currentImage.url}
+                    alt="Editor"
+                    className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
+                    style={{ filter: getFilterStyle(), transform: getTransformStyle() }}
+                    draggable={false}
+                    onLoad={() => { if (needsFit) setNeedsFit(false); setNeedsFit(true); }}
                   />
-                )}
+                  
+                  {activeTab === "remove" && currentImage && (
+                    <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
+                  )}
 
-                {isCropping && (
-                  <>
-                    {/* Four dark overlay strips around the crop area (outside only) */}
-                    <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.55)' }} />
-                    <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: 0, width: `${cropArea.x}%`, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
-                    <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: `${cropArea.x + cropArea.width}%`, right: 0, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
-                    <div className="absolute pointer-events-none rounded-2xl" style={{ top: `${cropArea.y + cropArea.height}%`, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.55)' }} />
-                    <div
-                      className="absolute border-2 border-[#FF6B35]"
-                      style={{
-                        left: `${cropArea.x}%`,
-                        top: `${cropArea.y}%`,
-                        width: `${cropArea.width}%`,
-                        height: `${cropArea.height}%`,
-                        background: 'transparent',
-                        backgroundImage: 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)',
-                        backgroundSize: '33.33% 33.33%',
-                      }}
-                    >
-                      <div className="absolute -top-3 -left-3 w-8 h-8 flex items-center justify-center cursor-nw-resize z-10 touch-none">
-                        <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
+                  {isCropping && (
+                    <>
+                      <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.55)' }} />
+                      <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: 0, width: `${cropArea.x}%`, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
+                      <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: `${cropArea.x + cropArea.width}%`, right: 0, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.55)' }} />
+                      <div className="absolute pointer-events-none rounded-2xl" style={{ top: `${cropArea.y + cropArea.height}%`, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.55)' }} />
+                      <div
+                        className="absolute border-2 border-[#FF6B35]"
+                        style={{
+                          left: `${cropArea.x}%`, top: `${cropArea.y}%`,
+                          width: `${cropArea.width}%`, height: `${cropArea.height}%`,
+                          background: 'transparent',
+                          backgroundImage: 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)',
+                          backgroundSize: '33.33% 33.33%',
+                        }}
+                      >
+                        <div className="absolute -top-3 -left-3 w-8 h-8 flex items-center justify-center cursor-nw-resize z-10 touch-none"><div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" /></div>
+                        <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center cursor-ne-resize z-10 touch-none"><div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" /></div>
+                        <div className="absolute -bottom-3 -left-3 w-8 h-8 flex items-center justify-center cursor-sw-resize z-10 touch-none"><div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" /></div>
+                        <div className="absolute -bottom-3 -right-3 w-8 h-8 flex items-center justify-center cursor-se-resize z-10 touch-none"><div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" /></div>
                       </div>
-                      <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center cursor-ne-resize z-10 touch-none">
-                        <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
-                      </div>
-                      <div className="absolute -bottom-3 -left-3 w-8 h-8 flex items-center justify-center cursor-sw-resize z-10 touch-none">
-                        <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
-                      </div>
-                      <div className="absolute -bottom-3 -right-3 w-8 h-8 flex items-center justify-center cursor-se-resize z-10 touch-none">
-                        <div className="w-4 h-4 bg-[#FF6B35] rounded-full shadow-sm" />
-                      </div>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
             </>
           )}
           
@@ -1309,7 +1003,7 @@ export default function Editor() {
           </AnimatePresence>
           
           {currentImage && (
-            <motion.div 
+            <motion.div
               className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1326,95 +1020,45 @@ export default function Editor() {
                       className="bg-gradient-to-br from-[#1a1a1a]/95 via-[#141414]/95 to-[#0f0f0f]/95 backdrop-blur-xl border border-white/15 rounded-lg p-0.5 shadow-2xl mb-0.5"
                     >
                       <div className="flex flex-col gap-px">
-                        <button
-                          onClick={() => {
-                            fileInputRef.current?.click();
-                            setIsToolboxExpanded(false);
-                          }}
-                          className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
-                          title="Upload"
-                        >
+                        <button onClick={() => { fileInputRef.current?.click(); setIsToolboxExpanded(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Upload">
                           <Upload className="w-3.5 h-3.5" />
                         </button>
-                        
-                        <button
-                          onClick={() => {
-                            setIsGalleryPickerOpen(true);
-                            setIsToolboxExpanded(false);
-                          }}
-                          className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
-                          title="Gallery"
-                        >
+                        <button onClick={() => { setIsGalleryPickerOpen(true); setIsToolboxExpanded(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Gallery">
                           <Grid3x3 className="w-3.5 h-3.5" />
                         </button>
-                        
                         <div className="h-px bg-white/10 mx-1" />
-                        
-                        <button
-                          onClick={() => {
-                            setIsPanToolActive(!isPanToolActive);
-                            setIsToolboxExpanded(false);
-                          }}
-                          className={`w-8 h-8 rounded-md transition-all flex items-center justify-center active:scale-95 ${isPanToolActive ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-                          title="Pan"
-                        >
+                        <button onClick={() => { setIsPanToolActive(!isPanToolActive); setIsToolboxExpanded(false); }} className={`w-8 h-8 rounded-md transition-all flex items-center justify-center active:scale-95 ${isPanToolActive ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/5 text-white/60 hover:text-white'}`} title="Pan">
                           <Move className="w-3.5 h-3.5" />
                         </button>
-                        
                         <div className="h-px bg-white/10 mx-1" />
-                        
-                        <button
-                          onClick={() => setZoom(z => Math.min(z + 0.2, 5))}
-                          className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
-                          title="Zoom In"
-                        >
+                        <button onClick={() => setZoom(z => Math.min(z + 0.2, 5))} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Zoom In">
                           <ZoomIn className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => setZoom(z => Math.max(z - 0.2, 0.1))}
-                          className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
-                          title="Zoom Out"
-                        >
+                        <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.1))} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Zoom Out">
                           <ZoomOut className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => { setNeedsFit(true); setIsPanToolActive(false); }}
-                          className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95"
-                          title="Fit to screen"
-                        >
+                        <button onClick={() => { setNeedsFit(true); setIsPanToolActive(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Fit to screen">
                           <Maximize2 className="w-3.5 h-3.5" />
                         </button>
-
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
                 
-                {/* Toggle Button */}
                 <motion.button
                   onClick={() => setIsToolboxExpanded(!isToolboxExpanded)}
                   className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-md hover:shadow-[#FF6B35]/40 transition-all flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <motion.div
-                    animate={{ rotate: isToolboxExpanded ? 45 : 0 }}
-                    transition={{ duration: 0.15 }}
-                  >
+                  <motion.div animate={{ rotate: isToolboxExpanded ? 45 : 0 }} transition={{ duration: 0.15 }}>
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                   </motion.div>
                 </motion.button>
                 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
               </div>
             </motion.div>
           )}
