@@ -49,6 +49,13 @@ export default function Editor() {
   const [brushSize, setBrushSize] = useState(30);
   const [brushOpacity, setBrushOpacity] = useState(0.8);
   const [brushMode, setBrushMode] = useState('draw');
+
+  // Paint tool state
+  const [paintStrokes, setPaintStrokes] = useState([]);
+  const [paintColor, setPaintColor] = useState("#FF6B35");
+  const [paintBrushSize, setPaintBrushSize] = useState(20);
+  const [paintBrushOpacity, setPaintBrushOpacity] = useState(0.85);
+  const paintCanvasRef = useRef(null);
   const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
   const [magicBrushImages, setMagicBrushImages] = useState([]);
   
