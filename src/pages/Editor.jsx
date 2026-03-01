@@ -57,6 +57,7 @@ export default function Editor() {
   const [paintColor, setPaintColor] = useState("#FF6B35");
   const [paintBrushSize, setPaintBrushSize] = useState(20);
   const [paintMode, setPaintMode] = useState("draw");
+  const [paintOpacity, setPaintOpacity] = useState(1);
   const paintCanvasRef = useRef(null);
   
   const [zoom, setZoom] = useState(1);
