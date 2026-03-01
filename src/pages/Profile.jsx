@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import MobileSelect from "@/components/ui/mobile-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
-import toast, { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'sonner';
 import LoadingSkeleton from "@/components/profile/LoadingSkeleton";
 import { 
   ITEMS_PER_PAGE, 
@@ -576,13 +576,7 @@ export default function Profile() {
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <Toaster 
         position="top-center"
-        toastOptions={{
-          style: {
-            background: '#1a1a1a',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.1)'
-          }
-        }}
+        theme="dark"
       />
       <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
         

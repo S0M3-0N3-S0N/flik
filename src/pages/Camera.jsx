@@ -187,10 +187,9 @@ export default function CameraPage() {
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
       clearTimeout(longPressRef.current);
-      clearTimeout(pinchThrottleRef.current);
       unsubscribe();
     };
-    }, []);
+    }, [startCamera]);
 
   useEffect(() => {
     const track = streamRef.current?.getVideoTracks()[0];

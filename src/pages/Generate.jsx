@@ -123,30 +123,33 @@ export default function Generate() {
   const handleImageUpload = async (filesOrEvent) => {
     // Handle both event (from hidden input) and direct file array (from ImageUploader)
     let validFiles = [];
-    if (filesOrEvent.target) {
-       validFiles = Array.from(filesOrEvent.target.files).filter(f => f.type.startsWith('image/'));
+    if (filesOrEvent?.target?.files) {
+       validFiles = Array.from(filesOrEvent.target.files).filter(f => f?.type?.startsWith('image/'));
     } else if (Array.isArray(filesOrEvent)) {
        validFiles = filesOrEvent; // Already filtered in ImageUploader
-    } else if (filesOrEvent.file) {
+    } else if (filesOrEvent?.file) {
        validFiles = [filesOrEvent.file]; // Single file object from ImageUploader (legacy mode)
     }
 
     if (validFiles.length === 0) return;
-    
+
     setIsUploading(true);
+    setError(null);
     try {
       const newUploads = await Promise.all(validFiles.map(async (file) => {
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
+        if (!uploadResult?.file_url) throw new Error('Upload failed: no URL returned');
         return { url: uploadResult.file_url, file, id: Date.now() + Math.random() };
       }));
       setUploadedImages(prev => [...prev, ...newUploads]);
-      setIsUploading(false);
       base44.analytics.track({ 
         eventName: 'generate_images_uploaded', 
         properties: { count: validFiles.length } 
       });
     } catch (err) {
-      setError("Failed to upload images");
+      console.error('Image upload error:', err);
+      setError("Failed to upload images. Please try again.");
+    } finally {
       setIsUploading(false);
     }
   };

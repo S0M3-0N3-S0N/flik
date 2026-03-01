@@ -33,9 +33,11 @@ export default function ResultModal({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch {
-      // fallback to original handler
-      onDownload();
+      toast.success('Downloaded successfully');
+    } catch (err) {
+      console.error('Download failed:', err);
+      toast.error('Download failed, opening in new tab');
+      window.open(resultImage, '_blank');
     }
   };
 

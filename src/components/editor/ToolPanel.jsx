@@ -96,6 +96,11 @@ const tools = [
 const categories = ["Enhancement", "Creative", "Edit"];
 
 export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
+  if (!onToolSelect) {
+    console.warn('ToolPanel: onToolSelect callback is missing');
+    return null;
+  }
+  
   return (
     <div className="py-6 px-4 space-y-8">
       {categories.map((category, catIndex) => (
