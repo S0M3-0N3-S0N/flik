@@ -329,9 +329,9 @@ export default function PaintPanel({
         </div>
       )}
 
-      {/* Stroke actions */}
+      {/* Stroke actions - Bottom on Desktop */}
       {hasStrokes && (
-        <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+        <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10 md:mt-auto">
           <span className="text-xs text-white/50">{strokeCount} stroke{strokeCount !== 1 ? "s" : ""}</span>
           <div className="flex gap-1">
             <button
