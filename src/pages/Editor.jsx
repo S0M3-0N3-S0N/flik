@@ -794,6 +794,45 @@ export default function Editor() {
     if (cursorRef.current) cursorRef.current.style.display = 'none';
   }, [handleMouseUp]);
 
+  // Draw paint strokes on canvas overlay
+  useEffect(() => {
+    if (!paintCanvasRef.current || !imageRef.current || activeTab !== "paint") return;
+    const canvas = paintCanvasRef.current;
+    const img = imageRef.current;
+    const rect = img.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    paintStrokes.forEach(stroke => {
+      const points = stroke.points || [];
+      if (!points.length) return;
+      const size = stroke.size || paintBrushSize;
+      const color = stroke.color || paintColor;
+      ctx.globalCompositeOperation = stroke.mode === "erase" ? 'destination-out' : 'source-over';
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = stroke.mode === "erase" ? 1 : 0.85;
+      if (points.length === 1) {
+        ctx.beginPath();
+        ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
+        }
+        ctx.stroke();
+      }
+    });
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }, [paintStrokes, paintBrushSize, paintColor, activeTab]);
+
   // Draw brush strokes on canvas overlay
   useEffect(() => {
     if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
