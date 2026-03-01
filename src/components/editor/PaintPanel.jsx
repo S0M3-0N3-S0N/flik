@@ -6,72 +6,109 @@ import { cn } from "@/lib/utils";
 // ── Tool icons ──────────────────────────────────────────────────────────────
 
 function MarkerIcon({ color, active }) {
+  // Thick Copic-style marker pointing down
+  const bodyFill = active ? color : "#1e1e1e";
+  const stroke = active ? color : "#333";
   return (
-    <svg width="28" height="64" viewBox="0 0 28 64" fill="none">
-      {/* cap */}
-      <rect x="6" y="1" width="16" height="16" rx="4" fill={color} />
-      <rect x="9" y="4" width="4" height="8" rx="2" fill="white" opacity="0.35" />
-      {/* body */}
-      <rect x="5" y="16" width="18" height="34" rx="3" fill={active ? color : "#f5f5f5"} opacity={active ? 0.15 : 1} />
-      <rect x="5" y="16" width="18" height="34" rx="3" stroke={color} strokeWidth={active ? 2 : 1.5} fill="none" />
-      {/* label band */}
-      <rect x="7" y="22" width="14" height="4" rx="2" fill={color} opacity="0.6" />
-      {/* tip taper */}
-      <path d="M10 50 L14 61 L18 50Z" fill={color} />
+    <svg width="32" height="72" viewBox="0 0 32 72" fill="none">
+      {/* rounded cap */}
+      <rect x="9" y="2" width="14" height="10" rx="5" fill={color} />
+      {/* neck ring */}
+      <rect x="8" y="11" width="16" height="4" rx="1" fill={color} opacity="0.6" />
+      {/* barrel */}
+      <rect x="6" y="14" width="20" height="36" rx="4" fill={bodyFill} />
+      {/* shine on barrel */}
+      <rect x="8" y="16" width="3" height="28" rx="1.5" fill="white" opacity="0.07" />
+      {/* color label band */}
+      <rect x="6" y="38" width="20" height="12" rx="0" fill={color} opacity="0.9" />
+      {/* bottom shoulder */}
+      <rect x="8" y="50" width="16" height="4" rx="2" fill={color} />
+      {/* bullet nib */}
+      <rect x="11" y="54" width="10" height="6" rx="3" fill={color} />
+      {/* nib tip dot */}
+      <ellipse cx="16" cy="62" rx="4" ry="2.5" fill={color} />
+      {active && <rect x="6" y="14" width="20" height="36" rx="4" stroke={color} strokeWidth="1.5" fill="none" />}
     </svg>
   );
 }
 
 function PenIcon({ color, active }) {
+  // Sleek ballpoint pen
+  const bodyFill = active ? color : "#1a1a1a";
   return (
-    <svg width="28" height="64" viewBox="0 0 28 64" fill="none">
+    <svg width="32" height="72" viewBox="0 0 32 72" fill="none">
       {/* clip */}
-      <rect x="16" y="1" width="5" height="20" rx="2.5" fill={color} opacity="0.7" />
-      {/* cap */}
-      <rect x="7" y="1" width="14" height="14" rx="3" fill={color} />
-      <rect x="10" y="3" width="3" height="7" rx="1.5" fill="white" opacity="0.35" />
-      {/* body */}
-      <rect x="6" y="14" width="16" height="34" rx="2" fill={active ? color : "#f5f5f5"} opacity={active ? 0.15 : 1} />
-      <rect x="6" y="14" width="16" height="34" rx="2" stroke={color} strokeWidth={active ? 2 : 1.5} fill="none" />
-      {/* tip */}
-      <path d="M10 48 L14 60 L18 48Z" fill={color} />
-      <circle cx="14" cy="60" r="1.5" fill={color} />
+      <rect x="19" y="2" width="3.5" height="26" rx="1.75" fill={color} opacity="0.75" />
+      <rect x="19" y="27" width="3.5" height="3" rx="1" fill={color} />
+      {/* cap top dome */}
+      <ellipse cx="16" cy="5" rx="7" ry="4" fill={color} />
+      {/* cap body */}
+      <rect x="9" y="5" width="14" height="16" rx="1" fill={color} />
+      {/* cap bottom edge */}
+      <rect x="9" y="20" width="14" height="2" rx="1" fill={color} opacity="0.5" />
+      {/* barrel */}
+      <rect x="10" y="22" width="12" height="34" rx="2" fill={bodyFill} />
+      {/* shine */}
+      <rect x="12" y="24" width="2" height="28" rx="1" fill="white" opacity="0.06" />
+      {/* grip section */}
+      <rect x="10" y="52" width="12" height="4" rx="1" fill={color} opacity="0.3" />
+      {/* cone to tip */}
+      <path d="M12 56 L16 68 L20 56Z" fill={color} opacity="0.85" />
+      {/* tiny ball tip */}
+      <circle cx="16" cy="68" r="1.5" fill={color} />
+      {active && <rect x="10" y="22" width="12" height="34" rx="2" stroke={color} strokeWidth="1.5" fill="none" />}
     </svg>
   );
 }
 
 function CrayonIcon({ color, active }) {
+  // Classic chunky crayon with paper wrapper
+  const bodyFill = active ? color : "#222";
   return (
-    <svg width="28" height="64" viewBox="0 0 28 64" fill="none">
-      {/* wrapper band top */}
-      <rect x="6" y="1" width="16" height="8" rx="2" fill={color} />
-      {/* body - textured crayon look */}
-      <rect x="7" y="8" width="14" height="38" rx="2" fill={active ? color : "#f5f5f5"} opacity={active ? 0.15 : 1} />
-      <rect x="7" y="8" width="14" height="38" rx="2" stroke={color} strokeWidth={active ? 2 : 1.5} fill="none" />
-      {/* label area */}
-      <rect x="9" y="16" width="10" height="14" rx="1" fill={color} opacity="0.12" />
-      <rect x="9" y="16" width="10" height="14" rx="1" stroke={color} strokeWidth="0.75" opacity="0.4" fill="none" />
-      {/* wrapper band bottom */}
-      <rect x="6" y="42" width="16" height="8" rx="2" fill={color} opacity="0.85" />
-      {/* waxy tip */}
-      <path d="M10 50 L14 62 L18 50Z" fill={color} />
+    <svg width="32" height="72" viewBox="0 0 32 72" fill="none">
+      {/* flat top */}
+      <ellipse cx="16" cy="5" rx="8" ry="3.5" fill={color} />
+      {/* upper paper wrapper band */}
+      <rect x="8" y="4" width="16" height="10" rx="1" fill="white" opacity="0.12" />
+      <rect x="8" y="4" width="16" height="10" rx="1" stroke="white" strokeWidth="0.5" opacity="0.2" fill="none" />
+      {/* crayon body */}
+      <rect x="8" y="13" width="16" height="38" rx="2" fill={color} opacity={active ? 1 : 0.85} />
+      {/* body shine */}
+      <rect x="10" y="15" width="3" height="32" rx="1.5" fill="white" opacity="0.12" />
+      {/* lower paper wrapper */}
+      <rect x="8" y="38" width="16" height="13" rx="1" fill="white" opacity="0.1" />
+      <rect x="8" y="38" width="16" height="13" rx="1" stroke="white" strokeWidth="0.5" opacity="0.15" fill="none" />
+      {/* text lines on label */}
+      <rect x="11" y="42" width="10" height="1.5" rx="0.75" fill="white" opacity="0.2" />
+      <rect x="11" y="46" width="7" height="1.5" rx="0.75" fill="white" opacity="0.15" />
+      {/* wax tip taper */}
+      <path d="M10 51 L16 64 L22 51Z" fill={color} />
+      {/* tip point */}
+      <circle cx="16" cy="64" r="1.5" fill={color} opacity="0.7" />
+      {active && <rect x="8" y="13" width="16" height="38" rx="2" stroke="white" strokeWidth="1.5" opacity="0.5" fill="none" />}
     </svg>
   );
 }
 
 function EraserIcon({ active }) {
-  const pink = "#FF8FAB";
   return (
-    <svg width="28" height="64" viewBox="0 0 28 64" fill="none">
-      {/* white top */}
-      <rect x="6" y="6" width="16" height="14" rx="3" fill="#f0f0f0" stroke="#d0d0d0" strokeWidth="1.2" />
-      {/* pink body */}
-      <rect x="6" y="19" width="16" height="32" rx="2" fill={active ? "#ff6b8a" : pink} />
-      <rect x="6" y="19" width="16" height="32" rx="2" stroke={active ? "#F72C25" : "#e07090"} strokeWidth={active ? 2 : 1.2} fill="none" />
-      {/* stripe */}
-      <rect x="6" y="28" width="16" height="5" fill="white" opacity="0.3" />
-      {/* flat bottom */}
-      <rect x="8" y="51" width="12" height="6" rx="1" fill={active ? "#F72C25" : "#e07090"} />
+    <svg width="32" height="72" viewBox="0 0 32 72" fill="none">
+      {/* white paper/cardboard top */}
+      <rect x="8" y="4" width="16" height="10" rx="3" fill="#e8e8e8" />
+      <rect x="8" y="4" width="16" height="10" rx="3" stroke="#bbb" strokeWidth="1" fill="none" />
+      {/* shine on white part */}
+      <rect x="10" y="6" width="3" height="6" rx="1.5" fill="white" opacity="0.6" />
+      {/* pink eraser body */}
+      <rect x="7" y="13" width="18" height="40" rx="3" fill={active ? "#ff5577" : "#FF8FAB"} />
+      {/* body shine */}
+      <rect x="9" y="15" width="3.5" height="34" rx="1.75" fill="white" opacity="0.15" />
+      {/* horizontal stripe */}
+      <rect x="7" y="30" width="18" height="5" fill="white" opacity="0.12" />
+      {/* used/rubbed bottom edge */}
+      <rect x="7" y="51" width="18" height="2" rx="1" fill={active ? "#cc2244" : "#e07090"} />
+      {/* worn bottom face */}
+      <rect x="9" y="53" width="14" height="6" rx="2" fill={active ? "#cc2244" : "#e07090"} opacity="0.8" />
+      {active && <rect x="7" y="13" width="18" height="40" rx="3" stroke="#F72C25" strokeWidth="2" fill="none" />}
     </svg>
   );
 }
