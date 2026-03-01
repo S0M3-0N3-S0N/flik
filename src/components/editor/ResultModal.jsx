@@ -14,7 +14,8 @@ export default function ResultModal({
   onDownload, 
   transform, 
   onRegenerate, 
-  isRegenerating 
+  isRegenerating,
+  metadata = {}
 }) {
   const [mode, setMode] = useState("compare");
   const [sliderPos, setSliderPos] = useState(50);
@@ -51,7 +52,7 @@ export default function ResultModal({
   } : {};
 
   const handleApplyWithFeedback = () => {
-    onApply();
+    onApply(metadata);
   };
 
   const handleDiscardWithFeedback = () => {
