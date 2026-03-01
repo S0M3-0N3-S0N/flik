@@ -1,5 +1,5 @@
 import React from "react";
-import { Eraser, RotateCcw, Trash2 } from "lucide-react";
+import { Paintbrush, Eraser, RotateCcw, Trash2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
