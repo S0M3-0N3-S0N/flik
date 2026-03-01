@@ -726,14 +726,23 @@ export default function Editor() {
       return;
     }
 
-    if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
+    if ((activeTab === "remove" || activeTab === "paint") && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
       cursorRef.current.style.left = `${clientX - rect.left}px`;
       cursorRef.current.style.top = `${clientY - rect.top}px`;
       cursorRef.current.style.display = 'block';
     }
 
-    if (activeTab === "remove" && isDrawing && currentImage) {
+    if (activeTab === "paint" && isDrawing && currentImage) {
+      const pos = getRelativePosition(e);
+      if (pos && paintStrokes.length > 0) {
+        setPaintStrokes(prev => {
+          const newStrokes = [...prev];
+          newStrokes[newStrokes.length - 1].points.push(pos);
+          return newStrokes;
+        });
+      }
+    } else if (activeTab === "remove" && isDrawing && currentImage) {
       const pos = getRelativePosition(e);
       if (pos && brushStrokes.length > 0) {
         setBrushStrokes(prev => {
