@@ -138,9 +138,18 @@ export default function PaintPanel({
           </div>
 
           {/* Recent colors */}
-          {recentColors.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Recent</p>
+           {recentColors.length > 0 && (
+             <div className="space-y-1.5">
+               <div className="flex items-center justify-between">
+                 <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Recent</p>
+                 <button
+                   onClick={() => setRecentColors([])}
+                   className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                   title="Clear recent colors"
+                 >
+                   <Trash2 className="w-3 h-3" />
+                 </button>
+               </div>
               <div className="flex gap-2">
                 {recentColors.map((color, i) => (
                   <button
