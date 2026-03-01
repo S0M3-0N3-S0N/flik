@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Paintbrush, Eraser, RotateCcw, Trash2, Plus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import ColorPickerModal from "@/components/editor/ColorPickerModal";
 
 // Rainbow-ordered color palette: one long row per hue family, dark → light
 // Includes all primary + secondary + tertiary colors. Only 1 black and 1 white.
