@@ -103,27 +103,7 @@ export default function PaintPanel({
       {/* Color Section */}
       {paintMode === "draw" && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
-            {/* Custom color picker */}
-            <button
-              onClick={() => colorInputRef.current?.click()}
-              className="relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20"
-              style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
-              title="Custom color"
-            >
-              <div className="w-3.5 h-3.5 rounded-full bg-black/60 flex items-center justify-center">
-                <Plus className="w-2 h-2 text-white" />
-              </div>
-              <input
-                ref={colorInputRef}
-                type="color"
-                value={brushColor}
-                onChange={(e) => handleColorSelect(e.target.value)}
-                className="absolute opacity-0 w-0 h-0 pointer-events-none"
-              />
-            </button>
-          </div>
+          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
 
           {/* Currently selected color preview */}
           <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
