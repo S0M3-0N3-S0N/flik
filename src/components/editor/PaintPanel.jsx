@@ -249,6 +249,13 @@ export default function PaintPanel({
           </div>
         </div>
       )}
+
+      <ColorPickerModal
+        isOpen={isColorPickerOpen}
+        onClose={() => setIsColorPickerOpen(false)}
+        onColorSelect={handleColorSelect}
+        initialColor={brushColor}
+      />
     </div>
   );
 }
