@@ -103,36 +103,37 @@ export default function PaintPanel({
       {/* Color Section */}
       {paintMode === "draw" && (
         <div className="space-y-3">
-          {/* Header: label + selected swatch + custom picker */}
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
-            <div className="flex items-center gap-2">
-              {/* Selected color chip */}
-              <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
-                <div
-                  className="w-4 h-4 rounded-full border border-white/30 flex-shrink-0"
-                  style={{ backgroundColor: brushColor }}
-                />
-                <span className="text-[10px] text-white/50 font-mono">{brushColor.toUpperCase()}</span>
+            {/* Custom color picker */}
+            <button
+              onClick={() => colorInputRef.current?.click()}
+              className="relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20"
+              style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
+              title="Custom color"
+            >
+              <div className="w-3.5 h-3.5 rounded-full bg-black/60 flex items-center justify-center">
+                <Plus className="w-2 h-2 text-white" />
               </div>
-              {/* Custom color picker */}
-              <button
-                onClick={() => colorInputRef.current?.click()}
-                className="relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20 hover:scale-110 transition-transform"
-                style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
-                title="Custom color"
-              >
-                <div className="w-3.5 h-3.5 rounded-full bg-black/60 flex items-center justify-center">
-                  <Plus className="w-2 h-2 text-white" />
-                </div>
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={brushColor}
-                  onChange={(e) => handleColorSelect(e.target.value)}
-                  className="absolute opacity-0 w-0 h-0 pointer-events-none"
-                />
-              </button>
+              <input
+                ref={colorInputRef}
+                type="color"
+                value={brushColor}
+                onChange={(e) => handleColorSelect(e.target.value)}
+                className="absolute opacity-0 w-0 h-0 pointer-events-none"
+              />
+            </button>
+          </div>
+
+          {/* Currently selected color preview */}
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
+            <div
+              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg"
+              style={{ backgroundColor: brushColor }}
+            />
+            <div>
+              <p className="text-xs text-white/80 font-medium">Selected</p>
+              <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
             </div>
           </div>
 
@@ -140,13 +141,13 @@ export default function PaintPanel({
           {recentColors.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Recent</p>
-              <div className="flex gap-1.5 flex-wrap">
+              <div className="flex gap-2">
                 {recentColors.map((color, i) => (
                   <button
                     key={i}
                     onClick={() => handleColorSelect(color)}
                     className={cn(
-                      "w-7 h-7 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                      "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
                       brushColor === color
                         ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
                         : "border-white/20 hover:scale-105"
@@ -158,23 +159,27 @@ export default function PaintPanel({
             </div>
           )}
 
-          {/* Color grid — all families as wrapped rows */}
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1.5">Palette</p>
-            <div className="rounded-xl overflow-hidden border border-white/8 bg-white/3 p-2 space-y-1">
+          {/* Scrollable color rows — one per hue family */}
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">All Colors · swipe →</p>
+            <div
+              className="space-y-1.5 overflow-x-auto pb-1"
+              style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              <style>{`.color-row::-webkit-scrollbar { display: none; }`}</style>
               {COLOR_FAMILIES.map((family, fi) => (
-                <div key={fi} className="flex gap-1 flex-wrap">
+                <div key={fi} className="color-row flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
                   {family.map((color, i) => (
                     <button
                       key={i}
                       onClick={() => handleColorSelect(color)}
-                      title={color}
                       className={cn(
-                        "w-6 h-6 rounded-md border transition-all duration-100 flex-shrink-0",
+                        "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
                         brushColor === color
-                          ? "border-[#FF6B35] scale-125 shadow-md shadow-[#FF6B35]/50 z-10 relative"
-                          : "border-transparent hover:scale-110 hover:border-white/30",
-                        (color === "#FFFFFF" || color === "#FFFFDD") ? "border-white/20" : ""
+                          ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50"
+                          : "border-transparent hover:scale-110",
+                        // Add a faint border for very light / white colors
+                        color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
                       )}
                       style={{ backgroundColor: color }}
                     />
