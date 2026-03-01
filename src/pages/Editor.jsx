@@ -780,7 +780,7 @@ export default function Editor() {
         setCropArea(newCrop);
       }
     }
-  }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, isDragging, dragStart, dragType, isPanning]);
+  }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, paintStrokes, isDragging, dragStart, dragType, isPanning]);
 
   const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
