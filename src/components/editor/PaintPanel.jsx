@@ -71,9 +71,70 @@ export default function PaintPanel({
   const allColors = COLOR_FAMILIES.flat();
 
   return (
-    <div className="space-y-5">
-      {/* Mode Toggle */}
-      <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
+    <div className="space-y-4 md:space-y-0 md:grid md:grid-rows-[auto,1fr,auto] md:h-full md:gap-4">
+      {/* Top Controls Row - Desktop */}
+      <div className="hidden md:grid md:grid-cols-3 md:gap-3">
+        {/* Mode Toggle */}
+        <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
+          <button
+            onClick={() => onPaintModeChange("draw")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all",
+              paintMode === "draw"
+                ? "bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white shadow-lg"
+                : "text-white/50 hover:text-white"
+            )}
+          >
+            <Paintbrush className="w-3.5 h-3.5" />
+            Brush
+          </button>
+          <button
+            onClick={() => onPaintModeChange("erase")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all",
+              paintMode === "erase"
+                ? "bg-white/20 text-white shadow-lg"
+                : "text-white/50 hover:text-white"
+            )}
+          >
+            <Eraser className="w-3.5 h-3.5" />
+            Erase
+          </button>
+        </div>
+
+        {/* Weight */}
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
+          <p className="text-xs font-medium text-white/80 whitespace-nowrap">Weight</p>
+          <Slider
+            value={[brushSize]}
+            min={2}
+            max={80}
+            step={1}
+            onValueChange={([v]) => onBrushSizeChange(v)}
+            className="flex-1"
+          />
+          <span className="text-xs text-white/60 font-mono w-6 text-right">{brushSize}</span>
+        </div>
+
+        {/* Transparency */}
+        {paintMode === "draw" && (
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-xs font-medium text-white/80 whitespace-nowrap">Opac.</p>
+            <Slider
+              value={[onBrushOpacityChange ? brushOpacity : 100]}
+              min={1}
+              max={100}
+              step={1}
+              onValueChange={([v]) => onBrushOpacityChange?.(v)}
+              className="flex-1"
+            />
+            <span className="text-xs text-white/60 font-mono w-6 text-right">{onBrushOpacityChange ? brushOpacity : 100}%</span>
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Controls - Hidden on Desktop */}
+      <div className="md:hidden flex items-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
         <button
           onClick={() => onPaintModeChange("draw")}
           className={cn(
