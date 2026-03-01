@@ -586,30 +586,30 @@ export default function Editor() {
     if (files.length === 0) return;
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     if (imageFiles.length === 0) { toast.error('Please select image files'); return; }
-    if (imageFiles.length === 1) {
+
+    const loadedImgs = [];
+    let loadedCount = 0;
+    imageFiles.forEach((file, index) => {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        handleImageSelect({ url: ev.target.result, preview: ev.target.result, name: imageFiles[0].name });
-        toast.success('Image uploaded');
+        loadedImgs[index] = { url: ev.target.result, preview: ev.target.result, name: file.name };
+        loadedCount++;
+        if (loadedCount === imageFiles.length) {
+          // Append to existing images instead of replacing
+          setLoadedImages(prev => {
+            const combined = [...prev, ...loadedImgs];
+            setCurrentImageIndex(prev.length); // focus first new image
+            setCurrentImage(loadedImgs[0]);
+            resetImageState();
+            setTimeout(() => emblaApi?.scrollTo(prev.length), 0);
+            return combined;
+          });
+          toast.success(`${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''} added`);
+        }
       };
-      reader.readAsDataURL(imageFiles[0]);
-    } else {
-      const loadedImgs = [];
-      let loadedCount = 0;
-      imageFiles.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          loadedImgs[index] = { url: ev.target.result, preview: ev.target.result, name: file.name };
-          loadedCount++;
-          if (loadedCount === imageFiles.length) {
-            handleMultipleImagesSelect(loadedImgs);
-            toast.success(`${imageFiles.length} images uploaded`);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  }, [handleImageSelect, handleMultipleImagesSelect]);
+      reader.readAsDataURL(file);
+    });
+  }, [resetImageState, emblaApi]);
 
   // Keyboard shortcuts
   useEffect(() => {
