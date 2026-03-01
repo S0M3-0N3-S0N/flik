@@ -175,25 +175,16 @@ export default function PaintPanel({
                     />
                   ))}
                   {fi === COLOR_FAMILIES.length - 1 && (
-                    <>
-                      <button
-                        onClick={() => colorInputRef.current?.click()}
-                        className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white/20 flex-shrink-0 flex items-center justify-center overflow-hidden hover:scale-110 transition-all duration-150"
-                        style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
-                        title="Custom color"
-                      >
-                        <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-white/90 flex items-center justify-center">
-                          <Plus className="w-2 h-2 text-black" />
-                        </div>
-                      </button>
-                      <input
-                        ref={colorInputRef}
-                        type="color"
-                        value={brushColor}
-                        onChange={(e) => handleColorSelect(e.target.value)}
-                        className="absolute opacity-0 w-0 h-0 pointer-events-none"
-                      />
-                    </>
+                    <button
+                      onClick={() => setIsColorPickerOpen(true)}
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white/20 flex-shrink-0 flex items-center justify-center overflow-hidden hover:scale-110 transition-all duration-150"
+                      style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
+                      title="Custom color"
+                    >
+                      <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-white/90 flex items-center justify-center">
+                        <Plus className="w-2 h-2 text-black" />
+                      </div>
+                    </button>
                   )}
                 </div>
               ))}
