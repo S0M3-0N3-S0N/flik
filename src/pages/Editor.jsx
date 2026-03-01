@@ -1070,15 +1070,20 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: loadedImages.length > 1 ? 'pan-y' : 'none' }}
         >
-          {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
+          {(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
               style={{
-                width: brushSize * zoom, height: brushSize * zoom,
+                width: (activeTab === "paint" ? paintBrushSize : brushSize) * zoom,
+                height: (activeTab === "paint" ? paintBrushSize : brushSize) * zoom,
                 transform: 'translate(-50%, -50%)', display: 'none',
-                borderColor: brushMode === 'erase' ? 'rgba(255,255,255,0.8)' : 'rgba(255,107,53,0.8)',
-                backgroundColor: brushMode === 'erase' ? 'rgba(255,255,255,0.2)' : 'rgba(255,107,53,0.2)'
+                borderColor: activeTab === "paint"
+                  ? (paintMode === "erase" ? 'rgba(255,255,255,0.8)' : paintColor)
+                  : (brushMode === 'erase' ? 'rgba(255,255,255,0.8)' : 'rgba(255,107,53,0.8)'),
+                backgroundColor: activeTab === "paint"
+                  ? (paintMode === "erase" ? 'rgba(255,255,255,0.15)' : `${paintColor}33`)
+                  : (brushMode === 'erase' ? 'rgba(255,255,255,0.2)' : 'rgba(255,107,53,0.2)')
               }}
             />
           )}
