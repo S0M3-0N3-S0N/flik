@@ -1016,6 +1016,26 @@ export default function Editor() {
               }
             </TabsContent>
 
+            <TabsContent value="paint" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Paint</h3>
+              {currentImage ? (
+                <PaintPanel
+                  brushColor={paintColor}
+                  onBrushColorChange={setPaintColor}
+                  brushSize={paintBrushSize}
+                  onBrushSizeChange={setPaintBrushSize}
+                  brushOpacity={paintBrushOpacity}
+                  onBrushOpacityChange={setPaintBrushOpacity}
+                  onClearStrokes={() => setPaintStrokes([])}
+                  onUndoLastStroke={() => setPaintStrokes(prev => prev.slice(0, -1))}
+                  hasStrokes={paintStrokes.length > 0}
+                  strokeCount={paintStrokes.length}
+                />
+              ) : (
+                <p className="text-white/40 text-sm">Upload an image to start</p>
+              )}
+            </TabsContent>
+
             <TabsContent value="text" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">AI Text Generator</h3>
               {currentImage
