@@ -940,7 +940,9 @@ export default function Editor() {
               <Wand2 className="w-4 h-4" />
             </TabsTrigger>
             <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Paintbrush className="w-4 h-4" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2h8v3H8zM6 5h12v2H6zM5 7h14v9H5zM7 16h10l1 2H6zM8 18h8v1.5l-1 .5H9l-1-.5zM9.5 19.5h5v1l-.5.5h-4l-.5-.5z" />
+              </svg>
             </TabsTrigger>
             {user?.role === 'admin' && (
               <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
