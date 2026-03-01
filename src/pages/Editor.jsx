@@ -18,6 +18,7 @@ import TransformPanel from "@/components/editor/TransformPanel";
 import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import TextGeneratorPanel from "@/components/editor/TextGeneratorPanel";
+import PaintPanel from "@/components/editor/PaintPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import { useFlikActions } from "@/components/useFlikActions";
