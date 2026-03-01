@@ -17,7 +17,7 @@ const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 const MODES = ['PHOTO'];
 const initialSettings = { showGrid: false, timer: 0, cameraGuidance: true };
 
-const checkCameraSupport = (): boolean => {
+const checkCameraSupport = () => {
   return !!navigator.mediaDevices?.getUserMedia;
 };
 
