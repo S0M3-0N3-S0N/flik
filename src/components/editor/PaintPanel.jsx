@@ -71,70 +71,9 @@ export default function PaintPanel({
   const allColors = COLOR_FAMILIES.flat();
 
   return (
-    <div className="space-y-4 md:space-y-0 md:grid md:grid-rows-[auto,1fr,auto] md:h-full md:gap-4">
-      {/* Top Controls Row - Desktop */}
-      <div className="hidden md:grid md:grid-cols-3 md:gap-3">
-        {/* Mode Toggle */}
-        <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
-          <button
-            onClick={() => onPaintModeChange("draw")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all",
-              paintMode === "draw"
-                ? "bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white shadow-lg"
-                : "text-white/50 hover:text-white"
-            )}
-          >
-            <Paintbrush className="w-3.5 h-3.5" />
-            Brush
-          </button>
-          <button
-            onClick={() => onPaintModeChange("erase")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all",
-              paintMode === "erase"
-                ? "bg-white/20 text-white shadow-lg"
-                : "text-white/50 hover:text-white"
-            )}
-          >
-            <Eraser className="w-3.5 h-3.5" />
-            Erase
-          </button>
-        </div>
-
-        {/* Weight */}
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
-          <p className="text-xs font-medium text-white/80 whitespace-nowrap">Weight</p>
-          <Slider
-            value={[brushSize]}
-            min={2}
-            max={80}
-            step={1}
-            onValueChange={([v]) => onBrushSizeChange(v)}
-            className="flex-1"
-          />
-          <span className="text-xs text-white/60 font-mono w-6 text-right">{brushSize}</span>
-        </div>
-
-        {/* Transparency */}
-        {paintMode === "draw" && (
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
-            <p className="text-xs font-medium text-white/80 whitespace-nowrap">Opac.</p>
-            <Slider
-              value={[onBrushOpacityChange ? brushOpacity : 100]}
-              min={1}
-              max={100}
-              step={1}
-              onValueChange={([v]) => onBrushOpacityChange?.(v)}
-              className="flex-1"
-            />
-            <span className="text-xs text-white/60 font-mono w-6 text-right">{onBrushOpacityChange ? brushOpacity : 100}%</span>
-          </div>
-        )}
-      </div>
-
-      {/* Mobile Controls - Hidden on Desktop */}
-      <div className="md:hidden flex items-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
+    <div className="space-y-5">
+      {/* Mode Toggle */}
+      <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
         <button
           onClick={() => onPaintModeChange("draw")}
           className={cn(
@@ -163,140 +102,96 @@ export default function PaintPanel({
 
       {/* Color Section */}
       {paintMode === "draw" && (
-        <div className="space-y-2 md:space-y-0 md:overflow-y-auto md:flex md:flex-col">
-          {/* Mobile view */}
-          <div className="md:hidden space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
-              <button
-                onClick={() => colorInputRef.current?.click()}
-                className="relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20"
-                style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
-                title="Custom color"
-              >
-                <div className="w-3.5 h-3.5 rounded-full bg-black/60 flex items-center justify-center">
-                  <Plus className="w-2 h-2 text-white" />
-                </div>
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={brushColor}
-                  onChange={(e) => handleColorSelect(e.target.value)}
-                  className="absolute opacity-0 w-0 h-0 pointer-events-none"
-                />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
-              <div
-                className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg"
-                style={{ backgroundColor: brushColor }}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
+            {/* Custom color picker */}
+            <button
+              onClick={() => colorInputRef.current?.click()}
+              className="relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20"
+              style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
+              title="Custom color"
+            >
+              <div className="w-3.5 h-3.5 rounded-full bg-black/60 flex items-center justify-center">
+                <Plus className="w-2 h-2 text-white" />
+              </div>
+              <input
+                ref={colorInputRef}
+                type="color"
+                value={brushColor}
+                onChange={(e) => handleColorSelect(e.target.value)}
+                className="absolute opacity-0 w-0 h-0 pointer-events-none"
               />
-              <div>
-                <p className="text-xs text-white/80 font-medium">Selected</p>
-                <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
+            </button>
+          </div>
+
+          {/* Currently selected color preview */}
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
+            <div
+              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg"
+              style={{ backgroundColor: brushColor }}
+            />
+            <div>
+              <p className="text-xs text-white/80 font-medium">Selected</p>
+              <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
+            </div>
+          </div>
+
+          {/* Recent colors */}
+          {recentColors.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Recent</p>
+              <div className="flex gap-2">
+                {recentColors.map((color, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleColorSelect(color)}
+                    className={cn(
+                      "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                      brushColor === color
+                        ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
+                        : "border-white/20 hover:scale-105"
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
               </div>
             </div>
+          )}
 
-            {recentColors.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Recent</p>
-                <div className="flex gap-2">
-                  {recentColors.map((color, i) => (
+          {/* Scrollable color rows — one per hue family */}
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">All Colors · swipe →</p>
+            <div
+              className="space-y-1.5 overflow-x-auto pb-1"
+              style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              <style>{`.color-row::-webkit-scrollbar { display: none; }`}</style>
+              {COLOR_FAMILIES.map((family, fi) => (
+                <div key={fi} className="color-row flex gap-1.5 md:gap-2 overflow-x-auto pb-0.5 w-full" style={{ scrollbarWidth: "none" }}>
+                  {family.map((color, i) => (
                     <button
                       key={i}
                       onClick={() => handleColorSelect(color)}
                       className={cn(
-                        "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                        "w-8 h-8 md:w-10 md:h-10 rounded-full border-2 transition-all duration-150 flex-shrink-0",
                         brushColor === color
-                          ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
-                          : "border-white/20 hover:scale-105"
+                          ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50"
+                          : "border-transparent hover:scale-110",
+                        color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
                       )}
                       style={{ backgroundColor: color }}
                     />
                   ))}
                 </div>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">All Colors · swipe →</p>
-              <div
-                className="space-y-1.5 overflow-x-auto pb-1"
-                style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                <style>{`.color-row::-webkit-scrollbar { display: none; }`}</style>
-                {COLOR_FAMILIES.map((family, fi) => (
-                  <div key={fi} className="color-row flex gap-1.5 overflow-x-auto pb-0.5 w-full" style={{ scrollbarWidth: "none" }}>
-                    {family.map((color, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleColorSelect(color)}
-                        className={cn(
-                          "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
-                          brushColor === color
-                            ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50"
-                            : "border-transparent hover:scale-110",
-                          color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
-                        )}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop grid view */}
-          <div className="hidden md:block md:flex-1 md:overflow-y-auto md:space-y-2">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color Palette</p>
-              <button
-                onClick={() => colorInputRef.current?.click()}
-                className="relative w-6 h-6 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20 hover:scale-110 transition-transform"
-                style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
-                title="Custom color"
-              >
-                <div className="w-2.5 h-2.5 rounded-full bg-black/60 flex items-center justify-center">
-                  <Plus className="w-1.5 h-1.5 text-white" />
-                </div>
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={brushColor}
-                  onChange={(e) => handleColorSelect(e.target.value)}
-                  className="absolute opacity-0 w-0 h-0 pointer-events-none"
-                />
-              </button>
-            </div>
-
-            {/* Color grid - desktop */}
-            <div
-              className="grid gap-1.5 overflow-y-auto pb-1"
-              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(32px, 1fr))" }}
-            >
-              {COLOR_FAMILIES.flat().map((color, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleColorSelect(color)}
-                  className={cn(
-                    "aspect-square rounded-lg border-2 transition-all duration-150",
-                    brushColor === color
-                      ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50 z-10"
-                      : "border-transparent hover:scale-110",
-                    color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
-                  )}
-                  style={{ backgroundColor: color }}
-                />
               ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* Weight / Size - Mobile only */}
-      <div className="md:hidden space-y-2">
+      {/* Weight / Size */}
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-white/80">Weight</p>
           <span className="text-sm text-white/60 bg-white/10 rounded-lg px-3 py-1 font-mono min-w-[48px] text-center">{brushSize}</span>
@@ -311,9 +206,9 @@ export default function PaintPanel({
         />
       </div>
 
-      {/* Transparency / Opacity - Mobile only */}
+      {/* Transparency / Opacity */}
       {paintMode === "draw" && (
-        <div className="md:hidden space-y-2">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-white/80">Transparency</p>
             <span className="text-sm text-white/60 bg-white/10 rounded-lg px-3 py-1 font-mono min-w-[48px] text-center">{onBrushOpacityChange ? brushOpacity : 100}%</span>
@@ -329,9 +224,9 @@ export default function PaintPanel({
         </div>
       )}
 
-      {/* Stroke actions - Bottom on Desktop */}
+      {/* Stroke actions */}
       {hasStrokes && (
-        <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10 md:mt-auto">
+        <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
           <span className="text-xs text-white/50">{strokeCount} stroke{strokeCount !== 1 ? "s" : ""}</span>
           <div className="flex gap-1">
             <button
