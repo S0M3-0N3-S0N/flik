@@ -394,7 +394,7 @@ function LayoutContent({ children, currentPageName }) {
                     user?.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />
                   )}
                 </div>
-                <span className="text-[10px] font-medium">Profile</span>
+                <span className="text-[10px] font-medium"></span>
               </button>
             </nav>
         )}
