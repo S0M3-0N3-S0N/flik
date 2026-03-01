@@ -1,7 +1,8 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Paintbrush, Eraser, RotateCcw, Trash2, SlidersHorizontal, Plus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import ColorPickerModal from "./ColorPickerModal";
 
 const PRESET_COLORS = [
   "#000000", "#FF6B35", "#F72C25", "#FFB800", "#66BB6A", "#4FC3F7",
