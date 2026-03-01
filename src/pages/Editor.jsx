@@ -1129,6 +1129,10 @@ export default function Editor() {
                          <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
                        )}
 
+                       {activeTab === "paint" && idx === currentImageIndex && (
+                         <canvas ref={paintCanvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
+                       )}
+
                        {isCropping && idx === currentImageIndex && (
                          <>
                            <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.65)' }} />
