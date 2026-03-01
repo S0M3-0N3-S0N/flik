@@ -1,11 +1,46 @@
-import React, { useRef } from "react";
-import { Paintbrush, Eraser, RotateCcw, Trash2, SlidersHorizontal, Plus } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Paintbrush, Eraser, RotateCcw, Trash2, Plus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
-const PRESET_COLORS = [
-  "#000000", "#FF6B35", "#F72C25", "#FFB800", "#66BB6A", "#4FC3F7",
-  "#CE93D8", "#FF8A65", "#FFFFFF", "#1A1A2E",
+// Full color-coordinated palette organized by hue family (dark → light per row)
+const COLOR_FAMILIES = [
+  // Reds
+  ["#4A0000","#6B0000","#8B0000","#A00000","#B22222","#CC2200","#DD2222","#EE3333","#FF4444","#FF6666","#FF8888","#FFAAAA","#FFCCCC","#FFE5E5"],
+  // Red-Oranges
+  ["#5C1100","#7A1A00","#991500","#BB2200","#CC3300","#DD4400","#EE5500","#FF6633","#FF7744","#FF8855","#FFAA88","#FFCCAA","#FFDDCC","#FFEEEE"],
+  // Oranges
+  ["#4D1A00","#6B2800","#883300","#AA4400","#BB5500","#CC6600","#DD7700","#EE8800","#FF9900","#FFAA22","#FFBB55","#FFCC88","#FFDDAA","#FFEEDD"],
+  // Yellow-Oranges
+  ["#4D2D00","#6B4000","#886600","#AA8800","#BB9900","#CCAA00","#DDBB00","#EECC00","#FFD700","#FFE033","#FFE866","#FFF099","#FFF5BB","#FFFADD"],
+  // Yellows
+  ["#3D3D00","#5C5C00","#7A7A00","#999900","#AAAA00","#BBBB00","#CCCC00","#DDDD00","#EEEE00","#FFFF00","#FFFF44","#FFFF88","#FFFFAA","#FFFFDD"],
+  // Yellow-Greens
+  ["#1A3300","#2B4A00","#3D6600","#4F7F00","#669900","#77AA00","#88BB00","#99CC00","#AADD00","#BBEE00","#CCFF00","#DDFF55","#EEFF99","#F5FFCC"],
+  // Greens
+  ["#003300","#004D00","#006600","#007700","#008800","#009900","#00AA00","#00BB00","#00CC00","#00DD00","#00EE00","#44FF44","#88FF88","#CCFFCC"],
+  // Blue-Greens
+  ["#003322","#004D33","#006644","#007755","#008866","#009977","#00AA88","#00BB99","#00CCAA","#00DDBB","#00EECC","#44FFDD","#88FFEE","#CCFFF5"],
+  // Teals / Cyans
+  ["#003333","#004D4D","#006666","#007777","#008888","#009999","#00AAAA","#00BBBB","#00CCCC","#00DDDD","#00EEEE","#44FFFF","#88FFFF","#CCFFFF"],
+  // Sky Blues
+  ["#002244","#003366","#004488","#0055AA","#0066BB","#0077CC","#1188DD","#22AAEE","#33BBFF","#66CCFF","#99DDFF","#BBEEFF","#DDEEFF","#EEF8FF"],
+  // Blues
+  ["#000066","#000099","#0000BB","#0000DD","#1111EE","#2222FF","#4444FF","#6666FF","#8888FF","#AAAAFF","#CCCCFF","#DDDDFF","#EEEEFF","#F5F5FF"],
+  // Blue-Purples / Indigos
+  ["#1A0044","#280066","#380088","#4800AA","#5500BB","#6600CC","#7711DD","#8822EE","#9933FF","#AA55FF","#BB88FF","#CCAAFF","#DDCCFF","#EEEEFF"],
+  // Purples / Violets
+  ["#330033","#4D004D","#660066","#770077","#880088","#990099","#AA00AA","#BB22BB","#CC44CC","#DD66DD","#EE88EE","#FF99FF","#FFBBFF","#FFDDFF"],
+  // Magentas / Pinks
+  ["#440022","#660033","#880044","#AA0055","#CC0066","#DD1177","#EE2288","#FF33AA","#FF55BB","#FF77CC","#FF99DD","#FFBBEE","#FFDDFF","#FFF0FF"],
+  // Hot Pinks / Rose
+  ["#550022","#770033","#990044","#BB0055","#CC1166","#DD2277","#EE3388","#FF4499","#FF66AA","#FF88BB","#FFAACC","#FFCCDD","#FFEEEE","#FFF5F5"],
+  // Browns / Earth tones
+  ["#1A0A00","#2B1200","#3D1C00","#4F2800","#613300","#7A4400","#8B5513","#A0522D","#B8621A","#C8813A","#D4A574","#E8C4A0","#F0D8C0","#FFF0E8"],
+  // Grays
+  ["#000000","#111111","#222222","#333333","#444444","#555555","#666666","#777777","#888888","#999999","#AAAAAA","#BBBBBB","#CCCCCC","#DDDDDD"],
+  // Light grays to white
+  ["#AAAAAA","#BBBBBB","#CCCCCC","#DDDDDD","#E0E0E0","#E8E8E8","#EEEEEE","#F2F2F2","#F5F5F5","#F8F8F8","#FAFAFA","#FCFCFC","#FEFEFE","#FFFFFF"],
 ];
 
 export default function PaintPanel({
