@@ -51,6 +51,13 @@ export default function Editor() {
   const [brushMode, setBrushMode] = useState('draw');
   const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
   const [magicBrushImages, setMagicBrushImages] = useState([]);
+
+  // Paint tool state
+  const [paintStrokes, setPaintStrokes] = useState([]);
+  const [paintColor, setPaintColor] = useState("#FF6B35");
+  const [paintBrushSize, setPaintBrushSize] = useState(20);
+  const [paintMode, setPaintMode] = useState("draw");
+  const paintCanvasRef = useRef(null);
   
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
