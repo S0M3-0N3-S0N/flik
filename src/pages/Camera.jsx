@@ -615,7 +615,7 @@ export default function CameraPage() {
         )}
 
         {/* Camera Guidance */}
-        {!photo && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
+        {!photo && settings.cameraGuidance && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
 
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
