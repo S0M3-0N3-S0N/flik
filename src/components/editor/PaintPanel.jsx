@@ -59,6 +59,7 @@ export default function PaintPanel({
 }) {
   const colorInputRef = useRef(null);
   const [recentColors, setRecentColors] = useState([]);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
   const handleColorSelect = (color) => {
     onBrushColorChange(color);
