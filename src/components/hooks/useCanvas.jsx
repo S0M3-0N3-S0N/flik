@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 
 export function useCanvas() {
-  const generateCanvas = async (sourceImage, adjustments, transform, selectedFilter) => {
+  const generateCanvas = async (sourceImage, adjustments, transform, selectedFilter, paintStrokes = []) => {
     if (!sourceImage) return null;
 
     const canvas = document.createElement('canvas');
@@ -63,11 +63,57 @@ export function useCanvas() {
     ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
 
     ctx.restore();
+
+    // Draw paint strokes on top
+    if (paintStrokes.length > 0) {
+      // Create a new context without transformations for drawing strokes
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.filter = 'none';
+      
+      paintStrokes.forEach(stroke => {
+        const points = stroke.points || [];
+        if (!points.length) return;
+        const size = stroke.size;
+        const color = stroke.color;
+        const opacity = stroke.opacity !== undefined ? stroke.opacity / 100 : 1;
+        
+        ctx.globalCompositeOperation = stroke.mode === "erase" ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalAlpha = stroke.mode === "erase" ? 1 : opacity;
+        
+        // Convert percentage-based points to canvas pixel coordinates
+        if (points.length === 1) {
+          const x = (points[0].x / 100) * canvas.width;
+          const y = (points[0].y / 100) * canvas.height;
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          const x0 = (points[0].x / 100) * canvas.width;
+          const y0 = (points[0].y / 100) * canvas.height;
+          ctx.moveTo(x0, y0);
+          for (let i = 1; i < points.length; i++) {
+            const x = (points[i].x / 100) * canvas.width;
+            const y = (points[i].y / 100) * canvas.height;
+            ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+      });
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
     return canvas;
   };
 
-  const getProcessedImageBlob = async (sourceImage, adjustments, transform, selectedFilter) => {
-    const canvas = await generateCanvas(sourceImage, adjustments, transform, selectedFilter);
+  const getProcessedImageBlob = async (sourceImage, adjustments, transform, selectedFilter, paintStrokes = []) => {
+    const canvas = await generateCanvas(sourceImage, adjustments, transform, selectedFilter, paintStrokes);
     if (!canvas) return null;
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
