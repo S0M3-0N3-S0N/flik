@@ -354,6 +354,7 @@ export default function Editor() {
       if (!result?.url) throw new Error("Failed to generate image");
       setResultImage(result.url);
       setShowResult(true);
+      base44.analytics.track({ eventName: "tool_applied", properties: { tool_id: tool.id, success: true } });
       toast.success(`${tool.label} applied successfully!`, { id: `tool-${tool.id}` });
       base44.entities.PromptLearning.create({
         prompt: tool.prompt, tool_type: "ai_tool", was_successful: true,
@@ -1425,16 +1426,21 @@ export default function Editor() {
       </main>
       
       <ResultModal
-        isOpen={showResult}
-        onClose={handleCloseResult}
-        originalImage={processedImage || currentImage}
-        resultImage={resultImage}
-        onApply={handleApplyResult}
-        onDownload={handleDownload}
-        transform={processedImage ? undefined : transform}
-        onRegenerate={regenerateAction}
-        isRegenerating={isProcessing || isMagicBrushProcessing}
-      />
+         isOpen={showResult}
+         onClose={handleCloseResult}
+         originalImage={processedImage || currentImage}
+         resultImage={resultImage}
+         onApply={handleApplyResult}
+         onDownload={handleDownload}
+         transform={processedImage ? undefined : transform}
+         onRegenerate={regenerateAction}
+         isRegenerating={isProcessing || isMagicBrushProcessing}
+         metadata={{
+           adjustments: adjustments,
+           filter: selectedFilter,
+           transform: transform
+         }}
+       />
       
       <GalleryPicker
         isOpen={isGalleryPickerOpen}
