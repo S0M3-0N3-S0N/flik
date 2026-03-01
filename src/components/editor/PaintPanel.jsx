@@ -87,7 +87,7 @@ export default function PaintPanel({
 
             {/* Custom color picker button */}
             <button
-              onClick={() => colorInputRef.current?.click()}
+              onClick={() => setShowColorPicker(true)}
               className={cn(
                 "w-9 h-9 rounded-full border-2 transition-all duration-150 flex-shrink-0 flex items-center justify-center overflow-hidden",
                 !PRESET_COLORS.includes(brushColor)
@@ -102,13 +102,6 @@ export default function PaintPanel({
               <div className="w-4 h-4 rounded-full bg-white/90 flex items-center justify-center">
                 <Plus className="w-2.5 h-2.5 text-black" />
               </div>
-              <input
-                ref={colorInputRef}
-                type="color"
-                value={brushColor}
-                onChange={(e) => onBrushColorChange(e.target.value)}
-                className="absolute opacity-0 w-0 h-0 pointer-events-none"
-              />
             </button>
 
             {/* Currently selected custom color indicator */}
@@ -116,7 +109,7 @@ export default function PaintPanel({
               <button
                 className="w-9 h-9 rounded-full border-2 border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40 flex-shrink-0"
                 style={{ backgroundColor: brushColor }}
-                onClick={() => colorInputRef.current?.click()}
+                onClick={() => setShowColorPicker(true)}
               />
             )}
           </div>
