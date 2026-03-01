@@ -151,7 +151,7 @@ export default function ColorPickerModal({ color, onColorChange, onClose }) {
           onTouchStart={(e) => { isDraggingHue.current = true; getHueFromEvent(e); }}
         >
           <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full border-2 border-white shadow-lg pointer-events-none"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-white shadow-lg pointer-events-none"
             style={{
               left: `${(hue / 360) * 100}%`,
               backgroundColor: hueToHex(hue),
