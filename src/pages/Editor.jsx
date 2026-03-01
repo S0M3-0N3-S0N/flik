@@ -181,19 +181,25 @@ export default function Editor() {
   // Cleanup all object URLs on unmount and image switch
   const cleanupObjectURLs = useCallback((urlToKeep) => {
     Array.from(objectURLsRef.current).forEach(url => {
-      if (url !== urlToKeep) {
+      if (url !== urlToKeep && url !== currentImage?.url) {
         try { URL.revokeObjectURL(url); } catch (e) { /* ignore */ }
         objectURLsRef.current.delete(url);
       }
     });
-  }, []);
+  }, [currentImage?.url]);
 
   useEffect(() => {
     return () => {
-      objectURLsRef.current.forEach(url => {
-        try { URL.revokeObjectURL(url); } catch (e) { /* ignore */ }
-      });
-      objectURLsRef.current.clear();
+      // Clear all object URLs on unmount
+      try {
+        objectURLsRef.current.forEach(url => {
+          try { URL.revokeObjectURL(url); } catch (e) { /* ignore */ }
+        });
+        objectURLsRef.current.clear();
+      } catch (e) {
+        console.error('Error cleaning up object URLs:', e);
+      }
+
       if (adjustmentUndoTimerRef.current) clearTimeout(adjustmentUndoTimerRef.current);
     };
   }, []);
@@ -281,6 +287,7 @@ export default function Editor() {
   }, [needsFit, currentImage]);
 
   const createObjectURL = useCallback((blob) => {
+    if (!blob) throw new Error('Cannot create object URL from null blob');
     const url = URL.createObjectURL(blob);
     objectURLsRef.current.add(url);
     return url;
@@ -479,6 +486,7 @@ export default function Editor() {
     if (!currentImage) return;
     setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
     setIsProcessing(true);
+    let blobUrl = null;
     try {
       let tempTransform = { rotate: 0, flipH: false, flipV: false };
       if (type === 'rotate-right') tempTransform.rotate = 90;
@@ -487,34 +495,45 @@ export default function Editor() {
       else if (type === 'flip-vertical') tempTransform.flipV = true;
       const canvas = await generateCanvas(currentImage, adjustments, tempTransform, selectedFilter, []);
       if (!canvas) { toast.error("Failed to generate canvas for transform."); throw new Error("Failed to generate canvas"); }
-      canvas.toBlob((blob) => {
-        if (!blob) { 
-          setIsProcessing(false); 
-          toast.error("Transform failed.");
-          return;
-        }
-        const url = createObjectURL(blob);
-          const transformedImage = { url, preview: url, name: "transformed.png" };
-          setCurrentImage(prev => prev ? transformedImage : null);
-          setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? transformedImage : img));
-          setAdjustments({ ...DEFAULT_ADJUSTMENTS });
-          setSelectedFilter(null);
-          setTransform({ rotate: 0, flipH: false, flipV: false });
-          setBrushStrokes([]);
-          setPaintStrokes([]);
-          setZoom(1);
-          setPan({ x: 0, y: 0 });
-          setRedoHistory([]);
-          setIsProcessing(false);
-          setNeedsFit(true);
-          canvas.remove();
-      }, 'image/png', 1.0);
+
+      blobUrl = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Blob creation timeout')), 10000);
+        canvas.toBlob((blob) => {
+          clearTimeout(timeout);
+          if (!blob) {
+            reject(new Error('Blob is null'));
+            return;
+          }
+          try {
+            const url = createObjectURL(blob);
+            resolve(url);
+          } catch (e) {
+            reject(e);
+          }
+        }, 'image/png', 1.0);
+      });
+
+      const transformedImage = { url: blobUrl, preview: blobUrl, name: "transformed.png" };
+      setCurrentImage(prev => prev ? transformedImage : null);
+      setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? transformedImage : img));
+      setAdjustments({ ...DEFAULT_ADJUSTMENTS });
+      setSelectedFilter(null);
+      setTransform({ rotate: 0, flipH: false, flipV: false });
+      setBrushStrokes([]);
+      setPaintStrokes([]);
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      setRedoHistory([]);
+      setNeedsFit(true);
     } catch (error) {
       console.error("Transform error:", error);
+      if (blobUrl) revokeObjectURL(blobUrl);
       setIsProcessing(false);
       toast.error("Transform failed. Please try again.");
+      return;
     }
-  }, [currentImage, adjustments, selectedFilter, transform, generateCanvas, createObjectURL]);
+    setIsProcessing(false);
+  }, [currentImage, adjustments, selectedFilter, transform, generateCanvas, createObjectURL, revokeObjectURL, currentImageIndex]);
 
   const handleMagicBrush = useCallback(async () => {
     if (!magicBrushPrompt.trim()) {

@@ -2,30 +2,53 @@ import { useState, useCallback } from 'react';
 
 export function useCanvas() {
   const generateCanvas = async (sourceImage, adjustments, transform, selectedFilter, paintStrokes = []) => {
-    if (!sourceImage) return null;
+     if (!sourceImage) return null;
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Failed to get 2D context from canvas');
-    const img = new Image();
-    const imageUrl = sourceImage.preview || sourceImage.url;
-    
-    if (!imageUrl) {
-      throw new Error('No image URL provided');
-    }
-    
-    if (!imageUrl.startsWith('blob:') && !imageUrl.startsWith('data:')) {
-      img.crossOrigin = "anonymous";
-    }
+     const canvas = document.createElement('canvas');
+     const ctx = canvas.getContext('2d');
+     if (!ctx) throw new Error('Failed to get 2D context from canvas');
+     const img = new Image();
+     const imageUrl = sourceImage.preview || sourceImage.url;
 
-    await new Promise((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = (e) => {
-        console.error('Image load error:', e, 'URL:', imageUrl);
-        reject(new Error('Failed to load image'));
-      };
-      img.src = imageUrl;
-    });
+     if (!imageUrl) {
+       throw new Error('No image URL provided');
+     }
+
+     if (!imageUrl.startsWith('blob:') && !imageUrl.startsWith('data:')) {
+       img.crossOrigin = "anonymous";
+     }
+
+     // Retry logic for blob URL loading
+     let lastError;
+     for (let attempt = 0; attempt < 3; attempt++) {
+       try {
+         await new Promise((resolve, reject) => {
+           const timeout = setTimeout(() => {
+             reject(new Error('Image load timeout'));
+           }, 5000);
+
+           img.onload = () => {
+             clearTimeout(timeout);
+             resolve();
+           };
+           img.onerror = (e) => {
+             clearTimeout(timeout);
+             reject(new Error('Failed to load image'));
+           };
+           img.src = imageUrl;
+         });
+         lastError = null;
+         break; // Success
+       } catch (e) {
+         lastError = e;
+         if (attempt < 2) await new Promise(r => setTimeout(r, 100)); // Wait before retry
+       }
+     }
+
+     if (lastError) {
+       console.error('Image load error after retries:', lastError, 'URL:', imageUrl);
+       throw lastError;
+     }
 
     // Handle rotation dimensions
     const rotationAngle = ((transform.rotate % 360) + 360) % 360;
