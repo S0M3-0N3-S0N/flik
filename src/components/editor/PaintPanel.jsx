@@ -174,11 +174,10 @@ export default function PaintPanel({
                       key={i}
                       onClick={() => handleColorSelect(color)}
                       className={cn(
-                        "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                        "w-8 h-8 md:w-10 md:h-10 rounded-full border-2 transition-all duration-150 flex-shrink-0",
                         brushColor === color
                           ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50"
                           : "border-transparent hover:scale-110",
-                        // Add a faint border for very light / white colors
                         color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
                       )}
                       style={{ backgroundColor: color }}
