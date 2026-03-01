@@ -88,6 +88,9 @@ export default function CameraPage() {
     if (!checkCameraSupport()) {
       setCameraSupported(false);
       toast.error("Camera not supported on this device");
+    } else {
+      // Request permissions early for better UX
+      navigator.mediaDevices.enumerateDevices().catch(() => {});
     }
   }, []);
 
@@ -137,15 +140,25 @@ export default function CameraPage() {
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: facing,
-          width: { ideal: 4096 },
-          height: { ideal: 2160 },
-          frameRate: { ideal: 30 },
-        },
-        audio: false,
-      });
+      // Try with specific constraints, fallback to default for desktop
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: facing,
+            width: { ideal: 4096 },
+            height: { ideal: 2160 },
+            frameRate: { ideal: 30 },
+          },
+          audio: false,
+        });
+      } catch (err) {
+        // Fallback for desktop cameras that don't support facingMode
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: facing === 'user' ? { width: { ideal: 1920 }, height: { ideal: 1080 } } : true,
+          audio: false,
+        });
+      }
 
       streamRef.current = stream;
       if (videoRef.current) {
