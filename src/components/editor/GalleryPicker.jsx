@@ -90,7 +90,7 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
         <DialogHeader className="px-5 sm:px-7 pt-3 sm:pt-4 pb-3 border-b border-white/10 bg-gradient-to-r from-[#1a1a1a] via-[#0f0f0f] to-[#1a1a1a] flex-shrink-0 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
           <div className="relative z-10">
-            <DialogTitle className="text-2xl sm:text-3xl font-bold gradient-text text-center mb-2">
+            <DialogTitle className="text-2xl sm:text-3xl font-bold gradient-text text-center mb-1">
               Gallery
             </DialogTitle>
 
