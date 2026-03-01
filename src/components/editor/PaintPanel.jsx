@@ -111,23 +111,10 @@ export default function PaintPanel({
               className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg"
               style={{ backgroundColor: brushColor }}
             />
-            <div className="flex-1">
+            <div>
               <p className="text-xs text-white/80 font-medium">Selected</p>
               <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
             </div>
-            <button
-              onClick={() => colorInputRef.current?.click()}
-              className="w-8 h-8 rounded-full flex-shrink-0 border border-white/20 hover:border-white/40 transition-all"
-              style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
-              title="Pick custom color"
-            />
-            <input
-              ref={colorInputRef}
-              type="color"
-              value={brushColor}
-              onChange={(e) => handleColorSelect(e.target.value)}
-              className="absolute opacity-0 w-0 h-0 pointer-events-none"
-            />
           </div>
 
           {/* Recent colors */}
