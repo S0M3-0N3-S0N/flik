@@ -25,6 +25,14 @@ export function useMagicBrush() {
     let blobUrl = null;
     
     try {
+      // Validate inputs
+      if (!magicBrushPrompt || magicBrushPrompt.trim().length === 0) {
+        throw new Error("Magic brush prompt is required");
+      }
+      if (!brushStrokes || brushStrokes.length === 0) {
+        throw new Error("Brush strokes are required - please draw on the image");
+      }
+
       // Bake the current image state
       const blob = await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter);
       
