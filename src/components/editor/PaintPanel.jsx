@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Slider } from "@/components/ui/slider";
-import { RotateCcw, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { RotateCcw, Trash2, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Tool icons ──────────────────────────────────────────────────────────────
