@@ -140,8 +140,8 @@ export default function Profile() {
     document.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchstart', handleTouchStart, { passive: true });
+      document.removeEventListener('touchmove', handleTouchMove, { passive: true });
       document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [pullDistance, queryClient]);
@@ -449,10 +449,19 @@ export default function Profile() {
   }, []);
 
   const handleDownload = async (url, title, type) => {
+    if (!url) {
+      toast.error('No URL available to download');
+      return;
+    }
+
     const toastId = toast.loading('Downloading...');
     try {
       const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
       const blob = await response.blob();
+      if (blob.size === 0) throw new Error('Downloaded file is empty');
+
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -461,10 +470,11 @@ export default function Profile() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
       toast.success('Downloaded successfully', { id: toastId });
       base44.analytics.track({ eventName: 'profile_creation_downloaded', properties: { type } });
     } catch (err) {
+      console.error('Download error:', err);
       toast.error('Download failed, opening in new tab', { id: toastId });
       window.open(url, '_blank');
     }
@@ -510,7 +520,7 @@ export default function Profile() {
   // Auto-adjust page when it exceeds total pages
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
-      setCurrentPage(totalPages);
+      setCurrentPage(Math.max(1, totalPages));
     }
   }, [totalPages, currentPage]);
 
@@ -533,6 +543,7 @@ export default function Profile() {
   }, [filterType, dateFilter, debouncedSearchQuery, sortBy]);
 
   const selectAll = useCallback(() => {
+    if (paginatedCreations.length === 0) return;
     if (selectedItems.length === paginatedCreations.length) {
       setSelectedItems([]);
     } else {
@@ -542,6 +553,7 @@ export default function Profile() {
   }, [selectedItems.length, paginatedCreations]);
 
   const selectAllFiltered = useCallback(() => {
+    if (filteredCreations.length === 0) return;
     if (selectedItems.length === filteredCreations.length) {
       setSelectedItems([]);
     } else {
@@ -560,6 +572,9 @@ export default function Profile() {
   // Global keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
+      const activeElement = document.activeElement?.tagName;
+      const isInputFocused = activeElement === 'INPUT' || activeElement === 'TEXTAREA';
+      
       // Escape to close dialogs (no double confirmation)
       if (e.key === 'Escape') {
         if (selectedItem) {
@@ -584,15 +599,16 @@ export default function Profile() {
         }
       }
       
-      // Delete key for selected items
-      if (e.key === 'Delete' && selectedItems.length > 0 && !deleteConfirm && !editingTitle && !editingPrompt) {
+      // Delete key for selected items (only if no input is focused)
+      if (e.key === 'Delete' && !isInputFocused && selectedItems.length > 0 && !deleteConfirm && !editingTitle && !editingPrompt) {
+        e.preventDefault();
         handleBatchDelete();
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [selectedItem, deleteConfirm, showPasswordDialog, selectedItems, editingTitle, editingPrompt]);
+  }, [selectedItem, deleteConfirm, showPasswordDialog, selectedItems, editingTitle, editingPrompt, handleBatchDelete]);
 
   if (!user) return null;
 

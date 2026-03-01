@@ -218,6 +218,13 @@ export default function CameraPage() {
     };
     }, [startCamera]);
 
+  // Cleanup throttle timer
+  useEffect(() => {
+    return () => {
+      if (pinchThrottleRef.current) clearTimeout(pinchThrottleRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
@@ -251,7 +258,6 @@ export default function CameraPage() {
     setTimeout(() => setShowZoomOverlay(false), 1200);
   };
 
-  const pinchThrottleRef = useRef(null);
   const handleTouchStart = (e) => {
     if (e?.touches?.length === 2) {
       clearTimeout(tapTimeoutRef.current);
@@ -263,6 +269,8 @@ export default function CameraPage() {
     }
   };
 
+  const pinchThrottleRef = useRef(null);
+  
   const handleTouchMove = (e) => {
     if (e?.touches?.length === 2 && pinchStartDistRef.current) {
       if (pinchThrottleRef.current) return;
@@ -385,6 +393,7 @@ export default function CameraPage() {
   };
 
   const swipeStartX = useRef(null);
+
   const handleSwipeStart = (e) => { swipeStartX.current = e.touches?.[0]?.clientX ?? e.clientX; };
   const handleSwipeEnd = (e) => {
     if (swipeStartX.current === null) return;

@@ -194,11 +194,18 @@ export default function ResultModal({
                     Enhanced
                   </div>
                   <div className="flex-1 p-4 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={resultImage}
-                      alt="Result"
-                      className="w-full h-full object-contain"
-                    />
+                    {imageLoadError ? (
+                      <div className="w-full h-full flex items-center justify-center bg-black/50 text-white">
+                        Failed to load result
+                      </div>
+                    ) : (
+                      <img
+                        src={resultImage}
+                        alt="Result"
+                        className="w-full h-full object-contain"
+                        onError={() => setImageLoadError(true)}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

@@ -105,20 +105,30 @@ export default function Generate() {
 
      return () => {
        // Cleanup uploaded image object URLs
-       uploadedImageURLsRef.current.forEach(url => {
-         try {
-           URL.revokeObjectURL(url);
-         } catch (e) {
-           // Ignore errors from revoking URLs
-         }
-       });
-       uploadedImageURLsRef.current.clear();
-       // Cleanup abort controller
-       if (abortControllerRef.current) {
-         abortControllerRef.current.abort();
-       }
-     };
-   }, []);
+            uploadedImageURLsRef.current.forEach(url => {
+              try {
+                URL.revokeObjectURL(url);
+              } catch (e) {
+                // Ignore errors from revoking URLs
+              }
+            });
+            uploadedImageURLsRef.current.clear();
+            // Cleanup abort controller
+            if (abortControllerRef.current) {
+              abortControllerRef.current.abort();
+            }
+          };
+        }, []);
+
+        // Track generation completion for analytics
+        useEffect(() => {
+          if (generatedImages.length > 0 && !isGenerating) {
+            base44.analytics.track({
+              eventName: 'generate_page_viewed',
+              properties: { total_generated: generatedImages.length }
+            });
+          }
+        }, [isGenerating]);
 
   const handleImageUpload = async (filesOrEvent) => {
     // Handle both event (from hidden input) and direct file array (from ImageUploader)
