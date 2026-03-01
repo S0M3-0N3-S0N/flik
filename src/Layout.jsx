@@ -320,7 +320,6 @@ function LayoutContent({ children, currentPageName }) {
                     ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                     : "text-white/60"
                 }`}
-                style={{ boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.5)' }}
               >
                 <Image className="w-6 h-6" />
                 <span className="text-[10px] font-medium">Editor</span>
@@ -340,7 +339,6 @@ function LayoutContent({ children, currentPageName }) {
                     ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                     : "text-white/60"
                 }`}
-                style={{ boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.5)' }}
               >
                 <Wand2 className="w-6 h-6" />
                 <span className="text-[10px] font-medium">Generate</span>
@@ -354,7 +352,6 @@ function LayoutContent({ children, currentPageName }) {
                       ? "text-[#FF6B35] bg-[#FF6B35]/10"
                       : "text-white/60"
                   }`}
-                  style={{ boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.5)' }}
                 >
                   <Camera className="w-6 h-6" />
                   <span className="text-[10px] font-medium">Camera</span>
@@ -368,7 +365,6 @@ function LayoutContent({ children, currentPageName }) {
                     ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                     : "text-white/60"
                 }`}
-                style={{ boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 2px rgba(0,0,0,0.5)' }}
               >
                 <Sparkles className="w-6 h-6" />
                 <span className="text-[10px] font-medium">FLIK</span>
