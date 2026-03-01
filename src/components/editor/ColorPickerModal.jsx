@@ -143,7 +143,7 @@ export default function ColorPickerModal({ color, onColorChange, onClose }) {
         {/* Hue Slider */}
         <div
           ref={hueRef}
-          className="relative w-full h-6 rounded-full overflow-hidden cursor-pointer select-none"
+          className="relative w-full h-4 rounded-full overflow-hidden cursor-pointer select-none"
           style={{
             background: "linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)"
           }}
