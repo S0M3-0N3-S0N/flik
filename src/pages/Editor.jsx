@@ -397,7 +397,10 @@ export default function Editor() {
     if (!currentImage) return;
     try {
       const blob = await handleGetProcessedBlob();
-      if (!blob) { toast.error("Could not get image data to download."); return; }
+      if (!blob) { 
+        toast.error("Could not get image data to download."); 
+        return; 
+      }
       const url = createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -441,11 +444,16 @@ export default function Editor() {
       const canvas = await generateCanvas(currentImage, adjustments, tempTransform, selectedFilter);
       if (!canvas) { toast.error("Failed to generate canvas for transform."); throw new Error("Failed to generate canvas"); }
       canvas.toBlob((blob) => {
-        if (!blob) { setIsProcessing(false); toast.error("Transform failed."); return; }
+        if (!blob) { 
+          setIsProcessing(false); 
+          toast.error("Transform failed.");
+          return;
+        }
         const url = createObjectURL(blob);
-        setCurrentImage({ ...currentImage, url, preview: url, name: "transformed.png" });
+        setCurrentImage(prev => prev ? { ...prev, url, preview: url, name: "transformed.png" } : null);
         setTransform({ rotate: 0, flipH: false, flipV: false });
         setBrushStrokes([]);
+        setPaintStrokes([]);
         setRedoHistory([]);
         setIsProcessing(false);
         setNeedsFit(true);
@@ -541,11 +549,17 @@ export default function Editor() {
       finalCanvas.height = cropHeight;
       finalCanvas.getContext('2d').drawImage(bakeCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
       finalCanvas.toBlob((blob) => {
-        if (!blob) { setIsProcessing(false); toast.error("Crop failed."); return; }
+        if (!blob) { 
+          setIsProcessing(false); 
+          toast.error("Crop failed."); 
+          return; 
+        }
         const url = createObjectURL(blob);
-        setCurrentImage({ ...currentImage, url, preview: url, name: "cropped_image.png" });
+        setCurrentImage(prev => prev ? { ...prev, url, preview: url, name: "cropped_image.png" } : null);
         setAdjustments({ ...DEFAULT_ADJUSTMENTS });
         setSelectedFilter(null);
+        setBrushStrokes([]);
+        setPaintStrokes([]);
         setIsCropping(false);
         setRedoHistory([]);
         setIsProcessing(false);
@@ -564,9 +578,14 @@ export default function Editor() {
     setIsSaving(true);
     try {
       const blob = await handleGetProcessedBlob();
-      if (!blob) { toast.error("Could not get image data to save."); return; }
+      if (!blob) { 
+        toast.error("Could not get image data to save."); 
+        setIsSaving(false);
+        return; 
+      }
       const file = new File([blob], `flik_creation_${Date.now()}.png`, { type: blob.type });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      if (!uploadResult?.file_url) throw new Error('Upload failed');
       await base44.entities.Creation.create({
         title: `Edited Image (${new Date().toLocaleString()})`,
         type: 'image', url: uploadResult.file_url, thumbnail_url: uploadResult.file_url
@@ -590,7 +609,7 @@ export default function Editor() {
     if (!e?.target?.files) return;
     const files = Array.from(e.target.files);
     // Reset input so same file can be re-uploaded
-    e.target.value = '';
+    if (e.target) e.target.value = '';
     if (files.length === 0) return;
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     if (imageFiles.length === 0) { toast.error('Please select image files'); return; }
@@ -599,17 +618,26 @@ export default function Editor() {
     let loadedCount = 0;
     imageFiles.forEach((file, index) => {
       const reader = new FileReader();
+      reader.onerror = () => {
+        console.error(`Failed to read file: ${file.name}`);
+        toast.error(`Failed to read ${file.name}`);
+      };
       reader.onload = (ev) => {
+        if (!ev.target?.result) {
+          console.error(`No result for file: ${file.name}`);
+          return;
+        }
         loadedImgs[index] = { url: ev.target.result, preview: ev.target.result, name: file.name };
         loadedCount++;
         if (loadedCount === imageFiles.length) {
           // Append to existing images instead of replacing
           setLoadedImages(prev => {
             const combined = [...prev, ...loadedImgs];
-            setCurrentImageIndex(prev.length); // focus first new image
+            const newIndex = prev.length;
+            setCurrentImageIndex(newIndex);
             setCurrentImage(loadedImgs[0]);
             resetImageState();
-            setTimeout(() => emblaApi?.scrollTo(prev.length), 0);
+            setTimeout(() => emblaApi?.scrollTo(newIndex), 0);
             return combined;
           });
           toast.success(`${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''} added`);

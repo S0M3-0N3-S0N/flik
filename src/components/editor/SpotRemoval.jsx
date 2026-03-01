@@ -96,20 +96,21 @@ export default function SpotRemoval({
   };
 
   const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target?.files || []);
     if (files.length === 0) return;
 
     setIsUploading(true);
     try {
       const newImages = await Promise.all(files.map(async (file) => {
         const result = await base44.integrations.Core.UploadFile({ file });
+        if (!result?.file_url) throw new Error('No file URL returned');
         return result.file_url;
       }));
 
-      const updatedImages = [...referenceImages, ...newImages];
+      const updatedImages = [...(referenceImages || []), ...newImages];
       onReferenceImagesChange(updatedImages);
       toast.success(`${files.length} image${files.length > 1 ? 's' : ''} uploaded successfully!`);
-      e.target.value = '';
+      if (e.target) e.target.value = '';
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error(`Failed to upload: ${error.message || 'Unknown error'}`);
