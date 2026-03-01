@@ -119,7 +119,12 @@ export default function PaintPanel({
             </div>
             <button
               onClick={onEyeDropperActivate}
-              className="ml-auto p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className={cn(
+                "ml-auto p-1.5 rounded-lg transition-colors",
+                isEyeDropperActive
+                  ? "bg-[#FF6B35] text-white shadow-lg shadow-[#FF6B35]/40"
+                  : "text-white/60 hover:text-white hover:bg-white/10"
+              )}
               title="Pick color from image"
             >
               <Droplet className="w-4 h-4" />
