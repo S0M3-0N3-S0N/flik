@@ -311,12 +311,12 @@ export default function Editor() {
   }, [loadedImages, resetImageState, emblaApi]);
 
   const handleGenerateCanvas = useCallback(
-    () => generateCanvas(currentImage, adjustments, transform, selectedFilter),
-    [currentImage, adjustments, transform, selectedFilter, generateCanvas]
+    () => generateCanvas(currentImage, adjustments, transform, selectedFilter, paintStrokes),
+    [currentImage, adjustments, transform, selectedFilter, paintStrokes, generateCanvas]
   );
   const handleGetProcessedBlob = useCallback(
-    () => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter),
-    [currentImage, adjustments, transform, selectedFilter, getProcessedImageBlob]
+    () => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter, paintStrokes),
+    [currentImage, adjustments, transform, selectedFilter, paintStrokes, getProcessedImageBlob]
   );
 
   const handleToolSelect = useCallback(async (tool) => {
