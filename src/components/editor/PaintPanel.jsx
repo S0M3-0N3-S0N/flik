@@ -163,88 +163,132 @@ export default function PaintPanel({
 
       {/* Color Section */}
       {paintMode === "draw" && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
-            {/* Custom color picker */}
-            <button
-              onClick={() => colorInputRef.current?.click()}
-              className="relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20"
-              style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
-              title="Custom color"
-            >
-              <div className="w-3.5 h-3.5 rounded-full bg-black/60 flex items-center justify-center">
-                <Plus className="w-2 h-2 text-white" />
-              </div>
-              <input
-                ref={colorInputRef}
-                type="color"
-                value={brushColor}
-                onChange={(e) => handleColorSelect(e.target.value)}
-                className="absolute opacity-0 w-0 h-0 pointer-events-none"
+        <div className="space-y-2 md:space-y-0 md:overflow-y-auto md:flex md:flex-col">
+          {/* Mobile view */}
+          <div className="md:hidden space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
+              <button
+                onClick={() => colorInputRef.current?.click()}
+                className="relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20"
+                style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
+                title="Custom color"
+              >
+                <div className="w-3.5 h-3.5 rounded-full bg-black/60 flex items-center justify-center">
+                  <Plus className="w-2 h-2 text-white" />
+                </div>
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  value={brushColor}
+                  onChange={(e) => handleColorSelect(e.target.value)}
+                  className="absolute opacity-0 w-0 h-0 pointer-events-none"
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
+              <div
+                className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg"
+                style={{ backgroundColor: brushColor }}
               />
-            </button>
-          </div>
-
-          {/* Currently selected color preview */}
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
-            <div
-              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg"
-              style={{ backgroundColor: brushColor }}
-            />
-            <div>
-              <p className="text-xs text-white/80 font-medium">Selected</p>
-              <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
-            </div>
-          </div>
-
-          {/* Recent colors */}
-          {recentColors.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Recent</p>
-              <div className="flex gap-2">
-                {recentColors.map((color, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleColorSelect(color)}
-                    className={cn(
-                      "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
-                      brushColor === color
-                        ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
-                        : "border-white/20 hover:scale-105"
-                    )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+              <div>
+                <p className="text-xs text-white/80 font-medium">Selected</p>
+                <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
               </div>
             </div>
-          )}
 
-          {/* Scrollable color rows — one per hue family */}
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">All Colors · swipe →</p>
-            <div
-              className="space-y-1.5 overflow-x-auto pb-1"
-              style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              <style>{`.color-row::-webkit-scrollbar { display: none; }`}</style>
-              {COLOR_FAMILIES.map((family, fi) => (
-                <div key={fi} className="color-row flex gap-1.5 md:gap-2 overflow-x-auto pb-0.5 w-full" style={{ scrollbarWidth: "none" }}>
-                  {family.map((color, i) => (
+            {recentColors.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Recent</p>
+                <div className="flex gap-2">
+                  {recentColors.map((color, i) => (
                     <button
                       key={i}
                       onClick={() => handleColorSelect(color)}
                       className={cn(
-                        "w-8 h-8 md:w-10 md:h-10 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                        "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
                         brushColor === color
-                          ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50"
-                          : "border-transparent hover:scale-110",
-                        color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
+                          ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
+                          : "border-white/20 hover:scale-105"
                       )}
                       style={{ backgroundColor: color }}
                     />
                   ))}
                 </div>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">All Colors · swipe →</p>
+              <div
+                className="space-y-1.5 overflow-x-auto pb-1"
+                style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                <style>{`.color-row::-webkit-scrollbar { display: none; }`}</style>
+                {COLOR_FAMILIES.map((family, fi) => (
+                  <div key={fi} className="color-row flex gap-1.5 overflow-x-auto pb-0.5 w-full" style={{ scrollbarWidth: "none" }}>
+                    {family.map((color, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleColorSelect(color)}
+                        className={cn(
+                          "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                          brushColor === color
+                            ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50"
+                            : "border-transparent hover:scale-110",
+                          color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
+                        )}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop grid view */}
+          <div className="hidden md:block md:flex-1 md:overflow-y-auto md:space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color Palette</p>
+              <button
+                onClick={() => colorInputRef.current?.click()}
+                className="relative w-6 h-6 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20 hover:scale-110 transition-transform"
+                style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
+                title="Custom color"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-black/60 flex items-center justify-center">
+                  <Plus className="w-1.5 h-1.5 text-white" />
+                </div>
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  value={brushColor}
+                  onChange={(e) => handleColorSelect(e.target.value)}
+                  className="absolute opacity-0 w-0 h-0 pointer-events-none"
+                />
+              </button>
+            </div>
+
+            {/* Color grid - desktop */}
+            <div
+              className="grid gap-1.5 overflow-y-auto pb-1"
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(32px, 1fr))" }}
+            >
+              {COLOR_FAMILIES.flat().map((color, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleColorSelect(color)}
+                  className={cn(
+                    "aspect-square rounded-lg border-2 transition-all duration-150",
+                    brushColor === color
+                      ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50 z-10"
+                      : "border-transparent hover:scale-110",
+                    color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
+                  )}
+                  style={{ backgroundColor: color }}
+                />
               ))}
             </div>
           </div>
