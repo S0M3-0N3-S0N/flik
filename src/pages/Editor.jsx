@@ -680,7 +680,13 @@ export default function Editor() {
       setDragStart({ x: clientX, y: clientY });
       return;
     }
-    if (activeTab === "remove" && currentImage) {
+    if (activeTab === "paint" && currentImage) {
+      const pos = getRelativePosition(e);
+      if (pos) {
+        setIsDrawing(true);
+        setPaintStrokes(prev => [...prev, { points: [pos], color: paintColor, size: paintBrushSize, mode: paintMode }]);
+      }
+    } else if (activeTab === "remove" && currentImage) {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsDrawing(true);
