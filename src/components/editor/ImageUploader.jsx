@@ -7,7 +7,17 @@ export default function ImageUploader({ onImageSelect, multiple = false }) {
   const fileInputRef = useRef(null);
 
   const processFile = useCallback((file) => {
+    // Validate file size (50MB max)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('File exceeds 50MB limit');
+      return;
+    }
+    
     const reader = new FileReader();
+    reader.onerror = () => {
+      console.error('File read error');
+      alert('Failed to read file');
+    };
     reader.onload = (e) => {
       onImageSelect({
         file,
@@ -20,13 +30,28 @@ export default function ImageUploader({ onImageSelect, multiple = false }) {
   }, [onImageSelect]);
 
   const processFiles = useCallback((files) => {
-    const imageFiles = files.filter(f => f.type.startsWith('image/'));
-    const readers = imageFiles.map(file => new Promise(resolve => {
+    const imageFiles = files.filter(f => f.type.startsWith('image/') && f.size <= 50 * 1024 * 1024);
+    
+    // Check for duplicates
+    const seen = new Set();
+    const uniqueFiles = imageFiles.filter(f => {
+      const key = `${f.name}-${f.size}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    
+    if (imageFiles.length !== uniqueFiles.length) {
+      alert('Some duplicate or oversized files were skipped');
+    }
+    
+    const readers = uniqueFiles.map(file => new Promise(resolve => {
       const reader = new FileReader();
+      reader.onerror = () => resolve(null);
       reader.onload = (e) => resolve({ file, url: e.target.result, preview: e.target.result, name: file.name });
       reader.readAsDataURL(file);
     }));
-    Promise.all(readers).then(images => onImageSelect(images));
+    Promise.all(readers).then(images => onImageSelect(images.filter(Boolean)));
   }, [onImageSelect]);
 
   const handleDragOver = useCallback((e) => {

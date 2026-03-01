@@ -238,8 +238,8 @@ export default function Editor() {
       const container = containerRef.current;
       if (!img || !container) return;
 
-      const imgW = img?.naturalWidth;
-      const imgH = img?.naturalHeight;
+      const imgW = img?.naturalWidth || 0;
+      const imgH = img?.naturalHeight || 0;
       if (!imgW || !imgH) return;
 
       const rect = container.getBoundingClientRect();
@@ -581,7 +581,8 @@ export default function Editor() {
         setIsProcessing(false);
         setNeedsFit(true);
         toast.success("Image cropped successfully!");
-        finalCanvas.remove();
+        try { finalCanvas.remove(); } catch (e) { /* ignore */ }
+        try { bakeCanvas.remove(); } catch (e) { /* ignore */ }
       }, 'image/png', 1.0);
     } catch (error) {
       console.error("Error cropping:", error);
@@ -666,13 +667,15 @@ export default function Editor() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if (!e) return;
+      if (!e || !currentImage) return;
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+      
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
         e.preventDefault(); handleRedo();
       } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault(); handleUndo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault(); handleSaveToGallery();
       }
     };

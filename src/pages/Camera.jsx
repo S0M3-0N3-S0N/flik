@@ -17,6 +17,10 @@ const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 const MODES = ['PHOTO'];
 const initialSettings = { showGrid: false, timer: 0, cameraGuidance: true };
 
+const checkCameraSupport = (): boolean => {
+  return !!navigator.mediaDevices?.getUserMedia;
+};
+
 function settingsReducer(state, action) {
   return { ...state, [action.key]: action.value };
 }
@@ -75,8 +79,17 @@ export default function CameraPage() {
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
+  const [cameraSupported, setCameraSupported] = useState(true);
 
   const mode = MODES[modeIndex];
+
+  // Check camera support on mount
+  useEffect(() => {
+    if (!checkCameraSupport()) {
+      setCameraSupported(false);
+      toast.error("Camera not supported on this device");
+    }
+  }, []);
 
   // Lock to portrait and detect orientation for counter-rotating icons
   useEffect(() => {
@@ -117,6 +130,13 @@ export default function CameraPage() {
     setHasStream(false);
 
     try {
+      if (!checkCameraSupport()) {
+        setCameraSupported(false);
+        toast.error("Camera not supported on this device");
+        setCameraLoading(false);
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: facing,
@@ -157,7 +177,14 @@ export default function CameraPage() {
       setExposure(0);
     } catch (err) {
       console.error('Camera error:', err);
-      toast.error("Camera access denied or unavailable.");
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        toast.error("Camera permission denied. Please allow camera access.");
+      } else if (err instanceof DOMException && err.name === 'NotFoundError') {
+        toast.error("No camera device found on this device.");
+        setCameraSupported(false);
+      } else {
+        toast.error("Camera unavailable. Please check permissions.");
+      }
     } finally {
       initializingRef.current = false;
       setCameraLoading(false);
@@ -570,10 +597,23 @@ export default function CameraPage() {
         )}
       </AnimatePresence>
 
+      {/* Unsupported state */}
+      {!cameraSupported && (
+        <div className="absolute inset-0 bg-black/95 flex items-center justify-center z-50">
+          <div className="text-center text-white">
+            <h3 className="text-xl font-bold mb-2">Camera Not Available</h3>
+            <p className="text-white/60 mb-4">Your device doesn't support camera access</p>
+            <button onClick={() => navigate(createPageUrl('Editor'))} className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+              Go Back
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Viewfinder (fullscreen) ── */}
       <div
         ref={viewfinderRef}
-        className="absolute inset-0 overflow-hidden"
+        className={`absolute inset-0 overflow-hidden ${!cameraSupported ? 'hidden' : ''}`}
         onTouchStart={(e) => {
           handleTouchStart(e);
           handleSwipeStart(e);

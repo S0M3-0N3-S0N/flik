@@ -19,6 +19,7 @@ export default function ResultModal({
   const [mode, setMode] = useState("compare");
   const [sliderPos, setSliderPos] = useState(50);
   const [userFeedback, setUserFeedback] = useState(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   const handleDownloadResult = async () => {
     if (!resultImage) return;
@@ -125,11 +126,18 @@ export default function ResultModal({
                 }}
               >
                 {/* Result Image (Background) - No transform as it is baked */}
-                <img
-                  src={resultImage}
-                  alt="Enhanced"
-                  className="w-full h-full object-contain pointer-events-none"
-                />
+                {imageLoadError ? (
+                  <div className="w-full h-full flex items-center justify-center bg-black/50 text-white">
+                    Failed to load result image
+                  </div>
+                ) : (
+                  <img
+                    src={resultImage}
+                    alt="Enhanced"
+                    className="w-full h-full object-contain pointer-events-none"
+                    onError={() => setImageLoadError(true)}
+                  />
+                )}
 
                 {/* Original Image (Foreground - Clipped) - Transform needed to match visual */}
                 <div 

@@ -126,17 +126,28 @@ export default function Generate() {
     if (filesOrEvent?.target?.files) {
        validFiles = Array.from(filesOrEvent.target.files).filter(f => f?.type?.startsWith('image/'));
     } else if (Array.isArray(filesOrEvent)) {
-       validFiles = filesOrEvent; // Already filtered in ImageUploader
+       validFiles = filesOrEvent;
     } else if (filesOrEvent?.file) {
-       validFiles = [filesOrEvent.file]; // Single file object from ImageUploader (legacy mode)
+       validFiles = [filesOrEvent.file];
     }
 
     if (validFiles.length === 0) return;
 
+    // Validate file sizes (50MB max)
+    const oversized = validFiles.filter(f => f.size > 50 * 1024 * 1024);
+    if (oversized.length > 0) {
+      setError(`${oversized.length} file(s) exceed 50MB limit`);
+      return;
+    }
+
     setIsUploading(true);
     setError(null);
+
     try {
       const newUploads = await Promise.all(validFiles.map(async (file) => {
+        if (abortControllerRef.current?.signal.aborted) {
+          throw new Error('Upload cancelled');
+        }
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
         if (!uploadResult?.file_url) throw new Error('Upload failed: no URL returned');
         return { url: uploadResult.file_url, file, id: Date.now() + Math.random() };
@@ -148,7 +159,9 @@ export default function Generate() {
       });
     } catch (err) {
       console.error('Image upload error:', err);
-      setError("Failed to upload images. Please try again.");
+      if (!(err instanceof Error && err.message === 'Upload cancelled')) {
+        setError("Failed to upload images. Please try again.");
+      }
     } finally {
       setIsUploading(false);
     }
@@ -175,8 +188,10 @@ export default function Generate() {
       const styleInstruction = selectedStyleObjects.map(s => s.prompt).join(", ");
       const styleLabels = selectedStyleObjects.map(s => s.label).join(" + ");
       
+      const sanitizedPrompt = prompt.substring(0, 500).replace(/[<>]/g, '');
+      
       const llmAnalysis = await base44.integrations.Core.InvokeLLM({
-        prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${prompt}".
+        prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${sanitizedPrompt}".
         
         ${uploadedImages.length > 0 ? `IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates ${imageStrength > 0.7 ? "EXTREMELY STRICTLY (maintain exact composition and forms)" : imageStrength < 0.4 ? "loosely (use as vague inspiration)" : "strongly"} to them, while applying the user's text prompt as a modification or style.` : ""}
         ${aiModel === AI_MODEL_OPTIONS.GEMINI ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
@@ -301,8 +316,12 @@ export default function Generate() {
       });
     } catch (err) {
       console.error("Error generating image:", err);
-      if (err.name !== 'AbortError') {
+      if (err instanceof Error && err.name !== 'AbortError') {
         setError("Failed to generate. " + (err.message || "Please try again."));
+        base44.analytics.track({ 
+          eventName: 'generate_error', 
+          properties: { error: err.message } 
+        });
       }
     } finally {
       setIsGenerating(false);

@@ -150,7 +150,7 @@ export default function Profile() {
 
   // Debounced search with cleanup
   useEffect(() => {
-    const debouncedSearch = debounce((value) => setDebouncedSearchQuery(value), 300);
+    const debouncedSearch = debounce((value) => setDebouncedSearchQuery(value.toLowerCase()), 300);
     debouncedSearch(searchQuery);
     
     return () => {
@@ -257,6 +257,15 @@ export default function Profile() {
   };
 
   const handleLogout = async () => {
+    // Clear local state
+    setSearchQuery("");
+    setSelectedItems([]);
+    setSelectedItem(null);
+    setEditingTitle(null);
+    setEditingPrompt(null);
+    setDeleteConfirm(null);
+    localStorage.clear();
+    sessionStorage.clear();
     await base44.auth.logout();
   };
 
@@ -374,33 +383,43 @@ export default function Profile() {
   };
 
   const confirmBatchDelete = async () => {
-    const total = selectedItems.length;
-    
-    // Warning for large bulk operations
-    if (total > BATCH_DELETE_WARNING_THRESHOLD) {
-      if (!window.confirm(`You're about to delete ${total} items. This may take a while. Continue?`)) {
-        setDeleteConfirm(null);
-        return;
-      }
-    }
-    
-    setIsBatchDeleting(true);
-    setBatchDeleteProgress(0);
-    setBatchDeleteFailed(0);
-    const toastId = toast.loading(`Deleting 0/${total} items...`);
-    
-    let failed = 0;
-    for (let i = 0; i < selectedItems.length; i++) {
-      try {
-        await deleteMutation.mutateAsync(selectedItems[i]);
-      } catch (error) {
-        failed++;
-        setBatchDeleteFailed(failed);
-      }
-      const progress = Math.round(((i + 1) / total) * 100);
-      setBatchDeleteProgress(progress);
-      toast.loading(`Deleting ${i + 1}/${total} items... ${failed > 0 ? `(${failed} failed)` : ''}`, { id: toastId });
-    }
+   const total = selectedItems.length;
+
+   // Warning for large bulk operations
+   if (total > BATCH_DELETE_WARNING_THRESHOLD) {
+     if (!window.confirm(`You're about to delete ${total} items. This may take a while. Continue?`)) {
+       setDeleteConfirm(null);
+       return;
+     }
+   }
+
+   setIsBatchDeleting(true);
+   setBatchDeleteProgress(0);
+   setBatchDeleteFailed(0);
+   const toastId = toast.loading(`Deleting 0/${total} items...`);
+
+   let failed = 0;
+   const timeout = setTimeout(() => {
+     if (isBatchDeleting) {
+       toast.error('Batch delete timed out. Some items may not have been deleted.', { id: toastId });
+       setIsBatchDeleting(false);
+       setDeleteConfirm(null);
+     }
+   }, 300000); // 5 minute timeout
+
+   for (let i = 0; i < selectedItems.length; i++) {
+     try {
+       await deleteMutation.mutateAsync(selectedItems[i]);
+     } catch (error) {
+       failed++;
+       setBatchDeleteFailed(failed);
+     }
+     const progress = Math.round(((i + 1) / total) * 100);
+     setBatchDeleteProgress(progress);
+     toast.loading(`Deleting ${i + 1}/${total} items... ${failed > 0 ? `(${failed} failed)` : ''}`, { id: toastId });
+   }
+
+   clearTimeout(timeout);
     
     if (failed === 0) {
       toast.success(`${total} ${total === 1 ? 'item' : 'items'} deleted successfully`, { id: toastId });
@@ -454,9 +473,9 @@ export default function Profile() {
   const filteredCreations = useMemo(() => {
     return creations.filter(item => {
       const matchesSearch = !debouncedSearchQuery || 
-        item.title?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-        item.prompt?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-        item.metadata?.toString().toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+        item.title?.toLowerCase().includes(debouncedSearchQuery) ||
+        item.prompt?.toLowerCase().includes(debouncedSearchQuery) ||
+        item.metadata?.toString().toLowerCase().includes(debouncedSearchQuery);
       const matchesType = filterType === 'all' || item.type === filterType;
       
       let matchesDate = true;
@@ -495,12 +514,17 @@ export default function Profile() {
     }
   }, [totalPages, currentPage]);
 
-  const stats = useMemo(() => ({
+  const stats = useMemo(() => {
+  if (creations.length === 0) {
+    return { total: 0, images: 0, videos: 0, today: 0, thisWeek: 0, thisMonth: 0 };
+  }
+  return {
     total: creations.length,
     images: creations.filter(c => c.type === 'image').length,
     videos: creations.filter(c => c.type === 'video').length,
     ...getTimeframeStats(creations)
-  }), [creations]);
+  };
+  }, [creations]);
 
   // Reset page and clear selections when filters change
   useEffect(() => {
