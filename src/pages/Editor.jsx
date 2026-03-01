@@ -988,6 +988,7 @@ export default function Editor() {
   }, [activeTab]);
 
   const getFilterStyle = useCallback(() => {
+    if (!currentImage || currentImage.preview === null) return "none";
     const filters = [];
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
     if (adjustments.contrast !== 0) filters.push(`contrast(${100 + adjustments.contrast}%)`);
@@ -998,7 +999,7 @@ export default function Editor() {
     if (adjustments.grayscale > 0) filters.push(`grayscale(${adjustments.grayscale}%)`);
     if (selectedFilter && selectedFilter.id !== "none") filters.push(selectedFilter.filter);
     return filters.length > 0 ? filters.join(" ") : "none";
-  }, [adjustments, selectedFilter]);
+  }, [adjustments, selectedFilter, currentImage]);
 
   const getTransformStyle = useCallback(() => {
     const transforms = [];
