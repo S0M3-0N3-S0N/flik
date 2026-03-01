@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import { Paintbrush, Eraser, RotateCcw, Trash2, Plus, Droplet } from "lucide-react";
-import { useRef, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
