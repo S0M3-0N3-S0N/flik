@@ -686,6 +686,12 @@ export default function Editor() {
         setIsDrawing(true);
         setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
       }
+    } else if (activeTab === "paint" && currentImage) {
+      const pos = getRelativePosition(e);
+      if (pos) {
+        setIsDrawing(true);
+        setPaintStrokes(prev => [...prev, { points: [pos], color: paintColor, size: paintBrushSize, opacity: paintBrushOpacity }]);
+      }
     } else if (isCropping) {
       const pos = getRelativePosition(e);
       if (pos) {
