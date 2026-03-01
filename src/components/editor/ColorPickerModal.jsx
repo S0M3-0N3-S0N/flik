@@ -161,18 +161,18 @@ export default function ColorPickerModal({ color, onColorChange, onClose }) {
 
         {/* Hex Input */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-3 flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-            <div className="w-6 h-6 rounded-full border border-white/20 flex-shrink-0" style={{ backgroundColor: currentHex }} />
+          <div className="flex items-center gap-2 flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+            <div className="w-4 h-4 rounded-full border border-white/20 flex-shrink-0" style={{ backgroundColor: currentHex }} />
             <input
               type="text"
               value={hexInput}
               onChange={handleHexInput}
-              className="flex-1 bg-transparent text-white font-mono text-sm outline-none uppercase"
+              className="flex-1 bg-transparent text-white font-mono text-xs outline-none uppercase"
               maxLength={7}
             />
           </div>
-          <button className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50">
-            <Pipette className="w-4 h-4" />
+          <button className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50">
+            <Pipette className="w-3 h-3" />
           </button>
         </div>
       </div>
