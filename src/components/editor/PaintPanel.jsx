@@ -56,13 +56,11 @@ export default function PaintPanel({
           )}
           title="Eraser"
         >
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-            {/* Eraser body */}
-            <div className="w-6 h-9 rounded-md bg-pink-300/80" />
-            {/* Band */}
-            <div className="w-6 h-1.5 rounded-sm bg-pink-500/60" />
-            {/* Base */}
-            <div className="w-6 h-3 rounded-b-sm bg-white/30" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Eraser
+              className="w-8 h-8"
+              style={{ color: paintMode === "erase" ? "rgba(255,255,255,0.9)" : "#888" }}
+            />
           </div>
           <span className="absolute bottom-1 text-[9px] font-semibold text-white/60">Eraser</span>
         </button>
