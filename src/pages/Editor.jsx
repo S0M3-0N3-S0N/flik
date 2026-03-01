@@ -18,7 +18,6 @@ import TransformPanel from "@/components/editor/TransformPanel";
 import SpotRemoval from "@/components/editor/SpotRemoval";
 import CropPanel from "@/components/editor/CropPanel";
 import TextGeneratorPanel from "@/components/editor/TextGeneratorPanel";
-import PaintPanel from "@/components/editor/PaintPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import { useFlikActions } from "@/components/useFlikActions";
@@ -49,14 +48,6 @@ export default function Editor() {
   const [brushSize, setBrushSize] = useState(30);
   const [brushOpacity, setBrushOpacity] = useState(0.8);
   const [brushMode, setBrushMode] = useState('draw');
-
-  // Paint tool state
-  const [paintStrokes, setPaintStrokes] = useState([]);
-  const [paintColor, setPaintColor] = useState("#2196F3");
-  const [paintBrushSize, setPaintBrushSize] = useState(20);
-  const [paintBrushOpacity, setPaintBrushOpacity] = useState(0.85);
-  const [paintActiveTool, setPaintActiveTool] = useState("marker");
-  const paintCanvasRef = useRef(null);
   const [magicBrushPrompt, setMagicBrushPrompt] = useState("");
   const [magicBrushImages, setMagicBrushImages] = useState([]);
   
@@ -687,14 +678,6 @@ export default function Editor() {
         setIsDrawing(true);
         setBrushStrokes(prev => [...prev, { points: [pos], type: brushMode, size: brushSize }]);
       }
-    } else if (activeTab === "paint" && currentImage) {
-      const pos = getRelativePosition(e);
-      if (pos) {
-        setIsDrawing(true);
-        const isEraser = paintActiveTool === "eraser";
-        const opacity = paintActiveTool === "highlighter" ? 0.4 : paintBrushOpacity;
-        setPaintStrokes(prev => [...prev, { points: [pos], color: isEraser ? null : paintColor, size: paintBrushSize, opacity, tool: paintActiveTool }]);
-      }
     } else if (isCropping) {
       const pos = getRelativePosition(e);
       if (pos) {
@@ -729,37 +712,17 @@ export default function Editor() {
       return;
     }
 
-    if ((activeTab === "remove" || activeTab === "paint") && cursorRef.current && containerRef.current && clientX !== undefined) {
+    if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
       cursorRef.current.style.left = `${clientX - rect.left}px`;
       cursorRef.current.style.top = `${clientY - rect.top}px`;
       cursorRef.current.style.display = 'block';
-      if (activeTab === "paint") {
-        cursorRef.current.style.borderColor = paintColor;
-        cursorRef.current.style.backgroundColor = paintColor + "44";
-        cursorRef.current.style.width = `${paintBrushSize * zoom}px`;
-        cursorRef.current.style.height = `${paintBrushSize * zoom}px`;
-      } else {
-        cursorRef.current.style.borderColor = brushMode === 'erase' ? 'rgba(255,255,255,0.8)' : 'rgba(255,107,53,0.8)';
-        cursorRef.current.style.backgroundColor = brushMode === 'erase' ? 'rgba(255,255,255,0.2)' : 'rgba(255,107,53,0.2)';
-        cursorRef.current.style.width = `${brushSize * zoom}px`;
-        cursorRef.current.style.height = `${brushSize * zoom}px`;
-      }
     }
 
     if (activeTab === "remove" && isDrawing && currentImage) {
       const pos = getRelativePosition(e);
       if (pos && brushStrokes.length > 0) {
         setBrushStrokes(prev => {
-          const newStrokes = [...prev];
-          newStrokes[newStrokes.length - 1].points.push(pos);
-          return newStrokes;
-        });
-      }
-    } else if (activeTab === "paint" && isDrawing && currentImage) {
-      const pos = getRelativePosition(e);
-      if (pos && paintStrokes.length > 0) {
-        setPaintStrokes(prev => {
           const newStrokes = [...prev];
           newStrokes[newStrokes.length - 1].points.push(pos);
           return newStrokes;
@@ -807,51 +770,6 @@ export default function Editor() {
     handleMouseUp();
     if (cursorRef.current) cursorRef.current.style.display = 'none';
   }, [handleMouseUp]);
-
-  // Draw paint strokes on paint canvas overlay
-  useEffect(() => {
-    if (!paintCanvasRef.current || !imageRef.current || activeTab !== "paint") return;
-    const canvas = paintCanvasRef.current;
-    const img = imageRef.current;
-    const rect = img.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    paintStrokes.forEach(stroke => {
-    const { points, color, size, opacity, tool } = stroke;
-    if (!points || points.length === 0) return;
-    const isEraser = tool === "eraser" || !color;
-    if (isEraser) {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.strokeStyle = 'rgba(0,0,0,1)';
-      ctx.fillStyle = 'rgba(0,0,0,1)';
-    } else {
-      ctx.globalCompositeOperation = 'source-over';
-      const hex = color || "#FF6B35";
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      ctx.strokeStyle = `rgba(${r},${g},${b},${opacity ?? 0.85})`;
-      ctx.fillStyle = `rgba(${r},${g},${b},${opacity ?? 0.85})`;
-    }
-    ctx.lineWidth = size || 20;
-    ctx.lineCap = tool === "highlighter" ? 'square' : 'round';
-    ctx.lineJoin = 'round';
-      if (points.length === 1) {
-        ctx.beginPath();
-        ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.beginPath();
-        ctx.moveTo((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height);
-        for (let i = 1; i < points.length; i++) {
-          ctx.lineTo((points[i].x / 100) * canvas.width, (points[i].y / 100) * canvas.height);
-        }
-        ctx.stroke();
-      }
-    });
-  }, [paintStrokes, activeTab]);
 
   // Draw brush strokes on canvas overlay
   useEffect(() => {
@@ -920,7 +838,7 @@ export default function Editor() {
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-6 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
             <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Sparkles className="w-4 h-4" />
             </TabsTrigger>
@@ -938,13 +856,6 @@ export default function Editor() {
             </TabsTrigger>
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 2h10v14H7z" />
-                <path d="M7 16l5 6 5-6" />
-                <line x1="7" y1="7" x2="17" y2="7" />
-              </svg>
             </TabsTrigger>
             {user?.role === 'admin' && (
               <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
@@ -1030,28 +941,6 @@ export default function Editor() {
               }
             </TabsContent>
 
-            <TabsContent value="paint" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Paint</h3>
-              {currentImage ? (
-                <PaintPanel
-                  brushColor={paintColor}
-                  onBrushColorChange={setPaintColor}
-                  brushSize={paintBrushSize}
-                  onBrushSizeChange={setPaintBrushSize}
-                  brushOpacity={paintBrushOpacity}
-                  onBrushOpacityChange={setPaintBrushOpacity}
-                  onClearStrokes={() => setPaintStrokes([])}
-                  onUndoLastStroke={() => setPaintStrokes(prev => prev.slice(0, -1))}
-                  hasStrokes={paintStrokes.length > 0}
-                  strokeCount={paintStrokes.length}
-                  activeTool={paintActiveTool}
-                  onToolChange={setPaintActiveTool}
-                />
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
-            </TabsContent>
-
             <TabsContent value="text" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">AI Text Generator</h3>
               {currentImage
@@ -1119,7 +1008,7 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: loadedImages.length > 1 ? 'pan-y' : 'none' }}
         >
-          {(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanning && !isPanToolActive && (
+          {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
@@ -1163,7 +1052,7 @@ export default function Editor() {
                          ref={idx === currentImageIndex ? imageRef : null}
                          src={img.preview || img.url}
                          alt="Editor"
-                         className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
+                         className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${activeTab === "remove" && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
                          style={{ filter: idx === currentImageIndex ? getFilterStyle() : 'none', transform: idx === currentImageIndex ? getTransformStyle() : 'none' }}
                          draggable={false}
                          onLoad={() => { if (idx === currentImageIndex && needsFit) { setNeedsFit(false); setNeedsFit(true); } }}
@@ -1171,9 +1060,6 @@ export default function Editor() {
 
                        {activeTab === "remove" && idx === currentImageIndex && (
                          <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
-                       )}
-                       {activeTab === "paint" && idx === currentImageIndex && (
-                         <canvas ref={paintCanvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none', cursor: 'none' }} />
                        )}
 
                        {isCropping && idx === currentImageIndex && (
