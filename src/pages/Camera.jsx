@@ -15,7 +15,7 @@ import { useFlikActions } from '../components/useFlikActions';
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
 
 const MODES = ['PHOTO'];
-const initialSettings = { showGrid: false, timer: 0 };
+const initialSettings = { showGrid: false, timer: 0, cameraGuidance: true };
 
 function settingsReducer(state, action) {
   return { ...state, [action.key]: action.value };
