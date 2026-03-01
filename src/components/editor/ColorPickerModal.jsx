@@ -136,7 +136,7 @@ export default function ColorPickerModal({ isOpen, onClose, onColorSelect, initi
                 <div
                   ref={hueSliderRef}
                   onClick={handleHueSliderClick}
-                  onTouchMove={handleTouchHueSlider}
+                  onTouchStart={handleTouchHueSlider}
                   className="relative h-12 rounded-full cursor-pointer overflow-hidden shadow-lg border border-white/10"
                   style={{
                     background: "linear-gradient(90deg, red, yellow, lime, aqua, blue, magenta, red)"
