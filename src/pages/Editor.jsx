@@ -1103,7 +1103,7 @@ export default function Editor() {
           onWheel={handleWheel}
           style={{ touchAction: loadedImages.length > 1 ? 'pan-y' : 'none' }}
         >
-          {activeTab === "remove" && !isSpacePressed && !isPanning && !isPanToolActive && (
+          {(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanning && !isPanToolActive && (
             <div
               ref={cursorRef}
               className="absolute pointer-events-none rounded-full border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-50 transition-none"
