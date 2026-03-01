@@ -137,12 +137,26 @@ export default function Editor() {
     crop: (payload) => {
       setActiveTab('crop');
       if (payload.active) handleStartCrop();
+    },
+    paint: (payload) => {
+      setActiveTab('paint');
+      if (payload.color) setPaintColor(payload.color);
+      if (payload.size) setPaintBrushSize(payload.size);
+      if (payload.opacity !== undefined) setPaintOpacity(payload.opacity / 100);
+      if (payload.mode) setPaintMode(payload.mode);
+      if (payload.clear) setPaintStrokes([]);
+      if (payload.undo) setPaintStrokes(prev => prev.slice(0, -1));
     }
   }, () => ({
     currentTool: activeTab,
     magicBrushPrompt,
     hasMaskDrawn: brushStrokes.length > 0,
-    hasImage: !!currentImage
+    hasImage: !!currentImage,
+    paintColor,
+    paintBrushSize,
+    paintOpacity: paintOpacity * 100,
+    paintMode,
+    paintStrokes: paintStrokes.length
   }));
 
   // Load image from URL parameter
