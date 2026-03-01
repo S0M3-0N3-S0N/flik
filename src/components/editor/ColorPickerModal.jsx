@@ -131,7 +131,7 @@ export default function ColorPickerModal({ color, onColorChange, onClose }) {
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent, black)" }} />
           {/* Cursor */}
           <div
-            className="absolute w-5 h-5 rounded-full border-2 border-white shadow-lg -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+            className="absolute w-4 h-4 rounded-full border-2 border-white shadow-lg -translate-x-1/2 -translate-y-1/2 pointer-events-none"
             style={{
               left: `${sat * 100}%`,
               top: `${(1 - val) * 100}%`,
