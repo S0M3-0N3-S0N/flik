@@ -1040,6 +1040,8 @@ export default function Editor() {
                   onUndoLastStroke={() => setPaintStrokes(prev => prev.slice(0, -1))}
                   hasStrokes={paintStrokes.length > 0}
                   strokeCount={paintStrokes.length}
+                  activeTool={paintActiveTool}
+                  onToolChange={setPaintActiveTool}
                 />
               ) : (
                 <p className="text-white/40 text-sm">Upload an image to start</p>
