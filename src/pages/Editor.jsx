@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock, Type, Paintbrush } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock, Type, Paintbrush, Droplet } from "lucide-react";
 import { toast } from "sonner";
 import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/ui/button";
@@ -99,6 +99,7 @@ export default function Editor() {
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
   const [generatedTextImage, setGeneratedTextImage] = useState(null);
   const [user, setUser] = useState(null);
+  const [isEyeDropperActive, setIsEyeDropperActive] = useState(false);
 
   const location = useLocation();
 
@@ -718,6 +719,40 @@ export default function Editor() {
   const handleMouseDown = useCallback((e) => {
     const clientX = e.touches?.length > 0 ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches?.length > 0 ? e.touches[0].clientY : e.clientY;
+    
+    // Eyedropper color picking
+    if (isEyeDropperActive && currentImage && imageRef.current) {
+      e.preventDefault();
+      setIsEyeDropperActive(false);
+      
+      const pos = getRelativePosition(e);
+      if (pos) {
+        const imgElement = imageRef.current;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = imgElement.naturalWidth;
+        tempCanvas.height = imgElement.naturalHeight;
+        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+
+        try {
+          tempCtx.drawImage(imgElement, 0, 0, tempCanvas.width, tempCanvas.height);
+          const pixelX = Math.round((pos.x / 100) * tempCanvas.width);
+          const pixelY = Math.round((pos.y / 100) * tempCanvas.height);
+          const imageData = tempCtx.getImageData(pixelX, pixelY, 1, 1).data;
+          const r = imageData[0];
+          const g = imageData[1];
+          const b = imageData[2];
+          const hexColor = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+          setPaintColor(hexColor);
+          toast.success(`Color picked: ${hexColor}`);
+        } catch (error) {
+          console.error("Eyedropper error (CORS?):", error);
+          toast.error("Could not pick color. Image might be from a different domain.");
+        }
+        tempCanvas.remove();
+      }
+      return;
+    }
+    
     if (isSpacePressed || e.button === 1 || isPanToolActive) {
       setIsPanning(true);
       setDragStart({ x: clientX, y: clientY });
@@ -754,7 +789,7 @@ export default function Editor() {
         }
       }
     }
-  }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea, paintColor, paintBrushSize, paintMode]);
+  }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea, paintColor, paintBrushSize, paintMode, isEyeDropperActive]);
 
   const handleMouseMove = useCallback((e) => {
     if (e?.cancelable && (isDrawing || isDragging || isPanning)) {
@@ -775,7 +810,9 @@ export default function Editor() {
       return;
     }
 
-    if ((activeTab === "remove" || activeTab === "paint") && cursorRef.current && containerRef.current && clientX !== undefined) {
+    if (isEyeDropperActive && containerRef.current && clientX !== undefined) {
+      containerRef.current.style.cursor = "crosshair";
+    } else if ((activeTab === "remove" || activeTab === "paint") && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
       cursorRef.current.style.left = `${clientX - rect.left}px`;
       cursorRef.current.style.top = `${clientY - rect.top}px`;
@@ -829,19 +866,25 @@ export default function Editor() {
         setCropArea(newCrop);
       }
     }
-  }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, paintStrokes, isDragging, dragStart, dragType, isPanning]);
+  }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, paintStrokes, isDragging, dragStart, dragType, isPanning, isEyeDropperActive]);
 
   const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
     setIsDragging(false);
     setIsPanning(false);
     setDragType(null);
-  }, []);
+    if (isEyeDropperActive) {
+      setIsEyeDropperActive(false);
+    }
+  }, [isEyeDropperActive]);
 
   const handleMouseLeave = useCallback(() => {
     handleMouseUp();
     if (cursorRef.current) cursorRef.current.style.display = 'none';
-  }, [handleMouseUp]);
+    if (isEyeDropperActive && containerRef.current) {
+      containerRef.current.style.cursor = "";
+    }
+  }, [handleMouseUp, isEyeDropperActive]);
 
   // Draw paint strokes on canvas overlay
   useEffect(() => {
@@ -1094,7 +1137,8 @@ export default function Editor() {
                   onUndoLastStroke={() => setPaintStrokes(prev => prev.slice(0, -1))}
                   hasStrokes={paintStrokes.length > 0}
                   strokeCount={paintStrokes.length}
-                />
+                  onEyeDropperActivate={() => setIsEyeDropperActive(true)}
+                  />
               ) : (
                 <p className="text-white/40 text-sm">Upload an image to start</p>
               )}
@@ -1219,6 +1263,7 @@ export default function Editor() {
                          className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
                          style={{ filter: idx === currentImageIndex ? getFilterStyle() : 'none', transform: idx === currentImageIndex ? getTransformStyle() : 'none' }}
                          draggable={false}
+                         crossOrigin="anonymous"
                          onLoad={() => { if (idx === currentImageIndex && needsFit) { setNeedsFit(false); setNeedsFit(true); } }}
                        />
 
