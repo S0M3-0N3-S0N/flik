@@ -140,24 +140,33 @@ export default function CameraPage() {
         return;
       }
 
-      // Try with specific constraints, fallback to default for desktop
+      // Try with facingMode first for mobile, then fallback to basic constraints for desktop
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: facing,
-            width: { ideal: 4096 },
-            height: { ideal: 2160 },
+            facingMode: { ideal: facing },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
             frameRate: { ideal: 30 },
           },
           audio: false,
         });
-      } catch (err) {
-        // Fallback for desktop cameras that don't support facingMode
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: facing === 'user' ? { width: { ideal: 1920 }, height: { ideal: 1080 } } : true,
-          audio: false,
-        });
+      } catch {
+        // Fallback: remove facingMode for desktop cameras
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              frameRate: { ideal: 30 },
+            },
+            audio: false,
+          });
+        } catch {
+          // Last resort: accept any available camera
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
       }
 
       streamRef.current = stream;
