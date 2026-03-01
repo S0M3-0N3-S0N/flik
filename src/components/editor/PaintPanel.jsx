@@ -1,8 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { Paintbrush, Eraser, RotateCcw, Trash2, SlidersHorizontal, Plus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import ColorPickerModal from "./ColorPickerModal";
 
 const PRESET_COLORS = [
   "#000000", "#FF6B35", "#F72C25", "#FFB800", "#66BB6A", "#4FC3F7",
@@ -24,17 +23,9 @@ export default function PaintPanel({
   onBrushOpacityChange,
 }) {
   const colorInputRef = useRef(null);
-  const [showColorPicker, setShowColorPicker] = useState(false);
 
   return (
     <div className="space-y-6">
-      {showColorPicker && (
-        <ColorPickerModal
-          color={brushColor}
-          onColorChange={onBrushColorChange}
-          onClose={() => setShowColorPicker(false)}
-        />
-      )}
       {/* Mode Toggle */}
       <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
         <button
@@ -86,7 +77,7 @@ export default function PaintPanel({
 
             {/* Custom color picker button */}
             <button
-              onClick={() => setShowColorPicker(true)}
+              onClick={() => colorInputRef.current?.click()}
               className={cn(
                 "w-9 h-9 rounded-full border-2 transition-all duration-150 flex-shrink-0 flex items-center justify-center overflow-hidden",
                 !PRESET_COLORS.includes(brushColor)
@@ -101,6 +92,13 @@ export default function PaintPanel({
               <div className="w-4 h-4 rounded-full bg-white/90 flex items-center justify-center">
                 <Plus className="w-2.5 h-2.5 text-black" />
               </div>
+              <input
+                ref={colorInputRef}
+                type="color"
+                value={brushColor}
+                onChange={(e) => onBrushColorChange(e.target.value)}
+                className="absolute opacity-0 w-0 h-0 pointer-events-none"
+              />
             </button>
 
             {/* Currently selected custom color indicator */}
@@ -108,7 +106,7 @@ export default function PaintPanel({
               <button
                 className="w-9 h-9 rounded-full border-2 border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40 flex-shrink-0"
                 style={{ backgroundColor: brushColor }}
-                onClick={() => setShowColorPicker(true)}
+                onClick={() => colorInputRef.current?.click()}
               />
             )}
           </div>
