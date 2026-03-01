@@ -46,6 +46,7 @@ FLIK APP STRUCTURE:
    - Filters: Vintage, Noir, Warm, Cool, Dramatic
    - Transform: Rotate, Flip, Crop
    - Batch Mode: Multi-image processing
+   - **AI Text Generator**: Generate stylized text images with custom fonts, styles, reference images, and a font library (tab id: "text")
 
 2. ✨ **Imagine AI (Generator)**
    - Text-to-Image generation
