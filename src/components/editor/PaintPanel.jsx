@@ -295,8 +295,8 @@ export default function PaintPanel({
         </div>
       )}
 
-      {/* Weight / Size */}
-      <div className="space-y-2">
+      {/* Weight / Size - Mobile only */}
+      <div className="md:hidden space-y-2">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-white/80">Weight</p>
           <span className="text-sm text-white/60 bg-white/10 rounded-lg px-3 py-1 font-mono min-w-[48px] text-center">{brushSize}</span>
@@ -311,9 +311,9 @@ export default function PaintPanel({
         />
       </div>
 
-      {/* Transparency / Opacity */}
+      {/* Transparency / Opacity - Mobile only */}
       {paintMode === "draw" && (
-        <div className="space-y-2">
+        <div className="md:hidden space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-white/80">Transparency</p>
             <span className="text-sm text-white/60 bg-white/10 rounded-lg px-3 py-1 font-mono min-w-[48px] text-center">{onBrushOpacityChange ? brushOpacity : 100}%</span>
