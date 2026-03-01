@@ -2,7 +2,6 @@ import React, { useRef, useState } from "react";
 import { Paintbrush, Eraser, RotateCcw, Trash2, Plus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import ColorPickerModal from "@/components/editor/ColorPickerModal";
 
 // Rainbow-ordered color palette: one long row per hue family, dark → light
 // Includes all primary + secondary + tertiary colors. Only 1 black and 1 white.
@@ -59,7 +58,6 @@ export default function PaintPanel({
 }) {
   const colorInputRef = useRef(null);
   const [recentColors, setRecentColors] = useState([]);
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
   const handleColorSelect = (color) => {
     onBrushColorChange(color);
@@ -174,18 +172,6 @@ export default function PaintPanel({
                       style={{ backgroundColor: color }}
                     />
                   ))}
-                  {fi === COLOR_FAMILIES.length - 1 && (
-                    <button
-                      onClick={() => setIsColorPickerOpen(true)}
-                      className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-white/20 flex-shrink-0 flex items-center justify-center overflow-hidden hover:scale-110 transition-all duration-150"
-                      style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
-                      title="Custom color"
-                    >
-                      <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-white/90 flex items-center justify-center">
-                        <Plus className="w-2 h-2 text-black" />
-                      </div>
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
@@ -249,13 +235,6 @@ export default function PaintPanel({
           </div>
         </div>
       )}
-
-      <ColorPickerModal
-        isOpen={isColorPickerOpen}
-        onClose={() => setIsColorPickerOpen(false)}
-        onColorSelect={handleColorSelect}
-        initialColor={brushColor}
-      />
     </div>
   );
 }
