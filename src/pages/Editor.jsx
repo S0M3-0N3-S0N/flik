@@ -1156,6 +1156,9 @@ export default function Editor() {
                        {activeTab === "remove" && idx === currentImageIndex && (
                          <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
                        )}
+                       {activeTab === "paint" && idx === currentImageIndex && (
+                         <canvas ref={paintCanvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none', cursor: 'none' }} />
+                       )}
 
                        {isCropping && idx === currentImageIndex && (
                          <>
