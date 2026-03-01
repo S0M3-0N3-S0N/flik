@@ -173,7 +173,16 @@ export default function Editor() {
     }
   }, [location.search, emblaApi]);
 
-  // Cleanup all object URLs on unmount
+  // Cleanup all object URLs on unmount and image switch
+  const cleanupObjectURLs = useCallback((urlToKeep) => {
+    Array.from(objectURLsRef.current).forEach(url => {
+      if (url !== urlToKeep) {
+        try { URL.revokeObjectURL(url); } catch (e) { /* ignore */ }
+        objectURLsRef.current.delete(url);
+      }
+    });
+  }, []);
+
   useEffect(() => {
     return () => {
       objectURLsRef.current.forEach(url => {
@@ -191,18 +200,19 @@ export default function Editor() {
       const idx = emblaApi.selectedScrollSnap();
       if (idx !== currentImageIndex && idx >= 0 && idx < loadedImages.length) {
         // Save current image edit state before switching
-        if (currentImage) {
-          const imgKey = currentImage.url || currentImage.id;
-          imageEditStateRef.current[imgKey] = {
-            adjustments, selectedFilter, transform, brushStrokes, zoom, pan
-          };
-          
-          // Keep cache size bounded
-          const keys = Object.keys(imageEditStateRef.current);
-          if (keys.length > MAX_EDIT_CACHE_SIZE) {
-            delete imageEditStateRef.current[keys[0]];
-          }
-        }
+            if (currentImage) {
+              const imgKey = currentImage.url || currentImage.id;
+              imageEditStateRef.current[imgKey] = {
+                adjustments, selectedFilter, transform, brushStrokes, paintStrokes, zoom, pan
+              };
+
+              // Keep cache size bounded - remove oldest
+              const keys = Object.keys(imageEditStateRef.current);
+              if (keys.length > MAX_EDIT_CACHE_SIZE) {
+                const keysToDelete = keys.slice(0, keys.length - MAX_EDIT_CACHE_SIZE);
+                keysToDelete.forEach(k => delete imageEditStateRef.current[k]);
+              }
+            }
         
         // Switch to new image
         setCurrentImageIndex(idx);
@@ -216,7 +226,8 @@ export default function Editor() {
           setAdjustments(savedState.adjustments);
           setSelectedFilter(savedState.selectedFilter);
           setTransform(savedState.transform);
-          setBrushStrokes(savedState.brushStrokes);
+          setBrushStrokes(savedState.brushStrokes || []);
+          setPaintStrokes(savedState.paintStrokes || []);
           setZoom(savedState.zoom);
           setPan(savedState.pan);
           setNeedsFit(false);
@@ -280,12 +291,13 @@ export default function Editor() {
   }, []);
 
   const handleImageSelect = useCallback((image) => {
+    cleanupObjectURLs(image?.url);
     setCurrentImage(image);
     setLoadedImages([image]);
     setCurrentImageIndex(0);
     if (image) resetImageState();
     setTimeout(() => emblaApi?.scrollTo(0), 0);
-  }, [resetImageState, emblaApi]);
+  }, [resetImageState, emblaApi, cleanupObjectURLs]);
 
   const handleMultipleImagesSelect = useCallback((images) => {
     if (images && Array.isArray(images) && images.length > 0) {
@@ -310,12 +322,12 @@ export default function Editor() {
   }, [loadedImages, resetImageState, emblaApi]);
 
   const handleGenerateCanvas = useCallback(
-    () => generateCanvas(currentImage, adjustments, transform, selectedFilter, paintStrokes),
-    [currentImage, adjustments, transform, selectedFilter, paintStrokes, generateCanvas]
+    () => generateCanvas(currentImage, adjustments, transform, selectedFilter, brushStrokes.length > 0 ? brushStrokes : paintStrokes),
+    [currentImage, adjustments, transform, selectedFilter, brushStrokes, paintStrokes, generateCanvas]
   );
   const handleGetProcessedBlob = useCallback(
-    () => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter, paintStrokes),
-    [currentImage, adjustments, transform, selectedFilter, paintStrokes, getProcessedImageBlob]
+    () => getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter, brushStrokes.length > 0 ? brushStrokes : paintStrokes),
+    [currentImage, adjustments, transform, selectedFilter, brushStrokes, paintStrokes, getProcessedImageBlob]
   );
 
   const handleToolSelect = useCallback(async (tool) => {
@@ -336,7 +348,7 @@ export default function Editor() {
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
       if (!uploadResult?.file_url) throw new Error("Failed to upload image");
       const result = await base44.integrations.Core.GenerateImage({
-        prompt: `${tool.prompt}. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
+        prompt: `${tool.prompt}. Maintain all existing adjustments, colors, filters and edits. Reference image provided - apply the enhancement while maintaining the original composition, subject, and overall structure.`,
         existing_image_urls: [uploadResult.file_url]
       });
       if (!result?.url) throw new Error("Failed to generate image");
@@ -362,13 +374,13 @@ export default function Editor() {
 
   const handleApplyResult = useCallback(() => {
     if (resultImage) {
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
       const enhancedImage = { url: resultImage, preview: resultImage, name: "enhanced_image.png" };
       setCurrentImage(enhancedImage);
       setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? enhancedImage : img));
-      setAdjustments({ ...DEFAULT_ADJUSTMENTS });
-      setSelectedFilter(null);
       setBrushStrokes([]);
+      setPaintStrokes([]);
+      setMagicBrushPrompt("");
       setRedoHistory([]);
       setNeedsFit(true);
     }
@@ -378,7 +390,7 @@ export default function Editor() {
       revokeObjectURL(processedImage);
       setProcessedImage(null);
     }
-  }, [resultImage, currentImage, adjustments, selectedFilter, transform, processedImage, revokeObjectURL, currentImageIndex]);
+  }, [resultImage, currentImage, adjustments, selectedFilter, transform, brushStrokes, paintStrokes, processedImage, revokeObjectURL, currentImageIndex]);
 
   const handleCloseResult = useCallback(() => {
     setShowResult(false);
@@ -391,24 +403,28 @@ export default function Editor() {
   const handleUndo = useCallback(() => {
     if (undoHistory.length === 0) return;
     const previous = undoHistory[undoHistory.length - 1];
-    setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setRedoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
     setCurrentImage(previous.image);
     setAdjustments(previous.adjustments || { ...DEFAULT_ADJUSTMENTS });
     setSelectedFilter(previous.filter !== undefined ? previous.filter : null);
     setTransform(previous.transform || { rotate: 0, flipH: false, flipV: false });
+    setBrushStrokes(previous.brushStrokes || []);
+    setPaintStrokes(previous.paintStrokes || []);
     setUndoHistory(prev => prev.slice(0, -1));
-  }, [undoHistory, currentImage, adjustments, selectedFilter, transform]);
+  }, [undoHistory, currentImage, adjustments, selectedFilter, transform, brushStrokes, paintStrokes]);
 
   const handleRedo = useCallback(() => {
     if (redoHistory.length === 0) return;
     const next = redoHistory[redoHistory.length - 1];
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
     setCurrentImage(next.image);
     setAdjustments(next.adjustments || { ...DEFAULT_ADJUSTMENTS });
     setSelectedFilter(next.filter !== undefined ? next.filter : null);
     setTransform(next.transform || { rotate: 0, flipH: false, flipV: false });
+    setBrushStrokes(next.brushStrokes || []);
+    setPaintStrokes(next.paintStrokes || []);
     setRedoHistory(prev => prev.slice(0, -1));
-  }, [redoHistory, currentImage, adjustments, selectedFilter, transform]);
+  }, [redoHistory, currentImage, adjustments, selectedFilter, transform, brushStrokes, paintStrokes]);
 
   const handleDownload = useCallback(async () => {
     if (!currentImage) return;
@@ -436,21 +452,21 @@ export default function Editor() {
   const handleAdjustmentChange = useCallback((newAdjustments) => {
     if (adjustmentUndoTimerRef.current) clearTimeout(adjustmentUndoTimerRef.current);
     adjustmentUndoTimerRef.current = setTimeout(() => {
-      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+      setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
     }, 500);
     setAdjustments(newAdjustments);
     setRedoHistory([]);
-  }, [currentImage, adjustments, selectedFilter, transform]);
+    }, [currentImage, adjustments, selectedFilter, transform, brushStrokes, paintStrokes]);
 
   const handleFilterSelect = useCallback((filter) => {
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
     setSelectedFilter(filter);
     setRedoHistory([]);
-  }, [currentImage, adjustments, selectedFilter, transform]);
+  }, [currentImage, adjustments, selectedFilter, transform, brushStrokes, paintStrokes]);
 
   const handleTransform = useCallback(async (type) => {
     if (!currentImage) return;
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
     setIsProcessing(true);
     try {
       let tempTransform = { rotate: 0, flipH: false, flipV: false };
@@ -551,14 +567,16 @@ export default function Editor() {
   const handleApplyCrop = useCallback(async () => {
     if (!currentImage) return;
     setIsProcessing(true);
-    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
+    setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
     try {
       const bakeCanvas = await handleGenerateCanvas();
-      if (!bakeCanvas) { toast.error("Failed to generate canvas for cropping."); throw new Error("Failed to generate canvas"); }
-      const cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width - 1));
-      const cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height - 1));
-      const cropWidth = Math.max(2, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
-      const cropHeight = Math.max(2, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
+      if (!bakeCanvas || bakeCanvas.width <= 0 || bakeCanvas.height <= 0) { toast.error("Failed to generate canvas for cropping."); throw new Error("Invalid canvas"); }
+      let cropX = Math.max(0, Math.min((cropArea.x / 100) * bakeCanvas.width, bakeCanvas.width - 1));
+      let cropY = Math.max(0, Math.min((cropArea.y / 100) * bakeCanvas.height, bakeCanvas.height - 1));
+      let cropWidth = Math.max(2, Math.min((cropArea.width / 100) * bakeCanvas.width, bakeCanvas.width - cropX));
+      let cropHeight = Math.max(2, Math.min((cropArea.height / 100) * bakeCanvas.height, bakeCanvas.height - cropY));
+      cropX = Math.max(0, cropX);
+      cropY = Math.max(0, cropY);
       if (cropWidth <= 0 || cropHeight <= 0) {
         toast.error("Crop area too small. Increase the selection.");
         setIsProcessing(false);
@@ -576,13 +594,14 @@ export default function Editor() {
         }
         const url = createObjectURL(blob);
         const croppedImage = { url, preview: url, name: "cropped_image.png" };
-        setCurrentImage(prev => prev ? croppedImage : null);
-        setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? croppedImage : img));
-        setAdjustments({ ...DEFAULT_ADJUSTMENTS });
-        setSelectedFilter(null);
-        setBrushStrokes([]);
-        setPaintStrokes([]);
-        setIsCropping(false);
+          setCurrentImage(prev => prev ? croppedImage : null);
+          setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? croppedImage : img));
+          setAdjustments({ ...DEFAULT_ADJUSTMENTS });
+          setSelectedFilter(null);
+          setBrushStrokes([]);
+          setPaintStrokes([]);
+          setTransform({ rotate: 0, flipH: false, flipV: false });
+          setIsCropping(false);
         setRedoHistory([]);
         setIsProcessing(false);
         setNeedsFit(true);
@@ -708,9 +727,15 @@ export default function Editor() {
   const handleWheel = useCallback((e) => {
     if (currentImage) {
       const delta = e.deltaY * -0.001;
-      setZoom(z => Math.min(Math.max(z + delta, 0.1), 5));
+      const newZoom = Math.min(Math.max(zoom + delta, 0.1), 5);
+      setZoom(newZoom);
+      const maxPan = (newZoom - 1) * 200;
+      setPan(prev => ({
+        x: Math.max(-maxPan, Math.min(maxPan, prev.x)),
+        y: Math.max(-maxPan, Math.min(maxPan, prev.y))
+      }));
     }
-  }, [currentImage]);
+  }, [currentImage, zoom]);
 
   const getRelativePosition = useCallback((e) => {
     if (!imageRef.current) return null;
@@ -900,9 +925,9 @@ export default function Editor() {
     if (!paintCanvasRef.current || !imageRef.current || activeTab !== "paint") return;
     const canvas = paintCanvasRef.current;
     const img = imageRef.current;
-    const rect = img.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    canvas.width = img.naturalWidth || img.width || 0;
+    canvas.height = img.naturalHeight || img.height || 0;
+    if (canvas.width === 0 || canvas.height === 0) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     paintStrokes.forEach(stroke => {
@@ -940,9 +965,9 @@ export default function Editor() {
     if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
     const canvas = canvasRef.current;
     const img = imageRef.current;
-    const rect = img.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    canvas.width = img.naturalWidth || img.width || 0;
+    canvas.height = img.naturalHeight || img.height || 0;
+    if (canvas.width === 0 || canvas.height === 0) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (brushStrokes.length === 0) return;
