@@ -213,7 +213,7 @@ export default function PaintPanel({
           )}
           title="Settings"
         >
-          {showSettings ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          <SlidersHorizontal className="w-4 h-4" />
         </button>
       </div>
 
