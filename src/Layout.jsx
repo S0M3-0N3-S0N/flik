@@ -385,7 +385,7 @@ function LayoutContent({ children, currentPageName }) {
                     : "text-white/60"
                 }`}
               >
-                <div className={`w-6 h-6 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
+                <div className={`w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
                   currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
                 }`}>
                   {user?.profile_picture ? (
