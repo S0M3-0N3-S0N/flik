@@ -1124,20 +1124,21 @@ export default function Editor() {
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Paint</h3>
               {currentImage ? (
                 <PaintPanel
-                  brushColor={paintColor}
-                  onBrushColorChange={setPaintColor}
-                  brushSize={paintBrushSize}
-                  onBrushSizeChange={setPaintBrushSize}
-                  brushOpacity={paintOpacity * 100}
-                  onBrushOpacityChange={(v) => setPaintOpacity(v / 100)}
-                  paintMode={paintMode}
-                  onPaintModeChange={setPaintMode}
-                  onClearStrokes={() => setPaintStrokes([])}
-                  onUndoLastStroke={() => setPaintStrokes(prev => prev.slice(0, -1))}
-                  hasStrokes={paintStrokes.length > 0}
-                  strokeCount={paintStrokes.length}
-                  onEyeDropperActivate={() => setIsEyeDropperActive(true)}
-                  />
+                   brushColor={paintColor}
+                   onBrushColorChange={setPaintColor}
+                   brushSize={paintBrushSize}
+                   onBrushSizeChange={setPaintBrushSize}
+                   brushOpacity={paintOpacity * 100}
+                   onBrushOpacityChange={(v) => setPaintOpacity(v / 100)}
+                   paintMode={paintMode}
+                   onPaintModeChange={setPaintMode}
+                   onClearStrokes={() => setPaintStrokes([])}
+                   onUndoLastStroke={() => setPaintStrokes(prev => prev.slice(0, -1))}
+                   hasStrokes={paintStrokes.length > 0}
+                   strokeCount={paintStrokes.length}
+                   onEyeDropperActivate={() => setIsEyeDropperActive(true)}
+                   isEyeDropperActive={isEyeDropperActive}
+                   />
               ) : (
                 <p className="text-white/40 text-sm">Upload an image to start</p>
               )}
