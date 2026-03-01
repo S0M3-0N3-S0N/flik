@@ -159,29 +159,33 @@ export default function PaintPanel({
             </div>
           )}
 
-          {/* Scrollable color row */}
+          {/* Scrollable color rows — one per hue family */}
           <div className="space-y-1.5">
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">All Colors — swipe to explore</p>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">All Colors · swipe →</p>
             <div
-              className="overflow-x-auto pb-2"
+              className="space-y-1.5 overflow-x-auto pb-1"
               style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              <style>{`.color-scroll::-webkit-scrollbar { display: none; }`}</style>
-              <div className="color-scroll flex gap-2 w-max">
-                {allColors.map((color, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleColorSelect(color)}
-                    className={cn(
-                      "w-9 h-9 rounded-full border-2 transition-all duration-150 flex-shrink-0",
-                      brushColor === color
-                        ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
-                        : "border-transparent hover:scale-105"
-                    )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
+              <style>{`.color-row::-webkit-scrollbar { display: none; }`}</style>
+              {COLOR_FAMILIES.map((family, fi) => (
+                <div key={fi} className="color-row flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+                  {family.map((color, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleColorSelect(color)}
+                      className={cn(
+                        "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                        brushColor === color
+                          ? "border-[#FF6B35] scale-125 shadow-lg shadow-[#FF6B35]/50"
+                          : "border-transparent hover:scale-110",
+                        // Add a faint border for very light / white colors
+                        color === "#FFFFFF" || color === "#FFFFDD" || color === "#FFDDFF" ? "border-white/20" : ""
+                      )}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </div>
