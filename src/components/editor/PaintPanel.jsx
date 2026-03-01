@@ -115,6 +115,13 @@ export default function PaintPanel({
               <p className="text-xs text-white/80 font-medium">Selected</p>
               <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
             </div>
+            <button
+              onClick={onEyeDropperActivate}
+              className="ml-auto p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              title="Pick color from image"
+            >
+              <Droplet className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Recent colors */}
