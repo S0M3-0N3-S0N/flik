@@ -27,15 +27,14 @@ export default function PaintPanel({
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   return (
-    <>
-    {showColorPicker && (
-      <ColorPickerModal
-        color={brushColor}
-        onColorChange={onBrushColorChange}
-        onClose={() => setShowColorPicker(false)}
-      />
-    )}
     <div className="space-y-6">
+      {showColorPicker && (
+        <ColorPickerModal
+          color={brushColor}
+          onColorChange={onBrushColorChange}
+          onClose={() => setShowColorPicker(false)}
+        />
+      )}
       {/* Mode Toggle */}
       <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
         <button
