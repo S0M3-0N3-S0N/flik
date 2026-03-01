@@ -89,7 +89,9 @@ export function useMagicBrush() {
       const redCanvas = document.createElement('canvas');
       redCanvas.width = img.width;
       redCanvas.height = img.height;
+      if (redCanvas.width <= 0 || redCanvas.height <= 0) throw new Error('Invalid canvas dimensions');
       const redCtx = redCanvas.getContext('2d');
+      if (!redCtx) throw new Error('Failed to get canvas context');
       redCtx.drawImage(img, 0, 0);
       drawStrokes(redCtx, `rgba(255, 0, 0, 1)`, 'source-over', 1.0);
 
@@ -97,7 +99,9 @@ export function useMagicBrush() {
       const alphaCanvas = document.createElement('canvas');
       alphaCanvas.width = img.width;
       alphaCanvas.height = img.height;
+      if (alphaCanvas.width <= 0 || alphaCanvas.height <= 0) throw new Error('Invalid canvas dimensions');
       const alphaCtx = alphaCanvas.getContext('2d');
+      if (!alphaCtx) throw new Error('Failed to get canvas context');
       alphaCtx.drawImage(img, 0, 0);
       drawStrokes(alphaCtx, 'rgba(0,0,0,1)', 'destination-out', 1.1);
 
@@ -160,9 +164,10 @@ export function useMagicBrush() {
 
       // 4. Generate
       if (setActiveTool) setActiveTool({ label: "Applying Magic..." });
+      const generatedPrompt = llmResponse || "seamless inpainting, fill the transparent area naturally";
       const result = await base44.integrations.Core.GenerateImage({
-        prompt: llmResponse,
-        existing_image_urls: [alphaUpload.file_url, ...(magicBrushImages?.map(img => img.url) || [])]
+        prompt: generatedPrompt,
+        existing_image_urls: [alphaUpload.file_url, ...(magicBrushImages?.map(img => typeof img === 'string' ? img : img.url) || [])]
       });
 
       if (!result?.url) throw new Error('No result URL from image generation');
