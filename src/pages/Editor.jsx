@@ -723,8 +723,6 @@ export default function Editor() {
     // Eyedropper color picking
     if (isEyeDropperActive && currentImage && imageRef.current) {
       e.preventDefault();
-      setIsEyeDropperActive(false);
-      
       const pos = getRelativePosition(e);
       if (pos) {
         const imgElement = imageRef.current;
@@ -745,11 +743,12 @@ export default function Editor() {
           setPaintColor(hexColor);
           toast.success(`Color picked: ${hexColor}`);
         } catch (error) {
-          console.error("Eyedropper error (CORS?):", error);
-          toast.error("Could not pick color. Image might be from a different domain.");
+          console.error("Eyedropper error:", error);
+          toast.error("Could not pick color from this image.");
         }
         tempCanvas.remove();
       }
+      setIsEyeDropperActive(false);
       return;
     }
     
