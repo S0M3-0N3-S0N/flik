@@ -44,6 +44,11 @@ export default function SettingsDrawer({ open, onClose, settings, onChange }) {
                 onChange={v => onChange('timer', v)}
               />
             </SettingRow>
+
+            {/* Camera Guidance */}
+            <SettingRow label="Camera Guidance">
+              <Toggle value={settings.cameraGuidance ?? true} onChange={v => onChange('cameraGuidance', v)} />
+            </SettingRow>
           </motion.div>
         </>
       )}
