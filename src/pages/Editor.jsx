@@ -919,9 +919,11 @@ export default function Editor() {
             <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
               <Wand2 className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Paintbrush className="w-4 h-4" />
-            </TabsTrigger>
+            {user?.role === 'admin' && (
+              <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
+                <Paintbrush className="w-4 h-4" />
+              </TabsTrigger>
+            )}
             {user?.role === 'admin' && (
               <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
                 <Type className="w-4 h-4" />
