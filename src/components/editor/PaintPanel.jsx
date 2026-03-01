@@ -172,6 +172,5 @@ export default function PaintPanel({
         </div>
       )}
     </div>
-    </>
   );
 }
