@@ -102,9 +102,10 @@ export default function SpotRemoval({
     setIsUploading(true);
     try {
       const newImages = await Promise.all(files.map(async (file) => {
+        if (!file.type.startsWith('image/')) throw new Error(`Invalid file type: ${file.type}`);
         const result = await base44.integrations.Core.UploadFile({ file });
         if (!result?.file_url) throw new Error('No file URL returned');
-        return result.file_url;
+        return { url: result.file_url, title: file.name };
       }));
 
       const updatedImages = [...(Array.isArray(referenceImages) ? referenceImages : []), ...newImages];
@@ -128,10 +129,10 @@ export default function SpotRemoval({
         throw new Error("User not authenticated");
       }
       const creations = await base44.entities.Creation.filter(
-        { created_by: user.email },
-        '-created_date',
-        50
-      );
+          { created_by: user.email },
+          '-created_date',
+          200
+        );
       setGalleryCreations(creations);
     } catch (error) {
       console.error("Failed to load gallery:", error);

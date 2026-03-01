@@ -179,7 +179,7 @@ export default function ImageUploader({ onImageSelect, multiple = false }) {
           </div>
           <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition-colors">
             <HardDrive className="w-4 h-4 text-[#FFB800]" />
-            <span>Up to 10MB</span>
+            <span>Up to 50MB</span>
           </div>
         </motion.div>
         
