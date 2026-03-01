@@ -819,18 +819,25 @@ export default function Editor() {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     paintStrokes.forEach(stroke => {
-      const { points, color, size, opacity } = stroke;
-      if (!points || points.length === 0) return;
+    const { points, color, size, opacity, tool } = stroke;
+    if (!points || points.length === 0) return;
+    const isEraser = tool === "eraser" || !color;
+    if (isEraser) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
       const hex = color || "#FF6B35";
       const r = parseInt(hex.slice(1, 3), 16);
       const g = parseInt(hex.slice(3, 5), 16);
       const b = parseInt(hex.slice(5, 7), 16);
       ctx.strokeStyle = `rgba(${r},${g},${b},${opacity ?? 0.85})`;
       ctx.fillStyle = `rgba(${r},${g},${b},${opacity ?? 0.85})`;
-      ctx.lineWidth = size || 20;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.lineWidth = size || 20;
+    ctx.lineCap = tool === "highlighter" ? 'square' : 'round';
+    ctx.lineJoin = 'round';
       if (points.length === 1) {
         ctx.beginPath();
         ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, ctx.lineWidth / 2, 0, Math.PI * 2);
