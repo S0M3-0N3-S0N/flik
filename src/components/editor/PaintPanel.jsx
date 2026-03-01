@@ -3,44 +3,43 @@ import { Paintbrush, Eraser, RotateCcw, Trash2, Plus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
-// Full color-coordinated palette organized by hue family (dark → light per row)
+// Rainbow-ordered color palette: one long row per hue family, dark → light
+// Includes all primary + secondary + tertiary colors. Only 1 black and 1 white.
 const COLOR_FAMILIES = [
-  // Reds
-  ["#4A0000","#6B0000","#8B0000","#A00000","#B22222","#CC2200","#DD2222","#EE3333","#FF4444","#FF6666","#FF8888","#FFAAAA","#FFCCCC","#FFE5E5"],
-  // Red-Oranges
-  ["#5C1100","#7A1A00","#991500","#BB2200","#CC3300","#DD4400","#EE5500","#FF6633","#FF7744","#FF8855","#FFAA88","#FFCCAA","#FFDDCC","#FFEEEE"],
-  // Oranges
-  ["#4D1A00","#6B2800","#883300","#AA4400","#BB5500","#CC6600","#DD7700","#EE8800","#FF9900","#FFAA22","#FFBB55","#FFCC88","#FFDDAA","#FFEEDD"],
-  // Yellow-Oranges
-  ["#4D2D00","#6B4000","#886600","#AA8800","#BB9900","#CCAA00","#DDBB00","#EECC00","#FFD700","#FFE033","#FFE866","#FFF099","#FFF5BB","#FFFADD"],
-  // Yellows
-  ["#3D3D00","#5C5C00","#7A7A00","#999900","#AAAA00","#BBBB00","#CCCC00","#DDDD00","#EEEE00","#FFFF00","#FFFF44","#FFFF88","#FFFFAA","#FFFFDD"],
-  // Yellow-Greens
-  ["#1A3300","#2B4A00","#3D6600","#4F7F00","#669900","#77AA00","#88BB00","#99CC00","#AADD00","#BBEE00","#CCFF00","#DDFF55","#EEFF99","#F5FFCC"],
-  // Greens
-  ["#003300","#004D00","#006600","#007700","#008800","#009900","#00AA00","#00BB00","#00CC00","#00DD00","#00EE00","#44FF44","#88FF88","#CCFFCC"],
-  // Blue-Greens
-  ["#003322","#004D33","#006644","#007755","#008866","#009977","#00AA88","#00BB99","#00CCAA","#00DDBB","#00EECC","#44FFDD","#88FFEE","#CCFFF5"],
-  // Teals / Cyans
-  ["#003333","#004D4D","#006666","#007777","#008888","#009999","#00AAAA","#00BBBB","#00CCCC","#00DDDD","#00EEEE","#44FFFF","#88FFFF","#CCFFFF"],
-  // Sky Blues
-  ["#002244","#003366","#004488","#0055AA","#0066BB","#0077CC","#1188DD","#22AAEE","#33BBFF","#66CCFF","#99DDFF","#BBEEFF","#DDEEFF","#EEF8FF"],
-  // Blues
-  ["#000066","#000099","#0000BB","#0000DD","#1111EE","#2222FF","#4444FF","#6666FF","#8888FF","#AAAAFF","#CCCCFF","#DDDDFF","#EEEEFF","#F5F5FF"],
-  // Blue-Purples / Indigos
-  ["#1A0044","#280066","#380088","#4800AA","#5500BB","#6600CC","#7711DD","#8822EE","#9933FF","#AA55FF","#BB88FF","#CCAAFF","#DDCCFF","#EEEEFF"],
-  // Purples / Violets
-  ["#330033","#4D004D","#660066","#770077","#880088","#990099","#AA00AA","#BB22BB","#CC44CC","#DD66DD","#EE88EE","#FF99FF","#FFBBFF","#FFDDFF"],
-  // Magentas / Pinks
-  ["#440022","#660033","#880044","#AA0055","#CC0066","#DD1177","#EE2288","#FF33AA","#FF55BB","#FF77CC","#FF99DD","#FFBBEE","#FFDDFF","#FFF0FF"],
-  // Hot Pinks / Rose
-  ["#550022","#770033","#990044","#BB0055","#CC1166","#DD2277","#EE3388","#FF4499","#FF66AA","#FF88BB","#FFAACC","#FFCCDD","#FFEEEE","#FFF5F5"],
-  // Browns / Earth tones
-  ["#1A0A00","#2B1200","#3D1C00","#4F2800","#613300","#7A4400","#8B5513","#A0522D","#B8621A","#C8813A","#D4A574","#E8C4A0","#F0D8C0","#FFF0E8"],
-  // Grays
-  ["#000000","#111111","#222222","#333333","#444444","#555555","#666666","#777777","#888888","#999999","#AAAAAA","#BBBBBB","#CCCCCC","#DDDDDD"],
-  // Light grays to white
-  ["#AAAAAA","#BBBBBB","#CCCCCC","#DDDDDD","#E0E0E0","#E8E8E8","#EEEEEE","#F2F2F2","#F5F5F5","#F8F8F8","#FAFAFA","#FCFCFC","#FEFEFE","#FFFFFF"],
+  // ❤️ Reds
+  ["#3D0000","#660000","#8B0000","#B22222","#CC0000","#E50000","#FF0000","#FF3333","#FF6666","#FF9999","#FFCCCC"],
+  // 🟧 Red-Oranges
+  ["#4D1100","#7A1A00","#A02000","#C83200","#E84400","#FF4500","#FF6622","#FF8855","#FFAA88","#FFCCBB"],
+  // 🟠 Oranges
+  ["#3D1A00","#6B2E00","#994400","#CC5500","#E56600","#FF6600","#FF8800","#FFAA33","#FFCC77","#FFEEBB"],
+  // 🟡 Yellow-Oranges
+  ["#4D3300","#7A5000","#A07000","#CC9000","#E5AA00","#FFC000","#FFD000","#FFE033","#FFEE88","#FFF5CC"],
+  // 💛 Yellows
+  ["#3D3D00","#6B6B00","#999900","#CCCC00","#E5E500","#FFFF00","#FFFF33","#FFFF77","#FFFFAA","#FFFFDD"],
+  // 🟢 Yellow-Greens
+  ["#1E3300","#3A5C00","#558000","#70AA00","#88CC00","#AAEE00","#BBFF00","#CCFF44","#DDFF88","#EEFFBB"],
+  // 🟢 Greens
+  ["#003300","#005500","#007700","#009900","#00BB00","#00CC00","#00EE00","#33FF33","#77FF77","#AAFFAA","#DDFFDD"],
+  // 🌿 Blue-Greens / Teals
+  ["#002B1A","#004D33","#007755","#009966","#00BB88","#00CCAA","#00EEBB","#33FFCC","#77FFDD","#AAFFF0"],
+  // 🩵 Cyans
+  ["#003333","#005555","#007777","#009999","#00BBBB","#00CCCC","#00EEEE","#33FFFF","#77FFFF","#AAFFFF"],
+  // 🩵 Sky Blues
+  ["#001F3F","#003366","#005599","#0077CC","#1199EE","#33AAFF","#55BBFF","#88CCFF","#BBDDFF","#DDEEFF"],
+  // 💙 Blues
+  ["#000044","#000077","#0000AA","#0000DD","#2222FF","#5555FF","#7777FF","#9999FF","#BBBBFF","#DDDDFF"],
+  // 🟣 Indigos / Blue-Purples
+  ["#0D0033","#1A0066","#2E0099","#4400CC","#5500EE","#6611FF","#8844FF","#AA77FF","#CCAAFF","#EEDDFF"],
+  // 💜 Purples / Violets
+  ["#220033","#440066","#660099","#8800BB","#AA00CC","#BB11DD","#CC33EE","#DD66FF","#EE99FF","#FFCCFF"],
+  // 🩷 Magentas / Hot Pinks
+  ["#330022","#660044","#990066","#BB0088","#DD00AA","#FF00CC","#FF33DD","#FF66EE","#FF99F5","#FFCCFF"],
+  // 🌸 Pinks / Rose
+  ["#440022","#770044","#AA0055","#CC2266","#EE4488","#FF55AA","#FF77BB","#FF99CC","#FFBBDD","#FFDDEE"],
+  // 🤎 Browns / Earth
+  ["#1A0800","#3D1500","#6B2D00","#8B4513","#A0522D","#BC6C25","#D4935A","#E8B48A","#F5D0B0","#FFF0E8"],
+  // ⬛⬜ Black & White only
+  ["#000000","#FFFFFF"],
 ];
 
 export default function PaintPanel({
