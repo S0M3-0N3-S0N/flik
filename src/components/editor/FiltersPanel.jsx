@@ -19,7 +19,7 @@ const filters = [
 
 export default function FiltersPanel({ selectedFilter, onFilterSelect, previewImage }) {
   return (
-    <div className="py-6 px-4 grid grid-cols-2 gap-3 overflow-y-auto max-h-full pb-20">
+    <div className="py-6 px-4 grid grid-cols-2 gap-3 overflow-y-auto max-h-[calc(100%-2rem)]">
       {filters.map((filter, index) => (
         <motion.button
           key={filter.id}

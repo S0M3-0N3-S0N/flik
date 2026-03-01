@@ -97,7 +97,6 @@ export default function Editor() {
   const [regenerateAction, setRegenerateAction] = useState(null);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
-  const [generatedTextImage, setGeneratedTextImage] = useState(null);
   const [user, setUser] = useState(null);
   const [isEyeDropperActive, setIsEyeDropperActive] = useState(false);
 
@@ -228,7 +227,7 @@ export default function Editor() {
     };
     emblaApi.on('select', onSelect);
     return () => emblaApi.off('select', onSelect);
-  }, [emblaApi, currentImageIndex, loadedImages, currentImage, adjustments, selectedFilter, transform, brushStrokes, zoom, pan, resetImageState, isImageLocked]);
+  }, [emblaApi, isImageLocked]);
 
   // Fit image to container when needsFit is true
   useEffect(() => {
@@ -473,6 +472,7 @@ export default function Editor() {
         setRedoHistory([]);
         setIsProcessing(false);
         setNeedsFit(true);
+        canvas.remove();
       }, 'image/png');
     } catch (error) {
       console.error("Transform error:", error);
@@ -581,6 +581,7 @@ export default function Editor() {
         setIsProcessing(false);
         setNeedsFit(true);
         toast.success("Image cropped successfully!");
+        finalCanvas.remove();
       }, 'image/png', 1.0);
     } catch (error) {
       console.error("Error cropping:", error);
@@ -616,7 +617,6 @@ export default function Editor() {
   }, [currentImage, handleGetProcessedBlob]);
 
   const handleTextImageGenerated = useCallback((imageUrl) => {
-    setGeneratedTextImage(imageUrl);
     setResultImage(imageUrl);
     setShowResult(true);
   }, []);
@@ -745,8 +745,9 @@ export default function Editor() {
         } catch (error) {
           console.error("Eyedropper error:", error);
           toast.error("Could not pick color from this image.");
+        } finally {
+          tempCanvas.remove();
         }
-        tempCanvas.remove();
       }
       setIsEyeDropperActive(false);
       return;
@@ -1012,36 +1013,36 @@ export default function Editor() {
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-7 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
-            <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Sparkles className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Settings2 className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="filters" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Filter className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <RotateCw className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="crop" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <CropIcon className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-              <Wand2 className="w-4 h-4" />
-            </TabsTrigger>
-            {user?.role === 'admin' && (
-              <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-                <Paintbrush className="w-4 h-4" />
+            <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-8 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
+              <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="AI Tools">
+                <Sparkles className="w-4 h-4" />
               </TabsTrigger>
-            )}
-            {user?.role === 'admin' && (
-              <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]">
-                <Type className="w-4 h-4" />
+              <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Adjustments">
+                <Settings2 className="w-4 h-4" />
               </TabsTrigger>
-            )}
-          </TabsList>
+              <TabsTrigger value="filters" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Filters">
+                <Filter className="w-4 h-4" />
+              </TabsTrigger>
+              <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Transform">
+                <RotateCw className="w-4 h-4" />
+              </TabsTrigger>
+              <TabsTrigger value="crop" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Crop">
+                <CropIcon className="w-4 h-4" />
+              </TabsTrigger>
+              <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Magic Brush">
+                <Wand2 className="w-4 h-4" />
+              </TabsTrigger>
+              {user?.role === 'admin' && (
+                <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Paint">
+                  <Paintbrush className="w-4 h-4" />
+                </TabsTrigger>
+              )}
+              {user?.role === 'admin' && (
+                <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Text Generator">
+                  <Type className="w-4 h-4" />
+                </TabsTrigger>
+              )}
+            </TabsList>
 
           <div className="px-4 pb-4">
             <TabsContent value="ai" className="mt-0">
