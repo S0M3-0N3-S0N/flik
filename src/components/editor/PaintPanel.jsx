@@ -36,15 +36,10 @@ export default function PaintPanel({
           title="Paintbrush"
         >
           {/* Brush body */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-            {/* Handle */}
-            <div className="w-3 h-8 rounded-t-sm" style={{ background: paintMode === "draw" ? "#FF6B35" : "#555" }} />
-            {/* Ferrule */}
-            <div className="w-4 h-1.5 rounded-sm bg-white/40" />
-            {/* Bristles */}
-            <div
-              className="w-4 h-5 rounded-b-full"
-              style={{ background: paintMode === "draw" ? brushColor : "#888" }}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Paintbrush
+              className="w-8 h-8"
+              style={{ color: paintMode === "draw" ? brushColor : "#888" }}
             />
           </div>
           <span className="absolute bottom-1 text-[9px] font-semibold text-white/60">Brush</span>
