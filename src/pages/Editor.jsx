@@ -691,7 +691,9 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsDrawing(true);
-        setPaintStrokes(prev => [...prev, { points: [pos], color: paintColor, size: paintBrushSize, opacity: paintBrushOpacity }]);
+        const isEraser = paintActiveTool === "eraser";
+        const opacity = paintActiveTool === "highlighter" ? 0.4 : paintBrushOpacity;
+        setPaintStrokes(prev => [...prev, { points: [pos], color: isEraser ? null : paintColor, size: paintBrushSize, opacity, tool: paintActiveTool }]);
       }
     } else if (isCropping) {
       const pos = getRelativePosition(e);
