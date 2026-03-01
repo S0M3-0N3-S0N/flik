@@ -37,6 +37,8 @@ export function useCanvas() {
       canvas.height = img.height;
     }
 
+    if (canvas.width <= 0 || canvas.height <= 0) throw new Error('Invalid canvas dimensions');
+
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((transform.rotate * Math.PI) / 180);
@@ -57,7 +59,12 @@ export function useCanvas() {
       filters.push(selectedFilter.filter);
     }
 
-    ctx.filter = filters.join(" ") || "none";
+    try {
+      ctx.filter = filters.join(" ") || "none";
+    } catch (e) {
+      // Fallback for older browsers - filter not supported, continue without
+      ctx.filter = "none";
+    }
 
     // Draw image centered in the transformed context
     ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
