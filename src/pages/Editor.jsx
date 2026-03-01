@@ -363,7 +363,9 @@ export default function Editor() {
   const handleApplyResult = useCallback(() => {
     if (resultImage) {
       setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform }]);
-      setCurrentImage({ url: resultImage, preview: resultImage, name: "enhanced_image.png" });
+      const enhancedImage = { url: resultImage, preview: resultImage, name: "enhanced_image.png" };
+      setCurrentImage(enhancedImage);
+      setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? enhancedImage : img));
       setAdjustments({ ...DEFAULT_ADJUSTMENTS });
       setSelectedFilter(null);
       setBrushStrokes([]);
@@ -376,7 +378,7 @@ export default function Editor() {
       revokeObjectURL(processedImage);
       setProcessedImage(null);
     }
-  }, [resultImage, currentImage, adjustments, selectedFilter, transform, processedImage, revokeObjectURL]);
+  }, [resultImage, currentImage, adjustments, selectedFilter, transform, processedImage, revokeObjectURL, currentImageIndex]);
 
   const handleCloseResult = useCallback(() => {
     setShowResult(false);
@@ -465,14 +467,16 @@ export default function Editor() {
           return;
         }
         const url = createObjectURL(blob);
-        setCurrentImage(prev => prev ? { ...prev, url, preview: url, name: "transformed.png" } : null);
-        setTransform({ rotate: 0, flipH: false, flipV: false });
-        setBrushStrokes([]);
-        setPaintStrokes([]);
-        setRedoHistory([]);
-        setIsProcessing(false);
-        setNeedsFit(true);
-        canvas.remove();
+          const transformedImage = { url, preview: url, name: "transformed.png" };
+          setCurrentImage(prev => prev ? transformedImage : null);
+          setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? transformedImage : img));
+          setTransform({ rotate: 0, flipH: false, flipV: false });
+          setBrushStrokes([]);
+          setPaintStrokes([]);
+          setRedoHistory([]);
+          setIsProcessing(false);
+          setNeedsFit(true);
+          canvas.remove();
       }, 'image/png');
     } catch (error) {
       console.error("Transform error:", error);
@@ -571,7 +575,9 @@ export default function Editor() {
           return; 
         }
         const url = createObjectURL(blob);
-        setCurrentImage(prev => prev ? { ...prev, url, preview: url, name: "cropped_image.png" } : null);
+        const croppedImage = { url, preview: url, name: "cropped_image.png" };
+        setCurrentImage(prev => prev ? croppedImage : null);
+        setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? croppedImage : img));
         setAdjustments({ ...DEFAULT_ADJUSTMENTS });
         setSelectedFilter(null);
         setBrushStrokes([]);
