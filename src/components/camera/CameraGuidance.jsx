@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 export default function CameraGuidance({ videoRef, isActive }) {
@@ -69,13 +69,44 @@ Only respond with the tip, nothing else.`,
     <AnimatePresence>
       {guidance && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/70 backdrop-blur-md rounded-2xl px-4 py-2 max-w-xs"
+          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: 20 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="fixed inset-0 flex items-center justify-center pointer-events-none z-40"
         >
-          <Lightbulb className="w-4 h-4 text-[#FFB800] flex-shrink-0" />
-          <p className="text-white text-sm font-medium">{guidance}</p>
+          {/* Backdrop blur */}
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-auto" />
+          
+          {/* Liquid glass card */}
+          <motion.div
+            className="relative mx-4 px-8 py-6 rounded-3xl max-w-sm text-center pointer-events-auto"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255, 107, 53, 0.2) 0%, rgba(255, 184, 0, 0.1) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: '1.5px solid rgba(255, 107, 53, 0.3)',
+              boxShadow: '0 8px 32px rgba(255, 107, 53, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+              >
+                <Zap className="w-5 h-5 text-[#FF6B35]" />
+              </motion.div>
+              <h3 className="text-white font-bold text-lg">AI Tip</h3>
+            </div>
+            <p className="text-white/90 text-base font-medium leading-relaxed">{guidance}</p>
+            
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{
+                background: 'radial-gradient(circle at 50% 0%, rgba(255, 107, 53, 0.1), transparent 70%)',
+                pointerEvents: 'none'
+              }}
+            />
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
