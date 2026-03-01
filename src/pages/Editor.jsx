@@ -711,7 +711,7 @@ export default function Editor() {
         }
       }
     }
-  }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea]);
+  }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea, paintColor, paintBrushSize, paintMode]);
 
   const handleMouseMove = useCallback((e) => {
     if (e.cancelable && (isDrawing || isDragging || isPanning)) e.preventDefault();
