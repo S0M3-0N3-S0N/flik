@@ -53,7 +53,7 @@ export default function PaintPanel({
   onUndoLastStroke,
   hasStrokes,
   strokeCount,
-  brushOpacity = 100,
+  brushOpacity,
   onBrushOpacityChange,
 }) {
   const colorInputRef = useRef(null);
@@ -216,18 +216,18 @@ export default function PaintPanel({
       </div>
 
       {/* Transparency / Opacity */}
-      {paintMode === "draw" && (
+      {paintMode === "draw" && onBrushOpacityChange && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-white/80">Transparency</p>
-            <span className="text-sm text-white/60 bg-white/10 rounded-lg px-3 py-1 font-mono min-w-[48px] text-center">{onBrushOpacityChange ? brushOpacity : 100}%</span>
+            <span className="text-sm text-white/60 bg-white/10 rounded-lg px-3 py-1 font-mono min-w-[48px] text-center">{brushOpacity ?? 100}%</span>
           </div>
           <Slider
-            value={[onBrushOpacityChange ? brushOpacity : 100]}
+            value={[brushOpacity ?? 100]}
             min={1}
             max={100}
             step={1}
-            onValueChange={([v]) => onBrushOpacityChange?.(v)}
+            onValueChange={([v]) => onBrushOpacityChange(v)}
             className="w-full"
           />
         </div>

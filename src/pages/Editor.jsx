@@ -712,7 +712,7 @@ export default function Editor() {
       const pos = getRelativePosition(e);
       if (pos) {
         setIsDrawing(true);
-        setPaintStrokes(prev => [...prev, { points: [pos], color: paintColor, size: paintBrushSize, mode: paintMode }]);
+        setPaintStrokes(prev => [...prev, { points: [pos], color: paintColor, size: paintBrushSize, mode: paintMode, opacity: paintOpacity * 100 }]);
       }
     } else if (activeTab === "remove" && currentImage) {
       const pos = getRelativePosition(e);
@@ -742,7 +742,13 @@ export default function Editor() {
   }, [isSpacePressed, isPanToolActive, activeTab, currentImage, getRelativePosition, brushMode, brushSize, isCropping, cropArea, paintColor, paintBrushSize, paintMode]);
 
   const handleMouseMove = useCallback((e) => {
-    if (e.cancelable && (isDrawing || isDragging || isPanning)) e.preventDefault();
+    if (e?.cancelable && (isDrawing || isDragging || isPanning)) {
+      try {
+        e.preventDefault();
+      } catch (err) {
+        // preventDefault can fail on non-cancelable events
+      }
+    }
     const clientX = e.touches?.length > 0 ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches?.length > 0 ? e.touches[0].clientY : e.clientY;
 
@@ -837,7 +843,7 @@ export default function Editor() {
       if (!points.length) return;
       const size = stroke.size || paintBrushSize;
       const color = stroke.color || paintColor;
-      const opacity = stroke.opacity !== undefined ? stroke.opacity / 100 : paintBrushSize > 0 ? 1 : 0.85;
+      const opacity = stroke.opacity !== undefined ? stroke.opacity / 100 : 1;
       ctx.globalCompositeOperation = stroke.mode === "erase" ? 'destination-out' : 'source-over';
       ctx.strokeStyle = color;
       ctx.fillStyle = color;
@@ -860,7 +866,7 @@ export default function Editor() {
     });
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
-  }, [paintStrokes, paintBrushSize, paintColor, activeTab]);
+  }, [paintStrokes, paintBrushSize, paintColor, paintOpacity, activeTab]);
 
   // Draw brush strokes on canvas overlay
   useEffect(() => {
@@ -899,6 +905,26 @@ export default function Editor() {
     });
     ctx.globalCompositeOperation = 'source-over';
   }, [brushStrokes, brushSize, brushOpacity, activeTab]);
+  
+  // Reset canvas context when switching tabs
+  useEffect(() => {
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+    if (paintCanvasRef.current) {
+      const ctx = paintCanvasRef.current.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, paintCanvasRef.current.width, paintCanvasRef.current.height);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+  }, [activeTab]);
 
   const getFilterStyle = useCallback(() => {
     const filters = [];
@@ -1045,6 +1071,8 @@ export default function Editor() {
                   onBrushColorChange={setPaintColor}
                   brushSize={paintBrushSize}
                   onBrushSizeChange={setPaintBrushSize}
+                  brushOpacity={paintOpacity * 100}
+                  onBrushOpacityChange={(v) => setPaintOpacity(v / 100)}
                   paintMode={paintMode}
                   onPaintModeChange={setPaintMode}
                   onClearStrokes={() => setPaintStrokes([])}

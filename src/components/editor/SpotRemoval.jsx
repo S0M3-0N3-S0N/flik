@@ -107,7 +107,7 @@ export default function SpotRemoval({
         return result.file_url;
       }));
 
-      const updatedImages = [...(referenceImages || []), ...newImages];
+      const updatedImages = [...(Array.isArray(referenceImages) ? referenceImages : []), ...newImages];
       onReferenceImagesChange(updatedImages);
       toast.success(`${files.length} image${files.length > 1 ? 's' : ''} uploaded successfully!`);
       if (e.target) e.target.value = '';
@@ -143,7 +143,8 @@ export default function SpotRemoval({
   };
 
   const handleGalleryToggle = (creation) => {
-    const imageUrl = creation.thumbnail_url || creation.url;
+    const imageUrl = creation?.thumbnail_url || creation?.url;
+    if (!imageUrl) return;
     setSelectedGalleryImages(prev => 
       prev.includes(imageUrl) 
         ? prev.filter(url => url !== imageUrl)
@@ -153,7 +154,8 @@ export default function SpotRemoval({
 
   const handleAddSelectedImages = () => {
     if (selectedGalleryImages.length > 0) {
-      onReferenceImagesChange([...referenceImages, ...selectedGalleryImages]);
+      const currentRefs = Array.isArray(referenceImages) ? referenceImages : [];
+      onReferenceImagesChange([...currentRefs, ...selectedGalleryImages]);
       toast.success(`${selectedGalleryImages.length} image${selectedGalleryImages.length > 1 ? 's' : ''} added from gallery`);
       setSelectedGalleryImages([]);
       setShowGalleryPicker(false);
