@@ -116,7 +116,7 @@ export default function PaintPanel({
             />
             <div>
               <p className="text-xs text-white/80 font-medium">Selected</p>
-              <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
+              <p className="text-xs text-white/40 font-mono">{getClosestPantone(brushColor)}</p>
             </div>
             <button
               onClick={onEyeDropperActivate}
