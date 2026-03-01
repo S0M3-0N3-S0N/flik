@@ -609,10 +609,13 @@ export default function CameraPage() {
 
         {/* Grid */}
         {settings.showGrid && !photo && (
-          <div className="absolute inset-0 pointer-events-none" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
-            {[...Array(9)].map((_, i) => <div key={i} className="border border-white/20" />)}
-          </div>
+         <div className="absolute inset-0 pointer-events-none" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
+           {[...Array(9)].map((_, i) => <div key={i} className="border border-white/20" />)}
+         </div>
         )}
+
+        {/* Camera Guidance */}
+        {!photo && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
 
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
