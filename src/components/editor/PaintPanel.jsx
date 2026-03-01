@@ -168,7 +168,7 @@ export default function PaintPanel({
             >
               <style>{`.color-row::-webkit-scrollbar { display: none; }`}</style>
               {COLOR_FAMILIES.map((family, fi) => (
-                <div key={fi} className="color-row flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+                <div key={fi} className="color-row flex gap-1.5 md:gap-2 overflow-x-auto pb-0.5 w-full" style={{ scrollbarWidth: "none" }}>
                   {family.map((color, i) => (
                     <button
                       key={i}
