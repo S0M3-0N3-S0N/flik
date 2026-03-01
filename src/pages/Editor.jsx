@@ -118,7 +118,7 @@ export default function Editor() {
 
   // Register actions for FLIK
   useFlikActions('Editor', {
-    tool: (payload) => { setActiveTab(payload.id); },
+    tool: (payload) => { setActiveTab(payload.id === 'text' ? 'text' : payload.id); },
     adjustment: (payload) => {
       const newAdjustments = { ...adjustments, [payload.key]: payload.value };
       handleAdjustmentChange(newAdjustments);
