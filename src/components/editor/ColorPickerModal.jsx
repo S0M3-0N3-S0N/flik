@@ -106,21 +106,21 @@ export default function ColorPickerModal({ color, onColorChange, onClose }) {
     <div className="fixed inset-0 z-[200] flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-sm rounded-t-3xl bg-[#141414] border border-white/10 p-5 pb-8 space-y-5"
+        className="relative w-full max-w-sm rounded-t-2xl bg-[#141414] border border-white/10 p-3 pb-5 space-y-3"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-white/60">Custom Color</span>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-            <X className="w-4 h-4 text-white/80" />
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-semibold text-white/60">Custom Color</span>
+          <button onClick={onClose} className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
+            <X className="w-3 h-3 text-white/80" />
           </button>
         </div>
 
         {/* Saturation / Value Box */}
         <div
           ref={satValRef}
-          className="relative w-full h-44 rounded-2xl overflow-hidden cursor-crosshair select-none"
+          className="relative w-full h-28 rounded-xl overflow-hidden cursor-crosshair select-none"
           style={{
             background: `linear-gradient(to right, white, ${hueToHex(hue)})`,
           }}
