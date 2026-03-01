@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from "react";
-import { Upload, Image, X } from "lucide-react";
+import React, { useCallback, useState, useRef } from "react";
+import { Upload, Image, FileType, HardDrive } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ImageUploader({ onImageSelect, multiple = false }) {
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
 
   const processFile = useCallback((file) => {
     const reader = new FileReader();
@@ -76,15 +77,16 @@ export default function ImageUploader({ onImageSelect, multiple = false }) {
         onDrop={handleDrop}
         className={`
           relative w-full max-w-2xl aspect-square sm:aspect-video cursor-pointer
-          rounded-2xl sm:rounded-3xl border-2 border-dashed transition-all duration-300
-          flex flex-col items-center justify-center gap-4 sm:gap-6
+          rounded-3xl border-2 border-dashed overflow-hidden transition-all duration-300
+          flex flex-col items-center justify-center gap-6
           ${isDragging 
-            ? "border-[#FF6B35] bg-[#FF6B35]/10" 
-            : "border-white/20 hover:border-white/40 bg-white/5"
+            ? "border-[#FF6B35] bg-[#FF6B35]/15 shadow-lg shadow-[#FF6B35]/30" 
+            : "border-white/15 hover:border-white/30 bg-gradient-to-br from-white/8 to-white/3 hover:shadow-lg hover:shadow-white/10"
           }
         `}
       >
         <input
+          ref={fileInputRef}
           type="file"
           accept="image/*"
           multiple={multiple}
@@ -92,38 +94,77 @@ export default function ImageUploader({ onImageSelect, multiple = false }) {
           className="hidden"
         />
         
+        {/* Animated background grid */}
+        <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: "40px 40px" }} />
+        
+        {/* Icon with enhanced animation */}
         <motion.div 
-          animate={{ y: isDragging ? -10 : 0 }}
+          animate={{ 
+            y: isDragging ? -15 : 0,
+            scale: isDragging ? 1.1 : 1
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className={`
-            w-20 h-20 rounded-2xl flex items-center justify-center
-            ${isDragging ? "btn-gradient" : "bg-white/10"}
+            w-24 h-24 rounded-3xl flex items-center justify-center transition-all duration-300
+            ${isDragging 
+              ? "bg-gradient-to-br from-[#FF6B35] to-[#F72C25] shadow-2xl shadow-[#FF6B35]/50" 
+              : "bg-gradient-to-br from-white/15 to-white/5 hover:from-white/20 hover:to-white/10"
+            }
           `}
         >
-          <Upload className={`w-8 h-8 ${isDragging ? "text-white" : "text-white/60"}`} />
+          <motion.div
+            animate={{ rotate: isDragging ? 360 : 0 }}
+            transition={{ duration: isDragging ? 0.6 : 0.3 }}
+          >
+            <Upload className={`w-10 h-10 transition-colors ${isDragging ? "text-white" : "text-white/70"}`} />
+          </motion.div>
         </motion.div>
         
-        <div className="text-center">
-          <p className="text-lg font-medium text-white/90">
-            {isDragging ? "Drop your image here" : "Drag & drop an image"}
-          </p>
-          <p className="text-sm text-white/50 mt-2">
-            or click to browse from your device
+        {/* Main text with gradient */}
+        <div className="text-center relative z-10">
+          <motion.p 
+            animate={{ scale: isDragging ? 1.05 : 1 }}
+            className={`text-xl sm:text-2xl font-bold transition-colors ${isDragging ? "text-white gradient-text" : "text-white/95"}`}
+          >
+            {isDragging ? "Drop your image" : "Upload an Image"}
+          </motion.p>
+          <p className="text-sm text-white/50 mt-3">
+            Drag & drop or{" "}
+            <motion.button
+              onClick={() => fileInputRef.current?.click()}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="text-[#FF6B35] hover:text-[#FFB800] font-semibold inline underline transition-colors"
+            >
+              browse files
+            </motion.button>
           </p>
         </div>
         
-        <div className="flex items-center gap-4 text-xs text-white/40">
-          <span className="flex items-center gap-1">
-            <Image className="w-3 h-3" />
-            PNG, JPG, WEBP
-          </span>
-          <span>Up to 10MB</span>
-        </div>
+        {/* Specs section with icons */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex flex-col sm:flex-row items-center gap-6 text-xs text-white/50 relative z-10"
+        >
+          <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition-colors">
+            <FileType className="w-4 h-4 text-[#FF6B35]" />
+            <span>PNG, JPG, WEBP, GIF</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition-colors">
+            <HardDrive className="w-4 h-4 text-[#FFB800]" />
+            <span>Up to 10MB</span>
+          </div>
+        </motion.div>
         
-        <div className="absolute inset-0 rounded-3xl opacity-50 pointer-events-none"
+        {/* Gradient border effect on drag */}
+        <motion.div 
+          className="absolute inset-0 rounded-3xl pointer-events-none opacity-0"
+          animate={{ opacity: isDragging ? 1 : 0 }}
+          transition={{ duration: 0.2 }}
           style={{
-            background: isDragging 
-              ? "linear-gradient(135deg, rgba(255,107,53,0.2) 0%, rgba(247,44,37,0.2) 50%, rgba(255,184,0,0.2) 100%)"
-              : "transparent"
+            background: "linear-gradient(135deg, rgba(255,107,53,0.3) 0%, rgba(247,44,37,0.2) 50%, rgba(255,184,0,0.2) 100%)"
           }}
         />
       </label>
