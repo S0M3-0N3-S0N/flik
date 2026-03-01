@@ -146,6 +146,7 @@ ${currentPage === 'Editor' ? `
 ❌ NOT AVAILABLE: apply_prompt, apply_style
 Example working actions:
 - { "type": "tool", "label": "Open Magic Brush", "payload": { "id": "remove" } }
+- { "type": "tool", "label": "Open AI Text Generator", "payload": { "id": "text" } }
 - { "type": "adjustment", "label": "Brightness", "payload": { "key": "brightness", "value": 30 } }
 - { "type": "navigate", "label": "Go to Generator", "payload": { "page": "Generate" } }` : 
   currentPage === 'Generate' ? `
