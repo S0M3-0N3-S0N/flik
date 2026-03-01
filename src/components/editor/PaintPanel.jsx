@@ -56,6 +56,7 @@ export default function PaintPanel({
   brushOpacity,
   onBrushOpacityChange,
   onEyeDropperActivate,
+  isEyeDropperActive,
 }) {
   const colorInputRef = useRef(null);
   const [recentColors, setRecentColors] = useState([]);
