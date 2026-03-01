@@ -117,11 +117,16 @@ export default function Editor() {
     setSelectedFilter(null);
     setTransform({ rotate: 0, flipH: false, flipV: false });
     setBrushStrokes([]);
+    setPaintStrokes([]);
     setIsCropping(false);
     setCropArea({ x: 10, y: 10, width: 80, height: 80 });
     setActiveRatio(null);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
     setUndoHistory([]);
     setRedoHistory([]);
+    setMagicBrushPrompt("");
+    setMagicBrushImages([]);
     setNeedsFit(true);
   }, []);
 
@@ -379,9 +384,14 @@ export default function Editor() {
       const enhancedImage = { url: resultImage, preview: resultImage, name: "enhanced_image.png" };
       setCurrentImage(enhancedImage);
       setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? enhancedImage : img));
+      setAdjustments({ ...DEFAULT_ADJUSTMENTS });
+      setSelectedFilter(null);
       setBrushStrokes([]);
       setPaintStrokes([]);
       setMagicBrushPrompt("");
+      setTransform({ rotate: 0, flipH: false, flipV: false });
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
       setRedoHistory([]);
       setNeedsFit(true);
     }
@@ -475,7 +485,7 @@ export default function Editor() {
       else if (type === 'rotate-left') tempTransform.rotate = -90;
       else if (type === 'flip-horizontal') tempTransform.flipH = true;
       else if (type === 'flip-vertical') tempTransform.flipV = true;
-      const canvas = await generateCanvas(currentImage, adjustments, tempTransform, selectedFilter);
+      const canvas = await generateCanvas(currentImage, adjustments, tempTransform, selectedFilter, []);
       if (!canvas) { toast.error("Failed to generate canvas for transform."); throw new Error("Failed to generate canvas"); }
       canvas.toBlob((blob) => {
         if (!blob) { 
@@ -487,14 +497,18 @@ export default function Editor() {
           const transformedImage = { url, preview: url, name: "transformed.png" };
           setCurrentImage(prev => prev ? transformedImage : null);
           setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? transformedImage : img));
+          setAdjustments({ ...DEFAULT_ADJUSTMENTS });
+          setSelectedFilter(null);
           setTransform({ rotate: 0, flipH: false, flipV: false });
           setBrushStrokes([]);
           setPaintStrokes([]);
+          setZoom(1);
+          setPan({ x: 0, y: 0 });
           setRedoHistory([]);
           setIsProcessing(false);
           setNeedsFit(true);
           canvas.remove();
-      }, 'image/png');
+      }, 'image/png', 1.0);
     } catch (error) {
       console.error("Transform error:", error);
       setIsProcessing(false);
@@ -503,6 +517,14 @@ export default function Editor() {
   }, [currentImage, adjustments, selectedFilter, transform, generateCanvas, createObjectURL]);
 
   const handleMagicBrush = useCallback(async () => {
+    if (!magicBrushPrompt.trim()) {
+      toast.error("Please enter a prompt for the magic brush");
+      return;
+    }
+    if (brushStrokes.length === 0) {
+      toast.error("Please draw on the image to create a mask");
+      return;
+    }
     setRegenerateAction(() => () => handleMagicBrush());
     try {
       const resultUrl = await processMagicBrush({
@@ -601,7 +623,10 @@ export default function Editor() {
           setSelectedFilter(null);
           setBrushStrokes([]);
           setPaintStrokes([]);
+          setMagicBrushPrompt("");
           setTransform({ rotate: 0, flipH: false, flipV: false });
+          setZoom(1);
+          setPan({ x: 0, y: 0 });
           setIsCropping(false);
         setRedoHistory([]);
         setIsProcessing(false);
@@ -730,7 +755,8 @@ export default function Editor() {
       const delta = e.deltaY * -0.001;
       const newZoom = Math.min(Math.max(zoom + delta, 0.1), 5);
       setZoom(newZoom);
-      const maxPan = (newZoom - 1) * 200;
+      // Adjust pan limits based on new zoom level
+      const maxPan = Math.max((newZoom - 1) * 100, 0);
       setPan(prev => ({
         x: Math.max(-maxPan, Math.min(maxPan, prev.x)),
         y: Math.max(-maxPan, Math.min(maxPan, prev.y))

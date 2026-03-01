@@ -13,8 +13,8 @@ export default function AdjustmentsPanel({ adjustments, onChange }) {
     { key: "brightness", label: "Brightness", icon: Sun, min: -100, max: 100, step: 1 },
     { key: "contrast", label: "Contrast", icon: SlidersHorizontal, min: -100, max: 100, step: 1 },
     { key: "saturation", label: "Saturation", icon: Droplets, min: -100, max: 100, step: 1 },
-    { key: "blur", label: "Blur", icon: Layers, min: 0, max: 20, step: 1 },
-    { key: "hue", label: "Hue", icon: Palette, min: 0, max: 360, step: 1 },
+    { key: "blur", label: "Blur", icon: Layers, min: 0, max: 50, step: 1 },
+    { key: "hue", label: "Hue", icon: Palette, min: -180, max: 180, step: 1 },
     { key: "sepia", label: "Sepia", icon: Ghost, min: 0, max: 100, step: 1 },
     { key: "grayscale", label: "B&W", icon: Activity, min: 0, max: 100, step: 1 },
   ];
