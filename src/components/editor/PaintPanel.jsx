@@ -58,9 +58,21 @@ export default function PaintPanel({
   onBrushOpacityChange,
 }) {
   const colorInputRef = useRef(null);
+  const [recentColors, setRecentColors] = useState([]);
+
+  const handleColorSelect = (color) => {
+    onBrushColorChange(color);
+    setRecentColors(prev => {
+      const filtered = prev.filter(c => c !== color);
+      return [color, ...filtered].slice(0, 7);
+    });
+  };
+
+  // Flatten all colors into one scrollable row (color-coordinated order)
+  const allColors = COLOR_FAMILIES.flat();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Mode Toggle */}
       <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
         <button
@@ -92,58 +104,86 @@ export default function PaintPanel({
       {/* Color Section */}
       {paintMode === "draw" && (
         <div className="space-y-3">
-          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
-
-          {/* Color Circles */}
-          <div className="flex flex-wrap gap-2">
-            {PRESET_COLORS.map((color) => (
-              <button
-                key={color}
-                onClick={() => onBrushColorChange(color)}
-                className={cn(
-                  "w-9 h-9 rounded-full border-2 transition-all duration-150 flex-shrink-0",
-                  brushColor === color
-                    ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
-                    : "border-transparent hover:scale-105"
-                )}
-                style={{ backgroundColor: color }}
-              />
-            ))}
-
-            {/* Custom color picker button */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Color</p>
+            {/* Custom color picker */}
             <button
               onClick={() => colorInputRef.current?.click()}
-              className={cn(
-                "w-9 h-9 rounded-full border-2 transition-all duration-150 flex-shrink-0 flex items-center justify-center overflow-hidden",
-                !PRESET_COLORS.includes(brushColor)
-                  ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
-                  : "border-transparent hover:scale-105"
-              )}
-              style={{
-                background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)"
-              }}
+              className="relative w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/20"
+              style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}
               title="Custom color"
             >
-              <div className="w-4 h-4 rounded-full bg-white/90 flex items-center justify-center">
-                <Plus className="w-2.5 h-2.5 text-black" />
+              <div className="w-3.5 h-3.5 rounded-full bg-black/60 flex items-center justify-center">
+                <Plus className="w-2 h-2 text-white" />
               </div>
               <input
                 ref={colorInputRef}
                 type="color"
                 value={brushColor}
-                onChange={(e) => onBrushColorChange(e.target.value)}
+                onChange={(e) => handleColorSelect(e.target.value)}
                 className="absolute opacity-0 w-0 h-0 pointer-events-none"
               />
             </button>
+          </div>
 
-            {/* Currently selected custom color indicator */}
-            {!PRESET_COLORS.includes(brushColor) && (
-              <button
-                className="w-9 h-9 rounded-full border-2 border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40 flex-shrink-0"
-                style={{ backgroundColor: brushColor }}
-                onClick={() => colorInputRef.current?.click()}
-              />
-            )}
+          {/* Currently selected color preview */}
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
+            <div
+              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg"
+              style={{ backgroundColor: brushColor }}
+            />
+            <div>
+              <p className="text-xs text-white/80 font-medium">Selected</p>
+              <p className="text-xs text-white/40 font-mono">{brushColor.toUpperCase()}</p>
+            </div>
+          </div>
+
+          {/* Recent colors */}
+          {recentColors.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Recent</p>
+              <div className="flex gap-2">
+                {recentColors.map((color, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleColorSelect(color)}
+                    className={cn(
+                      "w-8 h-8 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                      brushColor === color
+                        ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
+                        : "border-white/20 hover:scale-105"
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Scrollable color row */}
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">All Colors — swipe to explore</p>
+            <div
+              className="overflow-x-auto pb-2"
+              style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              <style>{`.color-scroll::-webkit-scrollbar { display: none; }`}</style>
+              <div className="color-scroll flex gap-2 w-max">
+                {allColors.map((color, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleColorSelect(color)}
+                    className={cn(
+                      "w-9 h-9 rounded-full border-2 transition-all duration-150 flex-shrink-0",
+                      brushColor === color
+                        ? "border-[#FF6B35] scale-110 shadow-lg shadow-[#FF6B35]/40"
+                        : "border-transparent hover:scale-105"
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -160,7 +200,7 @@ export default function PaintPanel({
           max={80}
           step={1}
           onValueChange={([v]) => onBrushSizeChange(v)}
-          className="w-full [&_[data-slot=slider-track]]:bg-white/10 [&_[data-slot=slider-range]]:bg-gradient-to-r [&_[data-slot=slider-range]]:from-[#FF6B35] [&_[data-slot=slider-range]]:to-[#F72C25]"
+          className="w-full"
         />
       </div>
 
@@ -169,7 +209,7 @@ export default function PaintPanel({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-white/80">Transparency</p>
-            <span className="text-sm text-white/60 bg-white/10 rounded-lg px-3 py-1 font-mono min-w-[48px] text-center">{onBrushOpacityChange ? brushOpacity : 100}</span>
+            <span className="text-sm text-white/60 bg-white/10 rounded-lg px-3 py-1 font-mono min-w-[48px] text-center">{onBrushOpacityChange ? brushOpacity : 100}%</span>
           </div>
           <Slider
             value={[onBrushOpacityChange ? brushOpacity : 100]}
@@ -177,7 +217,7 @@ export default function PaintPanel({
             max={100}
             step={1}
             onValueChange={([v]) => onBrushOpacityChange?.(v)}
-            className="w-full [&_[data-slot=slider-track]]:bg-white/10 [&_[data-slot=slider-range]]:bg-gradient-to-r [&_[data-slot=slider-range]]:from-[#FF6B35] [&_[data-slot=slider-range]]:to-[#F72C25]"
+            className="w-full"
           />
         </div>
       )}
