@@ -93,17 +93,7 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
             <DialogTitle className="text-2xl sm:text-3xl font-bold gradient-text text-center mb-2">
               Gallery
             </DialogTitle>
-            <p className="text-sm text-white/60 mb-4 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-xs font-medium">
-                <ImageIcon className="w-3.5 h-3.5" />
-                {filteredCreations.length} image{filteredCreations.length !== 1 ? 's' : ''}
-              </span>
-              {selectedIds.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium animate-pulse">
-                  ✓ {selectedIds.length} selected
-                </span>
-              )}
-            </p>
+
             <div className="relative">
               <Input
                 value={searchTerm}
