@@ -726,17 +726,37 @@ export default function Editor() {
       return;
     }
 
-    if (activeTab === "remove" && cursorRef.current && containerRef.current && clientX !== undefined) {
+    if ((activeTab === "remove" || activeTab === "paint") && cursorRef.current && containerRef.current && clientX !== undefined) {
       const rect = containerRef.current.getBoundingClientRect();
       cursorRef.current.style.left = `${clientX - rect.left}px`;
       cursorRef.current.style.top = `${clientY - rect.top}px`;
       cursorRef.current.style.display = 'block';
+      if (activeTab === "paint") {
+        cursorRef.current.style.borderColor = paintColor;
+        cursorRef.current.style.backgroundColor = paintColor + "44";
+        cursorRef.current.style.width = `${paintBrushSize * zoom}px`;
+        cursorRef.current.style.height = `${paintBrushSize * zoom}px`;
+      } else {
+        cursorRef.current.style.borderColor = brushMode === 'erase' ? 'rgba(255,255,255,0.8)' : 'rgba(255,107,53,0.8)';
+        cursorRef.current.style.backgroundColor = brushMode === 'erase' ? 'rgba(255,255,255,0.2)' : 'rgba(255,107,53,0.2)';
+        cursorRef.current.style.width = `${brushSize * zoom}px`;
+        cursorRef.current.style.height = `${brushSize * zoom}px`;
+      }
     }
 
     if (activeTab === "remove" && isDrawing && currentImage) {
       const pos = getRelativePosition(e);
       if (pos && brushStrokes.length > 0) {
         setBrushStrokes(prev => {
+          const newStrokes = [...prev];
+          newStrokes[newStrokes.length - 1].points.push(pos);
+          return newStrokes;
+        });
+      }
+    } else if (activeTab === "paint" && isDrawing && currentImage) {
+      const pos = getRelativePosition(e);
+      if (pos && paintStrokes.length > 0) {
+        setPaintStrokes(prev => {
           const newStrokes = [...prev];
           newStrokes[newStrokes.length - 1].points.push(pos);
           return newStrokes;
