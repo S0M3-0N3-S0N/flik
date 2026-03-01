@@ -91,11 +91,6 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
           <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B35]/5 via-transparent to-[#FFB800]/5" />
           <div className="relative z-10">
             <DialogTitle className="text-2xl sm:text-3xl font-bold gradient-text flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] p-[2px]">
-                <div className="w-full h-full rounded-[10px] bg-[#0a0a0a] flex items-center justify-center">
-                  <Grid3x3 className="w-5 h-5 text-[#FF6B35]" />
-                </div>
-              </div>
               Gallery Picker
             </DialogTitle>
             <p className="text-sm text-white/60 mb-4 flex items-center gap-2">
