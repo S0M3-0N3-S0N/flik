@@ -155,14 +155,14 @@ export function useMagicBrush() {
         
         OUTPUT:
         Return ONLY the raw prompt string.`,
-        file_urls: [redUpload.file_url, cleanUpload.file_url, ...(magicBrushImages || [])]
+        file_urls: [redUpload.file_url, cleanUpload.file_url, ...(magicBrushImages?.map(img => img.url) || [])]
       });
 
       // 4. Generate
       if (setActiveTool) setActiveTool({ label: "Applying Magic..." });
       const result = await base44.integrations.Core.GenerateImage({
         prompt: llmResponse,
-        existing_image_urls: [alphaUpload.file_url, ...(magicBrushImages || [])]
+        existing_image_urls: [alphaUpload.file_url, ...(magicBrushImages?.map(img => img.url) || [])]
       });
 
       if (!result?.url) throw new Error('No result URL from image generation');

@@ -809,13 +809,14 @@ export default function Editor() {
       if (!points.length) return;
       const size = stroke.size || paintBrushSize;
       const color = stroke.color || paintColor;
+      const opacity = stroke.opacity !== undefined ? stroke.opacity / 100 : paintBrushSize > 0 ? 1 : 0.85;
       ctx.globalCompositeOperation = stroke.mode === "erase" ? 'destination-out' : 'source-over';
       ctx.strokeStyle = color;
       ctx.fillStyle = color;
       ctx.lineWidth = size;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.globalAlpha = stroke.mode === "erase" ? 1 : 0.85;
+      ctx.globalAlpha = stroke.mode === "erase" ? 1 : opacity;
       if (points.length === 1) {
         ctx.beginPath();
         ctx.arc((points[0].x / 100) * canvas.width, (points[0].y / 100) * canvas.height, size / 2, 0, Math.PI * 2);
