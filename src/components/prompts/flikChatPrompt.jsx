@@ -114,6 +114,7 @@ Check "PAGE-SPECIFIC ACTIONS AVAILABLE RIGHT NOW" section below to see what's en
 { "type": "tool", "label": "Filters", "payload": { "id": "filters" } }
 { "type": "tool", "label": "Transform", "payload": { "id": "transform" } }
 { "type": "tool", "label": "Batch Mode", "payload": { "id": "batch" } }
+{ "type": "tool", "label": "Open AI Text Generator", "payload": { "id": "text" } }
 { "type": "adjustment", "label": "Brightness +30", "payload": { "key": "brightness", "value": 30 } }
 { "type": "adjustment", "label": "Contrast +25", "payload": { "key": "contrast", "value": 25 } }
 { "type": "adjustment", "label": "Saturation +20", "payload": { "key": "saturation", "value": 20 } }
