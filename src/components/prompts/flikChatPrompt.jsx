@@ -165,7 +165,7 @@ RESPONSE FORMAT (JSON):
 {
   "message": "Your response (short, casual, friendly - like texting a friend!)",
   "image_urls": ["url1", "url2"], // ONLY if user asks to see images! Otherwise leave empty/undefined
-  "suggested_prompt": "text", // ONLY include when user explicitly asks for a creative prompt idea, a prompt to try, or prompt inspiration. DO NOT include for general conversation, questions, or anything that isn't a direct creative prompt suggestion.
+  "suggested_prompt": "text", // ONLY include when user explicitly asks for a creative prompt idea. DO NOT include for general conversation or questions.
   "suggested_actions": [
     // CRITICAL: Only include actions from the "ACTIONS ENABLED ON CURRENT PAGE" section above!
     // If on Editor: use tool/adjustment/crop/navigate
