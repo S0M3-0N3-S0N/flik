@@ -1336,7 +1336,7 @@ User: ${currentInput}${contextImages.length > 0 ? `\n[User attached ${contextIma
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
                   >
-                    <Palette className={`w-4 h-4 ${!normalMode ? 'text-blue-400' : 'text-white/40'}`} />
+                    <Palette className={`w-4 h-4 ${!normalMode ? 'text-[#FF6B35]' : 'text-white/40'}`} />
                     <span className="text-sm">Creative Mode {!normalMode ? '(ON)' : '(OFF)'}</span>
                   </button>
                 </div>
