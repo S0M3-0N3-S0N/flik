@@ -170,12 +170,16 @@ export default function Editor() {
   // Load image from URL parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
-    const loadUrl = urlParams.get('load');
-    if (loadUrl) {
-      const decodedUrl = decodeURIComponent(loadUrl);
-      const img = { url: decodedUrl, preview: decodedUrl, name: 'loaded_image.png' };
-      setCurrentImage(img);
-      setLoadedImages([img]);
+    const loadUrls = urlParams.getAll('load');
+    if (loadUrls.length > 0) {
+      const images = loadUrls.map((url, idx) => ({
+        url: decodeURIComponent(url),
+        preview: decodeURIComponent(url),
+        name: `loaded_image_${idx}.png`,
+        id: `${Date.now()}-${idx}`
+      }));
+      setLoadedImages(images);
+      setCurrentImage(images[0]);
       setNeedsFit(true);
       setTimeout(() => emblaApi?.scrollTo(0), 0);
     }
