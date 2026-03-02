@@ -21,6 +21,7 @@ import TextGeneratorPanel from "@/components/editor/TextGeneratorPanel";
 import PaintPanel from "@/components/editor/PaintPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
+import StickerOverlay from "@/components/editor/StickerOverlay";
 import { useFlikActions } from "@/components/useFlikActions";
 
 const DEFAULT_ADJUSTMENTS = {
