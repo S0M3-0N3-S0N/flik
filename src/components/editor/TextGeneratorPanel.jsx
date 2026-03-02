@@ -121,6 +121,38 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
     setReferenceImages(prev => prev.filter(img => img.id !== id));
   };
 
+  const removeWhiteBackground = (imageUrl) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          // If pixel is very light (near white), make it transparent
+          const brightness = (r + g + b) / 3;
+          if (brightness > 220 && r > 200 && g > 200 && b > 200) {
+            // Smooth edge: partial transparency based on how white it is
+            const alpha = Math.round(((255 - brightness) / 35) * 255);
+            data[i + 3] = Math.min(data[i + 3], alpha);
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => resolve(imageUrl); // fallback to original if fails
+      img.src = imageUrl;
+    });
+  };
+
   const handleGenerateText = async () => {
     if (!textContent.trim()) {
       toast.error("Please enter text");
@@ -133,19 +165,20 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
 
     setIsGenerating(true);
     try {
-      const prompt = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY TRANSPARENT background. No background color, no white background, no backdrop — only the text itself rendered with this style: ${stylePrompt}. The text must be visually striking, artistic, and readable. Output must have full alpha transparency everywhere except the text.`;
+      let promptText = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY TRANSPARENT background. No background color, no white background, no backdrop — only the text itself rendered with this style: ${stylePrompt}. The text must be visually striking, artistic, and readable. Output must have full alpha transparency everywhere except the text.`;
       
       if (referenceImages.length > 0) {
-        prompt += ` Match the visual aesthetic of the provided reference images.`;
+        promptText += ` Match the visual aesthetic of the provided reference images.`;
       }
 
       const imageResult = await base44.integrations.Core.GenerateImage({
-        prompt,
+        prompt: promptText,
         existing_image_urls: referenceImages.length > 0 ? referenceImages.map(img => img.url) : undefined,
       });
 
       if (imageResult?.url) {
-        const finalUrl = imageResult.url;
+        // Remove white background via canvas pixel processing
+        const finalUrl = await removeWhiteBackground(imageResult.url);
 
         // Save to font library
         await base44.entities.Font.create({
