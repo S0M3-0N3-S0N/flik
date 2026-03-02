@@ -98,9 +98,16 @@ export default function Generate() {
 
   useEffect(() => {
      const params = new URLSearchParams(window.location.search);
-     const loadUrl = params.get('load');
-     if (loadUrl) {
-       setUploadedImages([{ url: loadUrl, id: Date.now() }]);
+     const loadUrls = params.getAll('load');
+     if (loadUrls.length > 0) {
+       setUploadedImages(loadUrls.map((url, idx) => ({ 
+         url: decodeURIComponent(url), 
+         id: `${Date.now()}-${idx}` 
+       })));
+     }
+     const promptParam = params.get('prompt');
+     if (promptParam) {
+       setPrompt(decodeURIComponent(promptParam));
      }
 
      return () => {
