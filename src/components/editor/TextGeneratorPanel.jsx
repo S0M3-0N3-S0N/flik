@@ -34,7 +34,7 @@ async function removeWhiteBackground(imageUrl) {
   });
 }
 
-export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing }) {
+export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing, user }) {
   const [textContent, setTextContent] = useState("");
   const [stylePrompt, setStylePrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
