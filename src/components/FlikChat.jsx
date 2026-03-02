@@ -789,14 +789,14 @@ export default function FlikChat() {
           title,
           messages,
           last_message_at: new Date().toISOString()
-        }, { data_env: "prod" });
+        });
       } else {
         // Create new
         return base44.entities.FlikConversation.create({
           title,
           messages,
           last_message_at: new Date().toISOString()
-        }, { data_env: "prod" });
+        });
       }
     },
     onSuccess: (result) => {
