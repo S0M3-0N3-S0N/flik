@@ -82,8 +82,10 @@ export default function CameraPage() {
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
   const [cameraSupported, setCameraSupported] = useState(true);
+  const [cameraNotification, setCameraNotification] = useState(null);
 
   const mode = MODES[modeIndex];
+  const { captureFrame } = useCameraFrame(videoRef);
 
   // Check camera support on mount
   useEffect(() => {
