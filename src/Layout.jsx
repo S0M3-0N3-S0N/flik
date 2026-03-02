@@ -7,6 +7,7 @@ import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
 import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
+import MobileHeader from "@/components/layout/MobileHeader";
 import { base44 } from "@/api/base44Client";
 
 export const LanguageContext = React.createContext();
