@@ -682,6 +682,18 @@ User: ${currentInput}${contextImages.length > 0 ? `\n[User attached ${contextIma
       
       clearTimeout(timeoutId);
       
+      // Show notification on Camera page
+      if (currentPage === 'Camera' && response.message) {
+        const pageActions = getFlikActions(currentPage);
+        if (pageActions?.showNotification) {
+          // Extract first sentence or first 50 chars for notification
+          const notificationText = response.message.split(/[.!?]/)[0].slice(0, 50).trim();
+          if (notificationText) {
+            pageActions.showNotification(notificationText);
+          }
+        }
+      }
+      
       base44.analytics.track({ 
         eventName: 'flik_response_received',
         properties: { 
