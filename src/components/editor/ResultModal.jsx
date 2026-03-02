@@ -43,6 +43,15 @@ export default function ResultModal({
     }
   };
 
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.setAttribute('data-modal-open', 'true');
+    } else {
+      document.body.removeAttribute('data-modal-open');
+    }
+    return () => document.body.removeAttribute('data-modal-open');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const originalSrc = originalImage?.preview || originalImage?.url || originalImage;
