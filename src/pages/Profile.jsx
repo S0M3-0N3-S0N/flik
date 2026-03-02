@@ -1118,9 +1118,7 @@ export default function Profile() {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const params = new URLSearchParams();
-                                params.set('load', item.url);
-                                navigate(createPageUrl('Editor') + '?' + params.toString());
+                                navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
                               }}
                               className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
                               title="Edit in Photo Studio"
@@ -1416,9 +1414,7 @@ export default function Profile() {
             <div className="p-2 sm:p-4 md:p-5 border-t border-white/10 bg-[#1a1a1a] space-y-1.5 sm:space-y-2 flex-shrink-0">
               <Button
                 onClick={() => {
-                  const params = new URLSearchParams();
-                  params.set('load', selectedItem.url);
-                  navigate(createPageUrl('Editor') + '?' + params.toString());
+                  navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url));
                 }}
                 className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 h-11 text-sm font-medium rounded-xl"
               >

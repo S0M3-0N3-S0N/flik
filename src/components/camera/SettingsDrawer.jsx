@@ -45,8 +45,8 @@ export default function SettingsDrawer({ open, onClose, settings, onChange }) {
               />
             </SettingRow>
 
-            {/* Flik Assistants */}
-            <SettingRow label="Flik Assistants">
+            {/* Camera Guidance */}
+            <SettingRow label="Camera Guidance">
               <Toggle value={settings.cameraGuidance ?? true} onChange={v => onChange('cameraGuidance', v)} />
             </SettingRow>
           </motion.div>

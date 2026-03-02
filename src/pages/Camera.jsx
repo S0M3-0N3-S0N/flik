@@ -10,8 +10,6 @@ import FocusSquare from '../components/camera/FocusSquare';
 import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
 import CameraGuidance from '../components/camera/CameraGuidance';
-import CameraNotification from '../components/camera/CameraNotification';
-import { useCameraFrame } from '../components/hooks/useCameraFrame';
 import { useFlikActions } from '../components/useFlikActions';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
@@ -82,10 +80,8 @@ export default function CameraPage() {
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
   const [cameraSupported, setCameraSupported] = useState(true);
-  const [cameraNotification, setCameraNotification] = useState(null);
 
   const mode = MODES[modeIndex];
-  const { captureFrame } = useCameraFrame(videoRef);
 
   // Check camera support on mount
   useEffect(() => {
@@ -591,8 +587,6 @@ export default function CameraPage() {
     openSettings: () => setSettingsOpen(true),
     closeSettings: () => setSettingsOpen(false),
     exitCamera: () => navigate(createPageUrl('Editor')),
-    showNotification: (message) => setCameraNotification(message),
-    getCameraFrame: () => captureFrame(),
   }, () => ({
     isActive: true,
     hasStream,
@@ -692,12 +686,6 @@ export default function CameraPage() {
 
         {/* Camera Guidance */}
         {!photo && settings.cameraGuidance && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
-
-        {/* Camera Notification */}
-        <CameraNotification 
-          message={cameraNotification} 
-          onDismiss={() => setCameraNotification(null)} 
-        />
 
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}

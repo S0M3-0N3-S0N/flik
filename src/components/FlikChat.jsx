@@ -285,7 +285,6 @@ export default function FlikChat() {
     if (path.includes('Editor') || path.includes('editor')) return 'Editor';
     if (path.includes('Generate') || path.includes('generate')) return 'Generate';
     if (path.includes('Profile') || path.includes('profile')) return 'Profile';
-    if (path.includes('Camera') || path.includes('camera')) return 'Camera';
     return 'Unknown';
   }, [location.pathname]);
 
@@ -518,24 +517,7 @@ export default function FlikChat() {
 
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
-    let messageImages = retryImages || attachedImages;
-    
-    // Auto-capture camera frame if on Camera page and no images attached
-    const currentPage = getCurrentPage();
-    if (currentPage === 'Camera' && messageImages.length === 0) {
-      const pageActions = getFlikActions(currentPage);
-      if (pageActions?.getCameraFrame) {
-        try {
-          const frameBlob = await pageActions.getCameraFrame();
-          if (frameBlob) {
-            const uploadResult = await base44.integrations.Core.UploadFile({ file: frameBlob });
-            messageImages = [{ url: uploadResult.file_url, id: `frame-${Date.now()}` }];
-          }
-        } catch (err) {
-          console.error('Failed to capture camera frame:', err);
-        }
-      }
-    }
+    const messageImages = retryImages || attachedImages;
     
     if (!messageContent.trim() && messageImages.length === 0) {
       setIsListening(false);
@@ -606,6 +588,7 @@ export default function FlikChat() {
       const contextImages = userUploadedImages && userUploadedImages.length > 0 
         ? userUploadedImages.map(img => img.url) 
         : [];
+      const currentPage = getCurrentPage();
       const pageActions = getFlikActions(currentPage);
       const pageContext = getFlikContext(currentPage);
 
@@ -681,18 +664,6 @@ User: ${currentInput}${contextImages.length > 0 ? `\n[User attached ${contextIma
       setMessages(prev => [...prev, assistantMsg]);
       
       clearTimeout(timeoutId);
-      
-      // Show notification on Camera page
-      if (currentPage === 'Camera' && response.message) {
-        const pageActions = getFlikActions(currentPage);
-        if (pageActions?.showNotification) {
-          // Extract first sentence or first 50 chars for notification
-          const notificationText = response.message.split(/[.!?]/)[0].slice(0, 50).trim();
-          if (notificationText) {
-            pageActions.showNotification(notificationText);
-          }
-        }
-      }
       
       base44.analytics.track({ 
         eventName: 'flik_response_received',
