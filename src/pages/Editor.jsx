@@ -1363,8 +1363,18 @@ export default function Editor() {
                        )}
 
                        {activeTab === "paint" && idx === currentImageIndex && (
-                         <canvas ref={paintCanvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
-                       )}
+                          <canvas ref={paintCanvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
+                        )}
+
+                        {idx === currentImageIndex && stickers.length > 0 && (
+                          <StickerOverlay
+                            stickers={stickers}
+                            onStickersChange={setStickers}
+                            zoom={zoom}
+                            pan={pan}
+                            containerRef={containerRef}
+                          />
+                        )}
 
                        {isCropping && idx === currentImageIndex && (
                          <>
