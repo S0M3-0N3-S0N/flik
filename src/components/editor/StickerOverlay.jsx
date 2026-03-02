@@ -118,6 +118,7 @@ export default function StickerOverlay({ stickers, onStickersChange, zoom, pan, 
             style={{
               outline: activeSticker === sticker.id ? '2px dashed rgba(255,107,53,0.8)' : 'none',
               borderRadius: 4,
+              mixBlendMode: 'normal',
             }}
           />
 
