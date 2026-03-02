@@ -285,6 +285,7 @@ export default function FlikChat() {
     if (path.includes('Editor') || path.includes('editor')) return 'Editor';
     if (path.includes('Generate') || path.includes('generate')) return 'Generate';
     if (path.includes('Profile') || path.includes('profile')) return 'Profile';
+    if (path.includes('Camera') || path.includes('camera')) return 'Camera';
     return 'Unknown';
   }, [location.pathname]);
 
