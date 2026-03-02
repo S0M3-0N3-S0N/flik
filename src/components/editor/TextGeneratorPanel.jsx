@@ -354,6 +354,11 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
               Generating...
             </>
+          ) : isRemovingBg ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              Removing Background...
+            </>
           ) : (
             <>
               <Wand2 className="w-4 h-4 mr-2" />
