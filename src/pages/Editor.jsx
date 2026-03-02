@@ -740,8 +740,14 @@ export default function Editor() {
   }, [currentImage, handleGetProcessedBlob, stickers]);
 
   const handleTextImageGenerated = useCallback((imageUrl) => {
-    setResultImage(imageUrl);
-    setShowResult(true);
+    setStickers(prev => [...prev, {
+      url: imageUrl,
+      x: 50,
+      y: 50,
+      width: 20,
+      rotation: 0,
+      id: `sticker-${Date.now()}`
+    }]);
   }, []);
 
   const handleFileUpload = useCallback((e) => {
