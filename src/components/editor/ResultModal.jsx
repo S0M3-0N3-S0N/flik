@@ -72,7 +72,7 @@ export default function ResultModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-7xl h-[90vh] glass-card rounded-3xl overflow-hidden flex flex-col"
+          className="w-full max-w-7xl h-[100dvh] sm:h-[90vh] glass-card sm:rounded-3xl overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 shrink-0">
