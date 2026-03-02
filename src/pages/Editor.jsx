@@ -129,6 +129,7 @@ export default function Editor() {
     setRedoHistory([]);
     setMagicBrushPrompt("");
     setMagicBrushImages([]);
+    setStickers([]);
     setNeedsFit(true);
   }, []);
 
