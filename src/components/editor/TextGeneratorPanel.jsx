@@ -140,28 +140,19 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
         prompt += ` Use the provided reference images to ensure the text style matches the visual aesthetic shown in those images.`;
       }
 
+      let prompt = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY TRANSPARENT background. No background color, no white background, no backdrop — only the text itself rendered with this style: ${stylePrompt}. The text must be visually striking, artistic, and readable. Output must have full alpha transparency everywhere except the text.`;
+      
+      if (referenceImages.length > 0) {
+        prompt += ` Match the visual aesthetic of the provided reference images.`;
+      }
+
       const imageResult = await base44.integrations.Core.GenerateImage({
         prompt,
         existing_image_urls: referenceImages.length > 0 ? referenceImages.map(img => img.url) : undefined,
       });
 
       if (imageResult?.url) {
-        // Remove background using GenerateImage
-        setIsRemovingBg(true);
-        let finalUrl = imageResult.url;
-        try {
-          const uploadFile = await fetch(imageResult.url).then(r => r.blob()).then(blob => new File([blob], "text_image.png", { type: "image/png" }));
-          const uploaded = await base44.integrations.Core.UploadFile({ file: uploadFile });
-          const bgRemoved = await base44.integrations.Core.GenerateImage({
-            prompt: "Remove the background from this image completely, make it fully transparent, keep only the text/subject, no background at all",
-            existing_image_urls: [uploaded.file_url]
-          });
-          if (bgRemoved?.url) finalUrl = bgRemoved.url;
-        } catch (e) {
-          // fallback to original
-        } finally {
-          setIsRemovingBg(false);
-        }
+        const finalUrl = imageResult.url;
 
         // Save to font library
         await base44.entities.Font.create({
