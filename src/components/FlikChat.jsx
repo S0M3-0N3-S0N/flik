@@ -776,7 +776,7 @@ export default function FlikChat() {
     queryKey: ['flikConversations'],
     queryFn: async () => {
       const user = await base44.auth.me();
-      return base44.entities.FlikConversation.filter({ created_by: user.email }, '-last_message_at', 50, { data_env: "prod" });
+      return base44.entities.FlikConversation.filter({ created_by: user.email }, '-last_message_at', 50);
     },
     enabled: showConversations
   });
