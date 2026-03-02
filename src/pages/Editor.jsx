@@ -1369,9 +1369,12 @@ export default function Editor() {
 
                         {idx === currentImageIndex && stickers.length > 0 && (
                           <div
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                            className="absolute inset-0"
+                            onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                            onTouchStart={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                            onMouseMove={(e) => e.stopPropagation()}
+                            onTouchMove={(e) => e.stopPropagation()}
+                            className="absolute inset-0 z-20"
+                            style={{ touchAction: 'none' }}
                           >
                             <StickerOverlay
                               stickers={stickers}
