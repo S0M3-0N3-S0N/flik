@@ -14,7 +14,36 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
   const [referenceImages, setReferenceImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
   const fileInputRef = useRef(null);
+
+  const handleEnhancePrompt = async () => {
+    if (!stylePrompt.trim() && !textContent.trim()) {
+      toast.error("Enter some text or style description first");
+      return;
+    }
+    setIsEnhancingPrompt(true);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are a creative AI helping users write style prompts for AI text image generation.
+        
+The user wants to create stylized text${textContent ? ` that says "${textContent}"` : ''}.
+${stylePrompt ? `Their current style idea: "${stylePrompt}"` : 'They have not described a style yet.'}
+
+Generate an enhanced, detailed, and creative style prompt that will produce stunning AI-generated text art. 
+Focus on visual style, colors, lighting, texture, effects, and mood.
+Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
+      });
+      if (result) {
+        setStylePrompt(result.trim());
+        toast.success("Prompt enhanced!");
+      }
+    } catch (error) {
+      toast.error("Failed to enhance prompt");
+    } finally {
+      setIsEnhancingPrompt(false);
+    }
+  };
 
   const { data: fontLibrary = [], isLoading: isLoadingLibrary } = useQuery({
     queryKey: ['fontLibrary'],
