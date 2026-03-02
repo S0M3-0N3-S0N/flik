@@ -134,17 +134,28 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
+        // Sample corner pixels to detect background color
+        const sampleCorners = [
+          [0, 0], [canvas.width - 1, 0], [0, canvas.height - 1], [canvas.width - 1, canvas.height - 1],
+          [Math.floor(canvas.width / 2), 0], [Math.floor(canvas.width / 2), canvas.height - 1]
+        ];
+        let bgRSum = 0, bgGSum = 0, bgBSum = 0;
+        sampleCorners.forEach(([x, y]) => {
+          const idx = (y * canvas.width + x) * 4;
+          bgRSum += data[idx]; bgGSum += data[idx + 1]; bgBSum += data[idx + 2];
+        });
+        const bgR = bgRSum / sampleCorners.length;
+        const bgG = bgGSum / sampleCorners.length;
+        const bgB = bgBSum / sampleCorners.length;
+
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i], g = data[i + 1], b = data[i + 2];
-          const brightness = (r + g + b) / 3;
-          // Remove white AND dark/grey backgrounds
-          const isWhitish = brightness > 180 && r > 160 && g > 160 && b > 160;
-          const isDarkGrey = brightness < 80 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && Math.abs(r - b) < 20;
-          if (isWhitish) {
-            const alpha = Math.round(((255 - brightness) / 75) * 255);
-            data[i + 3] = Math.min(data[i + 3], alpha);
-          } else if (isDarkGrey) {
-            const alpha = Math.round((brightness / 80) * 255);
+          // Distance from detected background color
+          const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+          const threshold = 60;
+          if (dist < threshold) {
+            // Fade out pixels near background color
+            const alpha = Math.round((dist / threshold) * 255);
             data[i + 3] = Math.min(data[i + 3], alpha);
           }
         }
