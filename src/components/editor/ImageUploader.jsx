@@ -163,6 +163,19 @@ export default function ImageUploader({ onImageSelect, onGalleryOpen, multiple =
             >
               browse files
             </motion.button>
+            {onGalleryOpen && (
+              <>
+                {" / "}
+                <motion.button
+                  onClick={onGalleryOpen}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="text-[#FFB800] hover:text-[#FF6B35] font-semibold inline underline transition-colors"
+                >
+                  gallery
+                </motion.button>
+              </>
+            )}
           </p>
         </div>
         
