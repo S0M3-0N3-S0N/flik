@@ -26,7 +26,7 @@ export default function MobileHeader({ currentPageName }) {
       }`}
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
-      <div className={`flex items-center px-4 py-3 h-14 ${isRootPage ? 'justify-center' : 'justify-start'}`}>
+      <div className="flex items-center justify-between px-4 py-3 h-14">
         {isRootPage ? (
           <div className="gradient-text font-bold text-lg tracking-wider">FLIK</div>
         ) : (
@@ -39,6 +39,7 @@ export default function MobileHeader({ currentPageName }) {
             <ArrowLeft className="w-5 h-5" />
           </button>
         )}
+        <div className="flex-1" />
       </div>
     </div>
   );
