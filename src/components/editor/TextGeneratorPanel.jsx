@@ -209,7 +209,9 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
   const handleApplyFont = (font) => {
     setStylePrompt(font.style);
     setShowLibrary(false);
-    base44.entities.Font.update(font.id, { usageCount: (font.usageCount || 0) + 1 }).catch(() => {});
+    try {
+      base44.entities.Font.update(font.id, { usageCount: (font.usageCount || 0) + 1 }).catch(() => {});
+    } catch {}
   };
 
   return (
