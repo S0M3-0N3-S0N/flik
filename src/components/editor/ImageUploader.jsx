@@ -146,14 +146,14 @@ export default function ImageUploader({ onImageSelect, onGalleryOpen, multiple =
         </motion.div>
         
         {/* Main text with gradient */}
-        <div className="text-center relative z-10">
+        <div className="text-center relative z-10 px-4">
           <motion.p 
             animate={{ scale: isDragging ? 1.05 : 1 }}
-            className={`text-xl sm:text-2xl font-bold transition-colors ${isDragging ? "text-white gradient-text" : "text-white/95"}`}
+            className={`text-lg sm:text-2xl font-bold transition-colors ${isDragging ? "text-white gradient-text" : "text-white/95"}`}
           >
             {isDragging ? "Drop your image" : "Upload an Image"}
           </motion.p>
-          <p className="text-sm text-white/50 mt-3">
+          <p className="text-xs sm:text-sm text-white/50 mt-2 sm:mt-3">
             Drag & drop or{" "}
             <motion.button
               onClick={() => fileInputRef.current?.click()}
