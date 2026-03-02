@@ -129,7 +129,7 @@ Check "PAGE-SPECIFIC ACTIONS AVAILABLE RIGHT NOW" section below to see what's en
 { "type": "apply_style", "label": "Fantasy Art", "payload": { "style": "fantasy" } }
 
 **4. PROMPT SUGGESTIONS**:
-ONLY provide `suggested_prompt` when the user explicitly asks for a prompt, prompt idea, or creative inspiration. Do NOT include it for general conversation, answers, or casual chat.
+ONLY provide "suggested_prompt" when the user explicitly asks for a prompt, prompt idea, or creative inspiration. Do NOT include it for general conversation, answers, or casual chat.
 
 **5. SHOW IMAGES** (use sparingly):
 ONLY include image_urls when the user EXPLICITLY asks to see images!
