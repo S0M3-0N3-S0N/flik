@@ -518,7 +518,24 @@ export default function FlikChat() {
 
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
-    const messageImages = retryImages || attachedImages;
+    let messageImages = retryImages || attachedImages;
+    
+    // Auto-capture camera frame if on Camera page and no images attached
+    const currentPage = getCurrentPage();
+    if (currentPage === 'Camera' && messageImages.length === 0) {
+      const pageActions = getFlikActions(currentPage);
+      if (pageActions?.getCameraFrame) {
+        try {
+          const frameBlob = await pageActions.getCameraFrame();
+          if (frameBlob) {
+            const uploadResult = await base44.integrations.Core.UploadFile({ file: frameBlob });
+            messageImages = [{ url: uploadResult.file_url, id: `frame-${Date.now()}` }];
+          }
+        } catch (err) {
+          console.error('Failed to capture camera frame:', err);
+        }
+      }
+    }
     
     if (!messageContent.trim() && messageImages.length === 0) {
       setIsListening(false);
