@@ -1126,7 +1126,10 @@ export default function Profile() {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(createPageUrl('Generate') + '?prompt=' + encodeURIComponent(item.prompt || ''));
+                                const params = new URLSearchParams();
+                                params.set('load', item.url);
+                                if (item.prompt) params.set('prompt', item.prompt);
+                                navigate(createPageUrl('Generate') + '?' + params.toString());
                               }}
                               className="flex-1 bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
                               title="Imagine similar image"
