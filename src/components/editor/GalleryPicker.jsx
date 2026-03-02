@@ -22,7 +22,6 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
     }
   }, [isOpen]);
 
-  // Force fresh fetch to bypass cache
   const loadCreations = async () => {
     setLoading(true);
     try {
@@ -32,24 +31,6 @@ export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMulti
         '-created_date',
         200
       );
-      setCreations(results);
-    } catch (error) {
-      console.error("Error loading creations:", error);
-      toast.error("Failed to load gallery");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadCreations = async () => {
-    setLoading(true);
-    try {
-      const user = await base44.auth.me();
-        const results = await base44.entities.Creation.filter(
-          { type: 'image', created_by: user.email },
-          '-created_date',
-          200
-        );
       setCreations(results);
     } catch (error) {
       console.error("Error loading creations:", error);
