@@ -245,33 +245,51 @@ export default function FlikChat() {
   }, [voiceEnabled]);
 
   const processSpeechQueue = useCallback(function processSpeech() {
-    if (isSpeakingRef.current || speechQueueRef.current.length === 0) return;
+    if (isSpeakingRef.current || speechQueueRef.current.length === 0 || !window.speechSynthesis) return;
     
     isSpeakingRef.current = true;
     const text = speechQueueRef.current.shift();
     
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1.05;
-    utterance.volume = 1;
-    
-    const voice = getPreferredVoice();
-    if (voice) {
-      utterance.voice = voice;
+    try {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1.05;
+      utterance.volume = 1;
+      
+      const voice = getPreferredVoice();
+      if (voice) {
+        utterance.voice = voice;
+      }
+      
+      utterance.onend = () => {
+        isSpeakingRef.current = false;
+        processSpeech();
+      };
+      
+      utterance.onerror = (event) => {
+        isSpeakingRef.current = false;
+        console.warn('Speech synthesis error:', event.error);
+        processSpeech();
+      };
+      
+      // Cancel any pending utterances
+      window.speechSynthesis.cancel();
+      
+      // On mobile, we may need a small delay before speaking
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.error('Failed to speak:', e);
+          isSpeakingRef.current = false;
+          processSpeech();
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Speech synthesis error:', error);
+      isSpeakingRef.current = false;
+      processSpeech();
     }
-    
-    utterance.onend = () => {
-      isSpeakingRef.current = false;
-      processSpeech();
-    };
-    
-    utterance.onerror = () => {
-      isSpeakingRef.current = false;
-      processSpeech();
-    };
-    
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
   }, [getPreferredVoice]);
 
   const enqueueSpeech = useCallback((text) => {
