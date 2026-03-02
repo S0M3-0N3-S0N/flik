@@ -411,26 +411,35 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {fontLibrary.map((font) => (
-                  <button
-                    key={font.id}
-                    onClick={() => handleApplyFont(font)}
-                    className="relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35]/50 transition-all group"
-                  >
-                    <img
-                      src={font.imageUrl}
-                      alt={font.text}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                      <div className="w-full">
-                        <p className="text-xs text-white font-semibold truncate">{font.text}</p>
-                        <p className="text-[10px] text-white/60 truncate">{font.style}</p>
-                        {font.usageCount > 0 && (
-                          <p className="text-[10px] text-[#FF6B35] mt-1">Used {font.usageCount}x</p>
-                        )}
+                  <div key={font.id} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-[#FF6B35]/50 transition-all group">
+                    <button
+                      onClick={() => handleApplyFont(font)}
+                      className="w-full h-full"
+                    >
+                      <img
+                        src={font.imageUrl}
+                        alt={font.text}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                        <div className="w-full">
+                          <p className="text-xs text-white font-semibold truncate">{font.text}</p>
+                          <p className="text-[10px] text-white/60 truncate">{font.style}</p>
+                          {font.usageCount > 0 && (
+                            <p className="text-[10px] text-[#FF6B35] mt-1">Used {font.usageCount}x</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={(e) => handleDeleteFont(e, font.id)}
+                        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 z-10"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
