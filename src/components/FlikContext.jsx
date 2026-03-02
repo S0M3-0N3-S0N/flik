@@ -82,7 +82,7 @@ export function FlikProvider({ children }) {
           title,
           messages,
           last_message_at: new Date().toISOString()
-        }, { data_env: "prod" });
+        });
         toast.success('Conversation updated!');
         return currentConversationId;
       } else {
@@ -91,7 +91,7 @@ export function FlikProvider({ children }) {
           title,
           messages,
           last_message_at: new Date().toISOString()
-        }, { data_env: "prod" });
+        });
         setCurrentConversationId(newConversation.id);
         toast.success('Conversation saved!');
         return newConversation.id;
