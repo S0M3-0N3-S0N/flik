@@ -116,10 +116,18 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
     }
   };
 
+  const queryClient = useQueryClient();
+
   const { data: fontLibrary = [], isLoading: isLoadingLibrary } = useQuery({
     queryKey: ['fontLibrary'],
     queryFn: () => base44.entities.Font.list('-created_date', 100),
   });
+
+  const handleDeleteFont = async (e, fontId) => {
+    e.stopPropagation();
+    await base44.entities.Font.delete(fontId);
+    queryClient.invalidateQueries({ queryKey: ['fontLibrary'] });
+  };
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('image/'));
