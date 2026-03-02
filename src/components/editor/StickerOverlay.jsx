@@ -90,7 +90,11 @@ export default function StickerOverlay({ stickers, onStickersChange, zoom, pan, 
   if (!stickers.length) return null;
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-20">
+    <div
+      className="absolute inset-0 pointer-events-none z-20"
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
       {stickers.map(sticker => (
         <div
           key={sticker.id}
@@ -102,8 +106,8 @@ export default function StickerOverlay({ stickers, onStickersChange, zoom, pan, 
             transform: `rotate(${sticker.rotation || 0}deg)`,
             cursor: 'move',
           }}
-          onMouseDown={(e) => handleStickerMouseDown(e, sticker.id, 'drag')}
-          onTouchStart={(e) => handleStickerMouseDown(e, sticker.id, 'drag')}
+          onMouseDown={(e) => { e.stopPropagation(); handleStickerMouseDown(e, sticker.id, 'drag'); }}
+          onTouchStart={(e) => { e.stopPropagation(); handleStickerMouseDown(e, sticker.id, 'drag'); }}
           onClick={(e) => { e.stopPropagation(); setActiveSticker(sticker.id); }}
         >
           <img
