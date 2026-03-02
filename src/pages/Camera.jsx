@@ -886,13 +886,21 @@ export default function CameraPage() {
             {/* Edit shortcuts row */}
             <div className="w-full flex items-center justify-center gap-3 px-8 mt-1">
               <motion.button whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(createPageUrl('Editor'))}
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set('load', photo);
+                  navigate(createPageUrl('Editor') + '?' + params.toString());
+                }}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
                 <span style={iconRot}><Image className="w-4 h-4 text-[#FF6B35]" /></span>
                 <span className="text-white text-xs font-semibold">Photo Studio</span>
               </motion.button>
               <motion.button whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(createPageUrl('Generate'))}
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set('load', photo);
+                  navigate(createPageUrl('Generate') + '?' + params.toString());
+                }}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
                 <span style={iconRot}><Wand2 className="w-4 h-4 text-[#FFB800]" /></span>
                 <span className="text-white text-xs font-semibold">Imagine AI</span>
