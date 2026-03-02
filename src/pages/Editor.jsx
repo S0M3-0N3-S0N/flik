@@ -1228,10 +1228,7 @@ export default function Editor() {
 
             <TabsContent value="text" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">AI Text Generator</h3>
-              {currentImage
-                ? <TextGeneratorPanel onTextImageGenerated={handleTextImageGenerated} isProcessing={isProcessing} />
-                : <p className="text-white/40 text-sm">Upload an image to start</p>
-              }
+              <TextGeneratorPanel onTextImageGenerated={handleTextImageGenerated} isProcessing={isProcessing} />
             </TabsContent>
           </div>
         </Tabs>
