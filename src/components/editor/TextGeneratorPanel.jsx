@@ -146,15 +146,32 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
       });
 
       if (imageResult?.url) {
+        // Remove background using GenerateImage
+        setIsRemovingBg(true);
+        let finalUrl = imageResult.url;
+        try {
+          const uploadFile = await fetch(imageResult.url).then(r => r.blob()).then(blob => new File([blob], "text_image.png", { type: "image/png" }));
+          const uploaded = await base44.integrations.Core.UploadFile({ file: uploadFile });
+          const bgRemoved = await base44.integrations.Core.GenerateImage({
+            prompt: "Remove the background from this image completely, make it fully transparent, keep only the text/subject, no background at all",
+            existing_image_urls: [uploaded.file_url]
+          });
+          if (bgRemoved?.url) finalUrl = bgRemoved.url;
+        } catch (e) {
+          // fallback to original
+        } finally {
+          setIsRemovingBg(false);
+        }
+
         // Save to font library
         await base44.entities.Font.create({
           text: textContent,
           style: stylePrompt,
-          imageUrl: imageResult.url,
+          imageUrl: finalUrl,
           usageCount: 0
-        }).catch(() => {}); // Silently fail if save doesn't work
+        }).catch(() => {});
 
-        onTextImageGenerated(imageResult.url);
+        onTextImageGenerated(finalUrl);
         toast.success("Text generated successfully!");
         setTextContent("");
         setStylePrompt("");
