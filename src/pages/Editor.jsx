@@ -1368,13 +1368,19 @@ export default function Editor() {
                         )}
 
                         {idx === currentImageIndex && stickers.length > 0 && (
-                          <StickerOverlay
-                            stickers={stickers}
-                            onStickersChange={setStickers}
-                            zoom={zoom}
-                            pan={pan}
-                            containerRef={containerRef}
-                          />
+                          <div
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            className="absolute inset-0"
+                          >
+                            <StickerOverlay
+                              stickers={stickers}
+                              onStickersChange={setStickers}
+                              zoom={zoom}
+                              pan={pan}
+                              containerRef={containerRef}
+                            />
+                          </div>
                         )}
 
                        {isCropping && idx === currentImageIndex && (
