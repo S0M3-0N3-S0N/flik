@@ -121,76 +121,6 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
     setReferenceImages(prev => prev.filter(img => img.id !== id));
   };
 
-  const removeBackground = async (imageUrl) => {
-    try {
-      // Fetch image as blob to avoid CORS issues with canvas
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0);
-          URL.revokeObjectURL(blobUrl);
-
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-
-          // Sample many edge pixels to get a reliable background color
-          const edgeSamples = [];
-          const w = canvas.width, h = canvas.height;
-          for (let x = 0; x < w; x += 4) {
-            edgeSamples.push([x, 0], [x, h - 1]);
-          }
-          for (let y = 0; y < h; y += 4) {
-            edgeSamples.push([0, y], [w - 1, y]);
-          }
-
-          let rSum = 0, gSum = 0, bSum = 0;
-          edgeSamples.forEach(([x, y]) => {
-            const i = (y * w + x) * 4;
-            rSum += data[i]; gSum += data[i + 1]; bSum += data[i + 2];
-          });
-          const bgR = rSum / edgeSamples.length;
-          const bgG = gSum / edgeSamples.length;
-          const bgB = bSum / edgeSamples.length;
-
-          // Threshold: how different a pixel needs to be from background to keep it
-          const threshold = 40;
-          const feather = 20; // feathering range for soft edges
-
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i], g = data[i + 1], b = data[i + 2];
-            const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-            if (dist < threshold) {
-              data[i + 3] = 0; // fully transparent
-            } else if (dist < threshold + feather) {
-              // soft edge
-              const alpha = Math.round(((dist - threshold) / feather) * 255);
-              data[i + 3] = Math.min(data[i + 3], alpha);
-            }
-          }
-
-          ctx.putImageData(imageData, 0, 0);
-          resolve(canvas.toDataURL("image/png"));
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(blobUrl);
-          resolve(imageUrl);
-        };
-        img.src = blobUrl;
-      });
-    } catch (err) {
-      console.error("removeBackground error:", err);
-      return imageUrl; // fallback
-    }
-  };
-
   const handleGenerateText = async () => {
     if (!textContent.trim()) {
       toast.error("Please enter text");
@@ -203,20 +133,19 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
 
     setIsGenerating(true);
     try {
-      let promptText = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY TRANSPARENT background. No background color, no white background, no backdrop — only the text itself rendered with this style: ${stylePrompt}. The text must be visually striking, artistic, and readable. Output must have full alpha transparency everywhere except the text.`;
+      const prompt = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY TRANSPARENT background. No background color, no white background, no backdrop — only the text itself rendered with this style: ${stylePrompt}. The text must be visually striking, artistic, and readable. Output must have full alpha transparency everywhere except the text.`;
       
       if (referenceImages.length > 0) {
-        promptText += ` Match the visual aesthetic of the provided reference images.`;
+        prompt += ` Match the visual aesthetic of the provided reference images.`;
       }
 
       const imageResult = await base44.integrations.Core.GenerateImage({
-        prompt: promptText,
+        prompt,
         existing_image_urls: referenceImages.length > 0 ? referenceImages.map(img => img.url) : undefined,
       });
 
       if (imageResult?.url) {
-        // Remove background via canvas pixel processing
-        const finalUrl = await removeBackground(imageResult.url);
+        const finalUrl = imageResult.url;
 
         // Save to font library
         await base44.entities.Font.create({
