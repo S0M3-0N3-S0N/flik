@@ -606,7 +606,6 @@ export default function FlikChat() {
       const contextImages = userUploadedImages && userUploadedImages.length > 0 
         ? userUploadedImages.map(img => img.url) 
         : [];
-      const currentPage = getCurrentPage();
       const pageActions = getFlikActions(currentPage);
       const pageContext = getFlikContext(currentPage);
 
