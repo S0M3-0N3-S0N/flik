@@ -134,12 +134,6 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
 
     setIsGenerating(true);
     try {
-      let prompt = `Create an image with stylized text that says "${textContent}". Style: ${stylePrompt}. Make the text visually striking, readable, and artistic. Transparent or white background preferred.`;
-      
-      if (referenceImages.length > 0) {
-        prompt += ` Use the provided reference images to ensure the text style matches the visual aesthetic shown in those images.`;
-      }
-
       let prompt = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY TRANSPARENT background. No background color, no white background, no backdrop — only the text itself rendered with this style: ${stylePrompt}. The text must be visually striking, artistic, and readable. Output must have full alpha transparency everywhere except the text.`;
       
       if (referenceImages.length > 0) {
