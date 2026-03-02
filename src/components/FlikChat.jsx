@@ -643,19 +643,7 @@ RESPONSE STYLE: Be a helpful friend - casual, warm, direct. Keep it SHORT (2-3 s
         response_json_schema: normalMode ? {
           type: "object",
           properties: {
-            message: { type: "string" },
-            suggested_actions: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  label: { type: "string" },
-                  type: { type: "string", enum: ["navigate", "tool", "adjustment", "filter", "crop", "apply_prompt", "apply_style"] },
-                  payload: { type: "object", additionalProperties: true }
-                },
-                required: ["label", "type", "payload"]
-              }
-            }
+            message: { type: "string" }
           },
           required: ["message"]
         } : {
