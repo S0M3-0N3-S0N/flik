@@ -215,8 +215,8 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
       });
 
       if (imageResult?.url) {
-        // Remove white background via canvas pixel processing
-        const finalUrl = await removeWhiteBackground(imageResult.url);
+        // Remove background via canvas pixel processing
+        const finalUrl = await removeBackground(imageResult.url);
 
         // Save to font library
         await base44.entities.Font.create({
