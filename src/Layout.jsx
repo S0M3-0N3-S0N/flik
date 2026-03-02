@@ -381,8 +381,10 @@ function LayoutContent({ children, currentPageName }) {
               <button
                 onClick={(e) => {
                   if (currentPageName === "Profile") {
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (isChildRoute) {
+                      e.preventDefault();
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                   } else {
                     navigate(createPageUrl("Profile"));
                   }
