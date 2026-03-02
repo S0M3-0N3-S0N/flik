@@ -53,7 +53,7 @@ export default function FlikChat() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
   const [isListening, setIsListening] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [internetEnabled, setInternetEnabled] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
   const [isSavingConversation, setIsSavingConversation] = useState(false);
