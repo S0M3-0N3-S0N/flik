@@ -57,6 +57,7 @@ export default function FlikChat() {
   const [internetEnabled, setInternetEnabled] = useState(true);
   const [showConversations, setShowConversations] = useState(false);
   const [isSavingConversation, setIsSavingConversation] = useState(false);
+  const [normalMode, setNormalMode] = useState(false);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
