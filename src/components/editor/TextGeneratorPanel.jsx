@@ -136,11 +136,15 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
 
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i], g = data[i + 1], b = data[i + 2];
-          // If pixel is very light (near white), make it transparent
           const brightness = (r + g + b) / 3;
-          if (brightness > 220 && r > 200 && g > 200 && b > 200) {
-            // Smooth edge: partial transparency based on how white it is
-            const alpha = Math.round(((255 - brightness) / 35) * 255);
+          // Remove white AND dark/grey backgrounds
+          const isWhitish = brightness > 180 && r > 160 && g > 160 && b > 160;
+          const isDarkGrey = brightness < 80 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && Math.abs(r - b) < 20;
+          if (isWhitish) {
+            const alpha = Math.round(((255 - brightness) / 75) * 255);
+            data[i + 3] = Math.min(data[i + 3], alpha);
+          } else if (isDarkGrey) {
+            const alpha = Math.round((brightness / 80) * 255);
             data[i + 3] = Math.min(data[i + 3], alpha);
           }
         }
