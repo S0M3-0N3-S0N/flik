@@ -39,8 +39,8 @@ const COLOR_FAMILIES = [
   ["#440022","#770044","#AA0055","#CC2266","#EE4488","#FF55AA","#FF77BB","#FF99CC","#FFBBDD","#FFDDEE"],
   // 🤎 Browns / Earth
   ["#1A0800","#3D1500","#6B2D00","#8B4513","#A0522D","#BC6C25","#D4935A","#E8B48A","#F5D0B0","#FFF0E8"],
-  // ⬛⬜ Black & White only
-  ["#000000","#FFFFFF"],
+  // ⬛⬜ Blacks, Greys & White
+  ["#000000","#111111","#1A1A1A","#222222","#333333","#444444","#555555","#666666","#777777","#888888","#999999","#AAAAAA","#BBBBBB","#CCCCCC","#DDDDDD","#EEEEEE","#F5F5F5","#FFFFFF"],
 ];
 
 export default function PaintPanel({
