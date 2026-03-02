@@ -10,6 +10,8 @@ import FocusSquare from '../components/camera/FocusSquare';
 import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
 import CameraGuidance from '../components/camera/CameraGuidance';
+import CameraNotification from '../components/camera/CameraNotification';
+import { useCameraFrame } from '../components/hooks/useCameraFrame';
 import { useFlikActions } from '../components/useFlikActions';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
