@@ -602,8 +602,15 @@ export default function FlikChat() {
         }
       });
       
+      const normalModePrompt = `You are a helpful, friendly, and knowledgeable AI assistant. Answer any question the user has clearly and helpfully. You can help with anything - writing, coding, math, advice, general knowledge, creative ideas, or just casual conversation. Be warm, concise, and direct. No special formatting needed - just reply naturally.
+
+CONVERSATION HISTORY:
+${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n')}
+
+User: ${currentInput}${contextImages.length > 0 ? `\n[User attached ${contextImages.length} image(s)]` : ''}`;
+
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: buildFlikPrompt({
+        prompt: normalMode ? normalModePrompt : buildFlikPrompt({
           internetEnabled,
           userProfile,
           allCreations,
@@ -617,7 +624,13 @@ export default function FlikChat() {
         }),
         file_urls: contextImages.length > 0 ? contextImages : undefined,
         add_context_from_internet: internetEnabled,
-        response_json_schema: {
+        response_json_schema: normalMode ? {
+          type: "object",
+          properties: {
+            message: { type: "string" }
+          },
+          required: ["message"]
+        } : {
           type: "object",
           properties: {
             message: { type: "string" },
