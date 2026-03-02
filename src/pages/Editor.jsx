@@ -674,7 +674,52 @@ export default function Editor() {
         setIsSaving(false);
         return; 
       }
-      const file = new File([blob], `flik_creation_${Date.now()}.png`, { type: blob.type });
+
+      let finalBlob = blob;
+
+      // If there are stickers, composite them onto the image
+      if (stickers.length > 0) {
+        finalBlob = await new Promise((resolve) => {
+          const baseImg = new Image();
+          baseImg.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = baseImg.width;
+            canvas.height = baseImg.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(baseImg, 0, 0);
+
+            let loadedCount = 0;
+            const drawSticker = () => {
+              stickers.forEach(sticker => {
+                const sImg = new Image();
+                sImg.crossOrigin = 'anonymous';
+                sImg.onload = () => {
+                  const x = (sticker.x / 100) * canvas.width;
+                  const y = (sticker.y / 100) * canvas.height;
+                  const w = (sticker.width / 100) * canvas.width;
+                  const h = (sImg.naturalHeight / sImg.naturalWidth) * w;
+                  ctx.save();
+                  ctx.translate(x + w / 2, y + h / 2);
+                  ctx.rotate(((sticker.rotation || 0) * Math.PI) / 180);
+                  ctx.drawImage(sImg, -w / 2, -h / 2, w, h);
+                  ctx.restore();
+                  loadedCount++;
+                  if (loadedCount === stickers.length) {
+                    canvas.toBlob(b => resolve(b || blob), 'image/png');
+                  }
+                };
+                sImg.onerror = () => { loadedCount++; if (loadedCount === stickers.length) canvas.toBlob(b => resolve(b || blob), 'image/png'); };
+                sImg.src = sticker.url;
+              });
+            };
+            drawSticker();
+          };
+          baseImg.onerror = () => resolve(blob);
+          baseImg.src = URL.createObjectURL(blob);
+        });
+      }
+
+      const file = new File([finalBlob], `flik_creation_${Date.now()}.png`, { type: 'image/png' });
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
       if (!uploadResult?.file_url) throw new Error('Upload failed');
       await base44.entities.Creation.create({
@@ -688,7 +733,7 @@ export default function Editor() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentImage, handleGetProcessedBlob]);
+  }, [currentImage, handleGetProcessedBlob, stickers]);
 
   const handleTextImageGenerated = useCallback((imageUrl) => {
     // Add as a draggable sticker instead of opening result modal
