@@ -184,15 +184,15 @@ export default function ImageUploader({ onImageSelect, onGalleryOpen, multiple =
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex flex-col sm:flex-row items-center gap-6 text-xs text-white/50 relative z-10"
+          className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-white/50 relative z-10 px-2"
         >
-          <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition-colors">
-            <FileType className="w-4 h-4 text-[#FF6B35]" />
-            <span>PNG, JPG, WEBP, GIF</span>
+          <div className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl transition-colors">
+            <FileType className="w-3 h-3 sm:w-4 sm:h-4 text-[#FF6B35] flex-shrink-0" />
+            <span className="whitespace-nowrap">PNG, JPG, WEBP, GIF</span>
           </div>
-          <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition-colors">
-            <HardDrive className="w-4 h-4 text-[#FFB800]" />
-            <span>Up to 50MB</span>
+          <div className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl transition-colors">
+            <HardDrive className="w-3 h-3 sm:w-4 sm:h-4 text-[#FFB800] flex-shrink-0" />
+            <span className="whitespace-nowrap">Up to 50MB</span>
           </div>
         </motion.div>
         
