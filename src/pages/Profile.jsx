@@ -952,8 +952,10 @@ export default function Profile() {
                      const urls = selectedItems.map(id => {
                        const item = creations.find(c => c.id === id);
                        return item?.url;
-                     }).filter(Boolean).join(',');
-                     navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(urls));
+                     }).filter(Boolean);
+                     const params = new URLSearchParams();
+                     urls.forEach((url, idx) => params.append('load', url));
+                     navigate(createPageUrl('Editor') + '?' + params.toString());
                    }}
                    className="flex-1 min-w-[80px] sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-2 sm:px-3 text-xs sm:text-sm"
                    title="Edit selected in Photo Studio"
@@ -967,8 +969,10 @@ export default function Profile() {
                      const urls = selectedItems.map(id => {
                        const item = creations.find(c => c.id === id);
                        return item?.url;
-                     }).filter(Boolean).join(',');
-                     navigate(createPageUrl('Generate') + '?load=' + encodeURIComponent(urls));
+                     }).filter(Boolean);
+                     const params = new URLSearchParams();
+                     urls.forEach((url, idx) => params.append('load', url));
+                     navigate(createPageUrl('Generate') + '?' + params.toString());
                    }}
                    className="flex-1 min-w-[90px] sm:flex-none bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-9 px-2 sm:px-3 text-xs sm:text-sm"
                    title="Use as reference in Imagine AI"
