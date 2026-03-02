@@ -693,6 +693,12 @@ export default function CameraPage() {
         {/* Camera Guidance */}
         {!photo && settings.cameraGuidance && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
 
+        {/* Camera Notification */}
+        <CameraNotification 
+          message={cameraNotification} 
+          onDismiss={() => setCameraNotification(null)} 
+        />
+
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
 
