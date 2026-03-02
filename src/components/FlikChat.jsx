@@ -422,8 +422,7 @@ export default function FlikChat() {
       const creations = await base44.entities.Creation.filter(
         { created_by: user.email },
         '-created_date',
-        GALLERY_FETCH_LIMIT,
-        { data_env: "prod" }
+        GALLERY_FETCH_LIMIT
       );
       setGalleryCreations(creations);
       setGalleryCachedData(creations);
