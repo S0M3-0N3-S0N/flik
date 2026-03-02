@@ -15,7 +15,50 @@ export default function TextGeneratorPanel({ onTextImageGenerated, isProcessing 
   const [isUploading, setIsUploading] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Auto-suggest as user types (debounced)
+  useEffect(() => {
+    if (!stylePrompt || stylePrompt.length < 10) {
+      setShowSuggestions(false);
+      return;
+    }
+    const timer = setTimeout(() => getAISuggestions(stylePrompt), 1500);
+    return () => clearTimeout(timer);
+  }, [stylePrompt]);
+
+  const getAISuggestions = async (userPrompt) => {
+    if (!userPrompt || userPrompt.length < 10) return;
+    setIsLoadingSuggestions(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are a creative expert helping users write AI text art style prompts.
+
+The user wants to create stylized text${textContent ? ` that says "${textContent}"` : ''}.
+Their current style idea: "${userPrompt}"
+
+Provide 3 enhanced versions of their prompt for stunning AI-generated text art.
+Make them more specific, vivid, and visually descriptive. Keep each under 80 words.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            suggestions: { type: "array", items: { type: "string" } }
+          }
+        }
+      });
+      if (response?.suggestions?.length > 0) {
+        setAiSuggestions(response.suggestions);
+        setShowSuggestions(true);
+      }
+    } catch (e) {
+      // silently fail
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
 
   const handleEnhancePrompt = async () => {
     if (!stylePrompt.trim() && !textContent.trim()) {
@@ -36,6 +79,7 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
       });
       if (result) {
         setStylePrompt(result.trim());
+        setShowSuggestions(false);
         toast.success("Prompt enhanced!");
       }
     } catch (error) {
