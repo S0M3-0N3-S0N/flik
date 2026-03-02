@@ -133,19 +133,20 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
 
     setIsGenerating(true);
     try {
-      const prompt = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY TRANSPARENT background. No background color, no white background, no backdrop — only the text itself rendered with this style: ${stylePrompt}. The text must be visually striking, artistic, and readable. Output must have full alpha transparency everywhere except the text.`;
+      let imagePrompt = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY WHITE background. The text must be visually striking, artistic, and readable with this style: ${stylePrompt}.`;
       
       if (referenceImages.length > 0) {
-        prompt += ` Match the visual aesthetic of the provided reference images.`;
+        imagePrompt += ` Match the visual aesthetic of the provided reference images.`;
       }
 
       const imageResult = await base44.integrations.Core.GenerateImage({
-        prompt,
+        prompt: imagePrompt,
         existing_image_urls: referenceImages.length > 0 ? referenceImages.map(img => img.url) : undefined,
       });
 
       if (imageResult?.url) {
-        const finalUrl = imageResult.url;
+        // Remove white background using canvas
+        const finalUrl = await removeWhiteBackground(imageResult.url);
 
         // Save to font library
         await base44.entities.Font.create({
