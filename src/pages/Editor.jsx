@@ -100,6 +100,7 @@ export default function Editor() {
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
   const [user, setUser] = useState(null);
   const [isEyeDropperActive, setIsEyeDropperActive] = useState(false);
+  const [stickers, setStickers] = useState([]);
 
   const location = useLocation();
 
