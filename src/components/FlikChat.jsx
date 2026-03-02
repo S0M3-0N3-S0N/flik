@@ -592,6 +592,17 @@ export default function FlikChat() {
       const pageActions = getFlikActions(currentPage);
       const pageContext = getFlikContext(currentPage);
 
+      // Fetch saved conversations for context
+      let savedConversationsContext = '';
+      try {
+        const savedConvs = await base44.entities.FlikConversation.filter({ created_by: userProfile.email }, '-last_message_at', 5);
+        if (savedConvs && savedConvs.length > 0) {
+          savedConversationsContext = `\n\nPAST SAVED CONVERSATIONS (user has ${savedConvs.length} saved chats):\n${savedConvs.map(conv => `- "${conv.title}" (${conv.messages?.length || 0} messages)`).join('\n')}`;
+        }
+      } catch (e) {
+        // Silently fail if can't fetch saved conversations
+      }
+
       base44.analytics.track({ 
         eventName: 'flik_message_sent',
         properties: { 
@@ -612,7 +623,7 @@ FLIK FEATURES (know these to answer questions):
 
 USER INFO:
 - Name: ${cachedUserData?.userProfile?.full_name || 'User'}
-- Total Creations: ${cachedUserData?.allCreations?.length || 0}
+- Total Creations: ${cachedUserData?.allCreations?.length || 0}${savedConversationsContext}
 
 CONVERSATION HISTORY:
 ${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
