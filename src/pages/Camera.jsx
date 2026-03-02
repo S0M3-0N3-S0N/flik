@@ -591,6 +591,8 @@ export default function CameraPage() {
     openSettings: () => setSettingsOpen(true),
     closeSettings: () => setSettingsOpen(false),
     exitCamera: () => navigate(createPageUrl('Editor')),
+    showNotification: (message) => setCameraNotification(message),
+    getCameraFrame: () => captureFrame(),
   }, () => ({
     isActive: true,
     hasStream,
