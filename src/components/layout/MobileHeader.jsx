@@ -28,7 +28,7 @@ export default function MobileHeader({ currentPageName }) {
     >
       <div className="flex items-center justify-center px-4 py-3 h-14">
         {isRootPage ? (
-          <div className="gradient-text font-bold text-lg tracking-wider">FLIK</div>
+          <div className="gradient-text font-bold text-2xl tracking-wider">FLIK</div>
         ) : (
           <>
             <button
