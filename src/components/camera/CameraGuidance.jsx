@@ -21,10 +21,16 @@ export default function CameraGuidance({ videoRef, isActive }) {
       if (!ctx) return;
       
       ctx.drawImage(videoRef.current, 0, 0);
-      const imageData = canvas.toDataURL('image/jpeg', 0.6);
+      
+      // Convert canvas to blob for upload
+      const blob = await new Promise(resolve => {
+        canvas.toBlob(resolve, 'image/jpeg', 0.6);
+      });
+      
+      if (!blob) return;
 
       // Upload the frame temporarily
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: imageData });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: blob });
 
       // Get AI guidance
       const response = await base44.integrations.Core.InvokeLLM({
