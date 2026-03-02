@@ -690,8 +690,18 @@ export default function Editor() {
   }, [currentImage, handleGetProcessedBlob]);
 
   const handleTextImageGenerated = useCallback((imageUrl) => {
-    setResultImage(imageUrl);
-    setShowResult(true);
+    // Add as a draggable sticker instead of opening result modal
+    const newSticker = {
+      id: Date.now(),
+      url: imageUrl,
+      x: 20,
+      y: 20,
+      width: 40,
+      height: 40,
+      rotation: 0,
+    };
+    setStickers(prev => [...prev, newSticker]);
+    toast.success("Text sticker added! Drag & resize it on the canvas.");
   }, []);
 
   const handleFileUpload = useCallback((e) => {
