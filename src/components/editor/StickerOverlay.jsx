@@ -110,17 +110,28 @@ export default function StickerOverlay({ stickers, onStickersChange, zoom, pan, 
           onTouchStart={(e) => { e.stopPropagation(); handleStickerMouseDown(e, sticker.id, 'drag'); }}
           onClick={(e) => { e.stopPropagation(); setActiveSticker(sticker.id); }}
         >
-          <img
-            src={sticker.url}
-            alt="sticker"
-            className="w-full h-auto select-none"
-            draggable={false}
+          <div
             style={{
-              outline: activeSticker === sticker.id ? '2px dashed rgba(255,107,53,0.8)' : 'none',
+              backgroundImage: activeSticker === sticker.id
+                ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)'
+                : 'none',
+              backgroundSize: '8px 8px',
+              backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
               borderRadius: 4,
-              mixBlendMode: 'normal',
+              outline: activeSticker === sticker.id ? '2px dashed rgba(255,107,53,0.8)' : 'none',
             }}
-          />
+          >
+            <img
+              src={sticker.url}
+              alt="sticker"
+              className="w-full h-auto select-none"
+              draggable={false}
+              style={{
+                display: 'block',
+                borderRadius: 4,
+              }}
+            />
+          </div>
 
           {activeSticker === sticker.id && (
             <>
