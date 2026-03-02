@@ -1,8 +1,8 @@
 import React, { useCallback, useState, useRef } from "react";
-import { Upload, Image, FileType, HardDrive } from "lucide-react";
+import { Upload, Image, FileType, HardDrive, Grid3x3 } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function ImageUploader({ onImageSelect, multiple = false }) {
+export default function ImageUploader({ onImageSelect, onGalleryOpen, multiple = false }) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
