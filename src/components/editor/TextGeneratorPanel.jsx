@@ -202,23 +202,32 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-white/60 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-white/60 uppercase tracking-wider flex items-center gap-2">
               Style Description
+              {isLoadingSuggestions && <Loader2 className="w-3 h-3 animate-spin text-[#FF6B35]" />}
             </label>
-            <button
-              type="button"
-              onClick={handleEnhancePrompt}
-              disabled={isEnhancingPrompt}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#FF6B35]/20 to-[#FFB800]/20 border border-[#FF6B35]/30 text-[#FF6B35] text-[11px] font-medium hover:from-[#FF6B35]/30 hover:to-[#FFB800]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              title="AI will enhance your style prompt"
-            >
-              {isEnhancingPrompt ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <Sparkles className="w-3 h-3" />
+            <div className="flex items-center gap-2">
+              {stylePrompt.length > 10 && (
+                <button
+                  type="button"
+                  onClick={() => setShowSuggestions(!showSuggestions)}
+                  className="text-xs text-[#FF6B35] hover:text-[#FFB800] transition-colors flex items-center gap-1"
+                >
+                  <Lightbulb className="w-3 h-3" />
+                  {showSuggestions ? 'Hide' : 'Suggestions'}
+                </button>
               )}
-              {isEnhancingPrompt ? "Enhancing..." : "Enhance Prompt"}
-            </button>
+              <button
+                type="button"
+                onClick={handleEnhancePrompt}
+                disabled={isEnhancingPrompt}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#FF6B35]/20 to-[#FFB800]/20 border border-[#FF6B35]/30 text-[#FF6B35] text-[11px] font-medium hover:from-[#FF6B35]/30 hover:to-[#FFB800]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                title="AI will enhance your style prompt"
+              >
+                {isEnhancingPrompt ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {isEnhancingPrompt ? "Enhancing..." : "Enhance"}
+              </button>
+            </div>
           </div>
           <textarea
             value={stylePrompt}
@@ -227,6 +236,39 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
             rows={4}
             className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg text-white placeholder-white/30 text-base focus:outline-none focus:border-[#FF6B35] transition-colors resize-none"
           />
+
+          <AnimatePresence>
+            {showSuggestions && aiSuggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-3 space-y-2"
+              >
+                <div className="text-xs text-white/40 flex items-center gap-2 mb-2">
+                  <Sparkles className="w-3 h-3 text-[#FF6B35]" />
+                  AI-Enhanced Suggestions
+                </div>
+                {aiSuggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setStylePrompt(suggestion);
+                      setShowSuggestions(false);
+                      toast.success("Prompt applied!");
+                    }}
+                    className="w-full text-left p-3 rounded-lg bg-white/5 hover:bg-[#FF6B35]/20 border border-white/10 hover:border-[#FF6B35]/50 text-xs text-white/80 hover:text-white transition-all"
+                  >
+                    <div className="flex items-start gap-2">
+                      <Lightbulb className="w-3 h-3 text-[#FF6B35] mt-0.5 flex-shrink-0" />
+                      <span className="leading-relaxed">{suggestion}</span>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="space-y-3">
