@@ -811,7 +811,7 @@ export default function FlikChat() {
   });
 
   const deleteConversationMutation = useMutation({
-    mutationFn: (id) => base44.entities.FlikConversation.delete(id, { data_env: "prod" }),
+    mutationFn: (id) => base44.entities.FlikConversation.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flikConversations'] });
       toast.success('Conversation deleted');
