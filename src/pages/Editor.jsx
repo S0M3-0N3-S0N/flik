@@ -23,7 +23,6 @@ import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import StickerOverlay from "@/components/editor/StickerOverlay";
 import { useFlikActions } from "@/components/useFlikActions";
-import ExportModal from "@/components/editor/ExportModal";
 
 const DEFAULT_ADJUSTMENTS = {
   brightness: 0, contrast: 0, saturation: 0,
@@ -100,7 +99,6 @@ export default function Editor() {
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
   const [user, setUser] = useState(null);
-  const [showExportModal, setShowExportModal] = useState(false);
   const [isEyeDropperActive, setIsEyeDropperActive] = useState(false);
   const [stickers, setStickers] = useState([]);
 
@@ -1330,7 +1328,7 @@ export default function Editor() {
                 <span className="hidden sm:inline ml-1">{isSaving ? "Saving..." : "Save"}</span>
               </Button>
             )}
-            <Button disabled={!currentImage} onClick={() => setShowExportModal(true)} className="btn-gradient text-white text-xs disabled:opacity-30 px-3" title="Export">
+            <Button disabled={!currentImage} onClick={handleDownload} className="btn-gradient text-white text-xs disabled:opacity-30 px-3" title="Download">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline ml-1">Export</span>
             </Button>
@@ -1559,14 +1557,6 @@ export default function Editor() {
         onClose={() => setIsGalleryPickerOpen(false)}
         onSelect={handleImageSelect}
         onSelectMultiple={handleMultipleImagesSelect}
-      />
-
-      <ExportModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        onDownload={handleDownload}
-        onSaveToGallery={handleSaveToGallery}
-        imageUrl={currentImage?.url}
       />
     </div>
   );
