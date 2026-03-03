@@ -59,47 +59,28 @@ export default function PromptExtractor({ currentImage }) {
   return (
     <div className="space-y-4">
       {!showPrompt ? (
-        <div className="flex flex-col gap-3">
+        <>
           <p className="text-sm text-white/60">
-            Upload an image to extract a detailed text prompt that captures the style, composition, mood, and elements. Perfect for generating similar images.
+            Extract a detailed text prompt from your image that captures style, composition, mood, and elements.
           </p>
-          <ImageUploader
-            onImagesSelected={(images) => {
-              if (images && images.length > 0) {
-                setUploadedImage(images[0]);
-              }
-            }}
-            multiple={false}
-          />
-          {uploadedImage && (
-            <>
-              <div className="relative w-full h-40 rounded-lg overflow-hidden bg-white/5 border border-white/10">
-                <img
-                  src={uploadedImage.preview || uploadedImage.url}
-                  alt="Uploaded"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <Button
-                onClick={handleExtractPrompt}
-                disabled={isExtracting}
-                className="btn-gradient text-white w-full py-2"
-              >
-                {isExtracting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Extracting...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Extract Prompt from Image
-                  </>
-                )}
-              </Button>
-            </>
-          )}
-        </div>
+          <Button
+            onClick={handleExtractPrompt}
+            disabled={isExtracting || !currentImage}
+            className="btn-gradient text-white w-full py-2"
+          >
+            {isExtracting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Extracting...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Extract Prompt from Image
+              </>
+            )}
+          </Button>
+        </>
       ) : (
         <div className="space-y-3">
           <div className="p-3 rounded-lg bg-white/5 border border-white/10">
@@ -116,10 +97,7 @@ export default function PromptExtractor({ currentImage }) {
               Copy
             </Button>
             <Button
-              onClick={() => {
-                setShowPrompt(false);
-                setUploadedImage(null);
-              }}
+              onClick={() => setShowPrompt(false)}
               className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/30"
             >
               Extract Again
