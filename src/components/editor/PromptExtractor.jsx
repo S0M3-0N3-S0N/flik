@@ -11,19 +11,35 @@ export default function PromptExtractor({ onImageSelect }) {
   const [showPrompt, setShowPrompt] = useState(false);
   const fileInputRef = useRef(null);
 
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const imageFile = files.find(f => f.type.startsWith('image/'));
+    if (!imageFile) {
+      toast.error('Please select an image file');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setSelectedImage({ url: ev.target.result, preview: ev.target.result });
+    };
+    reader.readAsDataURL(imageFile);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleExtractPrompt = async () => {
-    if (!currentImage) {
+    if (!selectedImage) {
       toast.error("Please upload an image first");
       return;
     }
 
     setIsExtracting(true);
     try {
-      let imageUrl = currentImage.url;
+      let imageUrl = selectedImage.url;
       
       // If image is a data URL (local preview), upload it first
       if (!imageUrl || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
-        const response = await fetch(currentImage.preview || currentImage.url);
+        const response = await fetch(selectedImage.preview || selectedImage.url);
         const blob = await response.blob();
         const file = new File([blob], `image_${Date.now()}.png`, { type: 'image/png' });
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
