@@ -81,6 +81,7 @@ export default function CameraPage() {
   const [cameraLoading, setCameraLoading] = useState(false);
   const [orientation, setOrientation] = useState(0);
   const [cameraSupported, setCameraSupported] = useState(true);
+  const detectedFacesRef = useRef([]);
 
   const mode = MODES[modeIndex];
 
