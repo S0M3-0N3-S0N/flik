@@ -7,11 +7,15 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
  */
 export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdate }) {
   const [faces, setFaces] = useState([]);
-  const detectorRef = useRef(null);   // native FaceDetector instance
-  const modelRef = useRef(null);       // blazeface model
+  const detectorRef = useRef(null);
+  const modelRef = useRef(null);
   const modeRef = useRef(null);        // 'native' | 'blazeface' | 'none'
   const rafRef = useRef(null);
+  const onFacesUpdateRef = useRef(onFacesUpdate);
   const [videoDims, setVideoDims] = useState({ w: 0, h: 0 });
+
+  // Keep callback ref fresh without re-triggering detection loop
+  useEffect(() => { onFacesUpdateRef.current = onFacesUpdate; }, [onFacesUpdate]);
 
   // Initialise whichever detector is available
   useEffect(() => {
