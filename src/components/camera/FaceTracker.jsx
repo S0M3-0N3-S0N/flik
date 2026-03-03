@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * FaceTracker overlays face-detection boxes on the live camera feed.
