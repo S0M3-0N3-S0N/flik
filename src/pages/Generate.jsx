@@ -852,6 +852,24 @@ export default function Generate() {
         </DialogContent>
       </Dialog>
 
+      {/* Extract Prompt Dialog */}
+      <Dialog open={showExtractPrompt} onOpenChange={setShowExtractPrompt}>
+        <DialogContent className="max-w-md w-[90vw] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border border-white/10 text-white rounded-2xl p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold gradient-text">Extract Prompt</DialogTitle>
+          </DialogHeader>
+          <PromptExtractor 
+            onGalleryOpen={(callback) => {
+              setShowGallery(true);
+              setShowExtractPrompt(false);
+              // Store callback to be called when gallery image is selected
+              window.__extractPromptCallback = callback;
+            }} 
+            currentImage={null}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Mobile Advanced Settings Drawer */}
       <Drawer open={showAdvancedSettings} onOpenChange={setShowAdvancedSettings}>
         <DrawerContent className="bg-[#1a1a1a] border-white/10">
