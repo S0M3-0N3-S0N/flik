@@ -930,42 +930,36 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                 <h3 className="font-bold text-white text-lg gradient-text">FLIK</h3>
               </div>
             </div>
-            <div className="flex items-center gap-2 relative z-10">
-              {/* Liquid glass button group */}
-              <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-1.5 py-1.5 shadow-lg" style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-                <button
-                  onClick={handleNewConversation}
-                  title="New chat"
-                  aria-label="Start new conversation"
-                  className="relative w-9 h-9 rounded-xl flex items-center justify-center text-white/70 hover:text-white hover:bg-white/15 transition-all active:scale-95"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  <span className="absolute top-0.5 right-0.5 w-3 h-3 bg-[#FF6B35] rounded-full flex items-center justify-center text-white font-bold leading-none" style={{ fontSize: '8px' }}>+</span>
-                </button>
-                <div className="w-px h-5 bg-white/15" />
-                <button
-                  onClick={() => setShowConversations(true)}
-                  title="Saved conversations"
-                  aria-label="View saved conversations"
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white/70 hover:text-white hover:bg-white/15 transition-all active:scale-95"
-                >
-                  <History className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Close button - separate liquid glass pill */}
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  base44.analytics.track({ eventName: 'flik_chat_closed' });
-                }}
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-95 border border-white/15 shadow-lg"
-                style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
-                title="Close"
-                aria-label="Close chat"
+            <div className="flex items-center gap-1 relative z-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleNewConversation}
+                className="relative text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
+                title="New chat"
+                aria-label="Start new conversation"
               >
-                <X className="w-4 h-4" />
-              </button>
+                <MessageSquare className="w-4 h-4" />
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-[#FF6B35] rounded-full flex items-center justify-center text-white font-bold leading-none" style={{ fontSize: '9px' }}>+</span>
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowConversations(true)}
+                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
+                title="Saved conversations"
+                aria-label="View saved conversations"
+              >
+                <History className="w-4 h-4" />
+              </Button>
+
+              <Button variant="ghost" size="icon" onClick={() => {
+                setIsOpen(false);
+                base44.analytics.track({ eventName: 'flik_chat_closed' });
+              }} className="text-white/60 hover:text-white h-11 w-11 min-h-[44px] min-w-[44px] ml-1">
+                <X className="w-5 h-5" />
+              </Button>
             </div>
           </div>
 
