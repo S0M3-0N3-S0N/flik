@@ -797,23 +797,7 @@ export default function CameraPage() {
           videoRef={videoRef}
           isActive={hasStream && !photo}
           mirrored={facingMode === 'user'}
-          onFacesUpdate={useCallback((faces) => {
-            detectedFacesRef.current = faces;
-            if (faces.length > 0 && !autoFocusedFaceRef.current) {
-              autoFocusedFaceRef.current = true;
-              const face = faces[0];
-              const cx = face.x + face.w / 2;
-              const cy = face.y + face.h / 2;
-              setFocusPos(prev => prev ?? { x: cx, y: cy });
-              setShowExposure(false);
-              setPortraitMode(true);
-              portraitFaceRef.current = face;
-            } else if (faces.length === 0) {
-              autoFocusedFaceRef.current = false;
-              setPortraitMode(false);
-              portraitFaceRef.current = null;
-            }
-          }, [])}
+          onFacesUpdate={onFacesUpdate}
         />}
 
         {/* Focus square */}
