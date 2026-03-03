@@ -1370,17 +1370,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                     </svg>
                     <span className="text-sm">Internet {internetEnabled ? 'ON' : 'OFF'}</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleNewConversation();
-                      document.getElementById('attach-menu')?.classList.add('hidden');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
-                  >
-                    <MessageSquare className="w-4 h-4 text-[#FF6B35]" />
-                    <span className="text-sm">New Chat</span>
-                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
