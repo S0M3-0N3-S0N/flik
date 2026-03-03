@@ -134,14 +134,27 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
               className="hidden"
             />
           </div>
-          {selectedImage && (
+          {selectedImages.length > 0 && (
             <>
-              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
-                <img
-                  src={selectedImage.preview}
-                  alt="Selected"
-                  className="max-w-full max-h-full object-contain"
-                />
+              <div className="grid grid-cols-3 gap-2">
+                {selectedImages.map((img, idx) => (
+                  <div key={idx} className="relative group">
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
+                      <img
+                        src={img.preview}
+                        alt="Selected"
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== idx))}
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500/80 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove image"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
               <Button
                 onClick={handleExtractPrompt}
@@ -154,7 +167,7 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
                     Extracting...
                   </>
                 ) : (
-                  <>Extract Prompt</>
+                  <>Extract Prompt{selectedImages.length > 1 && `s (${selectedImages.length})`}</>
                 )}
               </Button>
             </>
