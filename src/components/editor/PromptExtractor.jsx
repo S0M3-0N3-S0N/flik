@@ -184,7 +184,7 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
             <Button
               onClick={() => {
                 setShowPrompt(false);
-                setSelectedImage(null);
+                setSelectedImages([]);
               }}
               className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/30"
             >
