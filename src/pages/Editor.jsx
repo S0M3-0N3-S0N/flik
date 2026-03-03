@@ -1565,6 +1565,7 @@ export default function Editor() {
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         onDownload={handleDownload}
+        onSaveToGallery={handleSaveToGallery}
         imageUrl={currentImage?.url}
       />
     </div>
