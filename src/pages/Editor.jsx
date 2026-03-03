@@ -98,6 +98,7 @@ export default function Editor() {
   const [redoHistory, setRedoHistory] = useState([]);
   const [regenerateAction, setRegenerateAction] = useState(null);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
+  const [galleryCallback, setGalleryCallback] = useState(null);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
   const [user, setUser] = useState(null);
   const [isEyeDropperActive, setIsEyeDropperActive] = useState(false);
