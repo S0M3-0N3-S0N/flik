@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Copy, Loader2, Upload } from "lucide-react";
+import { Copy, Loader2, Upload, Image as ImageIcon } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function PromptExtractor({ currentImage }) {
+export default function PromptExtractor({ onImageSelect }) {
+  const [selectedImage, setSelectedImage] = useState(null);
   const [extractedPrompt, setExtractedPrompt] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleExtractPrompt = async () => {
     if (!currentImage) {
