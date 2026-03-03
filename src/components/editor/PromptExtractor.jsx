@@ -21,22 +21,32 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    const imageFile = files.find(f => f.type.startsWith('image/'));
-    if (!imageFile) {
-      toast.error('Please select an image file');
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      toast.error('Please select image files');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setSelectedImage({ url: ev.target.result, preview: ev.target.result });
-    };
-    reader.readAsDataURL(imageFile);
+    
+    let loadedCount = 0;
+    const newImages = [];
+    imageFiles.forEach((imageFile, index) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        newImages[index] = { url: ev.target.result, preview: ev.target.result };
+        loadedCount++;
+        if (loadedCount === imageFiles.length) {
+          setSelectedImages(prev => [...prev, ...newImages]);
+          toast.success(`${imageFiles.length} image(s) added`);
+        }
+      };
+      reader.readAsDataURL(imageFile);
+    });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleGallerySelect = () => {
     onGalleryOpen((selectedImage) => {
-      setSelectedImage({ url: selectedImage.url, preview: selectedImage.thumbnail_url || selectedImage.url });
+      setSelectedImages(prev => [...prev, { url: selectedImage.url, preview: selectedImage.thumbnail_url || selectedImage.url }]);
     });
   };
 
