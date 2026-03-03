@@ -1411,7 +1411,7 @@ export default function Editor() {
                        <motion.button
                          onClick={() => {
                            setIsImageLocked(!isImageLocked);
-                           if (!isImageLocked) setShowLockButton(false);
+                           setShowLockButton(true);
                          }}
                          initial={{ opacity: 0, y: -10 }}
                          animate={{ opacity: 1, y: 0 }}
