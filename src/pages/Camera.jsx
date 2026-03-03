@@ -862,6 +862,22 @@ export default function CameraPage() {
           )}
         </AnimatePresence>
 
+        {/* Portrait badge — centered top bar */}
+        <AnimatePresence>
+          {portraitMode && !photo && (
+            <motion.button
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              onClick={() => { setPortraitMode(false); portraitFaceRef.current = null; haptic(8); }}
+              className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-[#FFB800] rounded-full px-3 py-1"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-black/50" />
+              <span className="text-black text-[11px] font-bold tracking-widest">PORTRAIT</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
         {/* Top controls — positions are fixed, only icons rotate */}
         {!photo && !isRecording && (
           <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-5">
