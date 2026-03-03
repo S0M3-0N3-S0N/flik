@@ -273,6 +273,12 @@ export default function CameraPage() {
     track.applyConstraints({ advanced: [{ torch: on }] }).catch(() => {});
   }, []);
 
+  const setScreenFlash = useCallback((brightness) => {
+    if (videoRef.current) {
+      videoRef.current.style.filter = brightness > 0 ? `brightness(${brightness})` : 'none';
+    }
+  }, []);
+
   // Persistent torch when flashMode === 'on' (stays lit as a flashlight)
   useEffect(() => {
     if (flashMode === 'on') {
