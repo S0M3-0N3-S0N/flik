@@ -350,15 +350,24 @@ export default function CameraPage() {
 
     // Snap to nearest detected face center if tap is within a face box
     const faces = detectedFacesRef.current;
+    let tappedFace = null;
     if (faces.length > 0) {
       for (const face of faces) {
         if (x >= face.x && x <= face.x + face.w && y >= face.y && y <= face.y + face.h) {
           x = face.x + face.w / 2;
           y = face.y + face.h / 2;
+          tappedFace = face;
           haptic([10, 5, 10]);
           break;
         }
       }
+    }
+    if (tappedFace) {
+      setPortraitMode(true);
+      portraitFaceRef.current = tappedFace;
+    } else {
+      setPortraitMode(false);
+      portraitFaceRef.current = null;
     }
 
     setFocusPos({ x, y });
