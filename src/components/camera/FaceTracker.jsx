@@ -287,9 +287,9 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
 
             return (
               <div key={face.id} style={{ position: 'absolute', left: x, top: face.y, width: face.w, height: face.h }}>
-                {corners.map((corner, ci) => (
+                {corners.map((corner, cornerIdx) => (
                   <div
-                    key={ci}
+                    key={`${face.id}-${cornerIdx}`}
                     style={{
                       position: 'absolute',
                       width: size,
