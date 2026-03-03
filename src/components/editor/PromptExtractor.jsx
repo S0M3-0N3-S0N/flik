@@ -1,21 +1,20 @@
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Copy, Loader2, Upload, Grid3x3, X, ImagePlus } from "lucide-react";
+import { Copy, Loader2, Upload, Grid3x3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 export default function PromptExtractor({ onGalleryOpen, currentImage }) {
-  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [extractedPrompt, setExtractedPrompt] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   // Use currentImage from parent if available
   React.useEffect(() => {
-    if (currentImage && selectedImages.length === 0) {
-      setSelectedImages([{ url: currentImage.url, preview: currentImage.preview || currentImage.url }]);
+    if (currentImage && !selectedImage) {
+      setSelectedImage({ url: currentImage.url, preview: currentImage.preview || currentImage.url });
     }
   }, [currentImage]);
 
@@ -122,11 +121,11 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
           </div>
           {selectedImage && (
             <>
-              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white/5 border border-white/10">
+              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
                 <img
                   src={selectedImage.preview}
                   alt="Selected"
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full object-contain"
                 />
               </div>
               <Button
