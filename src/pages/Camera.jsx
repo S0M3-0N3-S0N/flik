@@ -390,7 +390,7 @@ export default function CameraPage() {
     }
 
     setFocusPos({ x, y });
-    setShowExposure(true);
+    setShowExposure(true); // always show exposure slider with focus (iPhone-style unified control)
     haptic(8);
 
     const track = streamRef.current?.getVideoTracks()[0];
