@@ -17,9 +17,21 @@ export default function PromptExtractor({ currentImage }) {
 
     setIsExtracting(true);
     try {
+      let imageUrl = currentImage.url;
+      
+      // If image is a data URL (local preview), upload it first
+      if (!imageUrl || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
+        const response = await fetch(currentImage.preview || currentImage.url);
+        const blob = await response.blob();
+        const file = new File([blob], `image_${Date.now()}.png`, { type: 'image/png' });
+        const uploadResult = await base44.integrations.Core.UploadFile({ file });
+        if (!uploadResult?.file_url) throw new Error('Failed to upload image');
+        imageUrl = uploadResult.file_url;
+      }
+
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `Analyze this image in detail and generate a comprehensive, descriptive text prompt that captures the scene, style, composition, mood, colors, and any notable elements. This prompt will be used to generate new images with a similar aesthetic and style. Make the prompt detailed, vivid, and suitable for an AI image generation model.`,
-        file_urls: [currentImage.url || currentImage.preview],
+        file_urls: [imageUrl],
       });
 
       if (response && typeof response === "string") {
