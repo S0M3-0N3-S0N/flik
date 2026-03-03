@@ -22,6 +22,7 @@ import PaintPanel from "@/components/editor/PaintPanel";
 import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import StickerOverlay from "@/components/editor/StickerOverlay";
+import PromptExtractor from "@/components/editor/PromptExtractor";
 import { useFlikActions } from "@/components/useFlikActions";
 
 const DEFAULT_ADJUSTMENTS = {
@@ -1187,10 +1188,13 @@ export default function Editor() {
               )}
               {user?.role === 'admin' && (
                 <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Text Generator">
-                    <Type className="w-4 h-4" />
-                  </TabsTrigger>
-                )}
-                </TabsList>
+                  <Type className="w-4 h-4" />
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="extract" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Extract Prompt">
+                <Zap className="w-4 h-4" />
+              </TabsTrigger>
+            </TabsList>
 
           <div className="px-4 pb-4">
             <TabsContent value="ai" className="mt-0">
@@ -1297,8 +1301,16 @@ export default function Editor() {
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">AI Text Generator</h3>
               <TextGeneratorPanel onTextImageGenerated={handleTextImageGenerated} isProcessing={isProcessing} user={user} />
             </TabsContent>
-            </div>
-            </Tabs>
+
+            <TabsContent value="extract" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Extract Prompt</h3>
+              <PromptExtractor onGalleryOpen={(callback) => {
+                setGalleryCallback(() => callback);
+                setIsGalleryPickerOpen(true);
+              }} currentImage={currentImage} />
+            </TabsContent>
+          </div>
+        </Tabs>
       </motion.aside>
       
       <main className="flex-1 flex flex-col order-1 lg:order-2 h-[60dvh] lg:h-auto relative min-h-0">
