@@ -1,11 +1,11 @@
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Copy, Loader2, Upload, Grid3x3, X } from "lucide-react";
+import { Copy, Loader2, Upload, Grid3x3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 export default function PromptExtractor({ onGalleryOpen, currentImage }) {
-  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [extractedPrompt, setExtractedPrompt] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -13,8 +13,8 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
 
   // Use currentImage from parent if available
   React.useEffect(() => {
-    if (currentImage && selectedImages.length === 0) {
-      setSelectedImages([{ url: currentImage.url, preview: currentImage.preview || currentImage.url }]);
+    if (currentImage && !selectedImage) {
+      setSelectedImage({ url: currentImage.url, preview: currentImage.preview || currentImage.url });
     }
   }, [currentImage]);
 
@@ -28,7 +28,7 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setSelectedImages(prev => [...prev, { url: ev.target.result, preview: ev.target.result }]);
+      setSelectedImage({ url: ev.target.result, preview: ev.target.result });
     };
     reader.readAsDataURL(imageFile);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -36,42 +36,33 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
 
   const handleGallerySelect = () => {
     onGalleryOpen((selectedImage) => {
-      setSelectedImages(prev => [...prev, { url: selectedImage.url, preview: selectedImage.thumbnail_url || selectedImage.url }]);
+      setSelectedImage({ url: selectedImage.url, preview: selectedImage.thumbnail_url || selectedImage.url });
     });
   };
 
-  const removeImage = (index) => {
-    setSelectedImages(prev => prev.filter((_, i) => i !== index));
-  };
-
   const handleExtractPrompt = async () => {
-    if (selectedImages.length === 0) {
-      toast.error("Please upload at least one image");
+    if (!selectedImage) {
+      toast.error("Please upload an image first");
       return;
     }
 
     setIsExtracting(true);
     try {
-      // Upload all images and get URLs
-      const imageUrls = [];
-      for (const img of selectedImages) {
-        let imageUrl = img.url;
-        
-        // If image is a data URL (local preview), upload it first
-        if (!imageUrl || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
-          const response = await fetch(img.preview || img.url);
-          const blob = await response.blob();
-          const file = new File([blob], `image_${Date.now()}.png`, { type: 'image/png' });
-          const uploadResult = await base44.integrations.Core.UploadFile({ file });
-          if (!uploadResult?.file_url) throw new Error('Failed to upload image');
-          imageUrl = uploadResult.file_url;
-        }
-        imageUrls.push(imageUrl);
+      let imageUrl = selectedImage.url;
+      
+      // If image is a data URL (local preview), upload it first
+      if (!imageUrl || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
+        const response = await fetch(selectedImage.preview || selectedImage.url);
+        const blob = await response.blob();
+        const file = new File([blob], `image_${Date.now()}.png`, { type: 'image/png' });
+        const uploadResult = await base44.integrations.Core.UploadFile({ file });
+        if (!uploadResult?.file_url) throw new Error('Failed to upload image');
+        imageUrl = uploadResult.file_url;
       }
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze these images in detail and generate a comprehensive, descriptive text prompt that captures the combined scene, style, composition, mood, colors, and any notable elements. This prompt will be used to generate new images with a similar aesthetic and style. Make the prompt detailed, vivid, and suitable for an AI image generation model.`,
-        file_urls: imageUrls,
+        prompt: `Analyze this image in detail and generate a comprehensive, descriptive text prompt that captures the scene, style, composition, mood, colors, and any notable elements. This prompt will be used to generate new images with a similar aesthetic and style. Make the prompt detailed, vivid, and suitable for an AI image generation model.`,
+        file_urls: [imageUrl],
       });
 
       if (response && typeof response === "string") {
@@ -128,26 +119,14 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
               className="hidden"
             />
           </div>
-          {selectedImages.length > 0 && (
+          {selectedImage && (
             <>
-              <div className="grid grid-cols-3 gap-2">
-                {selectedImages.map((img, idx) => (
-                  <div key={idx} className="relative group">
-                    <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
-                      <img
-                        src={img.preview}
-                        alt={`Selected ${idx + 1}`}
-                        className="max-w-full max-h-full object-contain"
-                      />
-                    </div>
-                    <button
-                      onClick={() => removeImage(idx)}
-                      className="absolute top-1 right-1 p-1 rounded bg-red-500/80 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3 text-white" />
-                    </button>
-                  </div>
-                ))}
+              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                <img
+                  src={selectedImage.preview}
+                  alt="Selected"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <Button
                 onClick={handleExtractPrompt}
@@ -184,7 +163,7 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
             <Button
               onClick={() => {
                 setShowPrompt(false);
-                setSelectedImages([]);
+                setSelectedImage(null);
               }}
               className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/30"
             >
