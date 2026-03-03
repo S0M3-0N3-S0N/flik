@@ -1304,7 +1304,10 @@ export default function Editor() {
 
             <TabsContent value="extract" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Extract Prompt</h3>
-              <PromptExtractor onGalleryOpen={() => setIsGalleryPickerOpen(true)} currentImage={currentImage} />
+              <PromptExtractor onGalleryOpen={(callback) => {
+                setGalleryCallback(() => callback);
+                setIsGalleryPickerOpen(true);
+              }} currentImage={currentImage} />
             </TabsContent>
           </div>
         </Tabs>
