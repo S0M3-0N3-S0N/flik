@@ -36,6 +36,7 @@ export default function Editor() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLocked, setIsImageLocked] = useState(false);
   const [showLockButton, setShowLockButton] = useState(true);
+  const [lockButtonHovered, setLockButtonHovered] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
