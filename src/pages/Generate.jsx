@@ -869,7 +869,7 @@ export default function Generate() {
 
       {/* Extract Prompt Dialog */}
       <Dialog open={showExtractPrompt} onOpenChange={setShowExtractPrompt}>
-        <DialogContent className="max-w-md w-[90vw] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border border-white/10 text-white rounded-2xl p-6 shadow-2xl">
+        <DialogContent className="max-w-md w-[95vw] sm:w-[90vw] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border border-white/10 text-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold gradient-text">Extract Prompt</DialogTitle>
           </DialogHeader>
