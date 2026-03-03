@@ -2,8 +2,13 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, Instagram, Share2, Camera, Images } from "lucide-react";
 
-export default function ExportModal({ isOpen, onClose, onDownload, imageUrl }) {
+export default function ExportModal({ isOpen, onClose, onDownload, onSaveToGallery, imageUrl }) {
   if (!isOpen) return null;
+
+  const handleSaveToGallery = async () => {
+    await onSaveToGallery();
+    onClose();
+  };
 
   const handleSaveToCameraRoll = async () => {
     await onDownload();
