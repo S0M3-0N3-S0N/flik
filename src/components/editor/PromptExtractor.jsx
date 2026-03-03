@@ -150,11 +150,12 @@ export default function PromptExtractor({ onGalleryOpen, currentImage, onExtract
         </>
       ) : (
         <div className="space-y-3">
-          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap break-words">
-              {extractedPrompt}
-            </p>
-          </div>
+          <textarea
+            value={extractedPrompt}
+            onChange={(e) => setExtractedPrompt(e.target.value)}
+            className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/40 focus:outline-none focus:border-white/30 resize-none"
+            rows={5}
+          />
           <div className="flex gap-2">
             <Button
               onClick={handleCopyPrompt}
@@ -162,6 +163,16 @@ export default function PromptExtractor({ onGalleryOpen, currentImage, onExtract
             >
               <Copy className="w-4 h-4 mr-2" />
               Copy
+            </Button>
+            <Button
+              onClick={() => {
+                if (onExtracted) {
+                  onExtracted(extractedPrompt);
+                }
+              }}
+              className="flex-1 btn-gradient text-white"
+            >
+              Use This
             </Button>
             <Button
               onClick={() => {
