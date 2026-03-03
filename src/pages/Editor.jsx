@@ -35,8 +35,6 @@ export default function Editor() {
   const [loadedImages, setLoadedImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLocked, setIsImageLocked] = useState(false);
-  const [showLockButton, setShowLockButton] = useState(true);
-  const [lockButtonHovered, setLockButtonHovered] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
@@ -804,14 +802,6 @@ export default function Editor() {
     });
   }, [resetImageState, emblaApi]);
 
-  // Auto-hide lock button after 2 seconds only if unlocked
-  useEffect(() => {
-    if (showLockButton && !isImageLocked) {
-      const timer = setTimeout(() => setShowLockButton(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showLockButton, isImageLocked]);
-
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -1172,7 +1162,7 @@ export default function Editor() {
         className="order-2 lg:order-1 w-full lg:w-80 h-[40dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-8 bg-white/5 mx-1 my-2 lg:mx-2 lg:my-4 p-0.5 lg:p-1 rounded-xl h-auto gap-1 lg:gap-0 flex-shrink-0">
+            <TabsList className="flex overflow-x-auto no-scrollbar lg:grid lg:grid-cols-8 bg-white/5 mx-2 my-4 p-1 rounded-xl h-auto gap-2 lg:gap-0 flex-shrink-0">
               <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="AI Tools">
                 <Sparkles className="w-4 h-4" />
               </TabsTrigger>
@@ -1399,34 +1389,15 @@ export default function Editor() {
              <div ref={emblaRef} className={`w-full h-full overflow-hidden ${isImageLocked ? 'pointer-events-none' : ''}`}>
                <div className="flex h-full">
                  {loadedImages.map((img, idx) => (
-                   <div 
-                     key={idx} 
-                     className="min-w-full h-full flex items-center justify-center overflow-hidden relative group"
-                     onMouseEnter={() => setLockButtonHovered(true)}
-                     onMouseLeave={() => setLockButtonHovered(false)}
-                   >
-                     {idx === currentImageIndex && (showLockButton || lockButtonHovered || isImageLocked) && (
-                       <motion.button
-                         onClick={() => {
-                           setIsImageLocked(!isImageLocked);
-                           if (isImageLocked) setShowLockButton(true);
-                         }}
-                         initial={{ opacity: 0, y: -8 }}
-                         animate={{ opacity: 1, y: 0 }}
-                         exit={{ opacity: 0, y: -8 }}
-                         transition={{ duration: 0.3, ease: "easeOut" }}
-                         className={`absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto px-2.5 py-1.5 rounded-lg backdrop-blur-sm transition-all duration-300 flex items-center gap-2 ${
-                           isImageLocked 
-                             ? 'bg-[#FF6B35]/20 border border-[#FF6B35]/40 text-[#FF6B35] hover:bg-[#FF6B35]/30' 
-                             : 'bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10'
-                         }`}
+                   <div key={idx} className="min-w-full h-full flex items-center justify-center overflow-hidden relative">
+                     {idx === currentImageIndex && (
+                       <button
+                         onClick={() => setIsImageLocked(!isImageLocked)}
+                         className={`absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`}
                          title={isImageLocked ? 'Unlock image' : 'Lock image'}
-                         whileHover={{ scale: 1.05 }}
-                         whileTap={{ scale: 0.95 }}
                        >
                          {isImageLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                         {isImageLocked && <span className="text-xs font-medium">Locked</span>}
-                       </motion.button>
+                       </button>
                      )}
                      <div
                        className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${(isPanning || isSpacePressed) ? 'cursor-move' : ''}`}
