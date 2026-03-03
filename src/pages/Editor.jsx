@@ -1329,7 +1329,7 @@ export default function Editor() {
                 <span className="hidden sm:inline ml-1">{isSaving ? "Saving..." : "Save"}</span>
               </Button>
             )}
-            <Button disabled={!currentImage} onClick={handleDownload} className="btn-gradient text-white text-xs disabled:opacity-30 px-3" title="Download">
+            <Button disabled={!currentImage} onClick={() => setShowExportModal(true)} className="btn-gradient text-white text-xs disabled:opacity-30 px-3" title="Export">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline ml-1">Export</span>
             </Button>
