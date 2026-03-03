@@ -121,11 +121,11 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
           </div>
           {selectedImage && (
             <>
-              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white/5 border border-white/10">
+              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
                 <img
                   src={selectedImage.preview}
                   alt="Selected"
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full object-contain"
                 />
               </div>
               <Button
