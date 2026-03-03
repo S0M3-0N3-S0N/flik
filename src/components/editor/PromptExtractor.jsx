@@ -128,14 +128,26 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
               className="hidden"
             />
           </div>
-          {selectedImage && (
+          {selectedImages.length > 0 && (
             <>
-              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
-                <img
-                  src={selectedImage.preview}
-                  alt="Selected"
-                  className="max-w-full max-h-full object-contain"
-                />
+              <div className="grid grid-cols-3 gap-2">
+                {selectedImages.map((img, idx) => (
+                  <div key={idx} className="relative group">
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
+                      <img
+                        src={img.preview}
+                        alt={`Selected ${idx + 1}`}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                    <button
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-1 right-1 p-1 rounded bg-red-500/80 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                ))}
               </div>
               <Button
                 onClick={handleExtractPrompt}
