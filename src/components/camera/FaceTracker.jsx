@@ -16,9 +16,41 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
   const rafRef = useRef(null);
   const onFacesUpdateRef = useRef(onFacesUpdate);
   const [videoDims, setVideoDims] = useState({ w: 0, h: 0 });
+  const smoothedFacesRef = useRef([]);
+  const SMOOTHING_FACTOR = 0.5; // EMA smoothing for stable face positions
 
   // Keep callback ref fresh without re-triggering detection loop
   useEffect(() => { onFacesUpdateRef.current = onFacesUpdate; }, [onFacesUpdate]);
+
+  // Smooth face coordinates using exponential moving average
+  const smoothFaces = (newFaces) => {
+    if (newFaces.length === 0) {
+      smoothedFacesRef.current = [];
+      return [];
+    }
+    
+    // Initialize smoothed faces if empty
+    if (smoothedFacesRef.current.length === 0) {
+      smoothedFacesRef.current = newFaces.map(f => ({ ...f }));
+      return smoothedFacesRef.current;
+    }
+
+    // Apply EMA smoothing to each face
+    const smoothed = newFaces.map((newFace, i) => {
+      const prev = smoothedFacesRef.current[i];
+      if (!prev) return newFace; // New face detected, use it as-is
+      
+      return {
+        x: prev.x + (newFace.x - prev.x) * SMOOTHING_FACTOR,
+        y: prev.y + (newFace.y - prev.y) * SMOOTHING_FACTOR,
+        w: prev.w + (newFace.w - prev.w) * SMOOTHING_FACTOR,
+        h: prev.h + (newFace.h - prev.h) * SMOOTHING_FACTOR,
+      };
+    });
+
+    smoothedFacesRef.current = smoothed;
+    return smoothed;
+  };
 
   // Initialise whichever detector is available
   useEffect(() => {
