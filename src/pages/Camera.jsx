@@ -679,7 +679,8 @@ export default function CameraPage() {
     cameraLoading,
     orientation,
     supported,
-  }));
+    faceTrackingEnabled,
+    }));
 
   return (
     <div className="fixed inset-0 bg-black select-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
