@@ -504,11 +504,50 @@ export default function CameraPage() {
       ctx.putImageData(imageData, 0, 0);
     }
 
+    // Portrait mode: blur background, keep face sharp
+    const face = portraitFaceRef.current;
+    if (portraitMode && face) {
+      // Scale face coords from rendered video size → actual video resolution
+      const rect = videoRef.current?.getBoundingClientRect();
+      const scaleX = canvas.width / (rect?.width || canvas.width);
+      const scaleY = canvas.height / (rect?.height || canvas.height);
+
+      const fx = face.x * scaleX;
+      const fy = face.y * scaleY;
+      const fw = face.w * scaleX;
+      const fh = face.h * scaleY;
+
+      // Expand the "keep sharp" region by 40% around face
+      const pad = 0.4;
+      const kx = Math.max(0, fx - fw * pad);
+      const ky = Math.max(0, fy - fh * pad);
+      const kw = Math.min(canvas.width - kx, fw * (1 + pad * 2));
+      const kh = Math.min(canvas.height - ky, fh * (1 + pad * 2));
+
+      // Save the sharp face region
+      const faceCanvas = document.createElement('canvas');
+      faceCanvas.width = kw;
+      faceCanvas.height = kh;
+      faceCanvas.getContext('2d').drawImage(canvas, kx, ky, kw, kh, 0, 0, kw, kh);
+
+      // Blur the full image using CSS filter on an offscreen canvas
+      const blurCanvas = document.createElement('canvas');
+      blurCanvas.width = canvas.width;
+      blurCanvas.height = canvas.height;
+      const blurCtx = blurCanvas.getContext('2d');
+      blurCtx.filter = 'blur(8px)';
+      blurCtx.drawImage(canvas, 0, 0);
+
+      // Composite: blurred base + sharp face region back
+      ctx.drawImage(blurCanvas, 0, 0);
+      ctx.drawImage(faceCanvas, 0, 0, kw, kh, kx, ky, kw, kh);
+    }
+
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     setPhoto(dataUrl);
     setSavedPhoto(null);
     if (flashMode !== 'on') setTorch(false);
-  }, [exposure, exposureCaps, flashMode, setTorch]);
+  }, [exposure, exposureCaps, flashMode, setTorch, portraitMode]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
