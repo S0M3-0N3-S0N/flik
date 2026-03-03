@@ -1560,6 +1560,13 @@ export default function Editor() {
         onSelect={handleImageSelect}
         onSelectMultiple={handleMultipleImagesSelect}
       />
+
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onDownload={handleDownload}
+        imageUrl={currentImage?.url}
+      />
     </div>
   );
 }
