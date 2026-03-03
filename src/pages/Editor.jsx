@@ -804,15 +804,13 @@ export default function Editor() {
     });
   }, [resetImageState, emblaApi]);
 
-  // Auto-hide lock button after 2 seconds when unlocked, keep visible when locked
+  // Auto-hide lock button after 2 seconds
   useEffect(() => {
-    if (isImageLocked) {
-      setShowLockButton(true);
-    } else if (showLockButton && !isImageLocked) {
+    if (showLockButton) {
       const timer = setTimeout(() => setShowLockButton(false), 2000);
       return () => clearTimeout(timer);
     }
-  }, [isImageLocked]);
+  }, [showLockButton]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1411,13 +1409,13 @@ export default function Editor() {
                        <motion.button
                          onClick={() => {
                            setIsImageLocked(!isImageLocked);
-                           setShowLockButton(true);
+                           setShowLockButton(false);
                          }}
-                         initial={{ opacity: 0, y: -10 }}
-                         animate={{ opacity: 1, y: 0 }}
-                         exit={{ opacity: 0, y: -10 }}
-                         transition={{ duration: 0.3, ease: "easeOut" }}
-                         className={`absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto transition-all duration-200 px-2 py-1 rounded-lg backdrop-blur-sm ${isImageLocked ? 'bg-[#FF6B35]/20 text-[#FF6B35]' : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/15'}`}
+                         initial={{ opacity: 0 }}
+                         animate={{ opacity: 1 }}
+                         exit={{ opacity: 0 }}
+                         transition={{ duration: 0.2 }}
+                         className={`absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`}
                          title={isImageLocked ? 'Unlock image' : 'Lock image'}
                        >
                          {isImageLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
