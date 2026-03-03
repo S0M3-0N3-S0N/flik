@@ -739,8 +739,12 @@ export default function CameraPage() {
               const cy = face.y + face.h / 2;
               setFocusPos({ x: cx, y: cy });
               setShowExposure(false);
+              setPortraitMode(true);
+              portraitFaceRef.current = face;
             } else if (faces.length === 0) {
               autoFocusedFaceRef.current = false;
+              setPortraitMode(false);
+              portraitFaceRef.current = null;
             }
           }, [focusPos])}
         />}
