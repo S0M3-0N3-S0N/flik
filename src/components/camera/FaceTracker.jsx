@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
  * Primary: browser's built-in FaceDetector API (Chrome/Android).
  * Fallback: TensorFlow.js BlazeFace (works on iOS/Safari too).
  */
-export default function FaceTracker({ videoRef, isActive, mirrored }) {
+export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdate }) {
   const [faces, setFaces] = useState([]);
   const detectorRef = useRef(null);   // native FaceDetector instance
   const modelRef = useRef(null);       // blazeface model
