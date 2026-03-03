@@ -532,8 +532,18 @@ export default function CameraPage() {
     runCountdown(() => {
       const shouldFlash = flashMode === 'on' || flashMode === 'auto';
       if (shouldFlash) {
-        setTorch(true);
-        setTimeout(captureFrame, 100);
+        if (facingMode === 'user') {
+          // Front camera: use screen flash
+          setScreenFlash(3);
+          setTimeout(() => {
+            captureFrame();
+            setScreenFlash(0);
+          }, 80);
+        } else {
+          // Rear camera: use torch
+          setTorch(true);
+          setTimeout(captureFrame, 100);
+        }
       } else {
         captureFrame();
       }
