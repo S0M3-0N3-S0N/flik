@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Copy, Loader2, Upload, Grid3x3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function PromptExtractor({ onGalleryOpen, currentImage }) {
+export default function PromptExtractor({ onGalleryOpen, currentImage, onExtracted }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [extractedPrompt, setExtractedPrompt] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
