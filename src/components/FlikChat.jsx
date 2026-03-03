@@ -934,6 +934,17 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
               <Button 
                 variant="ghost" 
                 size="icon" 
+                onClick={handleNewConversation}
+                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
+                title="New chat"
+                aria-label="Start new conversation"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                size="icon" 
                 onClick={() => setShowConversations(true)}
                 className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
                 title="Saved conversations"
@@ -1360,17 +1371,6 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                     <span className="text-sm">Internet {internetEnabled ? 'ON' : 'OFF'}</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleNewConversation();
-                      document.getElementById('attach-menu')?.classList.add('hidden');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
-                  >
-                    <MessageSquare className="w-4 h-4 text-[#FF6B35]" />
-                    <span className="text-sm">New Chat</span>
-                  </button>
                   <button
                     type="button"
                     onClick={() => {
