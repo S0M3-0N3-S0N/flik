@@ -401,6 +401,11 @@ export default function Generate() {
     setImageErrors(prev => ({ ...prev, [creationId]: true }));
   }, []);
 
+  const handleExtractedPrompt = useCallback((extractedPrompt) => {
+    setPrompt(extractedPrompt);
+    setShowExtractPrompt(false);
+  }, []);
+
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <section className="relative py-10 sm:py-16 md:py-20 px-4 sm:px-6 overflow-hidden">
