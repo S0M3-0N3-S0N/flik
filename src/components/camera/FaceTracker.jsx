@@ -198,12 +198,12 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
               w: f.boundingBox.width * scaleX,
               h: f.boundingBox.height * scaleY,
             }));
-            const smoothed = smoothFaces(mapped);
+            const tracked = trackFaces(mapped);
             setFaces(prev => {
-              if (prev.length === 0 && smoothed.length === 0) return prev;
-              return smoothed;
+              if (prev.length === 0 && tracked.length === 0) return prev;
+              return tracked;
             });
-            onFacesUpdateRef.current?.(smoothed);
+            onFacesUpdateRef.current?.(tracked);
             // Show brackets briefly then fade out (iPhone style)
             if (mapped.length > 0) {
               setVisible(true);
