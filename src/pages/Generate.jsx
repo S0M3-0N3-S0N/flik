@@ -50,6 +50,7 @@ export default function Generate() {
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
   const [imageErrors, setImageErrors] = useState({});
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [showExtractPrompt, setShowExtractPrompt] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
