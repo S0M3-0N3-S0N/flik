@@ -283,10 +283,12 @@ export default function CameraPage() {
   useEffect(() => {
     if (flashMode === 'on') {
       setTorch(true);
+      setScreenFlash(0);
     } else {
       setTorch(false);
+      setScreenFlash(0);
     }
-  }, [flashMode, setTorch]);
+  }, [flashMode, setTorch, setScreenFlash]);
 
   const applyZoom = useCallback((val) => {
     const track = streamRef.current?.getVideoTracks()[0];
