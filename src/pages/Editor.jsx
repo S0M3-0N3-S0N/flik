@@ -1182,6 +1182,9 @@ export default function Editor() {
                   <Type className="w-4 h-4" />
                 </TabsTrigger>
               )}
+              <TabsTrigger value="extract" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Extract Prompt">
+                <Zap className="w-4 h-4" />
+              </TabsTrigger>
             </TabsList>
 
           <div className="px-4 pb-4">
