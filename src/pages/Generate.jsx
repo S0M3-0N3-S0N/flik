@@ -876,11 +876,11 @@ export default function Generate() {
           <PromptExtractor 
             onGalleryOpen={(callback) => {
               setShowGallery(true);
-              setShowExtractPrompt(false);
               // Store callback to be called when gallery image is selected
               window.__extractPromptCallback = callback;
             }} 
             currentImage={null}
+            onExtracted={handleExtractedPrompt}
           />
         </DialogContent>
       </Dialog>
