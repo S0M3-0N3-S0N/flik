@@ -11,6 +11,12 @@ export default function PromptExtractor({ onGalleryOpen }) {
   const [showPrompt, setShowPrompt] = useState(false);
   const fileInputRef = useRef(null);
 
+  const handleGalleryOpen = () => {
+    onGalleryOpen((image) => {
+      setSelectedImage({ url: image.url, preview: image.url });
+    });
+  };
+
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
