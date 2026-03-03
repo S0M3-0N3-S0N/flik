@@ -98,7 +98,7 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
               Upload
             </Button>
             <Button
-              onClick={handleGalleryOpen}
+              onClick={onGalleryOpen}
               variant="outline"
               className="flex-1 text-white border-white/30 hover:bg-white/10 bg-white/5"
             >
