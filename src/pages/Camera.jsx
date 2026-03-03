@@ -505,15 +505,23 @@ export default function CameraPage() {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0);
 
-    if (exposure !== 0) {
+    // Apply screen flash brightness to captured image for selfies
+    let flashBrightness = 1;
+    if (facingMode === 'user' && (flashMode === 'on' || flashMode === 'auto')) {
+      flashBrightness = 1.5; // Screen flash brightens the image
+    }
+
+    if (exposure !== 0 || flashBrightness !== 1) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
       const maxExposure = Math.max(Math.abs(exposureCaps.min), exposureCaps.max);
-      const brightness = 1 + (exposure / maxExposure) * 0.8;
+      const exposureBrightness = 1 + (exposure / maxExposure) * 0.8;
+      const totalBrightness = exposureBrightness * flashBrightness;
+
       for (let i = 0; i < data.length; i += 4) {
-        data[i] = Math.min(255, data[i] * brightness);
-        data[i + 1] = Math.min(255, data[i + 1] * brightness);
-        data[i + 2] = Math.min(255, data[i + 2] * brightness);
+        data[i] = Math.min(255, data[i] * totalBrightness);
+        data[i + 1] = Math.min(255, data[i + 1] * totalBrightness);
+        data[i + 2] = Math.min(255, data[i + 2] * totalBrightness);
       }
       ctx.putImageData(imageData, 0, 0);
     }
@@ -525,7 +533,7 @@ export default function CameraPage() {
       setTorch(false);
       setScreenFlash(0);
     }
-  }, [exposure, exposureCaps, flashMode, setTorch, setScreenFlash]);
+  }, [exposure, exposureCaps, flashMode, facingMode, setTorch, setScreenFlash]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
