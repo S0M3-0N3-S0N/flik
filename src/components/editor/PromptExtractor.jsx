@@ -81,23 +81,48 @@ export default function PromptExtractor({ onImageSelect }) {
           <p className="text-sm text-white/60">
             Extract a detailed text prompt from your image that captures style, composition, mood, and elements.
           </p>
-          <Button
-            onClick={handleExtractPrompt}
-            disabled={isExtracting || !currentImage}
-            className="btn-gradient text-white w-full py-2"
-          >
-            {isExtracting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Extracting...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                Extract Prompt from Image
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              className="flex-1 text-white border-white/30 hover:bg-white/5"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </div>
+          {selectedImage && (
+            <>
+              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                <img
+                  src={selectedImage.preview}
+                  alt="Selected"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <Button
+                onClick={handleExtractPrompt}
+                disabled={isExtracting}
+                className="btn-gradient text-white w-full py-2"
+              >
+                {isExtracting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Extracting...
+                  </>
+                ) : (
+                  <>Extract Prompt</>
+                )}
+              </Button>
+            </>
+          )}
         </>
       ) : (
         <div className="space-y-3">
@@ -115,7 +140,10 @@ export default function PromptExtractor({ onImageSelect }) {
               Copy
             </Button>
             <Button
-              onClick={() => setShowPrompt(false)}
+              onClick={() => {
+                setShowPrompt(false);
+                setSelectedImage(null);
+              }}
               className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/30"
             >
               Extract Again
