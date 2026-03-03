@@ -1324,7 +1324,7 @@ export default function Editor() {
             </div>
             {currentImage && (
               <Button onClick={handleSaveToGallery} disabled={isSaving} className="text-xs text-white border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all px-3" title="Save to Gallery">
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Grid3x3 className="w-4 h-4" />}
                 <span className="hidden sm:inline ml-1">{isSaving ? "Saving..." : "Save"}</span>
               </Button>
             )}
