@@ -881,7 +881,6 @@ export default function Generate() {
               window.__extractPromptCallback = callback;
             }} 
             currentImage={null}
-            onExtracted={handleExtractedPrompt}
           />
         </DialogContent>
       </Dialog>

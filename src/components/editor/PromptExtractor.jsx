@@ -61,19 +61,7 @@ export default function PromptExtractor({ onGalleryOpen, currentImage, onExtract
       }
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this image with extreme detail and generate a highly accurate, comprehensive text prompt that will enable AI image generation to recreate a similar image. Include:
-1. Main subject(s) and their characteristics (size, position, detail)
-2. Setting/environment and background elements
-3. Artistic style and medium (photography, painting, digital art, etc.)
-4. Lighting quality, direction, and intensity
-5. Color palette and dominant colors
-6. Mood, atmosphere, and emotional tone
-7. Camera angle, perspective, and composition
-8. Any distinctive features, patterns, or textures
-9. Time of day/season if applicable
-10. Technical aspects (depth of field, focus, resolution feel)
-
-Be specific and precise. Use descriptive adjectives. Avoid vague terms. The prompt should be detailed enough for an AI to understand and recreate the exact visual style and subject matter.`,
+        prompt: `Analyze this image in detail and generate a comprehensive, descriptive text prompt that captures the scene, style, composition, mood, colors, and any notable elements. This prompt will be used to generate new images with a similar aesthetic and style. Make the prompt detailed, vivid, and suitable for an AI image generation model.`,
         file_urls: [imageUrl],
       });
 
@@ -162,12 +150,11 @@ Be specific and precise. Use descriptive adjectives. Avoid vague terms. The prom
         </>
       ) : (
         <div className="space-y-3">
-          <textarea
-            value={extractedPrompt}
-            onChange={(e) => setExtractedPrompt(e.target.value)}
-            className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/40 focus:outline-none focus:border-white/30 resize-none"
-            rows={5}
-          />
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap break-words">
+              {extractedPrompt}
+            </p>
+          </div>
           <div className="flex gap-2">
             <Button
               onClick={handleCopyPrompt}
@@ -175,16 +162,6 @@ Be specific and precise. Use descriptive adjectives. Avoid vague terms. The prom
             >
               <Copy className="w-4 h-4 mr-2" />
               Copy
-            </Button>
-            <Button
-              onClick={() => {
-                if (onExtracted) {
-                  onExtracted(extractedPrompt);
-                }
-              }}
-              className="flex-1 btn-gradient text-white"
-            >
-              Use This
             </Button>
             <Button
               onClick={() => {
