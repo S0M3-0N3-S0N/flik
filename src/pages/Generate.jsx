@@ -456,8 +456,8 @@ export default function Generate() {
               {(uploadedImages.length > 0 || isUploading) && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {uploadedImages.map((img) => (
-                    <div key={img.id} className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl overflow-hidden border border-white/10 group flex-shrink-0">
-                      <img src={img.url} className="w-full h-full object-cover" />
+                    <div key={img.id} className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl overflow-hidden border border-white/10 group flex-shrink-0 bg-black/40">
+                      <img src={img.url} className="w-full h-full object-contain" />
                       <button 
                         onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} 
                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 active:opacity-100 flex items-center justify-center transition-opacity"
