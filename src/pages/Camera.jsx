@@ -804,9 +804,9 @@ export default function CameraPage() {
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
 
-        {/* Exposure slider */}
+        {/* Exposure slider — unified with focus (always shows when focus is set) */}
         <AnimatePresence>
-          {showExposure && focusPos && !photo && (
+          {focusPos && !photo && (
             <ExposureSlider
               position={focusPos}
               value={exposure}
