@@ -451,10 +451,17 @@ export default function CameraPage() {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas) return;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
+
+      // Flash: turn torch on briefly for 'auto' mode, or keep on for 'on' mode
+      const shouldFlash = flashMode === 'on' || flashMode === 'auto';
+      if (shouldFlash) setTorch(true);
+
+      // Small delay to let the torch light up before capturing
+      const capture = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
 
       // Apply exposure adjustment via pixel manipulation if needed
       if (exposure !== 0) {
