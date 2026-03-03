@@ -82,7 +82,23 @@ export default function CameraPage() {
   const [orientation, setOrientation] = useState(0);
   const [cameraSupported, setCameraSupported] = useState(true);
   const detectedFacesRef = useRef([]);
-  const autoFocusedFaceRef = useRef(false); // tracks if we've auto-focused a face yet
+  const autoFocusedFaceRef = useRef(false);
+  const focusPosRef = useRef(null);
+
+  // Keep focusPosRef in sync so handleFacesUpdate doesn't need focusPos in deps
+  useEffect(() => { focusPosRef.current = focusPos; }, [focusPos]);
+
+  const handleFacesUpdate = useCallback((faces) => {
+    detectedFacesRef.current = faces;
+    if (faces.length > 0 && !focusPosRef.current && !autoFocusedFaceRef.current) {
+      autoFocusedFaceRef.current = true;
+      const face = faces[0];
+      setFocusPos({ x: face.x + face.w / 2, y: face.y + face.h / 2 });
+      setShowExposure(false);
+    } else if (faces.length === 0) {
+      autoFocusedFaceRef.current = false;
+    }
+  }, []);
 
   const mode = MODES[modeIndex];
 
