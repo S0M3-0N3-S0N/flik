@@ -993,11 +993,13 @@ export default function CameraPage() {
       </div>
 
       <SettingsDrawer
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        settings={settings}
-        onChange={handleSettingChange}
-      />
+         open={settingsOpen}
+         onClose={() => setSettingsOpen(false)}
+         settings={settings}
+         onChange={handleSettingChange}
+         faceTrackingEnabled={faceTrackingEnabled}
+         onFaceTrackingChange={setFaceTrackingEnabled}
+       />
     </div>
   );
 }
