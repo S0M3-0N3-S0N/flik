@@ -104,11 +104,18 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
               h: f.boundingBox.height * scaleY,
             }));
             setFaces(prev => {
-              // Only update if faces actually changed to avoid flicker
               if (prev.length === 0 && mapped.length === 0) return prev;
               return mapped;
             });
             onFacesUpdateRef.current?.(mapped);
+            // Show brackets briefly then fade out (iPhone style)
+            if (mapped.length > 0) {
+              setVisible(true);
+              clearTimeout(fadeTimerRef.current);
+              fadeTimerRef.current = setTimeout(() => setVisible(false), 1500);
+            } else {
+              setVisible(false);
+            }
           }
         } else if (mode === 'blazeface') {
           const predictions = await modelRef.current.estimateFaces(video, false);
@@ -128,6 +135,13 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
               return mapped;
             });
             onFacesUpdateRef.current?.(mapped);
+            if (mapped.length > 0) {
+              setVisible(true);
+              clearTimeout(fadeTimerRef.current);
+              fadeTimerRef.current = setTimeout(() => setVisible(false), 1500);
+            } else {
+              setVisible(false);
+            }
           }
         }
       } catch {
