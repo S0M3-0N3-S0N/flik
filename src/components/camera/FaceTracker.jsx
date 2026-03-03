@@ -16,40 +16,103 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
   const rafRef = useRef(null);
   const onFacesUpdateRef = useRef(onFacesUpdate);
   const [videoDims, setVideoDims] = useState({ w: 0, h: 0 });
-  const smoothedFacesRef = useRef([]);
-  const SMOOTHING_FACTOR = 0.5; // EMA smoothing for stable face positions
+  const trackedFacesRef = useRef([]); // [{id, x, y, w, h, vx, vy, vw, vh, kx, ky, kw, kh, ...}, ...]
+  const nextFaceIdRef = useRef(0);
+  const SMOOTHING_FACTOR = 0.6;
+  const KALMAN_Q = 0.001; // Process noise
+  const KALMAN_R = 1.0;   // Measurement noise
 
   // Keep callback ref fresh without re-triggering detection loop
   useEffect(() => { onFacesUpdateRef.current = onFacesUpdate; }, [onFacesUpdate]);
 
-  // Smooth face coordinates using exponential moving average
-  const smoothFaces = (newFaces) => {
-    if (newFaces.length === 0) {
-      smoothedFacesRef.current = [];
+  // Simple Kalman filter for each dimension
+  const updateKalman = (state, measurement) => {
+    const { estimate, p, vx } = state;
+    // Predict
+    const predictedEstimate = estimate + vx;
+    const predictedP = p + KALMAN_Q;
+    // Update
+    const K = predictedP / (predictedP + KALMAN_R);
+    const newEstimate = predictedEstimate + K * (measurement - predictedEstimate);
+    const newP = (1 - K) * predictedP;
+    const newVx = vx + K * (measurement - estimate) * 0.1; // Update velocity
+    return { estimate: newEstimate, p: newP, vx: newVx };
+  };
+
+  // Assign face IDs and track with Kalman + velocity
+  const trackFaces = (detections) => {
+    if (detections.length === 0) {
+      trackedFacesRef.current = [];
       return [];
     }
-    
-    // Initialize smoothed faces if empty
-    if (smoothedFacesRef.current.length === 0) {
-      smoothedFacesRef.current = newFaces.map(f => ({ ...f }));
-      return smoothedFacesRef.current;
+
+    const tracked = trackedFacesRef.current;
+    const used = new Set();
+    const result = [];
+
+    // Match detections to existing tracked faces
+    for (const detection of detections) {
+      let bestMatch = null;
+      let bestDist = Infinity;
+
+      for (let i = 0; i < tracked.length; i++) {
+        if (used.has(i)) continue;
+        const t = tracked[i];
+        const dist = Math.hypot(detection.x - t.x, detection.y - t.y);
+        if (dist < bestDist && dist < 80) { // Match threshold
+          bestDist = dist;
+          bestMatch = i;
+        }
+      }
+
+      if (bestMatch !== null) {
+        used.add(bestMatch);
+        const prev = tracked[bestMatch];
+        // Update Kalman estimates
+        const kx = updateKalman({ estimate: prev.kx || prev.x, p: prev.kp || 1, vx: prev.vx || 0 }, detection.x);
+        const ky = updateKalman({ estimate: prev.ky || prev.y, p: prev.kp || 1, vx: prev.vy || 0 }, detection.y);
+        const kw = updateKalman({ estimate: prev.kw || prev.w, p: prev.kp || 1, vx: prev.vw || 0 }, detection.w);
+        const kh = updateKalman({ estimate: prev.kh || prev.h, p: prev.kp || 1, vx: prev.vh || 0 }, detection.h);
+        
+        result.push({
+          id: prev.id,
+          x: kx.estimate,
+          y: ky.estimate,
+          w: kw.estimate,
+          h: kh.estimate,
+          vx: kx.vx,
+          vy: ky.vx,
+          vw: kw.vx,
+          vh: kh.vx,
+          kx: kx.estimate,
+          ky: ky.estimate,
+          kw: kw.estimate,
+          kh: kh.estimate,
+          kp: kx.p,
+        });
+      } else {
+        // New face
+        result.push({
+          id: nextFaceIdRef.current++,
+          x: detection.x,
+          y: detection.y,
+          w: detection.w,
+          h: detection.h,
+          vx: 0,
+          vy: 0,
+          vw: 0,
+          vh: 0,
+          kx: detection.x,
+          ky: detection.y,
+          kw: detection.w,
+          kh: detection.h,
+          kp: 1,
+        });
+      }
     }
 
-    // Apply EMA smoothing to each face
-    const smoothed = newFaces.map((newFace, i) => {
-      const prev = smoothedFacesRef.current[i];
-      if (!prev) return newFace; // New face detected, use it as-is
-      
-      return {
-        x: prev.x + (newFace.x - prev.x) * SMOOTHING_FACTOR,
-        y: prev.y + (newFace.y - prev.y) * SMOOTHING_FACTOR,
-        w: prev.w + (newFace.w - prev.w) * SMOOTHING_FACTOR,
-        h: prev.h + (newFace.h - prev.h) * SMOOTHING_FACTOR,
-      };
-    });
-
-    smoothedFacesRef.current = smoothed;
-    return smoothed;
+    trackedFacesRef.current = result;
+    return result;
   };
 
   // Initialise whichever detector is available
