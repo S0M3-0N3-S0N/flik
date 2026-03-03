@@ -93,8 +93,9 @@ export default function CameraPage() {
       const face = faces[0];
       const cx = face.x + face.w / 2;
       const cy = face.y + face.h / 2;
-      setFocusPos(prev => prev ?? { x: cx, y: cy });
-      setShowExposure(false);
+      // Auto-snap focus + exposure to detected face (iPhone-style)
+      setFocusPos({ x: cx, y: cy });
+      setShowExposure(true);
       setPortraitMode(true);
       portraitFaceRef.current = face;
     } else if (faces.length === 0) {
