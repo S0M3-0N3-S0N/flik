@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
  */
 export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdate }) {
   const [faces, setFaces] = useState([]);
+  const [visible, setVisible] = useState(false);
+  const fadeTimerRef = useRef(null);
   const detectorRef = useRef(null);
   const modelRef = useRef(null);
   const modeRef = useRef(null);        // 'native' | 'blazeface' | 'none'
