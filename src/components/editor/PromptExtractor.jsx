@@ -34,6 +34,12 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleGallerySelect = () => {
+    onGalleryOpen((selectedImage) => {
+      setSelectedImage({ url: selectedImage.url, preview: selectedImage.thumbnail_url || selectedImage.url });
+    });
+  };
+
   const handleExtractPrompt = async () => {
     if (!selectedImage) {
       toast.error("Please upload an image first");
