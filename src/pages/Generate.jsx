@@ -377,7 +377,17 @@ export default function Generate() {
   }, [selectedGalleryImages]);
 
   const confirmGallerySelection = useCallback(() => {
-    setUploadedImages(prev => [...prev, ...selectedGalleryImages]);
+    // Check if this is for extract prompt
+    if (window.__extractPromptCallback && selectedGalleryImages.length === 1) {
+      window.__extractPromptCallback({
+        url: selectedGalleryImages[0].url,
+        thumbnail_url: selectedGalleryImages[0].url
+      });
+      delete window.__extractPromptCallback;
+      setShowExtractPrompt(true);
+    } else {
+      setUploadedImages(prev => [...prev, ...selectedGalleryImages]);
+    }
     setShowGallery(false);
     setSelectedGalleryImages([]);
     setGallerySearchTerm("");
