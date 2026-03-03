@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
 import ImageGrid from "@/components/generate/ImageGrid";
 import ImageUploader from "@/components/editor/ImageUploader";
+import PromptExtractor from "@/components/editor/PromptExtractor";
 import { useFlikActions } from "@/components/useFlikActions";
 import { 
   MAX_PROMPTS_PER_GENERATION, 
@@ -49,6 +50,7 @@ export default function Generate() {
   const [gallerySearchTerm, setGallerySearchTerm] = useState("");
   const [imageErrors, setImageErrors] = useState({});
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [showPromptExtractor, setShowPromptExtractor] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -607,27 +609,39 @@ export default function Generate() {
                         </div>
 
                         {uploadedImages.length > 0 && (
-                          <div className="space-y-3">
-                             <div className="flex justify-between">
-                                <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
-                                <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
-                             </div>
-                             <Slider 
-                               value={[imageStrength]} 
-                               min={0.1} 
-                               max={0.9} 
-                               step={0.1} 
-                               onValueChange={(v) => setImageStrength(v[0])}
-                               className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
-                             />
-                             <p className="text-[10px] text-white/40 leading-tight">
-                               Higher values make the result look more like your reference images.
-                             </p>
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                           <div className="space-y-3">
+                              <div className="flex justify-between">
+                                 <Label className="text-xs font-medium text-white/60 uppercase tracking-wider">Image Influence</Label>
+                                 <span className="text-xs text-white/40">{Math.round(imageStrength * 100)}%</span>
+                              </div>
+                              <Slider 
+                                value={[imageStrength]} 
+                                min={0.1} 
+                                max={0.9} 
+                                step={0.1} 
+                                onValueChange={(v) => setImageStrength(v[0])}
+                                className="[&_.relative]:bg-white/10 [&_.absolute]:bg-[#FF6B35]"
+                              />
+                              <p className="text-[10px] text-white/40 leading-tight">
+                                Higher values make the result look more like your reference images.
+                              </p>
+                           </div>
+                         )}
+
+                        <div className="border-t border-white/10 pt-4 mt-4">
+                          <button
+                            onClick={() => {
+                              setShowPromptExtractor(true);
+                              setShowAdvancedSettings(false);
+                            }}
+                            className="w-full px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors"
+                          >
+                            Extract Prompt from Image
+                          </button>
+                        </div>
+                        </div>
+                        </PopoverContent>
+                        </Popover>
 
                 </div>
 
@@ -925,9 +939,41 @@ export default function Generate() {
                 </p>
               </div>
             )}
-          </div>
-        </DrawerContent>
-      </Drawer>
+
+            <div className="border-t border-white/10 pt-6 mt-6">
+              <button
+                onClick={() => {
+                  setShowPromptExtractor(true);
+                  setShowAdvancedSettings(false);
+                }}
+                className="w-full px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors"
+              >
+                Extract Prompt from Image
+              </button>
+            </div>
+            </div>
+            </DrawerContent>
+            </Drawer>
+
+            {/* Prompt Extractor Dialog */}
+            <Dialog open={showPromptExtractor} onOpenChange={setShowPromptExtractor}>
+            <DialogContent className="max-w-md bg-[#141414] border border-white/10 text-white">
+            <DialogHeader>
+            <DialogTitle>Extract Prompt from Image</DialogTitle>
+            </DialogHeader>
+            <PromptExtractor 
+            onGalleryOpen={(callback) => {
+              // Gallery functionality could be added here if needed
+              callback(null);
+            }}
+            currentImage={null}
+            onPromptExtracted={(extractedPrompt) => {
+              setPrompt(extractedPrompt);
+              setShowPromptExtractor(false);
+            }}
+            />
+            </DialogContent>
+            </Dialog>
     </div>
   );
 }
