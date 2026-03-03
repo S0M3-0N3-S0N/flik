@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Instagram, Share2, Camera } from "lucide-react";
+import { X, Download, Instagram, Share2, Camera, Images } from "lucide-react";
 
 export default function ExportModal({ isOpen, onClose, onDownload, imageUrl }) {
   if (!isOpen) return null;
