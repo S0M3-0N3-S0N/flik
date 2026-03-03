@@ -934,17 +934,6 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={handleNewConversation}
-                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
-                title="New chat"
-                aria-label="Start new conversation"
-              >
-                <MessageSquare className="w-4 h-4" />
-              </Button>
-
-              <Button 
-                variant="ghost" 
-                size="icon" 
                 onClick={() => setShowConversations(true)}
                 className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
                 title="Saved conversations"
