@@ -772,6 +772,22 @@ export default function CameraPage() {
         {/* Camera Guidance */}
         {!photo && settings.cameraGuidance && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
 
+        {/* Portrait mode badge */}
+        <AnimatePresence>
+          {portraitMode && !photo && (
+            <motion.button
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              onClick={() => { setPortraitMode(false); portraitFaceRef.current = null; haptic(8); }}
+              className="absolute top-16 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-[#FFB800]/90 backdrop-blur-md rounded-full px-3 py-1 pointer-events-auto"
+            >
+              <div className="w-2 h-2 rounded-full bg-white/80" />
+              <span className="text-black text-xs font-bold tracking-wide">PORTRAIT</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
         {/* Face tracker */}
         {!photo && <FaceTracker
           videoRef={videoRef}
