@@ -245,10 +245,10 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
         // Silently ignore
       }
 
-      // ~10 fps
+      // ~20 fps for smooth tracking
       rafRef.current = setTimeout(() => {
         if (!stopped) requestAnimationFrame(detect);
-      }, 100);
+      }, 50);
     };
 
     rafRef.current = requestAnimationFrame(detect);
