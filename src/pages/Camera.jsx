@@ -761,7 +761,7 @@ export default function CameraPage() {
         {!photo && settings.cameraGuidance && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
 
         {/* Face tracker */}
-        {!photo && <FaceTracker
+        {!photo && faceTrackingEnabled && <FaceTracker
           videoRef={videoRef}
           isActive={hasStream && !photo}
           mirrored={facingMode === 'user'}
