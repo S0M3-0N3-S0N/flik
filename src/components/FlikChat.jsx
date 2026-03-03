@@ -953,17 +953,6 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                 <History className="w-4 h-4" />
               </Button>
 
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleVoiceOutput}
-                className={`h-11 w-11 min-h-[44px] min-w-[44px] ${voiceEnabled ? "text-[#FF6B35] hover:bg-[#FF6B35]/10" : "text-white/40 hover:text-white hover:bg-white/10"}`}
-                title={voiceEnabled ? "Voice output: ON" : "Voice output: OFF"}
-                aria-label={voiceEnabled ? "Disable voice output" : "Enable voice output"}
-                aria-pressed={voiceEnabled}
-              >
-                {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              </Button>
               <Button variant="ghost" size="icon" onClick={() => {
                 setIsOpen(false);
                 base44.analytics.track({ eventName: 'flik_chat_closed' });
@@ -1381,6 +1370,17 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                   >
                     <Palette className={`w-4 h-4 ${!normalMode ? 'text-[#FF6B35]' : 'text-white/40'}`} />
                     <span className="text-sm">Creative Mode {!normalMode ? '(ON)' : '(OFF)'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleVoiceOutput();
+                      document.getElementById('attach-menu')?.classList.add('hidden');
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                  >
+                    {voiceEnabled ? <Volume2 className={`w-4 h-4 text-[#FF6B35]`} /> : <VolumeX className="w-4 h-4 text-white/40" />}
+                    <span className="text-sm">Voice Output {voiceEnabled ? '(ON)' : '(OFF)'}</span>
                   </button>
                 </div>
               </div>
