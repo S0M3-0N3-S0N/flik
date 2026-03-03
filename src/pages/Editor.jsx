@@ -312,13 +312,21 @@ export default function Editor() {
   }, []);
 
   const handleImageSelect = useCallback((image) => {
+    // If there's a pending callback (from PromptExtractor), use it instead
+    if (galleryCallback) {
+      galleryCallback(image);
+      setGalleryCallback(null);
+      setIsGalleryPickerOpen(false);
+      return;
+    }
+    
     cleanupObjectURLs(image?.url);
     setCurrentImage(image);
     setLoadedImages([image]);
     setCurrentImageIndex(0);
     if (image) resetImageState();
     setTimeout(() => emblaApi?.scrollTo(0), 0);
-  }, [resetImageState, emblaApi, cleanupObjectURLs]);
+  }, [resetImageState, emblaApi, cleanupObjectURLs, galleryCallback]);
 
   const handleMultipleImagesSelect = useCallback((images) => {
     if (images && Array.isArray(images) && images.length > 0) {
