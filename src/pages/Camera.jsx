@@ -6,7 +6,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from '@/utils';
 import { toast } from "sonner";
 import { base44 } from '@/api/base44Client';
-import FocusExposureControl from '../components/camera/FocusExposureControl';
+import FocusSquare from '../components/camera/FocusSquare';
+import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
 import CameraGuidance from '../components/camera/CameraGuidance';
 import FaceTracker from '../components/camera/FaceTracker';
@@ -81,28 +82,7 @@ export default function CameraPage() {
   const [orientation, setOrientation] = useState(0);
   const [cameraSupported, setCameraSupported] = useState(true);
   const detectedFacesRef = useRef([]);
-  const autoFocusedFaceRef = useRef(false);
-  const [portraitMode, setPortraitMode] = useState(false);
-  const portraitFaceRef = useRef(null); // stores the face box used for portrait blur
-
-  const onFacesUpdate = useCallback((faces) => {
-    detectedFacesRef.current = faces;
-    if (faces.length > 0 && !autoFocusedFaceRef.current) {
-      autoFocusedFaceRef.current = true;
-      const face = faces[0];
-      const cx = face.x + face.w / 2;
-      const cy = face.y + face.h / 2;
-      // Auto-snap focus + exposure to detected face (iPhone-style)
-      setFocusPos({ x: cx, y: cy });
-      setShowExposure(true);
-      setPortraitMode(true);
-      portraitFaceRef.current = face;
-    } else if (faces.length === 0) {
-      autoFocusedFaceRef.current = false;
-      setPortraitMode(false);
-      portraitFaceRef.current = null;
-    }
-  }, []);
+  const autoFocusedFaceRef = useRef(false); // tracks if we've auto-focused a face yet
 
   const mode = MODES[modeIndex];
 
@@ -368,28 +348,19 @@ export default function CameraPage() {
 
     // Snap to nearest detected face center if tap is within a face box
     const faces = detectedFacesRef.current;
-    let tappedFace = null;
     if (faces.length > 0) {
       for (const face of faces) {
         if (x >= face.x && x <= face.x + face.w && y >= face.y && y <= face.y + face.h) {
           x = face.x + face.w / 2;
           y = face.y + face.h / 2;
-          tappedFace = face;
           haptic([10, 5, 10]);
           break;
         }
       }
     }
-    if (tappedFace) {
-      setPortraitMode(true);
-      portraitFaceRef.current = tappedFace;
-    } else {
-      setPortraitMode(false);
-      portraitFaceRef.current = null;
-    }
 
     setFocusPos({ x, y });
-    setShowExposure(true); // always show exposure slider with focus (iPhone-style unified control)
+    setShowExposure(true);
     haptic(8);
 
     const track = streamRef.current?.getVideoTracks()[0];
@@ -522,50 +493,11 @@ export default function CameraPage() {
       ctx.putImageData(imageData, 0, 0);
     }
 
-    // Portrait mode: blur background, keep face sharp
-    const face = portraitFaceRef.current;
-    if (portraitMode && face) {
-      // Scale face coords from rendered video size → actual video resolution
-      const rect = videoRef.current?.getBoundingClientRect();
-      const scaleX = canvas.width / (rect?.width || canvas.width);
-      const scaleY = canvas.height / (rect?.height || canvas.height);
-
-      const fx = face.x * scaleX;
-      const fy = face.y * scaleY;
-      const fw = face.w * scaleX;
-      const fh = face.h * scaleY;
-
-      // Expand the "keep sharp" region by 40% around face
-      const pad = 0.4;
-      const kx = Math.max(0, fx - fw * pad);
-      const ky = Math.max(0, fy - fh * pad);
-      const kw = Math.min(canvas.width - kx, fw * (1 + pad * 2));
-      const kh = Math.min(canvas.height - ky, fh * (1 + pad * 2));
-
-      // Save the sharp face region
-      const faceCanvas = document.createElement('canvas');
-      faceCanvas.width = kw;
-      faceCanvas.height = kh;
-      faceCanvas.getContext('2d').drawImage(canvas, kx, ky, kw, kh, 0, 0, kw, kh);
-
-      // Blur the full image using CSS filter on an offscreen canvas
-      const blurCanvas = document.createElement('canvas');
-      blurCanvas.width = canvas.width;
-      blurCanvas.height = canvas.height;
-      const blurCtx = blurCanvas.getContext('2d');
-      blurCtx.filter = 'blur(8px)';
-      blurCtx.drawImage(canvas, 0, 0);
-
-      // Composite: blurred base + sharp face region back
-      ctx.drawImage(blurCanvas, 0, 0);
-      ctx.drawImage(faceCanvas, 0, 0, kw, kh, kx, ky, kw, kh);
-    }
-
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     setPhoto(dataUrl);
     setSavedPhoto(null);
     if (flashMode !== 'on') setTorch(false);
-  }, [exposure, exposureCaps, flashMode, setTorch, portraitMode]);
+  }, [exposure, exposureCaps, flashMode, setTorch]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
@@ -790,27 +722,42 @@ export default function CameraPage() {
         {/* Camera Guidance */}
         {!photo && settings.cameraGuidance && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
 
-
-
-        {/* Face tracker — hide boxes once focus has locked onto a face */}
+        {/* Face tracker */}
         {!photo && <FaceTracker
           videoRef={videoRef}
-          isActive={hasStream && !photo && !focusPos}
+          isActive={hasStream && !photo}
           mirrored={facingMode === 'user'}
-          onFacesUpdate={onFacesUpdate}
+          onFacesUpdate={useCallback((faces) => {
+            detectedFacesRef.current = faces;
+            // Auto-focus on first detected face if no manual focus yet
+            if (faces.length > 0 && !focusPos && !autoFocusedFaceRef.current) {
+              autoFocusedFaceRef.current = true;
+              const face = faces[0];
+              const cx = face.x + face.w / 2;
+              const cy = face.y + face.h / 2;
+              setFocusPos({ x: cx, y: cy });
+              setShowExposure(false);
+            } else if (faces.length === 0) {
+              autoFocusedFaceRef.current = false;
+            }
+          }, [focusPos])}
         />}
 
-        {/* Unified focus + exposure control */}
-        {!photo && focusPos && (
-          <FocusExposureControl
-            position={focusPos}
-            locked={afLocked}
-            value={exposure}
-            min={exposureCaps.min}
-            max={exposureCaps.max}
-            onChange={handleExposureChange}
-          />
-        )}
+        {/* Focus square */}
+        {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
+
+        {/* Exposure slider */}
+        <AnimatePresence>
+          {showExposure && focusPos && !photo && (
+            <ExposureSlider
+              position={focusPos}
+              value={exposure}
+              min={exposureCaps.min}
+              max={exposureCaps.max}
+              onChange={handleExposureChange}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Countdown overlay */}
         <AnimatePresence>
@@ -857,22 +804,6 @@ export default function CameraPage() {
               />
               <span className="text-white text-lg font-mono font-bold tracking-wider">{formatTime(recordingTime)}</span>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Portrait badge — centered top bar */}
-        <AnimatePresence>
-          {portraitMode && !photo && (
-            <motion.button
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              onClick={() => { setPortraitMode(false); portraitFaceRef.current = null; haptic(8); }}
-              className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-[#FFB800] rounded-full px-3 py-1"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-black/50" />
-              <span className="text-black text-[11px] font-bold tracking-widest">PORTRAIT</span>
-            </motion.button>
           )}
         </AnimatePresence>
 
