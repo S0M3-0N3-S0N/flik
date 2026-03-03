@@ -65,10 +65,11 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
     return () => window.removeEventListener('resize', updateVideoDims);
   }, [updateVideoDims]);
 
-  // Detection loop
+  // Detection loop — only restarts when isActive/videoRef change, not on callback changes
   useEffect(() => {
     if (!isActive) {
       setFaces([]);
+      onFacesUpdateRef.current?.([]);
       return;
     }
 
@@ -81,7 +82,7 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
       const mode = modeRef.current;
 
       if (!video || video.readyState < 2 || video.videoWidth === 0 || !mode || mode === 'none') {
-        rafRef.current = setTimeout(() => requestAnimationFrame(detect), 200);
+        rafRef.current = setTimeout(() => { if (!stopped) requestAnimationFrame(detect); }, 300);
         return;
       }
 
