@@ -163,11 +163,12 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
                 h: (y2 - y1) * scaleY,
               };
             });
+            const smoothed = smoothFaces(mapped);
             setFaces(prev => {
-              if (prev.length === 0 && mapped.length === 0) return prev;
-              return mapped;
+              if (prev.length === 0 && smoothed.length === 0) return prev;
+              return smoothed;
             });
-            onFacesUpdateRef.current?.(mapped);
+            onFacesUpdateRef.current?.(smoothed);
             if (mapped.length > 0) {
               setVisible(true);
               clearTimeout(fadeTimerRef.current);
