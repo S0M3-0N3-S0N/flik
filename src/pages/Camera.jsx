@@ -247,11 +247,11 @@ export default function CameraPage() {
     };
   }, []);
 
-  useEffect(() => {
+  const setTorch = useCallback((on) => {
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
-    track.applyConstraints({ advanced: [{ torch: flashMode === 'on' }] }).catch(() => {});
-  }, [flashMode]);
+    track.applyConstraints({ advanced: [{ torch: on }] }).catch(() => {});
+  }, []);
 
   const applyZoom = useCallback((val) => {
     const track = streamRef.current?.getVideoTracks()[0];
