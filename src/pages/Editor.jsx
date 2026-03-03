@@ -803,6 +803,14 @@ export default function Editor() {
     });
   }, [resetImageState, emblaApi]);
 
+  // Auto-hide lock button after 2 seconds
+  useEffect(() => {
+    if (showLockButton) {
+      const timer = setTimeout(() => setShowLockButton(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showLockButton]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
