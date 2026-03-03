@@ -65,29 +65,27 @@ export default function PromptExtractor({ onGalleryOpen, currentImage, onExtract
       }
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a master prompt engineer specializing in reverse-engineering image descriptions. Your task is to analyze this image in EXTREME detail and generate a prompt so accurate that when used to generate a new image, it would be virtually indistinguishable from the original.
+        prompt: `You are a professional visual description specialist. Analyze this image and create a comprehensive prompt that captures every visual detail for AI image generation purposes.
 
-CRITICAL ANALYSIS REQUIREMENTS:
-1. Subject Matter: Describe EVERY element in perfect detail - facial features, expressions, body language, clothing, accessories, every visible object
-2. Composition: Exact framing, perspective, depth, foreground-midground-background separation, rule of thirds application
-3. Lighting: Precise light direction, type (key light, fill light, backlighting), color temperature, shadows, highlights, dramatic effects
-4. Colors: Exact color palette - dominant colors, secondary colors, accent colors, saturation levels, contrast
-5. Texture & Materials: Surface quality of every visible material - fabric, skin, metal, wood, glass, paper, leather (rough, smooth, glossy, matte, etc.)
-6. Style & Technique: Photography style (portrait, landscape, macro, wide-angle), painting style if applicable, artistic movements, post-processing effects
-7. Mood & Atmosphere: Emotional tone, lighting mood, weather conditions, time of day, season
-8. Technical Specs: Camera settings implied (aperture, focal length for photography), resolution quality, sharpness, focus point
-9. Fine Details: Hair texture and movement, water reflections, shadows with specific angles, small background elements, any imperfections or unique characteristics
+ANALYZE AND DESCRIBE:
+1. Subject and Composition: All visible subjects, their positioning, framing, perspective, depth layers
+2. Visual Elements: Every object, person, animal, or element present and their properties
+3. Appearance Details: Textures, materials, surface qualities, patterns, physical characteristics
+4. Lighting and Atmosphere: Light direction, quality, color temperature, shadows, contrast, mood created
+5. Colors and Palette: Dominant colors, accent colors, saturation, tone
+6. Style and Aesthetic: Photography or art style, visual treatment, post-processing effects
+7. Environment: Setting, location characteristics, background elements
+8. Technical Aspects: Implied camera settings, resolution, sharpness, focal point, any technical qualities
 
-YOUR PROMPT MUST:
-- Capture the EXACT visual state of the image
-- Be 3-5 detailed sentences flowing naturally
-- Include specific technical camera/art terms
-- Mention specific colors by name (not just "blue" but "deep cobalt blue", "warm amber gold", etc.)
-- Include quality descriptors (masterpiece, professional, intricate, ultra-detailed, high resolution, etc.)
-- Be usable as-is to recreate this exact image with AI generation
-- Read like a cinematographer or photographer's detailed shot description
+CREATE A DETAILED PROMPT:
+- Write 3-5 flowing sentences
+- Include specific color names, material descriptions, technical terms
+- Be descriptive and factual about all visual elements present
+- Mention style, composition, and technical photography/art terms
+- Make it directly usable for AI image generation
+- Focus on visual and technical accuracy
 
-Generate ONLY the final, complete prompt. Nothing else.`,
+Output ONLY the final prompt text.`,
         file_urls: [imageUrl],
       });
 
