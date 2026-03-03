@@ -35,9 +35,13 @@ export default function PromptExtractor({ onGalleryOpen, currentImage, onExtract
   };
 
   const handleGallerySelect = () => {
-    onGalleryOpen((selectedImage) => {
-      setSelectedImage({ url: selectedImage.url, preview: selectedImage.thumbnail_url || selectedImage.url });
-    });
+    if (onGalleryOpen) {
+      onGalleryOpen((selection) => {
+        if (selection && selection.url) {
+          setSelectedImage({ url: selection.url, preview: selection.thumbnail_url || selection.url });
+        }
+      });
+    }
   };
 
   const handleExtractPrompt = async () => {
