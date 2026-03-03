@@ -160,48 +160,60 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
       stopped = true;
       clearTimeout(rafRef.current);
       cancelAnimationFrame(rafRef.current);
+      clearTimeout(fadeTimerRef.current);
       setFaces([]);
+      setVisible(false);
     };
   }, [isActive, videoRef]);
 
   if (faces.length === 0) return null;
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {faces.map((face, i) => {
-        const x = mirrored ? (videoDims.w || 0) - face.x - face.w : face.x;
-        const size = Math.max(12, Math.min(face.w * 0.22, 28));
-        const corners = [
-          { top: 0, left: 0, borderTop: true, borderLeft: true },
-          { top: 0, right: 0, borderTop: true, borderRight: true },
-          { bottom: 0, left: 0, borderBottom: true, borderLeft: true },
-          { bottom: 0, right: 0, borderBottom: true, borderRight: true },
-        ];
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          {faces.map((face, i) => {
+            const x = mirrored ? (videoDims.w || 0) - face.x - face.w : face.x;
+            const size = Math.max(12, Math.min(face.w * 0.22, 28));
+            const corners = [
+              { top: 0, left: 0, borderTop: true, borderLeft: true },
+              { top: 0, right: 0, borderTop: true, borderRight: true },
+              { bottom: 0, left: 0, borderBottom: true, borderLeft: true },
+              { bottom: 0, right: 0, borderBottom: true, borderRight: true },
+            ];
 
-        return (
-          <div key={i} style={{ position: 'absolute', left: x, top: face.y, width: face.w, height: face.h }}>
-            {corners.map((corner, ci) => (
-              <div
-                key={ci}
-                style={{
-                  position: 'absolute',
-                  width: size,
-                  height: size,
-                  top: corner.top !== undefined ? 0 : undefined,
-                  bottom: corner.bottom !== undefined ? 0 : undefined,
-                  left: corner.left !== undefined ? 0 : undefined,
-                  right: corner.right !== undefined ? 0 : undefined,
-                  borderTop: corner.borderTop ? '2px solid rgba(255,184,0,0.9)' : undefined,
-                  borderBottom: corner.borderBottom ? '2px solid rgba(255,184,0,0.9)' : undefined,
-                  borderLeft: corner.borderLeft ? '2px solid rgba(255,184,0,0.9)' : undefined,
-                  borderRight: corner.borderRight ? '2px solid rgba(255,184,0,0.9)' : undefined,
-                  borderRadius: 2,
-                }}
-              />
-            ))}
-          </div>
-        );
-      })}
-    </div>
+            return (
+              <div key={i} style={{ position: 'absolute', left: x, top: face.y, width: face.w, height: face.h }}>
+                {corners.map((corner, ci) => (
+                  <div
+                    key={ci}
+                    style={{
+                      position: 'absolute',
+                      width: size,
+                      height: size,
+                      top: corner.top !== undefined ? 0 : undefined,
+                      bottom: corner.bottom !== undefined ? 0 : undefined,
+                      left: corner.left !== undefined ? 0 : undefined,
+                      right: corner.right !== undefined ? 0 : undefined,
+                      borderTop: corner.borderTop ? '2px solid rgba(255,184,0,0.9)' : undefined,
+                      borderBottom: corner.borderBottom ? '2px solid rgba(255,184,0,0.9)' : undefined,
+                      borderLeft: corner.borderLeft ? '2px solid rgba(255,184,0,0.9)' : undefined,
+                      borderRight: corner.borderRight ? '2px solid rgba(255,184,0,0.9)' : undefined,
+                      borderRadius: 2,
+                    }}
+                  />
+                ))}
+              </div>
+            );
+          })}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
