@@ -85,7 +85,7 @@ export default function PromptExtractor({ onGalleryOpen }) {
             <Button
               onClick={() => fileInputRef.current?.click()}
               variant="outline"
-              className="flex-1 text-white border-white/30 hover:bg-white/5"
+              className="flex-1 text-white border-white/30 hover:bg-white/10 bg-white/5"
             >
               <Upload className="w-4 h-4 mr-2" />
               Upload
@@ -93,7 +93,7 @@ export default function PromptExtractor({ onGalleryOpen }) {
             <Button
               onClick={onGalleryOpen}
               variant="outline"
-              className="flex-1 text-white border-white/30 hover:bg-white/5"
+              className="flex-1 text-white border-white/30 hover:bg-white/10 bg-white/5"
             >
               <Grid3x3 className="w-4 h-4 mr-2" />
               Gallery
