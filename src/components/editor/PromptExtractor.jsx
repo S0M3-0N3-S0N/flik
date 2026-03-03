@@ -5,7 +5,7 @@ import { Copy, Loader2, Upload, Grid3x3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 export default function PromptExtractor({ onGalleryOpen, currentImage }) {
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]);
   const [extractedPrompt, setExtractedPrompt] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -13,8 +13,8 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
 
   // Use currentImage from parent if available
   React.useEffect(() => {
-    if (currentImage && !selectedImage) {
-      setSelectedImage({ url: currentImage.url, preview: currentImage.preview || currentImage.url });
+    if (currentImage && selectedImages.length === 0) {
+      setSelectedImages([{ url: currentImage.url, preview: currentImage.preview || currentImage.url }]);
     }
   }, [currentImage]);
 
