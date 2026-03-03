@@ -90,6 +90,14 @@ export default function PromptExtractor({ onGalleryOpen }) {
               <Upload className="w-4 h-4 mr-2" />
               Upload
             </Button>
+            <Button
+              onClick={onGalleryOpen}
+              variant="outline"
+              className="flex-1 text-white border-white/30 hover:bg-white/5"
+            >
+              <Grid3x3 className="w-4 h-4 mr-2" />
+              Gallery
+            </Button>
             <input
               ref={fileInputRef}
               type="file"
