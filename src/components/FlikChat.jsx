@@ -935,11 +935,12 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                 variant="ghost" 
                 size="icon" 
                 onClick={handleNewConversation}
-                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
+                className="relative text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
                 title="New chat"
                 aria-label="Start new conversation"
               >
                 <MessageSquare className="w-4 h-4" />
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-[#FF6B35] rounded-full flex items-center justify-center text-white font-bold leading-none" style={{ fontSize: '9px' }}>+</span>
               </Button>
 
               <Button 
