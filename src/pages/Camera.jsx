@@ -82,7 +82,9 @@ export default function CameraPage() {
   const [orientation, setOrientation] = useState(0);
   const [cameraSupported, setCameraSupported] = useState(true);
   const detectedFacesRef = useRef([]);
-  const autoFocusedFaceRef = useRef(false); // tracks if we've auto-focused a face yet
+  const autoFocusedFaceRef = useRef(false);
+  const [portraitMode, setPortraitMode] = useState(false);
+  const portraitFaceRef = useRef(null); // stores the face box used for portrait blur
 
   const mode = MODES[modeIndex];
 
