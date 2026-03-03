@@ -82,6 +82,7 @@ export default function CameraPage() {
   const [orientation, setOrientation] = useState(0);
   const [cameraSupported, setCameraSupported] = useState(true);
   const detectedFacesRef = useRef([]);
+  const autoFocusedFaceRef = useRef(false); // tracks if we've auto-focused a face yet
 
   const mode = MODES[modeIndex];
 
