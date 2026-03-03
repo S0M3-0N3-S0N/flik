@@ -275,7 +275,7 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
         >
-          {faces.map((face, i) => {
+          {faces.map((face) => {
             const x = mirrored ? (videoDims.w || 0) - face.x - face.w : face.x;
             const size = Math.max(12, Math.min(face.w * 0.22, 28));
             const corners = [
