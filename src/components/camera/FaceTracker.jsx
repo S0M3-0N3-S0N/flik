@@ -89,17 +89,19 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
         if (mode === 'native') {
           const detected = await detectorRef.current.detect(video);
           if (!stopped) {
-            setFaces(detected.map(f => ({
+            const mapped = detected.map(f => ({
               x: f.boundingBox.x * scaleX,
               y: f.boundingBox.y * scaleY,
               w: f.boundingBox.width * scaleX,
               h: f.boundingBox.height * scaleY,
-            })));
+            }));
+            setFaces(mapped);
+            onFacesUpdate?.(mapped);
           }
         } else if (mode === 'blazeface') {
           const predictions = await modelRef.current.estimateFaces(video, false);
           if (!stopped) {
-            setFaces(predictions.map(p => {
+            const mapped = predictions.map(p => {
               const [x1, y1] = p.topLeft;
               const [x2, y2] = p.bottomRight;
               return {
@@ -108,7 +110,9 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
                 w: (x2 - x1) * scaleX,
                 h: (y2 - y1) * scaleY,
               };
-            }));
+            });
+            setFaces(mapped);
+            onFacesUpdate?.(mapped);
           }
         }
       } catch {
