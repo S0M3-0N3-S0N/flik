@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Copy, Loader2, Upload, Grid3x3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function PromptExtractor({ onGalleryOpen, currentImage }) {
+export default function PromptExtractor({ onGalleryOpen, currentImage, onPromptExtracted }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [extractedPrompt, setExtractedPrompt] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
@@ -69,6 +69,10 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
         setExtractedPrompt(response);
         setShowPrompt(true);
         toast.success("Prompt extracted successfully!");
+        // Call the callback if provided
+        if (onPromptExtracted) {
+          onPromptExtracted(response);
+        }
       } else {
         toast.error("Failed to extract prompt");
       }
@@ -164,6 +168,7 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
               onClick={() => {
                 setShowPrompt(false);
                 setSelectedImage(null);
+                setExtractedPrompt("");
               }}
               className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/30"
             >
