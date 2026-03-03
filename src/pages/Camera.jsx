@@ -793,10 +793,10 @@ export default function CameraPage() {
 
 
 
-        {/* Face tracker */}
+        {/* Face tracker — hide boxes once focus has locked onto a face */}
         {!photo && <FaceTracker
           videoRef={videoRef}
-          isActive={hasStream && !photo}
+          isActive={hasStream && !photo && !focusPos}
           mirrored={facingMode === 'user'}
           onFacesUpdate={onFacesUpdate}
         />}
