@@ -69,6 +69,9 @@ export default function PromptExtractor({ onGalleryOpen, currentImage, onExtract
         setExtractedPrompt(response);
         setShowPrompt(true);
         toast.success("Prompt extracted successfully!");
+        if (onExtracted) {
+          onExtracted(response);
+        }
       } else {
         toast.error("Failed to extract prompt");
       }
