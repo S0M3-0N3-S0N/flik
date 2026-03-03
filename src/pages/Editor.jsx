@@ -99,6 +99,7 @@ export default function Editor() {
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [isToolboxExpanded, setIsToolboxExpanded] = useState(false);
   const [user, setUser] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [isEyeDropperActive, setIsEyeDropperActive] = useState(false);
   const [stickers, setStickers] = useState([]);
 
