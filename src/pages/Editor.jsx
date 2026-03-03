@@ -1399,17 +1399,22 @@ export default function Editor() {
              <div ref={emblaRef} className={`w-full h-full overflow-hidden ${isImageLocked ? 'pointer-events-none' : ''}`}>
                <div className="flex h-full">
                  {loadedImages.map((img, idx) => (
-                   <div key={idx} className="min-w-full h-full flex items-center justify-center overflow-hidden relative">
-                     {idx === currentImageIndex && showLockButton && (
+                   <div 
+                     key={idx} 
+                     className="min-w-full h-full flex items-center justify-center overflow-hidden relative group"
+                     onMouseEnter={() => setLockButtonHovered(true)}
+                     onMouseLeave={() => setLockButtonHovered(false)}
+                   >
+                     {idx === currentImageIndex && (showLockButton || lockButtonHovered) && (
                        <motion.button
                          onClick={() => {
                            setIsImageLocked(!isImageLocked);
                            setShowLockButton(false);
                          }}
-                         initial={{ opacity: 1 }}
+                         initial={{ opacity: 0 }}
                          animate={{ opacity: 1 }}
                          exit={{ opacity: 0 }}
-                         transition={{ duration: 0.3 }}
+                         transition={{ duration: 0.2 }}
                          className={`absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`}
                          title={isImageLocked ? 'Unlock image' : 'Lock image'}
                        >
