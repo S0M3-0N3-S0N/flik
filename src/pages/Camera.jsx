@@ -722,7 +722,7 @@ export default function CameraPage() {
         {!photo && settings.cameraGuidance && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
 
         {/* Face tracker */}
-        {!photo && <FaceTracker videoRef={videoRef} isActive={hasStream && !photo} mirrored={facingMode === 'user'} />}
+        {!photo && <FaceTracker videoRef={videoRef} isActive={hasStream && !photo} mirrored={facingMode === 'user'} onFacesUpdate={(f) => { detectedFacesRef.current = f; }} />}
 
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
