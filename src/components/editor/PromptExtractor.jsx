@@ -3,27 +3,25 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Copy, Loader2, Upload } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import ImageUploader from "./ImageUploader";
 
-export default function PromptExtractor() {
-  const [uploadedImage, setUploadedImage] = useState(null);
+export default function PromptExtractor({ currentImage }) {
   const [extractedPrompt, setExtractedPrompt] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
 
   const handleExtractPrompt = async () => {
-    if (!uploadedImage) {
+    if (!currentImage) {
       toast.error("Please upload an image first");
       return;
     }
 
     setIsExtracting(true);
     try {
-      let imageUrl = uploadedImage.url;
+      let imageUrl = currentImage.url;
       
       // If image is a data URL (local preview), upload it first
       if (!imageUrl || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
-        const response = await fetch(uploadedImage.preview || uploadedImage.url);
+        const response = await fetch(currentImage.preview || currentImage.url);
         const blob = await response.blob();
         const file = new File([blob], `image_${Date.now()}.png`, { type: 'image/png' });
         const uploadResult = await base44.integrations.Core.UploadFile({ file });
