@@ -23,6 +23,7 @@ import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import StickerOverlay from "@/components/editor/StickerOverlay";
 import { useFlikActions } from "@/components/useFlikActions";
+import ExportModal from "@/components/editor/ExportModal";
 
 const DEFAULT_ADJUSTMENTS = {
   brightness: 0, contrast: 0, saturation: 0,
