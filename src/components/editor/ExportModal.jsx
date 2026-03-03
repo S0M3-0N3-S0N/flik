@@ -92,16 +92,6 @@ export default function ExportModal({ isOpen, onClose, onDownload, onSaveToGalle
                 </button>
 
                 <button
-                  onClick={handleSaveToCameraRoll}
-                  className="w-full flex items-center gap-4 px-6 py-4 hover:bg-white/5 transition-colors text-left"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#555] to-[#333] flex items-center justify-center flex-shrink-0">
-                    <Camera className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-white font-medium">Save to Camera Roll</span>
-                </button>
-
-                <button
                   onClick={handleInstagramStories}
                   className="w-full flex items-center gap-4 px-6 py-4 hover:bg-white/5 transition-colors text-left"
                 >
