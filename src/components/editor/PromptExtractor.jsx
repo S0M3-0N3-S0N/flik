@@ -4,18 +4,19 @@ import { toast } from "sonner";
 import { Copy, Loader2, Upload, Grid3x3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function PromptExtractor({ onGalleryOpen }) {
+export default function PromptExtractor({ onGalleryOpen, currentImage }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [extractedPrompt, setExtractedPrompt] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const fileInputRef = useRef(null);
 
-  const handleGalleryOpen = () => {
-    onGalleryOpen((image) => {
-      setSelectedImage({ url: image.url, preview: image.url });
-    });
-  };
+  // Use currentImage from parent if available
+  React.useEffect(() => {
+    if (currentImage && !selectedImage) {
+      setSelectedImage({ url: currentImage.url, preview: currentImage.preview || currentImage.url });
+    }
+  }, [currentImage]);
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files || []);
