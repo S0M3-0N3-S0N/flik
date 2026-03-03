@@ -804,15 +804,15 @@ export default function Editor() {
     });
   }, [resetImageState, emblaApi]);
 
-  // Auto-hide lock button after 2 seconds (unless image is locked)
+  // Auto-hide lock button after 2 seconds when unlocked, keep visible when locked
   useEffect(() => {
-    if (showLockButton && !isImageLocked) {
+    if (isImageLocked) {
+      setShowLockButton(true);
+    } else if (showLockButton && !isImageLocked) {
       const timer = setTimeout(() => setShowLockButton(false), 2000);
       return () => clearTimeout(timer);
-    } else if (isImageLocked) {
-      setShowLockButton(true);
     }
-  }, [showLockButton, isImageLocked]);
+  }, [isImageLocked]);
 
   // Keyboard shortcuts
   useEffect(() => {
