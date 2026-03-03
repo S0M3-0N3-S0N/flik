@@ -28,7 +28,7 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setSelectedImage({ url: ev.target.result, preview: ev.target.result });
+      setSelectedImages(prev => [...prev, { url: ev.target.result, preview: ev.target.result }]);
     };
     reader.readAsDataURL(imageFile);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -36,8 +36,12 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
 
   const handleGallerySelect = () => {
     onGalleryOpen((selectedImage) => {
-      setSelectedImage({ url: selectedImage.url, preview: selectedImage.thumbnail_url || selectedImage.url });
+      setSelectedImages(prev => [...prev, { url: selectedImage.url, preview: selectedImage.thumbnail_url || selectedImage.url }]);
     });
+  };
+
+  const removeImage = (index) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleExtractPrompt = async () => {
