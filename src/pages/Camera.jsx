@@ -342,8 +342,21 @@ export default function CameraPage() {
     const clientY = e.changedTouches?.length > 0 ? e.changedTouches[0].clientY : e.clientY;
 
     const zoomScale = zoomCaps.supported ? 1 : zoomValue;
-    const x = (clientX - rect.left) / zoomScale;
-    const y = (clientY - rect.top) / zoomScale;
+    let x = (clientX - rect.left) / zoomScale;
+    let y = (clientY - rect.top) / zoomScale;
+
+    // Snap to nearest detected face center if tap is within a face box
+    const faces = detectedFacesRef.current;
+    if (faces.length > 0) {
+      for (const face of faces) {
+        if (x >= face.x && x <= face.x + face.w && y >= face.y && y <= face.y + face.h) {
+          x = face.x + face.w / 2;
+          y = face.y + face.h / 2;
+          haptic([10, 5, 10]);
+          break;
+        }
+      }
+    }
 
     setFocusPos({ x, y });
     setShowExposure(true);
