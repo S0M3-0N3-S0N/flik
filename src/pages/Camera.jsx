@@ -463,24 +463,34 @@ export default function CameraPage() {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0);
 
-      // Apply exposure adjustment via pixel manipulation if needed
-      if (exposure !== 0) {
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        const maxExposure = Math.max(Math.abs(exposureCaps.min), exposureCaps.max);
-        const brightness = 1 + (exposure / maxExposure) * 0.8;
+        // Apply exposure adjustment via pixel manipulation if needed
+        if (exposure !== 0) {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          const maxExposure = Math.max(Math.abs(exposureCaps.min), exposureCaps.max);
+          const brightness = 1 + (exposure / maxExposure) * 0.8;
 
-        for (let i = 0; i < data.length; i += 4) {
-          data[i] = Math.min(255, data[i] * brightness);     // R
-          data[i + 1] = Math.min(255, data[i + 1] * brightness); // G
-          data[i + 2] = Math.min(255, data[i + 2] * brightness); // B
+          for (let i = 0; i < data.length; i += 4) {
+            data[i] = Math.min(255, data[i] * brightness);     // R
+            data[i + 1] = Math.min(255, data[i + 1] * brightness); // G
+            data[i + 2] = Math.min(255, data[i + 2] * brightness); // B
+          }
+          ctx.putImageData(imageData, 0, 0);
         }
-        ctx.putImageData(imageData, 0, 0);
-      }
 
-      const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
-      setPhoto(dataUrl);
-      setSavedPhoto(null);
+        const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+        setPhoto(dataUrl);
+        setSavedPhoto(null);
+
+        // Turn torch off after capture (unless flash mode is 'on' — keep it on)
+        if (flashMode !== 'on') setTorch(false);
+      };
+
+      if (shouldFlash) {
+        setTimeout(capture, 100); // brief delay to allow torch to activate
+      } else {
+        capture();
+      }
     });
   };
 
