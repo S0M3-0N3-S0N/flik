@@ -795,13 +795,12 @@ export default function CameraPage() {
           mirrored={facingMode === 'user'}
           onFacesUpdate={useCallback((faces) => {
             detectedFacesRef.current = faces;
-            // Auto-focus on first detected face if no manual focus yet
-            if (faces.length > 0 && !focusPos && !autoFocusedFaceRef.current) {
+            if (faces.length > 0 && !autoFocusedFaceRef.current) {
               autoFocusedFaceRef.current = true;
               const face = faces[0];
               const cx = face.x + face.w / 2;
               const cy = face.y + face.h / 2;
-              setFocusPos({ x: cx, y: cy });
+              setFocusPos(prev => prev ?? { x: cx, y: cy });
               setShowExposure(false);
               setPortraitMode(true);
               portraitFaceRef.current = face;
@@ -810,7 +809,7 @@ export default function CameraPage() {
               setPortraitMode(false);
               portraitFaceRef.current = null;
             }
-          }, [focusPos])}
+          }, [])}
         />}
 
         {/* Focus square */}
