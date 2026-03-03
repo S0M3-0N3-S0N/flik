@@ -45,28 +45,33 @@ export default function PromptExtractor({ onGalleryOpen, currentImage }) {
   };
 
   const handleExtractPrompt = async () => {
-    if (!selectedImage) {
-      toast.error("Please upload an image first");
+    if (selectedImages.length === 0) {
+      toast.error("Please upload at least one image");
       return;
     }
 
     setIsExtracting(true);
     try {
-      let imageUrl = selectedImage.url;
-      
-      // If image is a data URL (local preview), upload it first
-      if (!imageUrl || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
-        const response = await fetch(selectedImage.preview || selectedImage.url);
-        const blob = await response.blob();
-        const file = new File([blob], `image_${Date.now()}.png`, { type: 'image/png' });
-        const uploadResult = await base44.integrations.Core.UploadFile({ file });
-        if (!uploadResult?.file_url) throw new Error('Failed to upload image');
-        imageUrl = uploadResult.file_url;
+      // Upload all images and get URLs
+      const imageUrls = [];
+      for (const img of selectedImages) {
+        let imageUrl = img.url;
+        
+        // If image is a data URL (local preview), upload it first
+        if (!imageUrl || imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
+          const response = await fetch(img.preview || img.url);
+          const blob = await response.blob();
+          const file = new File([blob], `image_${Date.now()}.png`, { type: 'image/png' });
+          const uploadResult = await base44.integrations.Core.UploadFile({ file });
+          if (!uploadResult?.file_url) throw new Error('Failed to upload image');
+          imageUrl = uploadResult.file_url;
+        }
+        imageUrls.push(imageUrl);
       }
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze this image in detail and generate a comprehensive, descriptive text prompt that captures the scene, style, composition, mood, colors, and any notable elements. This prompt will be used to generate new images with a similar aesthetic and style. Make the prompt detailed, vivid, and suitable for an AI image generation model.`,
-        file_urls: [imageUrl],
+        prompt: `Analyze these images in detail and generate a comprehensive, descriptive text prompt that captures the combined scene, style, composition, mood, colors, and any notable elements. This prompt will be used to generate new images with a similar aesthetic and style. Make the prompt detailed, vivid, and suitable for an AI image generation model.`,
+        file_urls: imageUrls,
       });
 
       if (response && typeof response === "string") {
