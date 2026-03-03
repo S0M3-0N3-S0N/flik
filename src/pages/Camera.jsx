@@ -800,21 +800,17 @@ export default function CameraPage() {
           onFacesUpdate={onFacesUpdate}
         />}
 
-        {/* Focus square */}
-        {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
-
-        {/* Exposure slider — unified with focus (always shows when focus is set) */}
-        <AnimatePresence>
-          {focusPos && !photo && (
-            <ExposureSlider
-              position={focusPos}
-              value={exposure}
-              min={exposureCaps.min}
-              max={exposureCaps.max}
-              onChange={handleExposureChange}
-            />
-          )}
-        </AnimatePresence>
+        {/* Unified focus + exposure control */}
+        {!photo && focusPos && (
+          <FocusExposureControl
+            position={focusPos}
+            locked={afLocked}
+            value={exposure}
+            min={exposureCaps.min}
+            max={exposureCaps.max}
+            onChange={handleExposureChange}
+          />
+        )}
 
         {/* Countdown overlay */}
         <AnimatePresence>
