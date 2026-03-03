@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import StyleSelector, { stylePresets } from "@/components/generate/StyleSelector";
 import ImageGrid from "@/components/generate/ImageGrid";
 import ImageUploader from "@/components/editor/ImageUploader";
+import PromptExtractor from "@/components/editor/PromptExtractor";
 import { useFlikActions } from "@/components/useFlikActions";
 import { 
   MAX_PROMPTS_PER_GENERATION, 
