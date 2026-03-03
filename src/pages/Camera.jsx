@@ -521,8 +521,11 @@ export default function CameraPage() {
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     setPhoto(dataUrl);
     setSavedPhoto(null);
-    if (flashMode !== 'on') setTorch(false);
-  }, [exposure, exposureCaps, flashMode, setTorch]);
+    if (flashMode !== 'on') {
+      setTorch(false);
+      setScreenFlash(0);
+    }
+  }, [exposure, exposureCaps, flashMode, setTorch, setScreenFlash]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
