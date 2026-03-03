@@ -91,16 +91,14 @@ export default function PromptExtractor({ currentImage }) {
           <div className="flex gap-2">
             <Button
               onClick={handleCopyPrompt}
-              variant="outline"
-              className="flex-1 text-white border-white/20 hover:bg-white/5"
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/30"
             >
               <Copy className="w-4 h-4 mr-2" />
               Copy
             </Button>
             <Button
               onClick={() => setShowPrompt(false)}
-              variant="outline"
-              className="flex-1 text-white border-white/20 hover:bg-white/5"
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/30"
             >
               Extract Again
             </Button>
