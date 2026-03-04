@@ -1378,13 +1378,6 @@ export default function Editor() {
           onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
           onWheel={handleWheel}
-          ref={(el) => {
-            containerRef.current = el;
-            // Need non-passive wheel listener to call preventDefault
-            if (el) {
-              el._wheelHandler = handleWheel;
-            }
-          }}
           style={{ 
             touchAction: (activeTab === "paint" || activeTab === "remove" || isCropping) 
               ? 'none' 
