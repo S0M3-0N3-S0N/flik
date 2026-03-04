@@ -1044,15 +1044,13 @@ export default function Editor() {
     }
   }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, paintStrokes, isDragging, dragStart, dragType, isPanning, isEyeDropperActive]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback((e) => {
     setIsDrawing(false);
     setIsDragging(false);
     setIsPanning(false);
     setDragType(null);
-    if (isEyeDropperActive) {
-      setIsEyeDropperActive(false);
-    }
-  }, [isEyeDropperActive]);
+    setDragStart(null);
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     handleMouseUp();
