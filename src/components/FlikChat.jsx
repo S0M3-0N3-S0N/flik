@@ -956,7 +956,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
               <Button variant="ghost" size="icon" onClick={() => {
                 setIsOpen(false);
                 base44.analytics.track({ eventName: 'flik_chat_closed' });
-              }} className="text-white/60 hover:text-white h-11 w-11 min-h-[44px] min-w-[44px] ml-1">
+              }} className="text-white/60 hover:text-white hover:bg-transparent h-11 w-11 min-h-[44px] min-w-[44px] ml-1">
                 <X className="w-5 h-5" />
               </Button>
             </div>
