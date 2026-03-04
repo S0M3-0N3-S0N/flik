@@ -941,7 +941,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
               >
                 <div className="relative">
                   <MessageSquare className="w-4 h-4" />
-                  <Plus className="w-2.5 h-2.5 absolute -top-1.5 -right-1.5 bg-[#FF6B35] text-white rounded-full p-[1px]" strokeWidth={3} />
+                  <Plus className="w-2 h-2 absolute -top-1 -right-1.5 text-white/70" strokeWidth={3} />
                 </div>
               </Button>
 
