@@ -914,8 +914,6 @@ export default function Editor() {
           tempCanvas.remove();
         }
       }
-      setIsEyeDropperActive(false);
-      return;
     }
     
     if (isSpacePressed || e.button === 1 || isPanToolActive) {
