@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check, Mic, MicOff, Volume2, VolumeX, Save, History, MessageSquare, Palette } from "lucide-react";
+import { X, Send, User, Loader2, Image as ImageIcon, ExternalLink, Trash2, RefreshCw, Upload, Grid3x3, Play, SlidersHorizontal, Wand2, Layers, Crop, ArrowLeft, AlertCircle, Copy, Edit2, Check, Mic, MicOff, Volume2, VolumeX, Save, History, MessageSquare, Palette, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
