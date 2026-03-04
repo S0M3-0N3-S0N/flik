@@ -113,10 +113,12 @@ export default function PaintPanel({
           <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
             <button
               onClick={() => colorWheelRef.current?.click()}
-              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg hover:scale-110 transition-transform cursor-pointer"
+              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg hover:scale-110 transition-transform cursor-pointer flex items-center justify-center"
               style={{ backgroundColor: brushColor }}
               title="Open color wheel"
-            />
+            >
+              <span className="text-white/70 font-bold text-base leading-none drop-shadow-md" style={{ textShadow: '0 0 3px rgba(0,0,0,0.8)' }}>+</span>
+            </button>
             <input
               ref={colorWheelRef}
               type="color"
