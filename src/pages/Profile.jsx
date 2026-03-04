@@ -1429,7 +1429,6 @@ export default function Profile() {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit in Photo Studio
               </Button>
-
               <div className="flex gap-2.5">
                 <Button
                   onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
