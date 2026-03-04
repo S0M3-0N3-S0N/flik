@@ -1281,10 +1281,11 @@ export default function Profile() {
           <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col border-t md:border-t-0 md:border-l border-white/10 bg-[#1a1a1a] max-h-[40vh] md:max-h-full overflow-hidden">
             {/* Header */}
             <div className="p-2 sm:p-4 md:p-5 border-b border-white/10 flex-shrink-0">
-              <DialogHeader className="p-0 space-y-2">
-                <DialogTitle className="text-lg sm:text-xl gradient-text line-clamp-2 text-left pr-8">
-                  {selectedItem?.title || selectedItem?.prompt || 'Creation'}
-                </DialogTitle>
+              <div className="flex items-start justify-between gap-2">
+                <DialogHeader className="p-0 space-y-2 flex-1 min-w-0">
+                  <DialogTitle className="text-lg sm:text-xl gradient-text line-clamp-2 text-left">
+                    {selectedItem?.title || selectedItem?.prompt || 'Creation'}
+                  </DialogTitle>
                 <DialogDescription className="text-white/50 text-left text-xs sm:text-sm" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
                   Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
                 </DialogDescription>
