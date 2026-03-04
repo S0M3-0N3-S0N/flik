@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
-import { Loader2, Image as ImageIcon, AlertCircle, Check, Grid3x3 } from "lucide-react";
+import { Loader2, Image as ImageIcon, AlertCircle, Check, Grid3x3, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function GalleryPicker({ isOpen, onClose, onSelect, onSelectMultiple }) {
