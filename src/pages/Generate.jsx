@@ -951,7 +951,7 @@ export default function Generate() {
                   onClick={() => imgToImgFileRef.current?.click()}
                   className="w-full flex items-center gap-3 px-4 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FF6B35]/40 transition-all text-white/70 hover:text-white"
                 >
-                  <Upload className="w-5 h-5 text-[#FF6B35]" />
+                  <ArrowUpFromLine className="w-5 h-5 text-[#FF6B35]" />
                   <div className="text-left">
                     <p className="text-sm font-medium">Upload from device</p>
                     <p className="text-xs text-white/40">JPG, PNG, WEBP supported</p>
