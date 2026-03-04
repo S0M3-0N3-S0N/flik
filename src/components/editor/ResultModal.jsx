@@ -22,24 +22,24 @@ export default function ResultModal({
   const [userFeedback, setUserFeedback] = useState(null);
   const [imageLoadError, setImageLoadError] = useState(false);
 
-  const handleDownloadResult = async () => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveToGallery = async () => {
     if (!resultImage) return;
+    setIsSaving(true);
     try {
-      const response = await fetch(resultImage);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `flik_result_${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast.success('Downloaded successfully');
+      await base44.entities.Creation.create({
+        type: 'image',
+        url: resultImage,
+        thumbnail_url: resultImage,
+        title: `Edited ${new Date().toLocaleDateString()}`,
+      });
+      toast.success('Saved to gallery!');
     } catch (err) {
-      console.error('Download failed:', err);
-      toast.error('Download failed, opening in new tab');
-      window.open(resultImage, '_blank');
+      console.error('Save failed:', err);
+      toast.error('Failed to save to gallery');
+    } finally {
+      setIsSaving(false);
     }
   };
 
