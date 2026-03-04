@@ -117,7 +117,7 @@ export default function PaintPanel({
               style={{ backgroundColor: brushColor }}
               title="Open color wheel"
             >
-              <span className="text-white/70 font-bold text-base leading-none drop-shadow-md" style={{ textShadow: '0 0 3px rgba(0,0,0,0.8)' }}>+</span>
+              <span className="text-white/70 font-bold text-lg leading-[0] drop-shadow-md select-none" style={{ textShadow: '0 0 3px rgba(0,0,0,0.8)', marginTop: '0px' }}>+</span>
             </button>
             <input
               ref={colorWheelRef}
