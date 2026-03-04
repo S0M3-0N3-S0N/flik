@@ -1053,12 +1053,16 @@ export default function Editor() {
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    handleMouseUp();
+    setIsDrawing(false);
+    setIsDragging(false);
+    setIsPanning(false);
+    setDragType(null);
+    setDragStart(null);
     if (cursorRef.current) cursorRef.current.style.display = 'none';
     if (isEyeDropperActive && containerRef.current) {
       containerRef.current.style.cursor = "";
     }
-  }, [handleMouseUp, isEyeDropperActive]);
+  }, [isEyeDropperActive]);
 
   // Draw paint strokes on canvas overlay
   useEffect(() => {
