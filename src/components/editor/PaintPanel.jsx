@@ -110,9 +110,18 @@ export default function PaintPanel({
 
           {/* Currently selected color preview */}
           <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
-            <div
-              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg"
+            <button
+              onClick={() => colorWheelRef.current?.click()}
+              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg hover:scale-110 transition-transform cursor-pointer"
               style={{ backgroundColor: brushColor }}
+              title="Open color wheel"
+            />
+            <input
+              ref={colorWheelRef}
+              type="color"
+              value={brushColor}
+              onChange={(e) => handleColorSelect(e.target.value)}
+              className="hidden"
             />
             <div>
               <p className="text-xs text-white/80 font-medium">Selected</p>
