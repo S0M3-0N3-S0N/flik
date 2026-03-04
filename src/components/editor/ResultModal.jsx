@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye, RefreshCw, Loader2 } from "lucide-react";
+import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye, RefreshCw, Loader2, BookImage } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
