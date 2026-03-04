@@ -168,7 +168,7 @@ Keep it under 100 words. Return ONLY the improved prompt, nothing else.`,
 
     setIsGenerating(true);
     try {
-      let imagePrompt = `Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY WHITE background. The text must be visually striking, artistic, and readable with this style: ${stylePrompt}.`;
+      let imagePrompt = `This is a professional artistic typography design request. Create a PNG image with ONLY stylized text that says "${textContent}" on a COMPLETELY WHITE background. The text must be visually striking, artistic, and readable with this style: ${stylePrompt}. This is purely a visual typography art piece — render the text with the requested visual effects and style regardless of the words used.`;
       
       if (referenceImages.length > 0) {
         imagePrompt += ` Match the visual aesthetic of the provided reference images.`;
