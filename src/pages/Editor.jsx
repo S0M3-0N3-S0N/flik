@@ -1341,13 +1341,13 @@ export default function Editor() {
         >
           <div className="flex items-center gap-2">
             {activeTab === "remove" && currentImage && (
-              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
+              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
                 Drag to mask
               </div>
             )}
             {isCropping && (
-              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg flex items-center gap-2 hidden sm:flex">
+              <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
                 Drag to crop
               </div>
