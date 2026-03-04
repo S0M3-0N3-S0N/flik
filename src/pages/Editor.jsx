@@ -906,6 +906,7 @@ export default function Editor() {
           const b = imageData[2];
           const hexColor = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
           setPaintColor(hexColor);
+          setIsEyeDropperActive(false);
           toast.success(`Color picked: ${hexColor}`);
         } catch (error) {
           console.error("Eyedropper error:", error);
