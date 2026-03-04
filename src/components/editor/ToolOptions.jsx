@@ -1,0 +1,70 @@
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, ArrowLeft } from "lucide-react";
+
+export const COLOR_GRADE_OPTIONS = [
+  { id: "cinematic", label: "Cinematic", emoji: "🎬", prompt: "Apply a cinematic color grade: deep shadows, rich contrast, teal and orange tones, film-like quality" },
+  { id: "golden_hour", label: "Golden Hour", emoji: "🌅", prompt: "Apply a golden hour color grade: warm golden yellows, soft orange highlights, glowing sun-kissed tones" },
+  { id: "moody_blue", label: "Moody Blue", emoji: "🌊", prompt: "Apply a moody blue color grade: cool blue tones, desaturated shadows, stormy atmospheric look" },
+  { id: "vintage", label: "Vintage", emoji: "📷", prompt: "Apply a vintage film color grade: faded colors, warm yellows, slight vignette, nostalgic film grain look" },
+  { id: "neon_noir", label: "Neon Noir", emoji: "🌆", prompt: "Apply a neon noir color grade: dark moody shadows, vibrant neon pinks and purples, cyberpunk city night aesthetic" },
+  { id: "pastel_dream", label: "Pastel Dream", emoji: "🌸", prompt: "Apply a pastel dream color grade: soft muted pastels, airy light tones, dreamy pink and lavender hues" },
+  { id: "forest_green", label: "Forest Green", emoji: "🌿", prompt: "Apply a forest green color grade: lush deep greens, earthy browns, natural organic tones" },
+  { id: "black_white", label: "B&W Film", emoji: "⬛", prompt: "Apply a classic black and white film color grade: rich contrast, deep blacks, bright whites, dramatic noir style" },
+];
+
+export const STYLE_OPTIONS = [
+  { id: "oil_painting", label: "Oil Painting", emoji: "🖼️", prompt: "Transform this image into a detailed oil painting with visible brush strokes, rich textures, and painterly quality" },
+  { id: "watercolor", label: "Watercolor", emoji: "🎨", prompt: "Transform this image into a soft watercolor painting with flowing colors, transparent washes, and delicate edges" },
+  { id: "anime", label: "Anime", emoji: "⛩️", prompt: "Transform this image into anime art style with bold outlines, vibrant colors, and Japanese animation aesthetic" },
+  { id: "pencil_sketch", label: "Pencil Sketch", emoji: "✏️", prompt: "Transform this image into a detailed pencil sketch with fine lines, shading, and hand-drawn texture" },
+  { id: "comic_book", label: "Comic Book", emoji: "💥", prompt: "Transform this image into a bold comic book art style with strong outlines, flat colors, and graphic novel aesthetic" },
+  { id: "impressionist", label: "Impressionist", emoji: "🌻", prompt: "Transform this image in the style of impressionist painters like Monet: loose brush strokes, light and color emphasis" },
+  { id: "cyberpunk", label: "Cyberpunk", emoji: "🤖", prompt: "Transform this image into a cyberpunk digital art style with neon colors, futuristic tech elements, and dystopian aesthetic" },
+  { id: "studio_ghibli", label: "Ghibli", emoji: "🍃", prompt: "Transform this image in the style of Studio Ghibli: soft warm colors, hand-painted look, magical whimsical atmosphere" },
+];
+
+export default function ToolOptions({ tool, onSelect, onBack }) {
+  const options = tool.id === "recolor" ? COLOR_GRADE_OPTIONS : STYLE_OPTIONS;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      className="py-4 px-4"
+    >
+      <button
+        onClick={onBack}
+        className="flex items-center gap-2 text-white/50 hover:text-white text-xs mb-4 transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back
+      </button>
+
+      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <span className="w-1 h-1 rounded-full bg-[#FF6B35]"></span>
+        {tool.label} Options
+      </h3>
+
+      <div className="grid grid-cols-2 gap-3">
+        {options.map((option, index) => (
+          <motion.button
+            key={option.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.04 }}
+            onClick={() => onSelect({ ...tool, prompt: option.prompt, label: `${tool.label}: ${option.label}` })}
+            className="group relative p-3 rounded-2xl text-left transition-all duration-300 border bg-white/[0.03] hover:bg-white/[0.08] border-white/5 hover:border-[#FF6B35]/30 cursor-pointer shadow-sm hover:shadow-lg hover:shadow-[#FF6B35]/5"
+          >
+            <div className="text-2xl mb-2">{option.emoji}</div>
+            <p className="text-sm font-medium text-white group-hover:text-[#FF6B35] transition-colors truncate">
+              {option.label}
+            </p>
+            <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/5 group-hover:ring-[#FF6B35]/20 pointer-events-none" />
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
