@@ -1410,11 +1410,10 @@ export default function Editor() {
                          ref={idx === currentImageIndex ? imageRef : null}
                          src={img.preview || img.url}
                          alt="Editor"
-                         className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl select-none ${(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
-                         style={{ filter: idx === currentImageIndex ? getFilterStyle() : 'none', transform: idx === currentImageIndex ? getTransformStyle() : 'none', userSelect: 'none', WebkitUserDrag: 'none' }}
+                         className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
+                         style={{ filter: idx === currentImageIndex ? getFilterStyle() : 'none', transform: idx === currentImageIndex ? getTransformStyle() : 'none' }}
                          draggable={false}
                          crossOrigin="anonymous"
-                         onDragStart={(e) => e.preventDefault()}
                          onLoad={() => { if (idx === currentImageIndex && needsFit) { setNeedsFit(false); setNeedsFit(true); } }}
                        />
 

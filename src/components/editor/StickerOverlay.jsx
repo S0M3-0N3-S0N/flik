@@ -113,9 +113,8 @@ export default function StickerOverlay({ stickers, onStickersChange, zoom, pan, 
           <img
             src={sticker.url}
             alt="sticker"
-            className="w-full h-auto select-none pointer-events-none"
+            className="w-full h-auto select-none"
             draggable={false}
-            onDragStart={(e) => e.preventDefault()}
             style={{
               outline: activeSticker === sticker.id ? '2px dashed rgba(255,107,53,0.8)' : 'none',
               borderRadius: 4,
