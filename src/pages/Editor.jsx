@@ -1033,7 +1033,7 @@ export default function Editor() {
     }
   }, [activeTab, isDrawing, currentImage, getRelativePosition, brushStrokes, paintStrokes, isDragging, dragStart, dragType, isPanning, isEyeDropperActive]);
 
-  const handleMouseUp = useCallback((e) => {
+  const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
     setIsDragging(false);
     setIsPanning(false);
