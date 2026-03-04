@@ -1143,6 +1143,29 @@ export default function Editor() {
     ctx.globalCompositeOperation = 'source-over';
   }, [brushStrokes, brushSize, brushOpacity, activeTab]);
   
+  // Non-passive wheel listener to allow preventDefault (prevents page scroll during zoom)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handler = (e) => {
+      if (currentImage) {
+        e.preventDefault();
+        const delta = e.deltaY * -0.001;
+        setZoom(prev => {
+          const newZoom = Math.min(Math.max(prev + delta, 0.1), 5);
+          const maxPan = Math.max((newZoom - 1) * 100, 0);
+          setPan(p => ({
+            x: Math.max(-maxPan, Math.min(maxPan, p.x)),
+            y: Math.max(-maxPan, Math.min(maxPan, p.y))
+          }));
+          return newZoom;
+        });
+      }
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, [currentImage]);
+
   // Reset canvas context when switching tabs
   useEffect(() => {
     if (canvasRef.current) {
