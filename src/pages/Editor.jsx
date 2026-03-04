@@ -1098,8 +1098,8 @@ export default function Editor() {
     if (!canvasRef.current || !imageRef.current || activeTab !== "remove") return;
     const canvas = canvasRef.current;
     const img = imageRef.current;
-    canvas.width = img.naturalWidth || img.width || 0;
-    canvas.height = img.naturalHeight || img.height || 0;
+    canvas.width = img.naturalWidth || img.getBoundingClientRect().width || 0;
+    canvas.height = img.naturalHeight || img.getBoundingClientRect().height || 0;
     if (canvas.width === 0 || canvas.height === 0) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
