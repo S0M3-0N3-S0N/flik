@@ -412,6 +412,56 @@ export default function Generate() {
     setShowExtractPrompt(false);
   }, []);
 
+  const handleImgToImgFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setIsImgToImgGenerating(true);
+    try {
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      if (!uploadResult?.file_url) throw new Error('Upload failed');
+      setImgToImgSource({ url: uploadResult.file_url, name: file.name });
+    } catch (err) {
+      setError("Failed to upload image.");
+    } finally {
+      setIsImgToImgGenerating(false);
+    }
+  };
+
+  const handleImgToImgGallerySelect = (creation) => {
+    const url = creation.thumbnail_url || creation.url;
+    setImgToImgSource({ url, name: creation.title || 'Gallery image' });
+    setShowImgToImgGallery(false);
+  };
+
+  const handleImgToImgGenerate = async () => {
+    if (!imgToImgSource) return;
+    setIsImgToImgGenerating(true);
+    setError(null);
+    try {
+      const result = await base44.integrations.Core.GenerateImage({
+        prompt: `Generate a visually similar image inspired by this reference. Maintain the same style, composition, colors, and subject matter. masterpiece, high quality, detailed`,
+        existing_image_urls: [imgToImgSource.url]
+      });
+      await base44.entities.Creation.create({
+        title: 'Image-to-Image Generation',
+        type: 'image',
+        url: result.url,
+        thumbnail_url: result.url,
+        prompt: 'Image-to-Image generation',
+        metadata: { source: 'image_to_image' }
+      });
+      setGeneratedImages(prev => [{ id: Date.now(), url: result.url, prompt: 'Image-to-Image', timestamp: new Date().toISOString() }, ...prev]);
+      setShowImageToImage(false);
+      setImgToImgSource(null);
+      base44.analytics.track({ eventName: 'generate_image_to_image', properties: { success: true } });
+    } catch (err) {
+      setError("Failed to generate. Please try again.");
+    } finally {
+      setIsImgToImgGenerating(false);
+    }
+  };
+
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <section className="relative py-10 sm:py-16 md:py-20 px-4 sm:px-6 overflow-hidden">
