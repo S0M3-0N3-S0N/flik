@@ -100,7 +100,7 @@ export default function Generate() {
         GALLERY_FETCH_LIMIT
       );
     },
-    enabled: !!user?.email && showGallery,
+    enabled: !!user?.email && (showGallery || showImgToImgGallery),
     staleTime: 30000, // 30 seconds
   });
 
