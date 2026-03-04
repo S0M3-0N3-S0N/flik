@@ -866,19 +866,7 @@ export default function Editor() {
     };
   }, [handleUndo, handleRedo, handleSaveToGallery]);
 
-  const handleWheel = useCallback((e) => {
-    if (currentImage) {
-      e.preventDefault();
-      const delta = e.deltaY * -0.001;
-      const newZoom = Math.min(Math.max(zoom + delta, 0.1), 5);
-      setZoom(newZoom);
-      const maxPan = Math.max((newZoom - 1) * 100, 0);
-      setPan(prev => ({
-        x: Math.max(-maxPan, Math.min(maxPan, prev.x)),
-        y: Math.max(-maxPan, Math.min(maxPan, prev.y))
-      }));
-    }
-  }, [currentImage, zoom]);
+
 
   const getRelativePosition = useCallback((e) => {
     if (!imageRef.current) return null;
