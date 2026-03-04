@@ -407,7 +407,9 @@ export default function Editor() {
         existing_image_urls: [uploadResult.file_url]
       });
       if (!result?.url) throw new Error("Failed to generate image");
-      setResultImage(result.url);
+      // For background removal, apply canvas-based white background removal
+      const finalUrl = tool.id === "background" ? await removeWhiteBackground(result.url) : result.url;
+      setResultImage(finalUrl);
       setShowResult(true);
       base44.analytics.track({ eventName: "tool_applied", properties: { tool_id: tool.id, success: true } });
       toast.success(`${tool.label} applied successfully!`, { id: `tool-${tool.id}` });
