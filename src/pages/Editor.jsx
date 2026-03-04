@@ -1388,7 +1388,7 @@ export default function Editor() {
           onTouchStart={handleMouseDown}
           onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
-          onWheel={handleWheel}
+
           style={{ 
             touchAction: (activeTab === "paint" || activeTab === "remove" || isCropping) 
               ? 'none' 
