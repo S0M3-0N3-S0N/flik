@@ -96,10 +96,35 @@ const tools = [
 
 const categories = ["Enhancement", "Creative", "Edit"];
 
+const TOOLS_WITH_OPTIONS = ["recolor", "style"];
+
 export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
+  const [selectedTool, setSelectedTool] = useState(null);
+
   if (!onToolSelect) {
     console.warn('ToolPanel: onToolSelect callback is missing');
     return null;
+  }
+
+  const handleToolClick = (tool) => {
+    if (TOOLS_WITH_OPTIONS.includes(tool.id)) {
+      setSelectedTool(tool);
+    } else {
+      onToolSelect(tool);
+    }
+  };
+
+  if (selectedTool) {
+    return (
+      <ToolOptions
+        tool={selectedTool}
+        onSelect={(toolWithOption) => {
+          setSelectedTool(null);
+          onToolSelect(toolWithOption);
+        }}
+        onBack={() => setSelectedTool(null)}
+      />
+    );
   }
   
   return (
@@ -117,7 +142,7 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: (catIndex * 0.1) + (index * 0.05) }}
-                onClick={() => onToolSelect(tool)}
+                onClick={() => handleToolClick(tool)}
                 disabled={isProcessing || !hasImage}
                 className={`
                   group relative p-3 rounded-2xl text-left transition-all duration-300 border
@@ -143,7 +168,7 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
                       {tool.label}
                     </p>
                     <p className="text-[10px] text-white/40 leading-tight line-clamp-2 group-hover:text-white/60 transition-colors">
-                      {tool.description}
+                      {TOOLS_WITH_OPTIONS.includes(tool.id) ? "Choose a style →" : tool.description}
                     </p>
                   </div>
                 </div>
