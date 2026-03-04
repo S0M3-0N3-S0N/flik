@@ -1317,7 +1317,7 @@ export default function Editor() {
                    onUndoLastStroke={() => setPaintStrokes(prev => prev.slice(0, -1))}
                    hasStrokes={paintStrokes.length > 0}
                    strokeCount={paintStrokes.length}
-                   onEyeDropperActivate={() => setIsEyeDropperActive(true)}
+                   onEyeDropperActivate={() => setIsEyeDropperActive(prev => !prev)}
                    isEyeDropperActive={isEyeDropperActive}
                    />
               ) : (
