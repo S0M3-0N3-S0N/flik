@@ -1286,10 +1286,16 @@ export default function Profile() {
                   <DialogTitle className="text-lg sm:text-xl gradient-text line-clamp-2 text-left">
                     {selectedItem?.title || selectedItem?.prompt || 'Creation'}
                   </DialogTitle>
-                <DialogDescription className="text-white/50 text-left text-xs sm:text-sm" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
-                  Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
-                </DialogDescription>
-              </DialogHeader>
+                  <DialogDescription className="text-white/50 text-left text-xs sm:text-sm" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
+                    Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogClose asChild>
+                  <button className="flex-shrink-0 p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors mt-0.5">
+                    <X className="w-4 h-4" />
+                  </button>
+                </DialogClose>
+              </div>
             </div>
 
             {/* Scrollable Content */}
