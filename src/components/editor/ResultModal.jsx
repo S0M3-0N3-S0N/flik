@@ -258,11 +258,12 @@ export default function ResultModal({
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <Button
                 variant="outline"
-                onClick={handleDownloadResult}
-                className="w-full sm:w-auto bg-white/10 border-white/40 text-white hover:bg-white/20 hover:border-white/60 hover:text-white transition-all shadow-sm"
+                onClick={handleSaveToGallery}
+                disabled={isSaving}
+                className="w-full sm:w-auto bg-white/10 border-white/40 text-white hover:bg-white/20 hover:border-white/60 hover:text-white transition-all shadow-sm disabled:opacity-50"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Download
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookImage className="w-4 h-4 mr-2" />}
+                {isSaving ? 'Saving...' : 'Save to Gallery'}
               </Button>
               <Button
                 onClick={handleApplyWithFeedback}
