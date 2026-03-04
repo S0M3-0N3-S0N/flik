@@ -342,7 +342,7 @@ export default function SpotRemoval({
                 <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {referenceImages.map((url, idx) => (
                     <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 group border border-white/10 bg-white/5">
-                      <img src={url} alt={`Reference ${idx + 1}`} className="w-full h-full object-cover" onError={(e) => {
+                      <img src={typeof url === 'string' ? url : url.url} alt={`Reference ${idx + 1}`} className="w-full h-full object-cover" onError={(e) => {
                         console.error(`Failed to load image ${idx}:`, url);
                         e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Crect width="80" height="80" fill="%23333"/%3E%3Ctext x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23666" font-size="10"%3EError%3C/text%3E%3C/svg%3E';
                       }} />

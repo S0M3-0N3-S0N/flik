@@ -93,6 +93,13 @@ export default function Editor() {
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ skipSnaps: false, containScroll: false });
 
+  // Disable Embla drag when in drawing mode so touch events reach the canvas
+  useEffect(() => {
+    if (!emblaApi) return;
+    const isDrawingMode = activeTab === "remove" || activeTab === "paint";
+    emblaApi.reInit({ watchDrag: !isDrawingMode && loadedImages.length > 1 });
+  }, [activeTab, emblaApi, loadedImages.length]);
+
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
   const [redoHistory, setRedoHistory] = useState([]);
