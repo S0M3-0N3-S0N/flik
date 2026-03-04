@@ -1521,7 +1521,7 @@ export default function Editor() {
           
           {currentImage && (
             <motion.div
-              className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30"
+              className="absolute bottom-4 right-4 z-30 md:hidden"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2 }}
