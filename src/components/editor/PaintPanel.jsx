@@ -59,6 +59,7 @@ export default function PaintPanel({
   isEyeDropperActive,
 }) {
   const colorInputRef = useRef(null);
+  const colorWheelRef = useRef(null);
   const [recentColors, setRecentColors] = useState([]);
 
   const handleColorSelect = (color) => {
