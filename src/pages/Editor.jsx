@@ -1546,7 +1546,7 @@ export default function Editor() {
                         </button>
                         <div className="h-px bg-white/10 mx-1" />
                         <button onClick={() => { setIsPanToolActive(!isPanToolActive); setIsToolboxExpanded(false); }} className={`w-8 h-8 rounded-md transition-all flex items-center justify-center active:scale-95 ${isPanToolActive ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/5 text-white/60 hover:text-white'}`} title="Pan">
-                          <Move className="w-3.5 h-3.5" />
+                           <Hand className="w-3.5 h-3.5" />
                         </button>
                         <div className="h-px bg-white/10 mx-1" />
                         <button onClick={() => setZoom(z => Math.min(z + 0.2, 5))} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Zoom In">
