@@ -57,7 +57,9 @@ export default function ToolOptions({ tool, onSelect, onBack }) {
             onClick={() => onSelect({ ...tool, prompt: option.prompt, label: `${tool.label}: ${option.label}` })}
             className="group relative p-3 rounded-2xl text-left transition-all duration-300 border bg-white/[0.03] hover:bg-white/[0.08] border-white/5 hover:border-[#FF6B35]/30 cursor-pointer shadow-sm hover:shadow-lg hover:shadow-[#FF6B35]/5"
           >
-            <div className="text-2xl mb-2">{option.emoji}</div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#FF6B35]/10 group-hover:bg-[#FF6B35]/20 text-[#FF6B35] transition-colors mb-1">
+              <option.icon className="w-5 h-5" />
+            </div>
             <p className="text-sm font-medium text-white group-hover:text-[#FF6B35] transition-colors truncate">
               {option.label}
             </p>
