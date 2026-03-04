@@ -939,7 +939,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                 title="New chat"
                 aria-label="Start new conversation"
               >
-                <MessageSquare className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
               </Button>
 
               <Button 
