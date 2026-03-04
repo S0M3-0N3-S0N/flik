@@ -497,21 +497,7 @@ export default function Generate() {
                 <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2 flex-wrap">
 
 
-                  <Select value={aiModel} onValueChange={(value) => {
-                    setAiModel(value);
-                    base44.analytics.track({ eventName: 'generate_ai_model_changed', properties: { model: value } });
-                  }}>
-                    <SelectTrigger className="h-8 sm:h-9 w-auto bg-transparent border-white/10 hover:bg-white/5 text-white text-[11px] sm:text-xs rounded-full gap-1.5 sm:gap-2 px-2.5 sm:px-3 focus:ring-0">
-                      <Zap className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${aiModel === AI_MODEL_OPTIONS.GEMINI ? 'text-[#FF6B35]' : 'text-white/50'}`} />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={AI_MODEL_OPTIONS.DEFAULT}>Standard</SelectItem>
-                      <SelectItem value={AI_MODEL_OPTIONS.GEMINI}>Smart Enhanced</SelectItem>
-                    </SelectContent>
-                  </Select>
 
-                  <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
 
                   <button 
                     onClick={() => fileInputRef.current?.click()}
