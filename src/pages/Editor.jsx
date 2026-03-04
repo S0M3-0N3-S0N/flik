@@ -1193,34 +1193,22 @@ export default function Editor() {
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="flex overflow-x-auto no-scrollbar bg-white/5 mx-1 sm:mx-2 my-4 p-1 rounded-xl h-auto gap-1 flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
-              <TabsTrigger value="ai" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="AI Tools">
-                <Sparkles className="w-4 h-4" />
-              </TabsTrigger>
-              <TabsTrigger value="adjust" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Adjustments">
-                <Settings2 className="w-4 h-4" />
-              </TabsTrigger>
-              <TabsTrigger value="filters" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Filters">
-                <Filter className="w-4 h-4" />
-              </TabsTrigger>
-              <TabsTrigger value="transform" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Transform">
-                <RotateCw className="w-4 h-4" />
-              </TabsTrigger>
-              <TabsTrigger value="crop" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Crop">
-                <CropIcon className="w-4 h-4" />
-              </TabsTrigger>
-              <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Magic Brush">
-                <Wand2 className="w-4 h-4" />
-              </TabsTrigger>
-              {user?.role === 'admin' && (
-                <TabsTrigger value="paint" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Paint">
-                  <Paintbrush className="w-4 h-4" />
+              {[
+                { value: "ai", icon: <Sparkles className="w-4 h-4" />, title: "AI Tools" },
+                { value: "adjust", icon: <Settings2 className="w-4 h-4" />, title: "Adjustments" },
+                { value: "filters", icon: <Filter className="w-4 h-4" />, title: "Filters" },
+                { value: "transform", icon: <RotateCw className="w-4 h-4" />, title: "Transform" },
+                { value: "crop", icon: <CropIcon className="w-4 h-4" />, title: "Crop" },
+                { value: "remove", icon: <Wand2 className="w-4 h-4" />, title: "Magic Brush" },
+                ...(user?.role === 'admin' ? [
+                  { value: "paint", icon: <Paintbrush className="w-4 h-4" />, title: "Paint" },
+                  { value: "text", icon: <Type className="w-4 h-4" />, title: "Text Generator" },
+                ] : [])
+              ].map(tab => (
+                <TabsTrigger key={tab.value} value={tab.value} className="flex-shrink-0 min-w-[40px] data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title={tab.title}>
+                  {tab.icon}
                 </TabsTrigger>
-              )}
-              {user?.role === 'admin' && (
-                <TabsTrigger value="text" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title="Text Generator">
-                  <Type className="w-4 h-4" />
-                </TabsTrigger>
-              )}
+              ))}
 
             </TabsList>
 
