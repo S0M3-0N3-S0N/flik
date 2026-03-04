@@ -111,21 +111,21 @@ export default function PaintPanel({
 
           {/* Currently selected color preview */}
           <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/10">
-            <button
-              onClick={() => colorWheelRef.current?.click()}
-              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg hover:scale-110 transition-transform cursor-pointer flex items-center justify-center"
+            <div
+              className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-white/30 shadow-lg transition-transform cursor-pointer flex items-center justify-center relative overflow-hidden"
               style={{ backgroundColor: brushColor }}
               title="Open color wheel"
             >
-              <span className="text-white/70 font-bold text-lg leading-[0] drop-shadow-md select-none" style={{ textShadow: '0 0 3px rgba(0,0,0,0.8)', marginTop: '-2px' }}>+</span>
-            </button>
-            <input
-              ref={colorWheelRef}
-              type="color"
-              value={brushColor}
-              onChange={(e) => handleColorSelect(e.target.value)}
-              className="hidden"
-            />
+              <span className="text-white/70 font-bold text-lg leading-[0] drop-shadow-md select-none pointer-events-none" style={{ textShadow: '0 0 3px rgba(0,0,0,0.8)', marginTop: '-2px' }}>+</span>
+              <input
+                ref={colorWheelRef}
+                type="color"
+                value={brushColor}
+                onChange={(e) => handleColorSelect(e.target.value)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                style={{ minHeight: '44px', minWidth: '44px' }}
+              />
+            </div>
             <div>
               <p className="text-xs text-white/80 font-medium">Selected</p>
               <p className="text-xs text-white/40 font-mono">{getClosestPantone(brushColor)}</p>
