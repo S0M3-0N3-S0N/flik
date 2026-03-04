@@ -1048,9 +1048,10 @@ export default function Editor() {
     setDragType(null);
     setDragStart(null);
     if (cursorRef.current) cursorRef.current.style.display = 'none';
-    if (isEyeDropperActive && containerRef.current) {
+    if (containerRef.current) {
       containerRef.current.style.cursor = "";
     }
+    setIsEyeDropperActive(false);
   }, [isEyeDropperActive]);
 
   // Draw paint strokes on canvas overlay
