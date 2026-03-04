@@ -167,7 +167,7 @@ export function useMagicBrush() {
         
         OUTPUT:
         Return ONLY the raw prompt string.`,
-        file_urls: [redUpload.file_url, cleanUpload.file_url, ...(magicBrushImages?.map(img => typeof img === 'string' ? img : img.url).filter(Boolean) || [])]
+        file_urls: [redUpload.file_url, cleanUpload.file_url, ...(magicBrushImages?.map(img => img.url) || [])]
       });
 
       // 4. Generate
