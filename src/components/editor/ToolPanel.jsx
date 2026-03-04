@@ -77,6 +77,14 @@ const tools = [
     prompt: "Apply HDR effect to this image, enhance dynamic range, bring out details in shadows and highlights, make it more vivid"
   },
   { 
+    id: "flash", 
+    icon: Zap, 
+    label: "Flash Effect", 
+    description: "Dramatic flash photography look",
+    category: "Creative",
+    prompt: "Apply a realistic camera flash effect to this photo: bright direct flash lighting on the subject, high contrast, sharp highlights blown out slightly, deep rich shadows in background, vivid colors with slight overexposure on the subject, authentic point-and-shoot flash photography aesthetic"
+  },
+  { 
     id: "background", 
     icon: Eraser, 
     label: "Remove BG", 
