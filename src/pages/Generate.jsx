@@ -563,7 +563,7 @@ export default function Generate() {
                         : 'text-white/60 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <ArrowUpFromLine className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     {uploadedImages.length > 0 && <span>{uploadedImages.length} Added</span>}
                   </button>
                   <input
