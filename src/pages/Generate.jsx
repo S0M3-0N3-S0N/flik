@@ -51,6 +51,12 @@ export default function Generate() {
   const [imageErrors, setImageErrors] = useState({});
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [showExtractPrompt, setShowExtractPrompt] = useState(false);
+  const [showImageToImage, setShowImageToImage] = useState(false);
+  const [imgToImgSource, setImgToImgSource] = useState(null);
+  const [isImgToImgGenerating, setIsImgToImgGenerating] = useState(false);
+  const [imgToImgGallerySearch, setImgToImgGallerySearch] = useState("");
+  const [showImgToImgGallery, setShowImgToImgGallery] = useState(false);
+  const imgToImgFileRef = useRef(null);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
