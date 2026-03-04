@@ -1033,19 +1033,25 @@ export default function Generate() {
 
       {/* Extract Prompt Dialog */}
       <Dialog open={showExtractPrompt} onOpenChange={setShowExtractPrompt}>
-        <DialogContent className="max-w-md w-[95vw] sm:w-[90vw] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border border-white/10 text-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-md w-[95vw] sm:w-[90vw] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border border-white/10 text-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold gradient-text">Extract Prompt</DialogTitle>
+            <DialogTitle className="text-lg font-bold gradient-text flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-[#FF6B35]" />
+              Extract Prompt
+            </DialogTitle>
+            <p className="text-white/40 text-xs mt-1">Upload or pick an image to extract its description</p>
           </DialogHeader>
-          <PromptExtractor 
-            onGalleryOpen={(callback) => {
-              setShowGallery(true);
-              // Store callback to be called when gallery image is selected
-              window.__extractPromptCallback = callback;
-            }} 
-            currentImage={null}
-            onExtracted={handleExtractedPrompt}
-          />
+
+          <div className="space-y-4 mt-2">
+            <PromptExtractor 
+              onGalleryOpen={(callback) => {
+                setShowGallery(true);
+                window.__extractPromptCallback = callback;
+              }} 
+              currentImage={null}
+              onExtracted={handleExtractedPrompt}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
