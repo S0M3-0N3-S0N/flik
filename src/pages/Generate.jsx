@@ -508,8 +508,7 @@ export default function Generate() {
                     }`}
                   >
                     <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="hidden xs:inline">{uploadedImages.length > 0 ? `${uploadedImages.length} Added` : 'Add Images'}</span>
-                    <span className="xs:hidden">{uploadedImages.length > 0 ? uploadedImages.length : 'Add'}</span>
+                    {uploadedImages.length > 0 && <span>{uploadedImages.length} Added</span>}
                   </button>
                   <input
                     ref={fileInputRef}
