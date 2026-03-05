@@ -417,13 +417,13 @@ function LayoutContent({ children, currentPageName }) {
                     navigate(createPageUrl("Profile"));
                   }
                 }}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
                   currentPageName === "Profile" 
                     ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                     : "text-white/60"
                 }`}
               >
-                <div className={`w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
+                <div className={`w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
                   currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
                 }`}>
                   {user?.profile_picture ? (
