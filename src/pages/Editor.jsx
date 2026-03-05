@@ -1423,20 +1423,8 @@ export default function Editor() {
             <ImageUploader onImageSelect={handleImageSelect} onGalleryOpen={() => setIsGalleryPickerOpen(true)} />
           ) : (
            <>
-             <div ref={emblaRef} className="w-full h-full overflow-hidden">
-               <div className="flex h-full" style={{ transform: 'none' }}>
-                 {loadedImages.map((img, idx) => (
-                   <div key={idx} className={`min-w-full h-full flex items-center justify-center overflow-hidden relative ${idx !== currentImageIndex ? 'pointer-events-none' : ''}`} style={{ display: idx === currentImageIndex ? 'flex' : 'none' }}>
-                     {idx === currentImageIndex && (
-                       <button
-                         onClick={() => setIsImageLocked(!isImageLocked)}
-                         className={`absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`}
-                         title={isImageLocked ? 'Unlock image' : 'Lock image'}
-                       >
-                         {isImageLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                       </button>
-                     )}
-                     <div
+             <div className="w-full h-full flex items-center justify-center overflow-hidden relative">
+                      <div
                        className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${(isPanning || isSpacePressed) ? 'cursor-move' : ''}`}
                        style={{
                          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
