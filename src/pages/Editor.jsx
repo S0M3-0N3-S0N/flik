@@ -798,7 +798,7 @@ export default function Editor() {
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     if (imageFiles.length === 0) { toast.error('Please select image files'); return; }
 
-    const loadedImgs = [];
+    const loadedImgs = new Array(imageFiles.length);
     let loadedCount = 0;
     imageFiles.forEach((file, index) => {
       const reader = new FileReader();
@@ -814,17 +814,19 @@ export default function Editor() {
         loadedImgs[index] = { url: ev.target.result, preview: ev.target.result, name: file.name };
         loadedCount++;
         if (loadedCount === imageFiles.length) {
-          // Append to existing images instead of replacing
+          const validImgs = loadedImgs.filter(Boolean);
           setLoadedImages(prev => {
-            const combined = [...prev, ...loadedImgs];
-            const newIndex = prev.length;
-            setCurrentImageIndex(newIndex);
-            setCurrentImage(loadedImgs[0]);
-            resetImageState();
-            setTimeout(() => emblaApi?.scrollTo(newIndex), 0);
+            const newIndex = prev.length === 0 ? 0 : prev.length;
+            const combined = [...prev, ...validImgs];
+            setTimeout(() => {
+              setCurrentImageIndex(newIndex);
+              setCurrentImage(combined[newIndex]);
+              resetImageState();
+              setTimeout(() => emblaApi?.scrollTo(newIndex), 50);
+            }, 0);
             return combined;
           });
-          toast.success(`${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''} added`);
+          toast.success(`${validImgs.length} image${validImgs.length > 1 ? 's' : ''} added`);
         }
       };
       reader.readAsDataURL(file);
