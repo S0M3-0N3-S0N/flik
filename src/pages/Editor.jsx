@@ -118,7 +118,7 @@ export default function Editor() {
   const imageEditStateRef = useRef({}); // Store edit state per image
   const MAX_EDIT_CACHE_SIZE = 50; // Prevent unbounded memory growth
   
-  const [emblaRef, emblaApi] = useEmblaCarousel({ skipSnaps: false, containScroll: false });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ skipSnaps: false, containScroll: false, watchDrag: false });
 
   const [activeTab, setActiveTab] = useState("ai");
   const [undoHistory, setUndoHistory] = useState([]);
