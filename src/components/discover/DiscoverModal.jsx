@@ -205,26 +205,37 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             </div>
 
             {/* Action Bar */}
-            <div className="px-4 py-3 border-t border-white/10 flex items-center gap-3 flex-shrink-0">
-              <button
-                onClick={handleLike}
-                disabled={isLiking}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center ${
-                  isLiked
-                    ? "bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30"
-                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${isLiked ? "fill-[#FF6B35]" : ""}`} />
-                <span>{likes.length}</span>
-              </button>
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition-all flex-1 justify-center"
-              >
-                <Share2 className="w-4 h-4" />
-                Share
-              </button>
+            <div className="px-4 py-3 border-t border-white/10 flex flex-col gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleLike}
+                  disabled={isLiking}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center ${
+                    isLiked
+                      ? "bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30"
+                      : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${isLiked ? "fill-[#FF6B35]" : ""}`} />
+                  <span>{likes.length}</span>
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition-all flex-1 justify-center"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+              </div>
+              {current.prompt && (
+                <button
+                  onClick={handleRecreate}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[#CDFF00] text-black hover:bg-[#b8e600] transition-all w-full justify-center"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Recreate
+                </button>
+              )}
             </div>
           </div>
         </motion.div>
