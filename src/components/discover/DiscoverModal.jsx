@@ -73,7 +73,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
     toast.success("Prompt copied!");
   };
 
-  const navigate = (dir) => {
+  const goTo = (dir) => {
     setCurrentIndex(prev => {
       const next = prev + dir;
       if (next < 0 || next >= creations.length) return prev;
