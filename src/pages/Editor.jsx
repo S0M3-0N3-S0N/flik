@@ -1424,87 +1424,81 @@ export default function Editor() {
           ) : (
            <>
              <div className="w-full h-full flex items-center justify-center overflow-hidden relative">
-                      <div
-                       className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${(isPanning || isSpacePressed) ? 'cursor-move' : ''}`}
+               <div
+                 className={`relative flex items-center justify-center no-invert transition-transform duration-75 ease-out ${(isPanning || isSpacePressed) ? 'cursor-move' : ''}`}
+                 style={{
+                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                   cursor: (isPanning || isSpacePressed || isPanToolActive) ? (isPanning ? 'grabbing' : 'grab') : undefined
+                 }}
+               >
+                 <img
+                   ref={imageRef}
+                   src={currentImage.preview || currentImage.url}
+                   alt="Editor"
+                   className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
+                   style={{ filter: getFilterStyle(), transform: getTransformStyle() }}
+                   draggable={false}
+                   crossOrigin="anonymous"
+                   onLoad={() => { if (needsFit) { setNeedsFit(false); setNeedsFit(true); } }}
+                 />
+
+                 {activeTab === "remove" && (
+                   <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
+                 )}
+
+                 {activeTab === "paint" && (
+                   <canvas ref={paintCanvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
+                 )}
+
+                 {stickers.length > 0 && (
+                   <StickerOverlay
+                     stickers={stickers}
+                     onStickersChange={setStickers}
+                     zoom={zoom}
+                     pan={pan}
+                     containerRef={containerRef}
+                   />
+                 )}
+
+                 {isCropping && (
+                   <>
+                     <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.65)' }} />
+                     <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: 0, width: `${cropArea.x}%`, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.65)' }} />
+                     <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: `${cropArea.x + cropArea.width}%`, right: 0, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.65)' }} />
+                     <div className="absolute pointer-events-none rounded-2xl" style={{ top: `${cropArea.y + cropArea.height}%`, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.65)' }} />
+                     <div
+                       className="absolute border-[3px] border-[#FF6B35] shadow-lg shadow-[#FF6B35]/30"
                        style={{
-                         transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                         cursor: (isPanning || isSpacePressed || isPanToolActive) ? (isPanning ? 'grabbing' : 'grab') : undefined
+                         left: `${cropArea.x}%`, top: `${cropArea.y}%`,
+                         width: `${cropArea.width}%`, height: `${cropArea.height}%`,
+                         background: 'transparent',
+                         backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                         backgroundSize: '33.33% 33.33%',
+                         boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.3)',
                        }}
                      >
-                       <img
-                         ref={idx === currentImageIndex ? imageRef : null}
-                         src={img.preview || img.url}
-                         alt="Editor"
-                         className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
-                         style={{ filter: idx === currentImageIndex ? getFilterStyle() : 'none', transform: idx === currentImageIndex ? getTransformStyle() : 'none' }}
-                         draggable={false}
-                         crossOrigin="anonymous"
-                         onLoad={() => { if (idx === currentImageIndex && needsFit) { setNeedsFit(false); setNeedsFit(true); } }}
-                       />
+                       <div className="absolute -top-4 -left-4 w-10 h-10 flex items-center justify-center cursor-nw-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
+                       <div className="absolute -top-4 -right-4 w-10 h-10 flex items-center justify-center cursor-ne-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
+                       <div className="absolute -bottom-4 -left-4 w-10 h-10 flex items-center justify-center cursor-sw-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
+                       <div className="absolute -bottom-4 -right-4 w-10 h-10 flex items-center justify-center cursor-se-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
+                     </div>
+                   </>
+                 )}
+               </div>
+             </div>
 
-                       {activeTab === "remove" && idx === currentImageIndex && (
-                         <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
-                       )}
-
-                       {activeTab === "paint" && idx === currentImageIndex && (
-                          <canvas ref={paintCanvasRef} className="absolute inset-0 pointer-events-none rounded-lg md:rounded-2xl w-full h-full" style={{ filter: 'none' }} />
-                        )}
-
-                        {idx === currentImageIndex && stickers.length > 0 && (
-                          <StickerOverlay
-                            stickers={stickers}
-                            onStickersChange={setStickers}
-                            zoom={zoom}
-                            pan={pan}
-                            containerRef={containerRef}
-                          />
-                        )}
-
-                       {isCropping && idx === currentImageIndex && (
-                         <>
-                           <div className="absolute pointer-events-none rounded-2xl" style={{ top: 0, left: 0, right: 0, height: `${cropArea.y}%`, background: 'rgba(0,0,0,0.65)' }} />
-                           <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: 0, width: `${cropArea.x}%`, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.65)' }} />
-                           <div className="absolute pointer-events-none" style={{ top: `${cropArea.y}%`, left: `${cropArea.x + cropArea.width}%`, right: 0, height: `${cropArea.height}%`, background: 'rgba(0,0,0,0.65)' }} />
-                           <div className="absolute pointer-events-none rounded-2xl" style={{ top: `${cropArea.y + cropArea.height}%`, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.65)' }} />
-                           <div
-                             className="absolute border-[3px] border-[#FF6B35] shadow-lg shadow-[#FF6B35]/30"
-                             style={{
-                               left: `${cropArea.x}%`, top: `${cropArea.y}%`,
-                               width: `${cropArea.width}%`, height: `${cropArea.height}%`,
-                               background: 'transparent',
-                               backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-                               backgroundSize: '33.33% 33.33%',
-                               boxShadow: 'inset 0 0 0 1px rgba(255,107,53,0.3)',
-                             }}
-                           >
-                             <div className="absolute -top-4 -left-4 w-10 h-10 flex items-center justify-center cursor-nw-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
-                             <div className="absolute -top-4 -right-4 w-10 h-10 flex items-center justify-center cursor-ne-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
-                             <div className="absolute -bottom-4 -left-4 w-10 h-10 flex items-center justify-center cursor-sw-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
-                             <div className="absolute -bottom-4 -right-4 w-10 h-10 flex items-center justify-center cursor-se-resize z-10 touch-none group hover:scale-125 transition-transform" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.9) 0%, rgba(255,107,53,0.6) 100%)', borderRadius: '50%', boxShadow: '0 0 12px rgba(255,107,53,0.5)' }}><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>
-                           </div>
-                           </>
-                           )}
-                           </div>
-                           </div>
-                           ))}
-                           </div>
-                           </div>
-
-                           {loadedImages.length > 1 && (
-                           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
-                           <button onClick={() => switchToImage(Math.max(0, currentImageIndex - 1))} disabled={isImageLocked} className="text-white/60 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
-                           <div className="flex items-center gap-1">
-                           {loadedImages.map((_, idx) => (
-                           <button key={idx} onClick={() => switchToImage(idx)} disabled={isImageLocked} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-[#FF6B35] w-4' : 'bg-white/30 hover:bg-white/50'} disabled:opacity-40 disabled:cursor-not-allowed`} />
-                           ))}
-                           </div>
-                           <button onClick={() => switchToImage(Math.min(loadedImages.length - 1, currentImageIndex + 1))} disabled={isImageLocked} className="text-white/60 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
-                           <div className="h-4 w-px bg-white/20" />
-                           <button onClick={() => setIsImageLocked(!isImageLocked)} className={`transition-colors ${isImageLocked ? 'text-[#FF6B35]' : 'text-white/60 hover:text-white'}`} title={isImageLocked ? 'Unlock image' : 'Lock image'}>{isImageLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}</button>
-                           </div>
-                           )}
-                           </>
-                           )}
+             {loadedImages.length > 1 && (
+               <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
+                 <button onClick={() => switchToImage(Math.max(0, currentImageIndex - 1))} className="text-white/60 hover:text-white transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                 <div className="flex items-center gap-1">
+                   {loadedImages.map((_, idx) => (
+                     <button key={idx} onClick={() => switchToImage(idx)} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-[#FF6B35] w-4' : 'bg-white/30 hover:bg-white/50'}`} />
+                   ))}
+                 </div>
+                 <button onClick={() => switchToImage(Math.min(loadedImages.length - 1, currentImageIndex + 1))} className="text-white/60 hover:text-white transition-colors"><ChevronRight className="w-4 h-4" /></button>
+               </div>
+             )}
+           </>
           
           <AnimatePresence>
             {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
