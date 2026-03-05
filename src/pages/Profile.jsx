@@ -177,6 +177,16 @@ export default function Profile() {
     localStorage.setItem('profile_stats_expanded', showStatsExpanded.toString());
   }, [showStatsExpanded]);
 
+  // Hide bottom nav when modal is open
+  useEffect(() => {
+    if (selectedItem) {
+      document.body.setAttribute("data-modal-open", "true");
+    } else {
+      document.body.removeAttribute("data-modal-open");
+    }
+    return () => document.body.removeAttribute("data-modal-open");
+  }, [selectedItem]);
+
   // Profile Mutations
   const handleAvatarUpload = async (e) => {
     if (!e?.target?.files?.length) return;
