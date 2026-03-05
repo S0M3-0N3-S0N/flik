@@ -8,6 +8,15 @@ import DiscoverModal from "@/components/discover/DiscoverModal";
 
 export default function Discover() {
   const [selectedCreation, setSelectedCreation] = useState(null);
+
+  useEffect(() => {
+    if (selectedCreation) {
+      document.body.setAttribute("data-modal-open", "true");
+    } else {
+      document.body.removeAttribute("data-modal-open");
+    }
+    return () => document.body.removeAttribute("data-modal-open");
+  }, [selectedCreation]);
   const [likeCounts, setLikeCounts] = useState({});
   const [likedByMe, setLikedByMe] = useState({});
 
