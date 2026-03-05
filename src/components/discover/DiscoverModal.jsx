@@ -83,8 +83,8 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === "ArrowRight") navigate(1);
-      if (e.key === "ArrowLeft") navigate(-1);
+      if (e.key === "ArrowRight") goTo(1);
+      if (e.key === "ArrowLeft") goTo(-1);
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKey);
