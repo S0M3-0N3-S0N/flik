@@ -26,7 +26,6 @@ export default function MobileHeader({ currentPageName }) {
       }`}
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
-      <div className="flex items-center justify-center px-4 py-3 h-14"></div>
     </div>
   );
 }
