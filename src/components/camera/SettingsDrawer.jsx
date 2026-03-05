@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-export default function SettingsDrawer({ open, onClose, settings, onChange, faceTrackingEnabled, onFaceTrackingChange }) {
+export default function SettingsDrawer({ open, onClose, settings, onChange, faceTrackingEnabled, onFaceTrackingChange, showTimestamp, onTimestampChange }) {
    const timerOptions = [{ label: 'Off', value: 0 }, { label: '3s', value: 3 }, { label: '10s', value: 10 }];
 
    return (
