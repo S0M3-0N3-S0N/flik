@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Heart, Share2, Copy, Check, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { X, Heart, Share2, Copy, Check, ChevronLeft, ChevronRight, User, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function DiscoverModal({ creation, creations, onClose, currentUser }) {
   const [currentIndex, setCurrentIndex] = useState(
