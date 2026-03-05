@@ -11,6 +11,14 @@ export const COLOR_GRADE_OPTIONS = [
   { id: "pastel_dream", label: "Pastel Dream", icon: Sparkles, prompt: "Apply a pastel dream color grade: soft muted pastels, airy light tones, dreamy pink and lavender hues" },
   { id: "forest_green", label: "Forest Green", icon: Leaf, prompt: "Apply a forest green color grade: lush deep greens, earthy browns, natural organic tones" },
   { id: "black_white", label: "B&W Film", icon: Circle, prompt: "Apply a classic black and white film color grade: rich contrast, deep blacks, bright whites, dramatic noir style" },
+  { id: "sunset_glow", label: "Sunset Glow", icon: Flame, prompt: "Apply a sunset glow color grade: fiery reds, burnt oranges, deep purples on the horizon, warm dramatic sky tones" },
+  { id: "arctic_ice", label: "Arctic Ice", icon: CloudSnow, prompt: "Apply an arctic ice color grade: icy cool blues, crisp whites, glacial tones, clean and cold atmosphere" },
+  { id: "faded_film", label: "Faded Film", icon: Camera, prompt: "Apply a faded film color grade: washed out muted tones, lifted blacks, soft grain, analog film aesthetic" },
+  { id: "deep_space", label: "Deep Space", icon: Moon, prompt: "Apply a deep space color grade: dark navy blacks, purple midtones, starry cool highlights, cosmic atmosphere" },
+  { id: "tropical", label: "Tropical", icon: Waves, prompt: "Apply a tropical color grade: vibrant teals and turquoises, lush greens, warm highlights, paradise vacation vibes" },
+  { id: "desert_sand", label: "Desert Sand", icon: Sunset, prompt: "Apply a desert sand color grade: warm sandy yellows, dusty oranges, dry earthy tones, arid landscape feel" },
+  { id: "matte_fade", label: "Matte Fade", icon: Contrast, prompt: "Apply a matte fade color grade: crushed blacks, flat contrast, desaturated mid-tones, modern editorial look" },
+  { id: "candy_pop", label: "Candy Pop", icon: Palette, prompt: "Apply a candy pop color grade: hyper-saturated pinks, yellows and blues, playful vivid tones, fun and energetic" },
 ];
 
 export const STYLE_OPTIONS = [
