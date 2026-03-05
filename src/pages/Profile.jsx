@@ -1253,214 +1253,215 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-[100vw] sm:max-w-[95vw] md:max-w-6xl w-full h-[100dvh] sm:h-[95vh] md:h-[90vh] bg-[#1a1a1a] border-0 sm:border sm:border-white/10 text-white p-0 overflow-hidden flex flex-col md:flex-row gap-0 sm:rounded-2xl">
-          {/* Image/Video Section */}
-          <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden min-h-0">
-            {selectedItem?.url && (
-              <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
-                {selectedItem.type === 'video' ? (
-                  <video 
-                    src={selectedItem.url} 
-                    controls 
-                    className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl rounded-lg"
-                    poster={selectedItem.thumbnail_url}
-                  >
-                    Your browser does not support video playback.
-                  </video>
-                ) : (
-                  <img 
-                    src={selectedItem.url} 
-                    alt={`${selectedItem.title || 'Creation'} - Full view`}
-                    className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl rounded-lg" 
-                  />
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Details Panel */}
-          <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col border-t md:border-t-0 md:border-l border-white/10 bg-[#1a1a1a] max-h-[40vh] md:max-h-full overflow-hidden">
-            {/* Header */}
-            <div className="p-2 sm:p-4 md:p-5 border-b border-white/10 flex-shrink-0">
-              <div className="flex items-start justify-between gap-2">
-                <DialogHeader className="p-0 space-y-2 flex-1 min-w-0">
-                  <DialogTitle className="text-lg sm:text-xl gradient-text line-clamp-2 text-left">
-                    {selectedItem?.title || selectedItem?.prompt || 'Creation'}
-                  </DialogTitle>
-                  <DialogDescription className="text-white/50 text-left text-xs sm:text-sm" title={`${new Date(selectedItem?.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
-                    Created {selectedItem?.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : 'recently'}
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogClose asChild>
-                  <button className="flex-shrink-0 p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors mt-0.5">
-                    <X className="w-4 h-4" />
-                  </button>
-                </DialogClose>
-              </div>
+      {/* Creation Detail — Discover-style modal */}
+      {selectedItem && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col md:items-center md:justify-center md:p-4" onClick={() => setSelectedItem(null)}>
+          {/* ── DESKTOP ── */}
+          <div
+            className="hidden md:flex relative w-full max-w-5xl bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[92vh]"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Image */}
+            <div className="flex-1 bg-black flex items-center justify-center relative">
+              {selectedItem.type === 'video' ? (
+                <video src={selectedItem.url} controls className="max-w-full max-h-[92vh] object-contain" poster={selectedItem.thumbnail_url} />
+              ) : (
+                <img src={selectedItem.url} alt={selectedItem.title || 'Creation'} className="max-w-full max-h-[92vh] object-contain" />
+              )}
             </div>
-
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 space-y-3 sm:space-y-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full min-h-0">
-              {/* Title Edit */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Title</label>
-                  {editingTitle === selectedItem?.id ? (
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } });
-                      }}
-                      disabled={updateMutation.isPending}
-                      className="h-7 text-xs px-3 btn-gradient text-white disabled:opacity-50"
-                    >
-                      {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingTitle(selectedItem?.id);
-                        setNewTitle(selectedItem?.title || '');
-                        setOriginalTitle(selectedItem?.title || '');
-                      }}
-                      className="h-7 w-7 p-0 text-white/40 hover:text-white hover:bg-white/10 rounded-lg"
-                      aria-label="Edit title"
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </Button>
-                  )}
-                </div>
-                {editingTitle === selectedItem?.id ? (
-                  <div className="space-y-2">
-                    <Input
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      className="bg-white/5 border-white/10 text-white h-10 text-sm rounded-lg"
-                      placeholder="Enter title..."
-                      autoFocus
-                      disabled={updateMutation.isPending}
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setEditingTitle(null)}
-                      className="text-xs text-white/40 hover:text-white h-7"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-white/90 font-medium break-words">{selectedItem?.title || 'Untitled'}</p>
-                )}
+            {/* Side Panel */}
+            <div className="w-80 flex flex-col border-l border-white/10">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
+                <p className="text-white font-semibold text-sm gradient-text line-clamp-1">{selectedItem.title || 'Untitled'}</p>
+                <button onClick={() => setSelectedItem(null)} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-
-              {/* Prompt Edit */}
-              {selectedItem?.prompt && (
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden">
+                {/* Title Edit */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Prompt</label>
-                    {editingPrompt === selectedItem?.id ? (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          if (newPrompt.trim()) {
-                            updateMutation.mutate({ id: selectedItem.id, data: { prompt: newPrompt } });
-                          }
-                        }}
-                        disabled={updateMutation.isPending}
-                        className="h-7 text-xs px-3 btn-gradient text-white disabled:opacity-50"
-                      >
+                    <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Title</label>
+                    {editingTitle === selectedItem?.id ? (
+                      <Button size="sm" onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } })} disabled={updateMutation.isPending} className="h-7 text-xs px-3 btn-gradient text-white">
                         {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
                       </Button>
                     ) : (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingPrompt(selectedItem?.id);
-                          setNewPrompt(selectedItem?.prompt || '');
-                          setOriginalPrompt(selectedItem?.prompt || '');
-                        }}
-                        className="h-7 w-7 p-0 text-white/40 hover:text-white hover:bg-white/10 rounded-lg"
-                        aria-label="Edit prompt"
-                      >
+                      <Button size="sm" variant="ghost" onClick={() => { setEditingTitle(selectedItem?.id); setNewTitle(selectedItem?.title || ''); }} className="h-7 w-7 p-0 text-white/40 hover:text-white hover:bg-white/10 rounded-lg">
                         <Edit className="w-3.5 h-3.5" />
                       </Button>
                     )}
                   </div>
-                  {editingPrompt === selectedItem?.id ? (
+                  {editingTitle === selectedItem?.id ? (
                     <div className="space-y-2">
-                      <Textarea
-                        value={newPrompt}
-                        onChange={(e) => setNewPrompt(e.target.value)}
-                        className="bg-white/5 border-white/10 text-white min-h-[100px] text-sm rounded-lg"
-                        placeholder="Enter prompt..."
-                        autoFocus
-                        disabled={updateMutation.isPending}
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setEditingPrompt(null)}
-                        className="text-xs text-white/40 hover:text-white h-7"
-                      >
-                        Cancel
-                      </Button>
+                      <Input value={newTitle} onChange={e => setNewTitle(e.target.value)} className="bg-white/5 border-white/10 text-white h-10 text-sm rounded-lg" autoFocus />
+                      <Button size="sm" variant="ghost" onClick={() => setEditingTitle(null)} className="text-xs text-white/40 h-7">Cancel</Button>
                     </div>
                   ) : (
-                    <div className="p-3 rounded-lg bg-white/5 border border-white/5">
-                      <p className="text-sm text-white/70 leading-relaxed break-words">{selectedItem.prompt}</p>
-                    </div>
+                    <p className="text-sm text-white/90 font-medium">{selectedItem?.title || 'Untitled'}</p>
                   )}
                 </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="p-2 sm:p-4 md:p-5 border-t border-white/10 bg-[#1a1a1a] space-y-1.5 sm:space-y-2 flex-shrink-0">
-              <Button
-                onClick={() => {
-                  navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url));
-                }}
-                className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 h-11 text-sm font-medium rounded-xl"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit in Photo Studio
-              </Button>
-              {user?.role === 'admin' && (
-                <PublishButton
-                  creation={selectedItem}
-                  onToggled={(published) => {
-                    queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
-                    setSelectedItem(prev => prev ? { ...prev, published_to_discover: published } : prev);
-                  }}
-                  className="w-full justify-center h-11"
-                />
-              )}
-              <div className="flex gap-2.5">
-                <Button
-                  onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
-                  className="flex-1 btn-gradient text-white h-11 text-sm font-medium rounded-xl"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
+                {/* Prompt Edit */}
+                {selectedItem?.prompt && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Prompt</label>
+                      {editingPrompt === selectedItem?.id ? (
+                        <Button size="sm" onClick={() => { if (newPrompt.trim()) updateMutation.mutate({ id: selectedItem.id, data: { prompt: newPrompt } }); }} disabled={updateMutation.isPending} className="h-7 text-xs px-3 btn-gradient text-white">
+                          {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="ghost" onClick={() => { setEditingPrompt(selectedItem?.id); setNewPrompt(selectedItem?.prompt || ''); }} className="h-7 w-7 p-0 text-white/40 hover:text-white hover:bg-white/10 rounded-lg">
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    {editingPrompt === selectedItem?.id ? (
+                      <div className="space-y-2">
+                        <Textarea value={newPrompt} onChange={e => setNewPrompt(e.target.value)} className="bg-white/5 border-white/10 text-white min-h-[80px] text-sm rounded-lg" autoFocus />
+                        <Button size="sm" variant="ghost" onClick={() => setEditingPrompt(null)} className="text-xs text-white/40 h-7">Cancel</Button>
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                        <p className="text-sm text-white/70 leading-relaxed">{selectedItem.prompt}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="px-4 py-3 border-t border-white/10 space-y-2 flex-shrink-0">
+                <Button onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))} className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 h-10 text-sm rounded-xl">
+                  <Edit className="w-4 h-4 mr-2" /> Edit in Studio
                 </Button>
-                <Button
-                  onClick={() => handleDelete(selectedItem.id)}
-                  variant="outline"
-                  className="w-11 h-11 p-0 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/30 rounded-xl"
-                  aria-label="Delete creation"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                {user?.role === 'admin' && (
+                  <PublishButton creation={selectedItem} onToggled={(published) => { queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] }); setSelectedItem(prev => prev ? { ...prev, published_to_discover: published } : prev); }} className="w-full justify-center h-10" />
+                )}
+                <div className="flex gap-2">
+                  <Button onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)} className="flex-1 btn-gradient text-white h-10 text-sm rounded-xl">
+                    <Download className="w-4 h-4 mr-2" /> Download
+                  </Button>
+                  <Button onClick={() => handleDelete(selectedItem.id)} variant="outline" className="w-10 h-10 p-0 border-red-500/20 text-red-400 hover:bg-red-500/10 rounded-xl">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          {/* ── MOBILE ── */}
+          <div className="md:hidden flex flex-col w-full h-full" onClick={e => e.stopPropagation()}>
+            {/* Image top ~55% */}
+            <div className="relative flex-shrink-0" style={{ height: '55vh' }}>
+              {selectedItem.type === 'video' ? (
+                <video src={selectedItem.url} controls className="w-full h-full object-cover" poster={selectedItem.thumbnail_url} />
+              ) : (
+                <img src={selectedItem.url} alt={selectedItem.title || 'Creation'} className="w-full h-full object-cover" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50 pointer-events-none" />
+              <button onClick={() => setSelectedItem(null)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white border border-white/20">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Bottom sheet */}
+            <div className="flex-1 bg-[#111111] rounded-t-3xl -mt-4 flex flex-col overflow-hidden relative" style={{ maxHeight: 'calc(45vh + 16px)' }}>
+              <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                <div className="w-10 h-1 rounded-full bg-white/20" />
+              </div>
+              {/* Author */}
+              <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
+                <div>
+                  <p className="text-white font-semibold text-sm gradient-text">{selectedItem.title || 'Untitled'}</p>
+                  <p className="text-white/40 text-xs">{selectedItem.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : ''}</p>
+                </div>
+              </div>
+
+              {/* Scrollable */}
+              <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4 [&::-webkit-scrollbar]:hidden">
+                {/* Prompt */}
+                {selectedItem?.prompt && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-white/50 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[#FF6B35]">⌘</span> Prompt</p>
+                      {editingPrompt === selectedItem?.id ? (
+                        <Button size="sm" onClick={() => { if (newPrompt.trim()) updateMutation.mutate({ id: selectedItem.id, data: { prompt: newPrompt } }); }} className="h-7 text-xs px-3 btn-gradient text-white">{updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}</Button>
+                      ) : (
+                        <button onClick={() => { setEditingPrompt(selectedItem?.id); setNewPrompt(selectedItem?.prompt || ''); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium border border-white/10">
+                          <Edit className="w-3 h-3" /> Edit
+                        </button>
+                      )}
+                    </div>
+                    {editingPrompt === selectedItem?.id ? (
+                      <div className="space-y-2">
+                        <Textarea value={newPrompt} onChange={e => setNewPrompt(e.target.value)} className="bg-white/5 border-white/10 text-white min-h-[80px] text-sm rounded-xl" autoFocus />
+                        <Button size="sm" variant="ghost" onClick={() => setEditingPrompt(null)} className="text-xs text-white/40 h-7">Cancel</Button>
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                        <p className="text-sm text-white/70 leading-relaxed">{selectedItem.prompt}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Title Edit */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-white/50 uppercase tracking-widest">Title</p>
+                    {editingTitle === selectedItem?.id ? (
+                      <Button size="sm" onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } })} className="h-7 text-xs px-3 btn-gradient text-white">{updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}</Button>
+                    ) : (
+                      <button onClick={() => { setEditingTitle(selectedItem?.id); setNewTitle(selectedItem?.title || ''); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium border border-white/10">
+                        <Edit className="w-3 h-3" /> Edit
+                      </button>
+                    )}
+                  </div>
+                  {editingTitle === selectedItem?.id ? (
+                    <div className="space-y-2">
+                      <Input value={newTitle} onChange={e => setNewTitle(e.target.value)} className="bg-white/5 border-white/10 text-white h-10 text-sm rounded-xl" autoFocus />
+                      <Button size="sm" variant="ghost" onClick={() => setEditingTitle(null)} className="text-xs text-white/40 h-7">Cancel</Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-white/80">{selectedItem?.title || 'Untitled'}</p>
+                  )}
+                </div>
+
+                {user?.role === 'admin' && (
+                  <PublishButton creation={selectedItem} onToggled={(published) => { queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] }); setSelectedItem(prev => prev ? { ...prev, published_to_discover: published } : prev); }} className="w-full justify-center h-11" />
+                )}
+
+                {/* Spacer */}
+                <div className="h-20" />
+              </div>
+
+              {/* Sticky bottom actions */}
+              <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 pt-3 bg-gradient-to-t from-[#111111] via-[#111111] to-transparent space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))}
+                    className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-white/10 border border-white/15 active:scale-95 transition-all"
+                  >
+                    <Edit className="w-4 h-4" /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
+                    className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-black flex items-center justify-center gap-2 active:scale-95 transition-all"
+                    style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}
+                  >
+                    <Download className="w-4 h-4" /> Download
+                  </button>
+                  <button
+                    onClick={() => handleDelete(selectedItem.id)}
+                    className="py-3.5 px-4 rounded-2xl font-bold text-sm text-red-400 flex items-center justify-center bg-red-500/10 border border-red-500/20 active:scale-95 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
