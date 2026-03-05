@@ -356,14 +356,14 @@ function LayoutContent({ children, currentPageName }) {
                     navigate(createPageUrl("Generate"));
                   }
                 }}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
                   currentPageName === "Generate" 
                     ? "text-[#FF6B35] bg-[#FF6B35]/10" 
                     : "text-white/60"
                 }`}
               >
-                <Wand2 className="w-6 h-6" />
-                <span className="text-[10px] font-medium">Generate</span>
+                <Wand2 className="w-5 h-5" />
+                <span className="text-[9px] font-medium">Generate</span>
               </button>
 
               {user?.role === 'admin' && (
