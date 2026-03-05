@@ -1115,61 +1115,38 @@ export default function Profile() {
                               />
                             )}
                           </div>
-                          <div className="flex gap-1.5 sm:gap-2">
+                          <div className="flex gap-1.5">
                             <Button
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
-                              }}
-                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
+                              onClick={(e) => { e.stopPropagation(); navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url)); }}
+                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-8 backdrop-blur-2xl rounded-lg flex items-center justify-center"
                               title="Edit in Photo Studio"
                             >
-                              <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">Edit</span>
+                              <Edit className="w-3.5 h-3.5" />
                             </Button>
                             <Button
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const params = new URLSearchParams();
-                                params.set('load', item.url);
-                                if (item.prompt) params.set('prompt', item.prompt);
-                                navigate(createPageUrl('Generate') + '?' + params.toString());
-                              }}
-                              className="flex-1 bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
+                              onClick={(e) => { e.stopPropagation(); const p = new URLSearchParams(); p.set('load', item.url); if (item.prompt) p.set('prompt', item.prompt); navigate(createPageUrl('Generate') + '?' + p.toString()); }}
+                              className="flex-1 bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 backdrop-blur-2xl rounded-lg flex items-center justify-center"
                               title="Imagine similar image"
                             >
-                              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">Imagine</span>
+                              <Sparkles className="w-3.5 h-3.5" />
                             </Button>
                             <Button
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const newVal = !item.published_to_discover;
-                                togglePublishMutation.mutate({ id: item.id, published: newVal });
-                              }}
-                              className={`flex-1 border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1 transition-all ${
-                                item.published_to_discover
-                                  ? "bg-[#FF6B35]/40 text-[#FF6B35]"
-                                  : "bg-white/20 hover:bg-white/30 text-white"
-                              }`}
+                              onClick={(e) => { e.stopPropagation(); togglePublishMutation.mutate({ id: item.id, published: !item.published_to_discover }); }}
+                              className={`flex-1 border-0 h-8 backdrop-blur-2xl rounded-lg flex items-center justify-center transition-all ${item.published_to_discover ? "bg-[#FF6B35]/40 text-[#FF6B35]" : "bg-white/20 hover:bg-white/30 text-white"}`}
                               title={item.published_to_discover ? "Remove from Discover" : "Share to Discover"}
                             >
-                              <Globe className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">{item.published_to_discover ? "Shared" : "Share"}</span>
+                              <Globe className="w-3.5 h-3.5" />
                             </Button>
                             <Button
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteMutation.mutate(item.id);
-                              }}
-                              className="bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
-                              title="Delete image"
+                              onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(item.id); }}
+                              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 backdrop-blur-2xl rounded-lg flex items-center justify-center"
+                              title="Delete"
                             >
-                              <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                             </div>
                         </div>
