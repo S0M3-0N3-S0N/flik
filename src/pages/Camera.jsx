@@ -83,6 +83,7 @@ export default function CameraPage() {
   const [orientation, setOrientation] = useState(0);
   const [cameraSupported, setCameraSupported] = useState(true);
   const [faceTrackingEnabled, setFaceTrackingEnabled] = useState(true);
+  const [showTimestamp, setShowTimestamp] = useState(true);
   const detectedFacesRef = useRef([]);
   const autoFocusedFaceRef = useRef(false);
   const focusPosRef = useRef(null);
