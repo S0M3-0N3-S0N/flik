@@ -1498,11 +1498,10 @@ export default function Editor() {
                  <button onClick={() => switchToImage(Math.min(loadedImages.length - 1, currentImageIndex + 1))} className="text-white/60 hover:text-white transition-colors"><ChevronRight className="w-4 h-4" /></button>
                </div>
              )}
-           </>
-          
-          <AnimatePresence>
-            {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
-          </AnimatePresence>
+
+             <AnimatePresence>
+              {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
+             </AnimatePresence>
           
           {currentImage && (
             <motion.div
