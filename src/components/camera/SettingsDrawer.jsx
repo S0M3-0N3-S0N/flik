@@ -49,6 +49,11 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, face
              <SettingRow label="Face Tracking">
                <Toggle value={faceTrackingEnabled} onChange={onFaceTrackingChange} />
              </SettingRow>
+
+             {/* Vintage Timestamp */}
+             <SettingRow label="Vintage Timestamp">
+               <Toggle value={showTimestamp} onChange={onTimestampChange} />
+             </SettingRow>
            </motion.div>
          </>
        )}
