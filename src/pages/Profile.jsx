@@ -1102,7 +1102,7 @@ export default function Profile() {
                         </div>
 
                         {/* Bottom Info */}
-                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-2.5 sm:space-y-3">
+                        <div className="space-y-2">
                           <div>
                             <h3 
                               className="font-bold text-white text-sm sm:text-base lg:text-lg line-clamp-2 mb-1 drop-shadow-lg"
