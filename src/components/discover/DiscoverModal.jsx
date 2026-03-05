@@ -48,10 +48,21 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}${window.location.pathname}?discover=${current.id}`;
-    await navigator.clipboard.writeText(url);
-    await base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" });
-    toast.success("Link copied!");
+    try {
+      const url = `${window.location.origin}${window.location.pathname}?discover=${current.id}`;
+      await navigator.clipboard.writeText(url);
+      await base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" });
+      toast.success("Link copied!");
+    } catch (err) {
+      toast.error("Failed to copy link");
+    }
+  };
+
+  const handleRecreate = () => {
+    if (current.prompt) {
+      navigate(createPageUrl("Generate") + `?prompt=${encodeURIComponent(current.prompt)}`);
+      onClose();
+    }
   };
 
   const handleCopyPrompt = () => {
