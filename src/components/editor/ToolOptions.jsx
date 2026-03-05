@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Film, Sun, Droplets, Camera, Zap, Sparkles, Leaf, Circle, Paintbrush, Droplet, Star, PenLine, BookOpen, Flower2, Cpu, Wind } from "lucide-react";
+import { ArrowLeft, Film, Sun, Droplets, Camera, Zap, Sparkles, Leaf, Circle, Paintbrush, Droplet, Star, PenLine, BookOpen, Flower2, Cpu, Wind, Moon, Flame, Waves, CloudSnow, Eye, Sunset, Palette, Contrast } from "lucide-react";
 
 export const COLOR_GRADE_OPTIONS = [
   { id: "cinematic", label: "Cinematic", icon: Film, prompt: "Apply a cinematic color grade: deep shadows, rich contrast, teal and orange tones, film-like quality" },
