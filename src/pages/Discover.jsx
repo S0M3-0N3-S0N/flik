@@ -52,48 +52,48 @@ export default function Discover() {
   }, [creations, user?.email]);
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 py-8">
+    <div className="min-h-screen px-4 sm:px-6 py-12 md:py-16">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
+          className="text-center mb-16 md:mb-20"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight">
             Created by the community,{" "}
             <span className="gradient-text">powered by imagination</span>
           </h1>
-          <p className="text-white/50 text-base sm:text-lg max-w-xl mx-auto">
+          <p className="text-white/60 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
             Explore what creators are making with FLIK
           </p>
         </motion.div>
 
         {/* Grid */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-32">
-            <Loader2 className="w-8 h-8 text-[#FF6B35] animate-spin" />
+          <div className="flex items-center justify-center py-40 md:py-48">
+            <Loader2 className="w-10 h-10 text-[#FF6B35] animate-spin" />
           </div>
         ) : creations.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-32"
+            className="text-center py-40 md:py-48"
           >
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center mx-auto mb-6 border border-[#FF6B35]/20">
-              <Sparkles className="w-10 h-10 text-[#FF6B35]" />
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center mx-auto mb-8 border border-[#FF6B35]/20">
+              <Sparkles className="w-12 h-12 text-[#FF6B35]" />
             </div>
-            <h3 className="text-white text-xl font-semibold mb-2">
+            <h3 className="text-white text-2xl font-semibold mb-3">
               No creations yet
             </h3>
-            <p className="text-white/40 max-w-sm mx-auto">
+            <p className="text-white/50 max-w-sm mx-auto text-base">
               Be the first to publish your creations to the community
             </p>
           </motion.div>
         ) : (
-          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 sm:gap-4">
+          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 sm:gap-5 md:gap-6">
             {creations.map((creation, index) => (
-              <div key={creation.id} className="mb-3 sm:mb-4 break-inside-avoid">
+              <div key={creation.id} className="mb-4 sm:mb-5 md:mb-6 break-inside-avoid">
                 <DiscoverCard
                   creation={creation}
                   likeCount={likeCounts[creation.id] || 0}
