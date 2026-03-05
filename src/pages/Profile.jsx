@@ -1147,13 +1147,29 @@ export default function Profile() {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                const newVal = !item.published_to_discover;
+                                togglePublishMutation.mutate({ id: item.id, published: newVal });
+                              }}
+                              className={`flex-1 border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1 transition-all ${
+                                item.published_to_discover
+                                  ? "bg-[#FF6B35]/40 text-[#FF6B35]"
+                                  : "bg-white/20 hover:bg-white/30 text-white"
+                              }`}
+                              title={item.published_to_discover ? "Remove from Discover" : "Share to Discover"}
+                            >
+                              <Globe className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <span className="hidden sm:inline">{item.published_to_discover ? "Shared" : "Share"}</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 deleteMutation.mutate(item.id);
                               }}
-                              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
+                              className="bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
                               title="Delete image"
                             >
                               <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">Delete</span>
                             </Button>
                             </div>
                         </div>
