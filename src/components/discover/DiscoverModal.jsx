@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Heart, Share2, Copy, Check, ChevronLeft, ChevronRight, User, RefreshCw } from "lucide-react";
+import { X, Heart, Share2, Copy, Check, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 
 export default function DiscoverModal({ creation, creations, onClose, currentUser }) {
   const [currentIndex, setCurrentIndex] = useState(
@@ -14,7 +12,6 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
   const [isLiked, setIsLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [copied, setCopied] = useState(false);
-  const navigate = useNavigate();
 
   const current = creations?.[currentIndex] || creation;
 
@@ -48,21 +45,10 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
   };
 
   const handleShare = async () => {
-    try {
-      const url = `${window.location.origin}${window.location.pathname}?discover=${current.id}`;
-      await navigator.clipboard.writeText(url);
-      await base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" });
-      toast.success("Link copied!");
-    } catch (err) {
-      toast.error("Failed to copy link");
-    }
-  };
-
-  const handleRecreate = () => {
-    if (current.prompt) {
-      navigate(createPageUrl("Generate") + `?prompt=${encodeURIComponent(current.prompt)}`);
-      onClose();
-    }
+    const url = `${window.location.origin}${window.location.pathname}?discover=${current.id}`;
+    await navigator.clipboard.writeText(url);
+    await base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" });
+    toast.success("Link copied!");
   };
 
   const handleCopyPrompt = () => {
@@ -73,7 +59,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
     toast.success("Prompt copied!");
   };
 
-  const goTo = (dir) => {
+  const navigate = (dir) => {
     setCurrentIndex(prev => {
       const next = prev + dir;
       if (next < 0 || next >= creations.length) return prev;
@@ -83,8 +69,8 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === "ArrowRight") goTo(1);
-      if (e.key === "ArrowLeft") goTo(-1);
+      if (e.key === "ArrowRight") navigate(1);
+      if (e.key === "ArrowLeft") navigate(-1);
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKey);
@@ -107,7 +93,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: "spring", damping: 25 }}
-          className="relative w-full max-w-4xl flex flex-col md:flex-row bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[95vh] md:max-h-[92vh]"
+          className="relative w-full max-w-4xl flex flex-col md:flex-row bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[92vh]"
           onClick={e => e.stopPropagation()}
         >
           {/* Image */}
@@ -121,7 +107,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             {/* Nav arrows */}
             {currentIndex > 0 && (
               <button
-                onClick={() => goTo(-1)}
+                onClick={() => navigate(-1)}
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -129,7 +115,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             )}
             {currentIndex < (creations?.length ?? 1) - 1 && (
               <button
-                onClick={() => goTo(1)}
+                onClick={() => navigate(1)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -138,7 +124,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           </div>
 
           {/* Side Panel */}
-          <div className="w-full md:w-80 flex flex-col border-t md:border-t-0 md:border-l border-white/10 overflow-hidden" style={{ maxHeight: '50vh', minHeight: '220px' }} >
+          <div className="w-full md:w-80 flex flex-col border-t md:border-t-0 md:border-l border-white/10 max-h-[40vh] md:max-h-[92vh]">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
               <div className="flex items-center gap-2.5">
@@ -205,37 +191,26 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             </div>
 
             {/* Action Bar */}
-            <div className="px-4 py-3 border-t border-white/10 flex flex-col gap-2 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleLike}
-                  disabled={isLiking}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center ${
-                    isLiked
-                      ? "bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30"
-                      : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"
-                  }`}
-                >
-                  <Heart className={`w-4 h-4 ${isLiked ? "fill-[#FF6B35]" : ""}`} />
-                  <span>{likes.length}</span>
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition-all flex-1 justify-center"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </button>
-              </div>
-              {current.prompt && (
-                <button
-                  onClick={handleRecreate}
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[#CDFF00] text-black hover:bg-[#b8e600] transition-all w-full justify-center"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Recreate
-                </button>
-              )}
+            <div className="px-4 py-3 border-t border-white/10 flex items-center gap-3 flex-shrink-0">
+              <button
+                onClick={handleLike}
+                disabled={isLiking}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center ${
+                  isLiked
+                    ? "bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${isLiked ? "fill-[#FF6B35]" : ""}`} />
+                <span>{likes.length}</span>
+              </button>
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition-all flex-1 justify-center"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
             </div>
           </div>
         </motion.div>
