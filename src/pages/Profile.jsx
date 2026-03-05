@@ -1391,6 +1391,14 @@ export default function Profile() {
                   <button onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))} className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-medium border border-white/10 transition-all">
                     <Edit className="w-4 h-4" /> Edit
                   </button>
+                  <button
+                    onClick={() => { const p = new URLSearchParams(); p.set('load', selectedItem.url); if (selectedItem.prompt) p.set('prompt', selectedItem.prompt); navigate(createPageUrl('Generate') + '?' + p.toString()); }}
+                    className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-[#FF6B35]/10 hover:bg-[#FF6B35]/20 text-white text-sm font-medium border border-[#FF6B35]/20 transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" /> Imagine
+                  </button>
+                </div>
+                <div className="flex gap-2">
                   <button onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)} className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-black text-sm font-bold transition-all active:scale-95" style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}>
                     <Download className="w-4 h-4" /> Download
                   </button>
