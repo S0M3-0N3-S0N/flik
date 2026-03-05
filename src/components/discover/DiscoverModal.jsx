@@ -138,7 +138,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           </div>
 
           {/* Side Panel */}
-          <div className="w-full md:w-80 flex flex-col border-t md:border-t-0 md:border-l border-white/10 max-h-[40vh] md:max-h-[92vh]">
+          <div className="w-full md:w-80 flex flex-col border-t md:border-t-0 md:border-l border-white/10 overflow-hidden" style={{ maxHeight: '50vh', minHeight: '220px' }} >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
               <div className="flex items-center gap-2.5">
