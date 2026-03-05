@@ -1419,9 +1419,7 @@ export default function Profile() {
 
             {/* Bottom sheet */}
             <div className="flex-1 bg-[#111111] rounded-t-3xl -mt-4 flex flex-col overflow-hidden relative" style={{ maxHeight: 'calc(45vh + 16px)' }}>
-              <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-                <div className="w-10 h-1 rounded-full bg-white/20" />
-              </div>
+
               {/* Author */}
               <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
                 <div>
