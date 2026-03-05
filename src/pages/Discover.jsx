@@ -53,7 +53,7 @@ export default function Discover() {
         >
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
             Created by the community,{" "}
-            <span className="gradient-text">powered by soul</span>
+            <span className="gradient-text">powered by imagination</span>
           </h1>
           <p className="text-white/50 text-base sm:text-lg max-w-xl mx-auto">
             Explore what creators are making with FLIK
