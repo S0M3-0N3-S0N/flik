@@ -139,8 +139,12 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           <div className="w-80 flex flex-col border-l border-white/10">
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
-                  {current.created_by?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
+                  {creatorProfile?.profile_picture ? (
+                    <img src={creatorProfile.profile_picture} alt="Creator" className="w-full h-full object-cover" />
+                  ) : (
+                    current.created_by?.[0]?.toUpperCase() || <User className="w-4 h-4" />
+                  )}
                 </div>
                 <div>
                   <p className="text-white text-sm font-semibold">{current.created_by?.split("@")[0] || "Creator"}</p>
