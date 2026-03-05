@@ -129,11 +129,13 @@ export default function FaceTracker({ videoRef, isActive, mirrored, onFacesUpdat
         } catch {}
       }
 
-      // 2. Fallback: BlazeFace via TensorFlow.js
+      // 2. Fallback: BlazeFace via TensorFlow.js (loaded dynamically to avoid build issues)
       try {
+        const tfUrl = 'https://esm.sh/@tensorflow/tfjs@4.15.0';
+        const blazefaceUrl = 'https://esm.sh/@tensorflow-models/blazeface@0.1.0';
         const [tf, blazeface] = await Promise.all([
-          import('@tensorflow/tfjs'),
-          import('@tensorflow-models/blazeface'),
+          import(/* @vite-ignore */ tfUrl),
+          import(/* @vite-ignore */ blazefaceUrl),
         ]);
         await tf.ready();
         if (cancelled) return;
