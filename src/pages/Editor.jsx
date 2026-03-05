@@ -493,7 +493,7 @@ export default function Editor() {
   const handleDownload = useCallback(async () => {
     if (!currentImage) return;
     try {
-      const blob = await handleGetProcessedBlob();
+      const blob = await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter, brushStrokes.length > 0 ? brushStrokes : paintStrokes);
       if (!blob) { 
         toast.error("Could not get image data to download."); 
         return; 
