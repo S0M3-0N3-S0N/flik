@@ -182,6 +182,11 @@ export default function ImageGrid({
                       )}
                     </Button>
                   </div>
+                  {user?.role === 'admin' && image.dbId && (
+                    <div className="mt-2">
+                      <PublishButton creation={{ id: image.dbId, published_to_discover: image.published_to_discover }} />
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
