@@ -29,6 +29,13 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
     setPromptExpanded(false);
   }, [current?.id, currentUser?.email]);
 
+  useEffect(() => {
+    if (!current?.created_by) return;
+    base44.entities.UserProfile.filter({ email: current.created_by }).then(data => {
+      setCreatorProfile(data?.[0] || null);
+    });
+  }, [current?.created_by]);
+
   const handleLike = async () => {
     if (!currentUser || isLiking) return;
     setIsLiking(true);
