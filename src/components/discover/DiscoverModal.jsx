@@ -107,7 +107,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: "spring", damping: 25 }}
-          className="relative w-full max-w-4xl flex flex-col md:flex-row bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[92vh]"
+          className="relative w-full max-w-4xl flex flex-col md:flex-row bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[95vh] md:max-h-[92vh]"
           onClick={e => e.stopPropagation()}
         >
           {/* Image */}
