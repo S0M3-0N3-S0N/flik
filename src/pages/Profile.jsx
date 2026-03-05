@@ -1430,6 +1430,16 @@ export default function Profile() {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit in Photo Studio
               </Button>
+              {user?.role === 'admin' && (
+                <PublishButton
+                  creation={selectedItem}
+                  onToggled={(published) => {
+                    queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
+                    setSelectedItem(prev => prev ? { ...prev, published_to_discover: published } : prev);
+                  }}
+                  className="w-full justify-center h-11"
+                />
+              )}
               <div className="flex gap-2.5">
                 <Button
                   onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
