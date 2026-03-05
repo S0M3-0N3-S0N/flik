@@ -1423,10 +1423,10 @@ export default function Editor() {
             <ImageUploader onImageSelect={handleImageSelect} onGalleryOpen={() => setIsGalleryPickerOpen(true)} />
           ) : (
            <>
-             <div ref={emblaRef} className={`w-full h-full overflow-hidden ${isImageLocked ? 'pointer-events-none' : ''}`}>
-               <div className="flex h-full">
+             <div ref={emblaRef} className="w-full h-full overflow-hidden">
+               <div className="flex h-full" style={{ transform: 'none' }}>
                  {loadedImages.map((img, idx) => (
-                   <div key={idx} className="min-w-full h-full flex items-center justify-center overflow-hidden relative">
+                   <div key={idx} className={`min-w-full h-full flex items-center justify-center overflow-hidden relative ${idx !== currentImageIndex ? 'pointer-events-none' : ''}`} style={{ display: idx === currentImageIndex ? 'flex' : 'none' }}>
                      {idx === currentImageIndex && (
                        <button
                          onClick={() => setIsImageLocked(!isImageLocked)}
