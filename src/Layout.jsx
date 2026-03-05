@@ -249,6 +249,20 @@ function LayoutContent({ children, currentPageName }) {
 
               {user?.role === 'admin' && (
                 <button
+                  onClick={() => navigate(createPageUrl("Discover"))}
+                  className={`flex items-center gap-2 transition-all ${
+                    currentPageName === "Discover" 
+                      ? "text-white" 
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  <Globe className="w-5 h-5" />
+                  <span className="text-sm font-medium">Discover</span>
+                </button>
+              )}
+
+              {user?.role === 'admin' && (
+                <button
                   onClick={() => navigate(createPageUrl("Camera"))}
                   className={`flex items-center gap-2 transition-all ${
                     currentPageName === "Camera" 

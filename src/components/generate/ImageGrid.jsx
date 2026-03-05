@@ -4,13 +4,15 @@ import { Download, Copy, Check, Trash2, Image as ImageIcon, Edit, Zap } from "lu
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../../utils";
+import PublishButton from "@/components/discover/PublishButton";
 
 export default function ImageGrid({ 
   images, 
   onDelete, 
   onClearAll, 
   isGenerating, 
-  stylePresets 
+  stylePresets,
+  user
 }) {
   const navigate = useNavigate();
   const [copiedId, setCopiedId] = React.useState(null);
