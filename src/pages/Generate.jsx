@@ -292,14 +292,20 @@ export default function Generate() {
             }
           });
 
+          // Fetch the saved creation to get its DB id
+          const savedCreations = await base44.entities.Creation.filter({ url: imageResult.url }, '-created_date', 1);
+          const dbId = savedCreations?.[0]?.id;
+
           return {
             id: Date.now() + Math.random(),
+            dbId,
             url: imageResult.url,
             prompt: prompt,
             enhancedPrompt: finalPrompt,
             style: selectedStyles,
             model: aiModel,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            published_to_discover: false
           };
         } catch (e) {
           console.error("Single generation failed:", e);
@@ -749,6 +755,7 @@ export default function Generate() {
             onClearAll={() => setGeneratedImages([])}
             isGenerating={isGenerating}
             stylePresets={stylePresets}
+            user={user}
           />
         </div>
       </section>
