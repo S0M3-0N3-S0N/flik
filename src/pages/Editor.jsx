@@ -776,7 +776,7 @@ export default function Editor() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentImage, handleGetProcessedBlob, stickers]);
+  }, [currentImage, adjustments, transform, selectedFilter, brushStrokes, paintStrokes, stickers, getProcessedImageBlob]);
 
   const handleTextImageGenerated = useCallback((imageUrl) => {
     setStickers(prev => [...prev, {
