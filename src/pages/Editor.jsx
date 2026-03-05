@@ -511,7 +511,7 @@ export default function Editor() {
       console.error("Download failed", e);
       toast.error("Download failed. Please try again.");
     }
-  }, [currentImage, handleGetProcessedBlob, createObjectURL, revokeObjectURL]);
+  }, [currentImage, adjustments, transform, selectedFilter, brushStrokes, paintStrokes, getProcessedImageBlob, createObjectURL, revokeObjectURL]);
 
   const handleAdjustmentChange = useCallback((newAdjustments) => {
     if (adjustmentUndoTimerRef.current) clearTimeout(adjustmentUndoTimerRef.current);
