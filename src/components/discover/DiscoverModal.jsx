@@ -129,7 +129,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             )}
             {currentIndex < (creations?.length ?? 1) - 1 && (
               <button
-                onClick={() => navigate(1)}
+                onClick={() => goTo(1)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all"
               >
                 <ChevronRight className="w-5 h-5" />
