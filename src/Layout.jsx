@@ -380,6 +380,20 @@ function LayoutContent({ children, currentPageName }) {
                 </button>
               )}
 
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => navigate(createPageUrl("Discover"))}
+                  className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${
+                    currentPageName === "Discover"
+                      ? "text-[#FF6B35] bg-[#FF6B35]/10"
+                      : "text-white/60"
+                  }`}
+                >
+                  <Globe className="w-6 h-6" />
+                  <span className="text-[10px] font-medium">Discover</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setIsOpen(true)}
                 className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px] min-h-[44px] ${

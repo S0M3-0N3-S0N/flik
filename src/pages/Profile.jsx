@@ -27,6 +27,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from 'sonner';
 import LoadingSkeleton from "@/components/profile/LoadingSkeleton";
+import PublishButton from "@/components/discover/PublishButton";
 import { 
   ITEMS_PER_PAGE, 
   MAX_CREATIONS_FETCH, 
