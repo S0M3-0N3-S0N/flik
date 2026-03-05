@@ -781,6 +781,9 @@ export default function CameraPage() {
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
 
+        {/* Vintage timestamp */}
+        <VintageTimestamp />
+
         {/* Exposure slider */}
         <AnimatePresence>
           {showExposure && focusPos && !photo && (
