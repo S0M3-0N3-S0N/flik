@@ -711,7 +711,7 @@ export default function Editor() {
     if (!currentImage) return;
     setIsSaving(true);
     try {
-      const blob = await handleGetProcessedBlob();
+      const blob = await getProcessedImageBlob(currentImage, adjustments, transform, selectedFilter, brushStrokes.length > 0 ? brushStrokes : paintStrokes);
       if (!blob) { 
         toast.error("Could not get image data to save."); 
         setIsSaving(false);
