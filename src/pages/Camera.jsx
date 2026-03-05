@@ -11,6 +11,7 @@ import ExposureSlider from '../components/camera/ExposureSlider';
 import SettingsDrawer from '../components/camera/SettingsDrawer';
 import CameraGuidance from '../components/camera/CameraGuidance';
 import FaceTracker from '../components/camera/FaceTracker';
+import VintageTimestamp from '../components/camera/VintageTimestamp';
 import { useFlikActions } from '../components/useFlikActions';
 
 const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch {} };
