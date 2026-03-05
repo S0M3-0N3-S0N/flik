@@ -1083,9 +1083,9 @@ export default function Profile() {
                       </div>
 
                       {/* Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-500 flex flex-col justify-between p-3 sm:p-4">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-between p-5">
                         {/* Top Actions */}
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 translate-y-[-15px] group-hover:translate-y-0 transition-all duration-500 delay-75">
                           <button
                             onClick={(e) => { 
                               e.stopPropagation(); 
@@ -1102,7 +1102,7 @@ export default function Profile() {
                         </div>
 
                         {/* Bottom Info */}
-                        <div className="space-y-2">
+                        <div className="translate-y-[25px] group-hover:translate-y-0 transition-all duration-500 delay-100 space-y-2.5 sm:space-y-3">
                           <div>
                             <h3 
                               className="font-bold text-white text-sm sm:text-base lg:text-lg line-clamp-2 mb-1 drop-shadow-lg"
@@ -1115,38 +1115,45 @@ export default function Profile() {
                               />
                             )}
                           </div>
-                          <div className="flex gap-1.5">
+                          <div className="flex gap-1.5 sm:gap-2">
                             <Button
                               size="sm"
-                              onClick={(e) => { e.stopPropagation(); navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url)); }}
-                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-8 backdrop-blur-2xl rounded-lg flex items-center justify-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(item.url));
+                              }}
+                              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
                               title="Edit in Photo Studio"
                             >
-                              <Edit className="w-3.5 h-3.5" />
+                              <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <span className="hidden sm:inline">Edit</span>
                             </Button>
                             <Button
                               size="sm"
-                              onClick={(e) => { e.stopPropagation(); const p = new URLSearchParams(); p.set('load', item.url); if (item.prompt) p.set('prompt', item.prompt); navigate(createPageUrl('Generate') + '?' + p.toString()); }}
-                              className="flex-1 bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 backdrop-blur-2xl rounded-lg flex items-center justify-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const params = new URLSearchParams();
+                                params.set('load', item.url);
+                                if (item.prompt) params.set('prompt', item.prompt);
+                                navigate(createPageUrl('Generate') + '?' + params.toString());
+                              }}
+                              className="flex-1 bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
                               title="Imagine similar image"
                             >
-                              <Sparkles className="w-3.5 h-3.5" />
+                              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <span className="hidden sm:inline">Imagine</span>
                             </Button>
                             <Button
                               size="sm"
-                              onClick={(e) => { e.stopPropagation(); togglePublishMutation.mutate({ id: item.id, published: !item.published_to_discover }); }}
-                              className={`flex-1 border-0 h-8 backdrop-blur-2xl rounded-lg flex items-center justify-center transition-all ${item.published_to_discover ? "bg-[#FF6B35]/40 text-[#FF6B35]" : "bg-white/20 hover:bg-white/30 text-white"}`}
-                              title={item.published_to_discover ? "Remove from Discover" : "Share to Discover"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteMutation.mutate(item.id);
+                              }}
+                              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
+                              title="Delete image"
                             >
-                              <Globe className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(item.id); }}
-                              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 backdrop-blur-2xl rounded-lg flex items-center justify-center"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <span className="hidden sm:inline">Delete</span>
                             </Button>
                             </div>
                         </div>
