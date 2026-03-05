@@ -1012,6 +1012,8 @@ export default function CameraPage() {
          onChange={handleSettingChange}
          faceTrackingEnabled={faceTrackingEnabled}
          onFaceTrackingChange={setFaceTrackingEnabled}
+         showTimestamp={showTimestamp}
+         onTimestampChange={setShowTimestamp}
        />
     </div>
   );
