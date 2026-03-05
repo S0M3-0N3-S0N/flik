@@ -15,6 +15,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
   const [isLiking, setIsLiking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [promptExpanded, setPromptExpanded] = useState(false);
+  const [creatorProfile, setCreatorProfile] = useState(null);
   const navigate = useNavigate();
 
   const current = creations?.[currentIndex] || creation;
