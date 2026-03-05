@@ -1500,71 +1500,71 @@ export default function Editor() {
              )}
 
              <AnimatePresence>
-              {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
+               {(isProcessing || isMagicBrushProcessing) && <ProcessingOverlay tool={activeTool} />}
              </AnimatePresence>
-          
-          {currentImage && (
-            <motion.div
-              className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="flex flex-col gap-2 items-end relative">
-                <AnimatePresence>
-                  {isToolboxExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.85, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.85, y: 10 }}
-                      transition={{ duration: 0.15 }}
-                      className="bg-gradient-to-br from-[#1a1a1a]/95 via-[#141414]/95 to-[#0f0f0f]/95 backdrop-blur-xl border border-white/15 rounded-lg p-0.5 shadow-2xl mb-0.5"
-                    >
-                      <div className="flex flex-col gap-px">
-                        <button onClick={() => { fileInputRef.current?.click(); setIsToolboxExpanded(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Upload">
-                          <Upload className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => { setIsGalleryPickerOpen(true); setIsToolboxExpanded(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Gallery">
-                          <Grid3x3 className="w-3.5 h-3.5" />
-                        </button>
-                        <div className="h-px bg-white/10 mx-1" />
-                        <button onClick={() => { setIsPanToolActive(!isPanToolActive); setIsToolboxExpanded(false); }} className={`w-8 h-8 rounded-md transition-all flex items-center justify-center active:scale-95 ${isPanToolActive ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/5 text-white/60 hover:text-white'}`} title="Pan">
+
+             <motion.div
+               className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 z-30"
+               initial={{ opacity: 0, scale: 0.9 }}
+               animate={{ opacity: 1, scale: 1 }}
+               transition={{ duration: 0.2 }}
+             >
+               <div className="flex flex-col gap-2 items-end relative">
+                 <AnimatePresence>
+                   {isToolboxExpanded && (
+                     <motion.div
+                       initial={{ opacity: 0, scale: 0.85, y: 10 }}
+                       animate={{ opacity: 1, scale: 1, y: 0 }}
+                       exit={{ opacity: 0, scale: 0.85, y: 10 }}
+                       transition={{ duration: 0.15 }}
+                       className="bg-gradient-to-br from-[#1a1a1a]/95 via-[#141414]/95 to-[#0f0f0f]/95 backdrop-blur-xl border border-white/15 rounded-lg p-0.5 shadow-2xl mb-0.5"
+                     >
+                       <div className="flex flex-col gap-px">
+                         <button onClick={() => { fileInputRef.current?.click(); setIsToolboxExpanded(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Upload">
+                           <Upload className="w-3.5 h-3.5" />
+                         </button>
+                         <button onClick={() => { setIsGalleryPickerOpen(true); setIsToolboxExpanded(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Gallery">
+                           <Grid3x3 className="w-3.5 h-3.5" />
+                         </button>
+                         <div className="h-px bg-white/10 mx-1" />
+                         <button onClick={() => { setIsPanToolActive(!isPanToolActive); setIsToolboxExpanded(false); }} className={`w-8 h-8 rounded-md transition-all flex items-center justify-center active:scale-95 ${isPanToolActive ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/5 text-white/60 hover:text-white'}`} title="Pan">
                            <Hand className="w-3.5 h-3.5" />
-                        </button>
-                        <div className="h-px bg-white/10 mx-1" />
-                        <button onClick={() => setZoom(z => Math.min(z + 0.2, 5))} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Zoom In">
-                          <ZoomIn className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.1))} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Zoom Out">
-                          <ZoomOut className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => { setNeedsFit(true); setIsPanToolActive(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Fit to screen">
-                          <Maximize2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
-                <motion.button
-                  onClick={() => setIsToolboxExpanded(!isToolboxExpanded)}
-                  className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-md hover:shadow-[#FF6B35]/40 transition-all flex items-center justify-center"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <motion.div animate={{ rotate: isToolboxExpanded ? 45 : 0 }} transition={{ duration: 0.15 }}>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </motion.div>
-                </motion.button>
-                
-                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </main>
+                         </button>
+                         <div className="h-px bg-white/10 mx-1" />
+                         <button onClick={() => setZoom(z => Math.min(z + 0.2, 5))} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Zoom In">
+                           <ZoomIn className="w-3.5 h-3.5" />
+                         </button>
+                         <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.1))} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Zoom Out">
+                           <ZoomOut className="w-3.5 h-3.5" />
+                         </button>
+                         <button onClick={() => { setNeedsFit(true); setIsPanToolActive(false); }} className="w-8 h-8 rounded-md flex items-center justify-center text-white/60 hover:bg-white/5 hover:text-white transition-colors active:scale-95" title="Fit to screen">
+                           <Maximize2 className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
+
+                 <motion.button
+                   onClick={() => setIsToolboxExpanded(!isToolboxExpanded)}
+                   className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-md hover:shadow-[#FF6B35]/40 transition-all flex items-center justify-center"
+                   whileHover={{ scale: 1.05 }}
+                   whileTap={{ scale: 0.95 }}
+                 >
+                   <motion.div animate={{ rotate: isToolboxExpanded ? 45 : 0 }} transition={{ duration: 0.15 }}>
+                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                     </svg>
+                   </motion.div>
+                 </motion.button>
+
+                 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
+               </div>
+             </motion.div>
+             </>
+             )}
+             </div>
+             </main>
       
       <ResultModal
          isOpen={showResult}
