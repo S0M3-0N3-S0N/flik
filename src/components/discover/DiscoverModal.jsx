@@ -1,0 +1,220 @@
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Heart, Share2, Copy, Check, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
+
+export default function DiscoverModal({ creation, creations, onClose, currentUser }) {
+  const [currentIndex, setCurrentIndex] = useState(
+    creations?.findIndex(c => c.id === creation?.id) ?? 0
+  );
+  const [likes, setLikes] = useState([]);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const current = creations?.[currentIndex] || creation;
+
+  useEffect(() => {
+    if (!current?.id) return;
+    base44.entities.Like.filter({ creation_id: current.id }).then(data => {
+      setLikes(data || []);
+      setIsLiked((data || []).some(l => l.user_email === currentUser?.email));
+    });
+  }, [current?.id, currentUser?.email]);
+
+  const handleLike = async () => {
+    if (!currentUser || isLiking) return;
+    setIsLiking(true);
+    try {
+      if (isLiked) {
+        const myLike = likes.find(l => l.user_email === currentUser.email);
+        if (myLike) await base44.entities.Like.delete(myLike.id);
+        setLikes(prev => prev.filter(l => l.user_email !== currentUser.email));
+        setIsLiked(false);
+      } else {
+        await base44.entities.Like.create({ creation_id: current.id, user_email: currentUser.email });
+        setLikes(prev => [...prev, { user_email: currentUser.email }]);
+        setIsLiked(true);
+      }
+    } catch (err) {
+      toast.error("Failed to update like");
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}${window.location.pathname}?discover=${current.id}`;
+    await navigator.clipboard.writeText(url);
+    await base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" });
+    toast.success("Link copied!");
+  };
+
+  const handleCopyPrompt = () => {
+    if (!current?.prompt) return;
+    navigator.clipboard.writeText(current.prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast.success("Prompt copied!");
+  };
+
+  const navigate = (dir) => {
+    setCurrentIndex(prev => {
+      const next = prev + dir;
+      if (next < 0 || next >= creations.length) return prev;
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "ArrowRight") navigate(1);
+      if (e.key === "ArrowLeft") navigate(-1);
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [creations?.length]);
+
+  if (!current) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: "spring", damping: 25 }}
+          className="relative w-full max-w-4xl flex flex-col md:flex-row bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[92vh]"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Image */}
+          <div className="flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[92vh] relative">
+            <img
+              src={current.url}
+              alt={current.title || "Creation"}
+              className="max-w-full max-h-[92vh] object-contain"
+            />
+
+            {/* Nav arrows */}
+            {currentIndex > 0 && (
+              <button
+                onClick={() => navigate(-1)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            {currentIndex < (creations?.length ?? 1) - 1 && (
+              <button
+                onClick={() => navigate(1)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Side Panel */}
+          <div className="w-full md:w-80 flex flex-col border-t md:border-t-0 md:border-l border-white/10 max-h-[40vh] md:max-h-[92vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
+                  {current.created_by?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
+                </div>
+                <div>
+                  <p className="text-white text-sm font-semibold">{current.created_by?.split("@")[0] || "Creator"}</p>
+                  <p className="text-white/40 text-xs">Author</p>
+                </div>
+              </div>
+              <button onClick={onClose} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {current.prompt && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>⌘</span> Prompt
+                    </p>
+                    <button
+                      onClick={handleCopyPrompt}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs transition-all"
+                    >
+                      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                    <p className="text-sm text-white/70 leading-relaxed">{current.prompt}</p>
+                  </div>
+                </div>
+              )}
+
+              {current.metadata?.model && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">ⓘ Information</p>
+                  <div className="space-y-2 p-3 rounded-xl bg-white/5 border border-white/5">
+                    {current.metadata?.model && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/50">Model</span>
+                        <span className="text-white font-medium">{current.metadata.model}</span>
+                      </div>
+                    )}
+                    {current.metadata?.style?.length > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/50">Style</span>
+                        <span className="text-white font-medium">{current.metadata.style.join(", ")}</span>
+                      </div>
+                    )}
+                    {current.metadata?.aspectRatio && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/50">Ratio</span>
+                        <span className="text-white font-medium">{current.metadata.aspectRatio}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Bar */}
+            <div className="px-4 py-3 border-t border-white/10 flex items-center gap-3 flex-shrink-0">
+              <button
+                onClick={handleLike}
+                disabled={isLiking}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center ${
+                  isLiked
+                    ? "bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${isLiked ? "fill-[#FF6B35]" : ""}`} />
+                <span>{likes.length}</span>
+              </button>
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition-all flex-1 justify-center"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}

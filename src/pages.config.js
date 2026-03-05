@@ -51,6 +51,7 @@ import Camera from './pages/Camera';
 import Editor from './pages/Editor';
 import Generate from './pages/Generate';
 import Profile from './pages/Profile';
+import Discover from './pages/Discover';
 import __Layout from './Layout.jsx';
 
 
@@ -59,6 +60,7 @@ export const PAGES = {
     "Editor": Editor,
     "Generate": Generate,
     "Profile": Profile,
+    "Discover": Discover,
 }
 
 export const pagesConfig = {
