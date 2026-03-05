@@ -19,28 +19,23 @@ export default function MobileHeader({ currentPageName }) {
     }
   };
 
+  // Show back button only on non-root pages (mobile only)
+  if (isRootPage || currentPageName === 'Camera') return null;
+
   return (
     <div
-      className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl ${
-        currentPageName === 'Camera' ? 'hidden' : 'md:hidden'
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl md:hidden"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
-      <div className="flex items-center justify-center px-4 py-3 h-14">
-        {isRootPage ? (
-          <div className="gradient-text font-bold text-2xl tracking-wider">FLIK</div>
-        ) : (
-          <>
-            <button
-              onClick={handleBack}
-              className="absolute left-4 flex items-center gap-2 text-white/80 hover:text-white transition-colors active:scale-95"
-              title="Go back"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          </>
-        )}
+      <div className="flex items-center px-4 py-3 h-14">
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-white/80 hover:text-white transition-colors active:scale-95"
+          title="Go back"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );
