@@ -1083,7 +1083,7 @@ export default function Profile() {
                       </div>
 
                       {/* Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-between p-5">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-500 flex flex-col justify-between p-3 sm:p-4">
                         {/* Top Actions */}
                         <div className="flex justify-end gap-2 translate-y-[-15px] group-hover:translate-y-0 transition-all duration-500 delay-75">
                           <button
