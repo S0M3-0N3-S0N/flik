@@ -1504,6 +1504,14 @@ export default function Profile() {
                     <Edit className="w-4 h-4" /> Edit
                   </button>
                   <button
+                    onClick={() => { const p = new URLSearchParams(); p.set('load', selectedItem.url); if (selectedItem.prompt) p.set('prompt', selectedItem.prompt); navigate(createPageUrl('Generate') + '?' + p.toString()); }}
+                    className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 active:scale-95 transition-all bg-[#FF6B35]/20 border border-[#FF6B35]/30"
+                  >
+                    <Sparkles className="w-4 h-4" /> Imagine
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button
                     onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
                     className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-black flex items-center justify-center gap-2 active:scale-95 transition-all"
                     style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}
