@@ -51,10 +51,6 @@ export default function Discover() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-sm font-medium mb-4">
-            <Globe className="w-4 h-4" />
-            Community
-          </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
             Created by the community,{" "}
             <span className="gradient-text">powered by soul</span>
