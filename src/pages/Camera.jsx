@@ -602,8 +602,13 @@ export default function CameraPage() {
     setIsSaving(true);
     toast.loading("Saving photo to gallery...", { id: 'photo-save' });
     try {
-      const res = await fetch(photo);
-      const blob = await res.blob();
+      // Convert dataUrl to blob without fetch (works reliably on mobile)
+      const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
+      const byteString = atob(base64Data);
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      const blob = new Blob([ab], { type: 'image/jpeg' });
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
