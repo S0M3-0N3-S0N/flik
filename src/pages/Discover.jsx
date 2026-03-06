@@ -9,6 +9,16 @@ import DiscoverModal from "@/components/discover/DiscoverModal";
 export default function Discover() {
   const queryClient = useQueryClient();
   const [selectedCreation, setSelectedCreation] = useState(null);
+  
+  // Handle shared links: ?discover=creationId
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const discoverParam = params.get('discover');
+    if (discoverParam && creations.length > 0 && !selectedCreation) {
+      const found = creations.find(c => c.id === discoverParam);
+      if (found) setSelectedCreation(found);
+    }
+  }, [creations]);
 
   useEffect(() => {
     if (selectedCreation) {
