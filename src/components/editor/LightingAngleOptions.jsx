@@ -37,6 +37,9 @@ const LIGHTING_ANGLES = [
 
 export default function LightingAngleOptions({ onSelect, onBack }) {
   const [selectedAngle, setSelectedAngle] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const containerRef = React.useRef(null);
 
   const handleSelect = (angle) => {
     setSelectedAngle(angle.id);
@@ -48,6 +51,86 @@ export default function LightingAngleOptions({ onSelect, onBack }) {
     };
     onSelect(tool);
   };
+
+  const getAngleFromCoords = (clientX, clientY) => {
+    if (!containerRef.current) return rotation;
+    const rect = containerRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+    return angle + 90;
+  };
+
+  const getPromptFromAngle = (angle) => {
+    const normalized = ((angle % 360) + 360) % 360;
+    if (normalized >= 315 || normalized < 45) return LIGHTING_ANGLES[1].prompt;
+    if (normalized >= 45 && normalized < 135) return LIGHTING_ANGLES[2].prompt;
+    if (normalized >= 135 && normalized < 225) return LIGHTING_ANGLES[0].prompt;
+    if (normalized >= 225 && normalized < 315) return LIGHTING_ANGLES[4].prompt;
+    return LIGHTING_ANGLES[1].prompt;
+  };
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setSelectedAngle(null);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const newRotation = getAngleFromCoords(e.clientX, e.clientY);
+    setRotation(newRotation);
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const tool = {
+      id: "lighting",
+      label: "Fix Lighting",
+      prompt: getPromptFromAngle(rotation),
+      selectedAngle: "custom"
+    };
+    onSelect(tool);
+  };
+
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    setSelectedAngle(null);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const newRotation = getAngleFromCoords(touch.clientX, touch.clientY);
+    setRotation(newRotation);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const tool = {
+      id: "lighting",
+      label: "Fix Lighting",
+      prompt: getPromptFromAngle(rotation),
+      selectedAngle: "custom"
+    };
+    onSelect(tool);
+  };
+
+  React.useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("touchmove", handleTouchMove);
+      window.addEventListener("touchend", handleTouchEnd);
+      return () => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+        window.removeEventListener("touchmove", handleTouchMove);
+        window.removeEventListener("touchend", handleTouchEnd);
+      };
+    }
+  }, [isDragging, rotation]);
 
   return (
     <div className="py-6 px-4 space-y-6">
@@ -92,14 +175,23 @@ export default function LightingAngleOptions({ onSelect, onBack }) {
         </div>
       </div>
 
-      {/* Interactive Preview Info */}
+      {/* Interactive Preview */}
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <div className="w-24 h-24 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center">
-          <div className="relative w-16 h-16 rounded-full border-2 border-[#FF6B35]/30 flex items-center justify-center">
-            <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
-              <div className="w-4 h-4 rounded-full bg-[#FF6B35]" />
-            </div>
-          </div>
+        <div
+          ref={containerRef}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          className={`w-40 h-40 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center relative cursor-grab ${
+            isDragging ? "cursor-grabbing" : ""
+          }`}
+        >
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="60" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+            <circle cx="80" cy="80" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+            <g transform={`rotate(${rotation} 80 80)`}>
+              <polygon points="80,20 95,75 80,65 65,75" fill="rgba(255, 107, 53, 0.3)" />
+            </g>
+          </svg>
         </div>
         <p className="text-center text-xs text-white/40 leading-relaxed">
           Hold and drag to change<br />light direction
