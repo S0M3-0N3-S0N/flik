@@ -460,7 +460,7 @@ export default function CameraPage() {
     haptic(12);
     if (isRecording) stopRecording();
     if (countdown > 0) {
-      clearTimeout(countdownTimerRef.current);
+      clearInterval(countdownTimerRef.current);
       setCountdown(0);
     }
     setModeIndex(idx);
@@ -488,11 +488,12 @@ export default function CameraPage() {
     countdownTimerRef.current = setInterval(() => {
       remaining -= 1;
       haptic(20);
-      setCountdown(remaining);
       if (remaining <= 0) {
         clearInterval(countdownTimerRef.current);
         setCountdown(0);
         action();
+      } else {
+        setCountdown(remaining);
       }
     }, 1000);
   };
@@ -568,7 +569,7 @@ export default function CameraPage() {
       setTorch(false);
       setScreenFlash(0);
     }
-  }, [exposure, exposureCaps, flashMode, facingMode, setTorch, setScreenFlash]);
+  }, [exposure, exposureCaps, flashMode, facingMode, setTorch, setScreenFlash, showTimestamp]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
@@ -610,7 +611,8 @@ export default function CameraPage() {
         url: file_url,
         thumbnail_url: file_url,
         title: `Photo ${new Date().toLocaleDateString()}`,
-        metadata: { source: 'camera', facing_mode: facingMode },
+        published_to_discover: false,
+        metadata: { source: 'camera', facing_mode: facingMode, vintage_timestamp: showTimestamp },
       });
 
       queryClient.invalidateQueries({ queryKey: ['creations'] });
