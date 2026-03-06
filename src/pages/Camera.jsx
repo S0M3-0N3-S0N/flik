@@ -528,6 +528,39 @@ export default function CameraPage() {
       ctx.putImageData(imageData, 0, 0);
     }
 
+    // Burn vintage timestamp onto the captured image
+    if (showTimestamp) {
+      const now = new Date();
+      const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+      const month = months[now.getMonth()];
+      const day = String(now.getDate()).padStart(2, "0");
+      const year = now.getFullYear();
+      let hours = now.getHours();
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      const hoursStr = String(hours).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const line1 = `${month}.${day} ${year}`;
+      const line2 = `${hoursStr}:${minutes} ${ampm}`;
+
+      const fontSize = Math.round(canvas.width * 0.045);
+      ctx.font = `bold ${fontSize}px "Courier New", Courier, monospace`;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+
+      const padding = Math.round(canvas.width * 0.03);
+      const lineH = Math.round(fontSize * 1.25);
+      const x = canvas.width - padding;
+      const y = canvas.height - padding;
+
+      // Glow effect
+      ctx.shadowColor = 'rgba(255, 180, 0, 0.9)';
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = '#FFD700';
+      ctx.fillText(line2, x, y);
+      ctx.fillText(line1, x, y - lineH);
+    }
+
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     setPhoto(dataUrl);
     setSavedPhoto(null);
@@ -535,7 +568,7 @@ export default function CameraPage() {
       setTorch(false);
       setScreenFlash(0);
     }
-  }, [exposure, exposureCaps, flashMode, facingMode, setTorch, setScreenFlash]);
+  }, [exposure, exposureCaps, flashMode, facingMode, showTimestamp, setTorch, setScreenFlash]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
