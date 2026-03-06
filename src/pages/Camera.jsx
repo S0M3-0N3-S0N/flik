@@ -254,7 +254,7 @@ export default function CameraPage() {
         try { t.stop(); } catch (e) { /* ignore */ }
       });
       clearInterval(timerRef.current);
-      clearTimeout(countdownTimerRef.current);
+      clearInterval(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
       clearTimeout(longPressRef.current);

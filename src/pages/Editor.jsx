@@ -1177,7 +1177,7 @@ export default function Editor() {
     }
   }, [activeTab]);
 
-  const getFilterStyle = useCallback(() => {
+  const getFilterStyle = useMemo(() => {
     if (!currentImage || currentImage.preview === null) return "none";
     const filters = [];
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
@@ -1191,13 +1191,17 @@ export default function Editor() {
     return filters.length > 0 ? filters.join(" ") : "none";
   }, [adjustments, selectedFilter, currentImage]);
 
-  const getTransformStyle = useCallback(() => {
+  const getTransformStyle = useMemo(() => {
     const transforms = [];
     if (transform.rotate !== 0) transforms.push(`rotate(${transform.rotate}deg)`);
     if (transform.flipH) transforms.push(`scaleX(-1)`);
     if (transform.flipV) transforms.push(`scaleY(-1)`);
     return transforms.length > 0 ? transforms.join(" ") : "none";
   }, [transform]);
+
+  // memoized filter/transform values for rendering
+  const filterStyle = getFilterStyle;
+  const transformStyle = getTransformStyle;
 
   return (
     <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
@@ -1436,7 +1440,7 @@ export default function Editor() {
                    src={currentImage.preview || currentImage.url}
                    alt="Editor"
                    className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
-                   style={{ filter: getFilterStyle(), transform: getTransformStyle() }}
+                   style={{ filter: filterStyle, transform: transformStyle }}
                    draggable={false}
                    crossOrigin="anonymous"
                    onLoad={() => { if (needsFit) { setNeedsFit(false); setNeedsFit(true); } }}
