@@ -131,8 +131,8 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
   };
 
   // Swipe handling
-  const touchStartX = React.useRef(null);
-  const touchStartY = React.useRef(null);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
