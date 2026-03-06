@@ -114,7 +114,9 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
   const handleRecreate = () => {
     if (!current?.prompt) return;
     onClose();
-    navigate(createPageUrl("Generate") + `?prompt=${encodeURIComponent(current.prompt)}`);
+    const params = new URLSearchParams();
+    params.set('prompt', current.prompt);
+    navigate(createPageUrl("Generate") + '?' + params.toString());
   };
 
   const navigateCreation = (dir) => {
