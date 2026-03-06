@@ -348,7 +348,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
                   )}
                 </div>
                 <div>
-                  <p className="text-white font-semibold text-sm">{creatorProfile?.full_name || current.created_by?.split("@")[0] || "Creator"}</p>
+                  <p className="text-white font-semibold text-sm">{creatorProfile?.display_name || current.created_by?.split("@")[0] || "Creator"}</p>
                 </div>
               </div>
               <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors">
