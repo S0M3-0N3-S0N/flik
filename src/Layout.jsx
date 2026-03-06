@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe } from "lucide-react";
@@ -8,6 +8,7 @@ import { FlikProvider, useFlik } from "@/components/FlikContext";
 import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
 import MobileHeader from "@/components/layout/MobileHeader";
+import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
 import { base44 } from "@/api/base44Client";
 
 export const LanguageContext = React.createContext();
@@ -500,17 +501,17 @@ function LayoutContent({ children, currentPageName }) {
         <FlikChatErrorBoundary>
           <FlikChat />
         </FlikChatErrorBoundary>
-        </div>
-        </LanguageContext.Provider>
-        );
-        }
+      </div>
+    </LanguageContext.Provider>
+  );
+}
 
 export default function Layout({ children, currentPageName }) {
-          return (
-          <ErrorBoundaryWrapper>
-            <FlikProvider>
-              <LayoutContent children={children} currentPageName={currentPageName} />
-            </FlikProvider>
-          </ErrorBoundaryWrapper>
-          );
-          }
+  return (
+    <ErrorBoundaryWrapper>
+      <FlikProvider>
+        <LayoutContent children={children} currentPageName={currentPageName} />
+      </FlikProvider>
+    </ErrorBoundaryWrapper>
+  );
+}
