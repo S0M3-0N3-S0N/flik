@@ -21,7 +21,7 @@ export default function VintageTimestamp() {
 
   return (
     <div
-      className="absolute bottom-28 right-4 pointer-events-none select-none z-20 text-right"
+      className="absolute top-16 right-4 pointer-events-none select-none z-20 text-right"
       style={{
         fontFamily: "'Courier New', Courier, monospace",
         textShadow: "0 0 8px rgba(255, 180, 0, 0.8), 0 0 2px rgba(255,255,255,0.6)",
