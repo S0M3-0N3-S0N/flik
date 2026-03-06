@@ -396,8 +396,9 @@ export default function Profile() {
    const toastId = toast.loading(`Deleting 0/${total} items...`);
 
    let failed = 0;
+   const isBatchDeletingRef = { current: true };
    const timeout = setTimeout(() => {
-     if (isBatchDeleting) {
+     if (isBatchDeletingRef.current) {
        toast.error('Batch delete timed out. Some items may not have been deleted.', { id: toastId });
        setIsBatchDeleting(false);
        setDeleteConfirm(null);
