@@ -896,10 +896,29 @@ export default function CameraPage() {
               <span style={iconRot}><X className="w-5 h-5 text-white" /></span>
             </motion.button>
 
-            <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'); }}
-              className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-              <span style={iconRot}>{flashIcon[flashMode]}</span>
-            </motion.button>
+            <div className="flex items-center gap-2">
+              <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'); }}
+                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
+                <span style={iconRot}>{flashIcon[flashMode]}</span>
+              </motion.button>
+              {flashMode !== 'off' && (
+                <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
+                  {['white', 'orange', 'red', 'cyan'].map(color => (
+                    <motion.button
+                      key={color}
+                      whileTap={{ scale: 0.85 }}
+                      onClick={() => { haptic(6); setFlashColorMode(color); }}
+                      className={`w-5 h-5 rounded-full transition-all border-2 ${
+                        flashColorMode === color ? 'border-white' : 'border-white/20'
+                      }`}
+                      style={{
+                        backgroundColor: color === 'white' ? 'white' : color === 'orange' ? '#FF6B35' : color === 'red' ? '#FF2442' : '#00BFFF'
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center gap-3">
               {settings.timer > 0 && (
