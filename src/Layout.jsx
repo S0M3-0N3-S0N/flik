@@ -229,11 +229,85 @@ function LayoutContent({ children, currentPageName }) {
         {/* Mobile Header */}
         <MobileHeader currentPageName={currentPageName} />
 
-        {/* Top Desktop Navigation - Hidden */}
+        {/* Top Desktop Navigation */}
+        <nav className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl ${currentPageName === 'Camera' ? 'hidden' : 'hidden md:flex'}`} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="w-full flex items-center justify-center px-8 py-4 relative">
+            <div className="absolute left-8 gradient-text font-bold text-lg tracking-wider">FLIK</div>
+            
+            <div className="flex items-center gap-8">
+              <button
+                onClick={() => navigate(currentPageName === "Editor" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Editor"))}
+                className={`flex items-center gap-2 transition-all ${
+                  currentPageName === "Editor" 
+                    ? "text-white" 
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Image className="w-5 h-5" />
+                <span className="text-sm font-medium">Photo Studio</span>
+              </button>
+
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => navigate(createPageUrl("Discover"))}
+                  className={`flex items-center gap-2 transition-all ${
+                    currentPageName === "Discover" 
+                      ? "text-white" 
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  <Globe className="w-5 h-5" />
+                  <span className="text-sm font-medium">Discover</span>
+                </button>
+              )}
+
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => navigate(createPageUrl("Camera"))}
+                  className={`flex items-center gap-2 transition-all ${
+                    currentPageName === "Camera" 
+                      ? "text-white" 
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  <Video className="w-5 h-5" />
+                  <span className="text-sm font-medium">Camera</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => navigate(currentPageName === "Generate" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Generate"))}
+                className={`flex items-center gap-2 transition-all ${
+                  currentPageName === "Generate" 
+                    ? "text-white" 
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Wand2 className="w-5 h-5" />
+                <span className="text-sm font-medium">Imagine AI</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => navigate(currentPageName === "Profile" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Profile"))}
+              className="flex items-center gap-3 transition-all group absolute right-8"
+            >
+              <div className={`w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
+                currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10 group-hover:border-white/20"
+              }`}>
+                {user?.profile_picture ? (
+                  <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  user?.full_name?.charAt(0).toUpperCase() || <User className="w-5 h-5" />
+                )}
+              </div>
+            </button>
+          </div>
+        </nav>
 
         
         {/* Main Content */}
-        <main style={{ paddingBottom: currentPageName !== "Camera" ? 'calc(70px + env(safe-area-inset-bottom))' : '0' }}>
+        <main className="md:pt-20" style={{ paddingBottom: currentPageName !== "Camera" ? 'calc(70px + env(safe-area-inset-bottom))' : '0' }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -402,11 +476,11 @@ function LayoutContent({ children, currentPageName }) {
         import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
 
         export default function Layout({ children, currentPageName }) {
-        return (
+          return (
           <ErrorBoundaryWrapper>
             <FlikProvider>
               <LayoutContent children={children} currentPageName={currentPageName} />
             </FlikProvider>
           </ErrorBoundaryWrapper>
-        );
-        }
+          );
+          }
