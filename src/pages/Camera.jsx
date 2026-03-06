@@ -733,6 +733,7 @@ export default function CameraPage() {
     orientation,
     supported,
     faceTrackingEnabled,
+    flashColorMode,
     }));
 
   return (
