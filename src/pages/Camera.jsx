@@ -571,7 +571,7 @@ export default function CameraPage() {
       setTorch(false);
       setScreenFlash(0);
     }
-  }, [exposure, exposureCaps, flashMode, facingMode, setTorch, setScreenFlash]);
+  }, [exposure, exposureCaps, flashMode, facingMode, showTimestamp, setTorch, setScreenFlash]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
