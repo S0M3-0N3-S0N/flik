@@ -692,9 +692,9 @@ export default function CameraPage() {
 
   // Give FLIK full camera control
   useFlikActions('Camera', {
-    takePhoto: () => takePhoto(),
-    savePhoto: () => savePhoto(),
-    retake: () => retake(),
+    takePhoto,
+    savePhoto,
+    retake,
     flipCamera: () => flipCamera(),
     setFlashMode: (mode) => setFlashMode(mode),
     toggleFlash: () => setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'),
