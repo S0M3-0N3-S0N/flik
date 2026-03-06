@@ -528,42 +528,6 @@ export default function CameraPage() {
       ctx.putImageData(imageData, 0, 0);
     }
 
-    // Burn vintage timestamp onto canvas if enabled
-    if (showTimestamp) {
-      const now = new Date();
-      const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-      const month = months[now.getMonth()];
-      const day = String(now.getDate()).padStart(2, "0");
-      const year = now.getFullYear();
-      let hours = now.getHours();
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
-      const hoursStr = String(hours).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-
-      const line1 = `${month}.${day} ${year}`;
-      const line2 = `${hoursStr}:${minutes} ${ampm}`;
-
-      const fontSize = Math.round(canvas.width * 0.045);
-      ctx.font = `bold ${fontSize}px "Courier New", Courier, monospace`;
-      ctx.textAlign = "right";
-      ctx.textBaseline = "bottom";
-
-      // Glow effect
-      ctx.shadowColor = "rgba(255, 180, 0, 0.9)";
-      ctx.shadowBlur = 12;
-      ctx.fillStyle = "#FFD700";
-
-      const marginRight = Math.round(canvas.width * 0.03);
-      const marginBottom = Math.round(canvas.height * 0.05);
-      const lineHeight = Math.round(fontSize * 1.3);
-
-      ctx.fillText(line2, canvas.width - marginRight, canvas.height - marginBottom);
-      ctx.fillText(line1, canvas.width - marginRight, canvas.height - marginBottom - lineHeight);
-
-      ctx.shadowBlur = 0;
-    }
-
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     setPhoto(dataUrl);
     setSavedPhoto(null);
@@ -571,7 +535,7 @@ export default function CameraPage() {
       setTorch(false);
       setScreenFlash(0);
     }
-  }, [exposure, exposureCaps, flashMode, facingMode, showTimestamp, setTorch, setScreenFlash]);
+  }, [exposure, exposureCaps, flashMode, facingMode, setTorch, setScreenFlash]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
@@ -602,13 +566,8 @@ export default function CameraPage() {
     setIsSaving(true);
     toast.loading("Saving photo to gallery...", { id: 'photo-save' });
     try {
-      // Convert dataUrl to blob without fetch (works reliably on mobile)
-      const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
-      const byteString = atob(base64Data);
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-      const blob = new Blob([ab], { type: 'image/jpeg' });
+      const res = await fetch(photo);
+      const blob = await res.blob();
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -621,7 +580,7 @@ export default function CameraPage() {
         metadata: { source: 'camera', facing_mode: facingMode },
       });
 
-      queryClient.invalidateQueries({ queryKey: ['profileCreations'] });
+      queryClient.invalidateQueries({ queryKey: ['creations'] });
       setSavedPhoto(true);
       toast.success("Saved to gallery!", { id: 'photo-save' });
     } catch (err) {
@@ -823,8 +782,8 @@ export default function CameraPage() {
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
 
-        {/* Vintage timestamp — only show on live viewfinder, not on captured photo */}
-        {showTimestamp && !photo && <VintageTimestamp />}
+        {/* Vintage timestamp */}
+        {showTimestamp && <VintageTimestamp />}
 
         {/* Exposure slider */}
         <AnimatePresence>
