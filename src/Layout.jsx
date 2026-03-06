@@ -45,6 +45,52 @@ function LayoutContent({ children, currentPageName }) {
 
   const isChildRoute = !['Editor', 'Generate', 'Profile'].includes(currentPageName);
 
+  // Auto-hide desktop nav after 3 seconds of inactivity
+  useEffect(() => {
+    if (currentPageName === 'Camera') return;
+    
+    const handleActivity = () => {
+      setShowDesktopNav(true);
+      if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
+      desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 3000);
+    };
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    // Start initial timer
+    desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 3000);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+      if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
+    };
+  }, [currentPageName]);
+
+  // Auto-hide mobile nav after 3 seconds of inactivity
+  useEffect(() => {
+    if (currentPageName === 'Camera') return;
+    
+    const handleActivity = () => {
+      setShowMobileNav(true);
+      if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
+      mobileNavTimeoutRef.current = setTimeout(() => setShowMobileNav(false), 3000);
+    };
+
+    window.addEventListener('touchstart', handleActivity);
+    window.addEventListener('touchmove', handleActivity);
+
+    // Start initial timer
+    mobileNavTimeoutRef.current = setTimeout(() => setShowMobileNav(false), 3000);
+
+    return () => {
+      window.removeEventListener('touchstart', handleActivity);
+      window.removeEventListener('touchmove', handleActivity);
+      if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
+    };
+  }, [currentPageName]);
+
   useEffect(() => {
     localStorage.setItem('app_language', language);
   }, [language]);
@@ -240,10 +286,6 @@ function LayoutContent({ children, currentPageName }) {
             showDesktopNav ? 'translate-y-0' : '-translate-y-full'
           }`}
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
-          onMouseEnter={() => {
-            setShowDesktopNav(true);
-            if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
-          }}
         >
           <div className="w-full flex items-center justify-center px-8 py-4 relative">
             <div className="absolute left-8 gradient-text font-bold text-lg tracking-wider">FLIK</div>
@@ -464,26 +506,7 @@ function LayoutContent({ children, currentPageName }) {
             </nav>
         )}
 
-        {/* Auto-hide nav timers */}
-        {currentPageName !== "Camera" && (
-          <div 
-            className="fixed inset-0 pointer-events-none"
-            onMouseMove={() => {
-              setShowDesktopNav(true);
-              if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
-              desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 3000);
-              
-              if (!showMobileNav) setShowMobileNav(true);
-              if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
-              mobileNavTimeoutRef.current = setTimeout(() => setShowMobileNav(false), 3000);
-            }}
-            onTouchMove={() => {
-              if (!showMobileNav) setShowMobileNav(true);
-              if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
-              mobileNavTimeoutRef.current = setTimeout(() => setShowMobileNav(false), 3000);
-            }}
-          />
-        )}
+
 
         {/* Global FLIK Button - Draggable (Desktop Only) */}
         <motion.button
@@ -492,10 +515,6 @@ function LayoutContent({ children, currentPageName }) {
           }}
           onMouseDown={handleFlikDragStart}
           onTouchStart={handleFlikDragStart}
-          onMouseEnter={() => {
-            setShowDesktopNav(true);
-            if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
-          }}
           style={{
             bottom: `calc(${flikPosition.bottom}px + env(safe-area-inset-bottom))`,
             right: `${flikPosition.right}px`,
