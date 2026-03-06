@@ -40,7 +40,7 @@ export default function Discover() {
   // Load like counts
   useEffect(() => {
     if (!creations.length) return;
-    base44.entities.Like.list("-created_date", 500).then((likes) => {
+    base44.entities.Like.list("-created_date", 1000).then((likes) => {
       const counts = {};
       const myLikes = {};
       (likes || []).forEach((like) => {
