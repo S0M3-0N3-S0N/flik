@@ -97,24 +97,9 @@ export default function LightingAngleOptions({ onSelect, onBack }) {
         </div>
       </div>
 
-      {/* Interactive Preview */}
-      <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <div
-          ref={containerRef}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-          className={`w-40 h-40 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center relative cursor-grab ${
-            isDragging ? "cursor-grabbing" : ""
-          }`}
-        >
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r="60" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-            <circle cx="80" cy="80" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-            <g transform={`rotate(${rotation} 80 80)`}>
-              <polygon points="80,20 95,75 80,65 65,75" fill="rgba(255, 107, 53, 0.3)" />
-            </g>
-          </svg>
-        </div>
+      {/* Interactive 3D Preview */}
+      <div className="flex flex-col items-center justify-center py-6 space-y-4">
+        <Lighting3DInteractive onSelect={handle3DSelect} />
         <p className="text-center text-xs text-white/40 leading-relaxed">
           Hold and drag to change<br />light direction
         </p>
