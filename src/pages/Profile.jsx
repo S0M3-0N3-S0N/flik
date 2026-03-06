@@ -64,7 +64,7 @@ export default function Profile() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParams.get('q') || "");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [filterType, setFilterType] = useState(searchParams.get('type') || "image");
+  const [filterType, setFilterType] = useState(searchParams.get('type') || "all");
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || "newest");
   const [dateFilter, setDateFilter] = useState(searchParams.get('date') || "all");
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
