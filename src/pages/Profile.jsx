@@ -356,7 +356,7 @@ export default function Profile() {
       setSelectedItem(null);
       setDeleteConfirm(null);
       
-      // Real undo with duplicate check
+      // Undo by recreating the item
       toast((t) => (
         <div className="flex items-center gap-3">
           <span>Creation deleted</span>
@@ -364,13 +364,6 @@ export default function Profile() {
             size="sm"
             onClick={async () => {
               try {
-                // Check if item still exists
-                const exists = await base44.entities.Creation.filter({ id: itemToDelete.id });
-                if (exists.length > 0) {
-                  toast.error('Item already exists', { id: t.id });
-                  return;
-                }
-                
                 const { id, created_date, updated_date, created_by, ...dataWithoutMeta } = itemToDelete;
                 await base44.entities.Creation.create(dataWithoutMeta);
                 await queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
