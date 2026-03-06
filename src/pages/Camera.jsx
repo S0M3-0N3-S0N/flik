@@ -585,11 +585,11 @@ export default function CameraPage() {
       const shouldFlash = flashMode === 'on' || flashMode === 'auto';
       if (shouldFlash) {
         if (facingMode === 'user') {
-          // Front camera: use screen flash
-          setScreenFlash(3);
+          // Front camera: use screen flash with color
+          setScreenFlash(3, flashColorMode);
           setTimeout(() => {
             captureFrame();
-            setScreenFlash(0);
+            setScreenFlash(0, flashColorMode);
           }, 80);
         } else {
           // Rear camera: use torch
