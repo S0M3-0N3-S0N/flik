@@ -223,7 +223,7 @@ export default function ResultModal({
           </div>
           
           {/* Actions */}
-          <div className="flex flex-col-reverse sm:flex-row items-center justify-between p-4 sm:p-6 gap-4 border-t border-white/10 bg-[#141414] shrink-0" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-between p-4 sm:p-6 gap-4 border-t border-white/10 bg-[#141414] shrink-0">
             <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 variant="ghost"

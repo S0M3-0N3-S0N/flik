@@ -327,7 +327,10 @@ function LayoutContent({ children, currentPageName }) {
               <button
                 onClick={(e) => {
                   if (currentPageName === "Editor") {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (isChildRoute) {
+                      e.preventDefault();
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                   } else {
                     navigate(createPageUrl("Editor"));
                   }
@@ -345,7 +348,10 @@ function LayoutContent({ children, currentPageName }) {
               <button
                 onClick={(e) => {
                   if (currentPageName === "Generate") {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (isChildRoute) {
+                      e.preventDefault();
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                   } else {
                     navigate(createPageUrl("Generate"));
                   }
@@ -403,7 +409,10 @@ function LayoutContent({ children, currentPageName }) {
               <button
                 onClick={(e) => {
                   if (currentPageName === "Profile") {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (isChildRoute) {
+                      e.preventDefault();
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                   } else {
                     navigate(createPageUrl("Profile"));
                   }

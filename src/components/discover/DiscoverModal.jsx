@@ -445,7 +445,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             </div>
 
             {/* Recreate button - sticky at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 px-5 pt-3 bg-gradient-to-t from-[#111111] via-[#111111] to-transparent" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 pt-3 bg-gradient-to-t from-[#111111] via-[#111111] to-transparent">
               <button
                 onClick={handleRecreate}
                 className="w-full py-4 rounded-2xl font-bold text-base text-black flex items-center justify-center gap-2 transition-all active:scale-95"
