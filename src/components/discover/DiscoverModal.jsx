@@ -182,7 +182,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           onClick={e => e.stopPropagation()}
         >
           {/* Image */}
-          <div className="flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[92vh] relative">
+          <div className="flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[92vh] relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             <img
               src={current.url}
               alt={current.title || "Creation"}
