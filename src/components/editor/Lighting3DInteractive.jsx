@@ -110,40 +110,37 @@ export default function Lighting3DInteractive({ onSelect }) {
     animate();
 
     // Mouse interaction
-    const onMouseDown = (event) => {
-      setIsDragging(true);
-      handleMouseMove(event);
-    };
-
     const handleMouseMove = (event) => {
-      if (!isDragging) return;
+      if (!isDragging || !containerRef.current) return;
 
       const rect = containerRef.current.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-      raycaster.setFromCamera(mouse, camera);
-      const sphereGeometry = new THREE.IcosahedronGeometry(1.5, 4);
-      const sphere = new THREE.Mesh(sphereGeometry);
+      raycaster.setFromCamera(mouse, cameraRef.current);
       
-      const intersects = raycaster.ray.intersectSphere(new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1.5));
-      if (intersects) {
-        const point = intersects[0];
-        lightPosRef.current.copy(point);
+      const sphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1.5);
+      const intersectPoint = new THREE.Vector3();
+      raycaster.ray.intersectSphere(sphere, intersectPoint);
+      
+      if (intersectPoint) {
+        lightPosRef.current.copy(intersectPoint);
       }
     };
 
+    const onMouseDown = (event) => {
+      setIsDragging(true);
+    };
+
     const onMouseUp = () => {
-      if (isDragging) {
-        setIsDragging(false);
-        const prompt = getPromptFromPosition(lightPosRef.current);
-        onSelect({
-          id: "lighting",
-          label: "Fix Lighting",
-          prompt,
-          selectedAngle: "custom"
-        });
-      }
+      setIsDragging(false);
+      const prompt = getPromptFromPosition(lightPosRef.current);
+      onSelect({
+        id: "lighting",
+        label: "Fix Lighting",
+        prompt,
+        selectedAngle: "custom"
+      });
     };
 
     renderer.domElement.addEventListener("mousedown", onMouseDown);
