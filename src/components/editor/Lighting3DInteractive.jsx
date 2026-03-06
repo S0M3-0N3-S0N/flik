@@ -169,9 +169,11 @@ export default function Lighting3DInteractive({ onSelect }) {
       renderer.domElement.removeEventListener("touchstart", onMouseDown);
       renderer.domElement.removeEventListener("touchmove", handleMouseMove);
       renderer.domElement.removeEventListener("touchend", onMouseUp);
-      containerRef.current?.removeChild(renderer.domElement);
+      if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
     };
-  }, [isDragging, onSelect]);
+  }, [onSelect]);
 
   const getPromptFromPosition = (pos) => {
     const angle = Math.atan2(pos.x, pos.z) * (180 / Math.PI);
