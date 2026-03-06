@@ -61,7 +61,6 @@ export default function CameraPage() {
   const [facingMode, setFacingMode] = useState('environment');
   const [modeIndex, setModeIndex] = useState(0);
   const [flashMode, setFlashMode] = useState('off');
-  const [flashColorMode, setFlashColorMode] = useState('white');
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -276,17 +275,9 @@ export default function CameraPage() {
     track.applyConstraints({ advanced: [{ torch: on }] }).catch(() => {});
   }, []);
 
-  const setScreenFlash = useCallback((brightness, color = 'white') => {
+  const setScreenFlash = useCallback((brightness) => {
     if (videoRef.current) {
-      if (brightness > 0) {
-        let filter = `brightness(${brightness})`;
-        if (color === 'orange') filter += ' hue-rotate(30deg) saturate(1.5)';
-        else if (color === 'red') filter += ' hue-rotate(-10deg) saturate(1.8)';
-        else if (color === 'cyan') filter += ' hue-rotate(190deg) saturate(1.5)';
-        videoRef.current.style.filter = filter;
-      } else {
-        videoRef.current.style.filter = 'none';
-      }
+      videoRef.current.style.filter = brightness > 0 ? `brightness(${brightness})` : 'none';
     }
   }, []);
 
@@ -585,11 +576,11 @@ export default function CameraPage() {
       const shouldFlash = flashMode === 'on' || flashMode === 'auto';
       if (shouldFlash) {
         if (facingMode === 'user') {
-          // Front camera: use screen flash with color
-          setScreenFlash(3, flashColorMode);
+          // Front camera: use screen flash
+          setScreenFlash(3);
           setTimeout(() => {
             captureFrame();
-            setScreenFlash(0, flashColorMode);
+            setScreenFlash(0);
           }, 80);
         } else {
           // Rear camera: use torch
@@ -705,7 +696,6 @@ export default function CameraPage() {
     flipCamera: () => flipCamera(),
     setFlashMode: (mode) => setFlashMode(mode),
     toggleFlash: () => setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'),
-    setFlashColor: (color) => setFlashColorMode(color),
     setZoom: (val) => applyZoom(val),
     setZoomPreset: (preset) => setZoomPreset(preset),
     toggleGrid: () => dispatchSettings({ key: 'showGrid', value: !settings.showGrid }),
@@ -733,7 +723,6 @@ export default function CameraPage() {
     orientation,
     supported,
     faceTrackingEnabled,
-    flashColorMode,
     }));
 
   return (
@@ -898,29 +887,10 @@ export default function CameraPage() {
               <span style={iconRot}><X className="w-5 h-5 text-white" /></span>
             </motion.button>
 
-            <div className="flex items-center gap-2">
-              <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'); }}
-                className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-                <span style={iconRot}>{flashIcon[flashMode]}</span>
-              </motion.button>
-              {flashMode !== 'off' && (
-                <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
-                  {['white', 'orange', 'red', 'cyan'].map(color => (
-                    <motion.button
-                      key={color}
-                      whileTap={{ scale: 0.85 }}
-                      onClick={() => { haptic(6); setFlashColorMode(color); }}
-                      className={`w-5 h-5 rounded-full transition-all border-2 ${
-                        flashColorMode === color ? 'border-white' : 'border-white/20'
-                      }`}
-                      style={{
-                        backgroundColor: color === 'white' ? 'white' : color === 'orange' ? '#FF6B35' : color === 'red' ? '#FF2442' : '#00BFFF'
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            <motion.button whileTap={{ scale: 0.85 }} onClick={() => { haptic(8); setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'); }}
+              className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
+              <span style={iconRot}>{flashIcon[flashMode]}</span>
+            </motion.button>
 
             <div className="flex items-center gap-3">
               {settings.timer > 0 && (
