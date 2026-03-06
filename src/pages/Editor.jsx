@@ -1180,7 +1180,7 @@ export default function Editor() {
     }
   }, [activeTab]);
 
-  const getFilterStyle = useMemo(() => {
+  const filterStyle = useMemo(() => {
     if (!currentImage || currentImage.preview === null) return "none";
     const filters = [];
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
@@ -1194,17 +1194,13 @@ export default function Editor() {
     return filters.length > 0 ? filters.join(" ") : "none";
   }, [adjustments, selectedFilter, currentImage]);
 
-  const getTransformStyle = useMemo(() => {
+  const transformStyle = useMemo(() => {
     const transforms = [];
     if (transform.rotate !== 0) transforms.push(`rotate(${transform.rotate}deg)`);
     if (transform.flipH) transforms.push(`scaleX(-1)`);
     if (transform.flipV) transforms.push(`scaleY(-1)`);
     return transforms.length > 0 ? transforms.join(" ") : "none";
   }, [transform]);
-
-  // memoized filter/transform values for rendering
-  const filterStyle = getFilterStyle;
-  const transformStyle = getTransformStyle;
 
   return (
     <div className="h-[calc(100dvh-4rem)] flex flex-col lg:flex-row overflow-hidden">
