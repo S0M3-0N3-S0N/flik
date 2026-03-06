@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Sparkles, Loader2, Globe, Zap } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import DiscoverCard from "@/components/discover/DiscoverCard";
 import DiscoverModal from "@/components/discover/DiscoverModal";
 
 export default function Discover() {
-  const queryClient = useQueryClient();
   const [selectedCreation, setSelectedCreation] = useState(null);
-  
-  // Handle shared links: ?discover=creationId
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const discoverParam = params.get('discover');
-    if (discoverParam && creations.length > 0 && !selectedCreation) {
-      const found = creations.find(c => c.id === discoverParam);
-      if (found) setSelectedCreation(found);
-    }
-  }, [creations]);
 
   useEffect(() => {
     if (selectedCreation) {
@@ -50,7 +39,7 @@ export default function Discover() {
   // Load like counts
   useEffect(() => {
     if (!creations.length) return;
-    base44.entities.Like.list("-created_date", 1000).then((likes) => {
+    base44.entities.Like.list("-created_date", 500).then((likes) => {
       const counts = {};
       const myLikes = {};
       (likes || []).forEach((like) => {
@@ -123,20 +112,7 @@ export default function Discover() {
         <DiscoverModal
           creation={selectedCreation}
           creations={creations}
-          onClose={() => {
-            setSelectedCreation(null);
-            // Refresh like counts when modal closes
-            base44.entities.Like.list("-created_date", 1000).then((likes) => {
-              const counts = {};
-              const myLikes = {};
-              (likes || []).forEach((like) => {
-                counts[like.creation_id] = (counts[like.creation_id] || 0) + 1;
-                if (like.user_email === user?.email) myLikes[like.creation_id] = true;
-              });
-              setLikeCounts(counts);
-              setLikedByMe(myLikes);
-            });
-          }}
+          onClose={() => setSelectedCreation(null)}
           currentUser={user}
         />
       )}

@@ -31,18 +31,22 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   useEffect(() => {
     if (!current?.created_by) return;
-    // Only fetch UserProfile - avoids admin-only User entity access issue
-    base44.entities.UserProfile.filter({ email: current.created_by })
-      .then((profiles) => {
-        const profile = profiles?.[0] || null;
-        setCreatorProfile({
-          profile_picture: profile?.profile_picture || null,
-          display_name: profile?.full_name || current.created_by?.split("@")[0],
-        });
-      })
-      .catch(() => {
-        setCreatorProfile({ display_name: current.created_by?.split("@")[0], profile_picture: null });
+    // Fetch both UserProfile (for display name/bio) and User (for profile picture)
+    Promise.all([
+      base44.entities.UserProfile.filter({ email: current.created_by }),
+      base44.entities.User.filter({ email: current.created_by })
+    ]).then(([profiles, users]) => {
+      const profile = profiles?.[0] || null;
+      const user = users?.[0] || null;
+      setCreatorProfile({
+        ...(user || {}),
+        ...(profile || {}),
+        // UserProfile fields take priority, but use User's profile_picture if UserProfile doesn't have one
+        profile_picture: profile?.profile_picture || user?.profile_picture || null,
+        // full_name from UserProfile if set, otherwise from User
+        display_name: profile?.full_name || user?.full_name || current.created_by?.split("@")[0],
       });
+    });
   }, [current?.created_by]);
 
   const handleLike = async () => {
@@ -68,18 +72,19 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   const handleShare = async () => {
     const url = `${window.location.origin}${window.location.pathname}?discover=${current.id}`;
-    let succeeded = false;
+    let copied = false;
     if (navigator.share) {
       try {
         await navigator.share({ url });
-        succeeded = true;
+        copied = true;
       } catch {}
     }
-    if (!succeeded) {
+    if (!copied) {
       try {
         await navigator.clipboard.writeText(url);
-        succeeded = true;
+        copied = true;
       } catch {
+        // fallback
         const el = document.createElement("textarea");
         el.value = url;
         el.style.position = "fixed";
@@ -87,12 +92,12 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
         document.body.appendChild(el);
         el.focus();
         el.select();
-        try { document.execCommand("copy"); succeeded = true; } catch {}
+        try { document.execCommand("copy"); copied = true; } catch {}
         document.body.removeChild(el);
       }
     }
-    if (succeeded) {
-      base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" }).catch(() => {});
+    if (copied) {
+      base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" });
       toast.success("Link copied!");
     } else {
       toast.error("Could not copy link");
@@ -114,9 +119,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
   const handleRecreate = () => {
     if (!current?.prompt) return;
     onClose();
-    const params = new URLSearchParams();
-    params.set('prompt', current.prompt);
-    navigate(createPageUrl("Generate") + '?' + params.toString());
+    navigate(createPageUrl("Generate") + `?prompt=${encodeURIComponent(current.prompt)}`);
   };
 
   const navigateCreation = (dir) => {
@@ -150,13 +153,13 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === "ArrowRight") setCurrentIndex(prev => Math.min(prev + 1, creations.length - 1));
-      if (e.key === "ArrowLeft") setCurrentIndex(prev => Math.max(prev - 1, 0));
+      if (e.key === "ArrowRight") navigateCreation(1);
+      if (e.key === "ArrowLeft") navigateCreation(-1);
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [creations?.length, onClose]);
+  }, [creations?.length]);
 
   if (!current) return null;
 

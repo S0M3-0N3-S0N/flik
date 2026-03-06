@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock, Type, Paintbrush, Droplet, Zap, Hand } from "lucide-react";
@@ -767,10 +767,7 @@ export default function Editor() {
       if (!uploadResult?.file_url) throw new Error('Upload failed');
       await base44.entities.Creation.create({
         title: `Edited Image (${new Date().toLocaleString()})`,
-        type: 'image',
-        url: uploadResult.file_url,
-        thumbnail_url: uploadResult.file_url,
-        published_to_discover: false,
+        type: 'image', url: uploadResult.file_url, thumbnail_url: uploadResult.file_url
       });
       toast.success('Saved to Gallery!');
     } catch (err) {
@@ -1180,7 +1177,7 @@ export default function Editor() {
     }
   }, [activeTab]);
 
-  const filterStyle = useMemo(() => {
+  const getFilterStyle = useCallback(() => {
     if (!currentImage || currentImage.preview === null) return "none";
     const filters = [];
     if (adjustments.brightness !== 0) filters.push(`brightness(${100 + adjustments.brightness}%)`);
@@ -1194,7 +1191,7 @@ export default function Editor() {
     return filters.length > 0 ? filters.join(" ") : "none";
   }, [adjustments, selectedFilter, currentImage]);
 
-  const transformStyle = useMemo(() => {
+  const getTransformStyle = useCallback(() => {
     const transforms = [];
     if (transform.rotate !== 0) transforms.push(`rotate(${transform.rotate}deg)`);
     if (transform.flipH) transforms.push(`scaleX(-1)`);
@@ -1439,7 +1436,7 @@ export default function Editor() {
                    src={currentImage.preview || currentImage.url}
                    alt="Editor"
                    className={`block max-w-none rounded-lg md:rounded-2xl shadow-2xl ${(activeTab === "remove" || activeTab === "paint") && !isSpacePressed && !isPanToolActive ? "cursor-none" : isCropping ? "cursor-move" : ""}`}
-                   style={{ filter: filterStyle, transform: transformStyle }}
+                   style={{ filter: getFilterStyle(), transform: getTransformStyle() }}
                    draggable={false}
                    crossOrigin="anonymous"
                    onLoad={() => { if (needsFit) { setNeedsFit(false); setNeedsFit(true); } }}

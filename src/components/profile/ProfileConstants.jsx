@@ -1,3 +1,4 @@
+
 // Profile Page Constants
 
 export const ITEMS_PER_PAGE = 20;
@@ -20,7 +21,6 @@ export const DATE_FILTERS = [
 ];
 
 export const FILTER_TYPES = [
-  { value: 'all', label: 'All' },
   { value: 'image', label: 'Images' },
   { value: 'video', label: 'Videos' }
 ];

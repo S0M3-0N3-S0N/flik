@@ -254,7 +254,7 @@ export default function CameraPage() {
         try { t.stop(); } catch (e) { /* ignore */ }
       });
       clearInterval(timerRef.current);
-      clearInterval(countdownTimerRef.current);
+      clearTimeout(countdownTimerRef.current);
       clearTimeout(tapTimeoutRef.current);
       clearTimeout(exposureThrottleRef.current);
       clearTimeout(longPressRef.current);
@@ -460,7 +460,7 @@ export default function CameraPage() {
     haptic(12);
     if (isRecording) stopRecording();
     if (countdown > 0) {
-      clearInterval(countdownTimerRef.current);
+      clearTimeout(countdownTimerRef.current);
       setCountdown(0);
     }
     setModeIndex(idx);
@@ -488,12 +488,11 @@ export default function CameraPage() {
     countdownTimerRef.current = setInterval(() => {
       remaining -= 1;
       haptic(20);
+      setCountdown(remaining);
       if (remaining <= 0) {
         clearInterval(countdownTimerRef.current);
         setCountdown(0);
         action();
-      } else {
-        setCountdown(remaining);
       }
     }, 1000);
   };
@@ -529,39 +528,6 @@ export default function CameraPage() {
       ctx.putImageData(imageData, 0, 0);
     }
 
-    // Bake vintage timestamp onto the photo if enabled
-    if (showTimestamp) {
-      const now = new Date();
-      const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-      const month = months[now.getMonth()];
-      const day = String(now.getDate()).padStart(2, "0");
-      const year = now.getFullYear();
-      let hours = now.getHours();
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
-      const hoursStr = String(hours).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-
-      const fontSize = Math.round(canvas.width * 0.04);
-      ctx.font = `bold ${fontSize}px "Courier New", Courier, monospace`;
-      ctx.textAlign = "right";
-      ctx.letterSpacing = "0.05em";
-
-      const line1 = `${month}.${day} ${year}`;
-      const line2 = `${hoursStr}:${minutes} ${ampm}`;
-      const x = canvas.width - Math.round(canvas.width * 0.025);
-      const y1 = canvas.height - Math.round(canvas.height * 0.1);
-      const y2 = canvas.height - Math.round(canvas.height * 0.055);
-
-      // Glow/shadow for vintage effect
-      ctx.shadowColor = "rgba(255, 180, 0, 0.9)";
-      ctx.shadowBlur = Math.round(fontSize * 0.5);
-      ctx.fillStyle = "#FFD700";
-      ctx.fillText(line1, x, y1);
-      ctx.fillText(line2, x, y2);
-      ctx.shadowBlur = 0;
-    }
-
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     setPhoto(dataUrl);
     setSavedPhoto(null);
@@ -569,22 +535,22 @@ export default function CameraPage() {
       setTorch(false);
       setScreenFlash(0);
     }
-  }, [exposure, exposureCaps, flashMode, facingMode, setTorch, setScreenFlash, showTimestamp]);
+  }, [exposure, exposureCaps, flashMode, facingMode, setTorch, setScreenFlash]);
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
-    // Prevent double-tap from spawning two countdowns
-    if (countdown > 0) return;
     runCountdown(() => {
-      const shouldFlash = flashMode === 'on';
+      const shouldFlash = flashMode === 'on' || flashMode === 'auto';
       if (shouldFlash) {
         if (facingMode === 'user') {
+          // Front camera: use screen flash
           setScreenFlash(3);
           setTimeout(() => {
             captureFrame();
             setScreenFlash(0);
           }, 80);
         } else {
+          // Rear camera: use torch
           setTorch(true);
           setTimeout(captureFrame, 100);
         }
@@ -611,8 +577,7 @@ export default function CameraPage() {
         url: file_url,
         thumbnail_url: file_url,
         title: `Photo ${new Date().toLocaleDateString()}`,
-        published_to_discover: false,
-        metadata: { source: 'camera', facing_mode: facingMode, vintage_timestamp: showTimestamp },
+        metadata: { source: 'camera', facing_mode: facingMode },
       });
 
       queryClient.invalidateQueries({ queryKey: ['creations'] });
@@ -637,7 +602,7 @@ export default function CameraPage() {
     clearInterval(timerRef.current);
   };
 
-  const retake = useCallback(() => {
+  const retake = () => {
     setPhoto(null);
     setSavedPhoto(null);
     setExposure(0);
@@ -647,7 +612,7 @@ export default function CameraPage() {
     }
     setZoomValue(1);
     startCamera(facingMode);
-  }, [facingMode, startCamera]);
+  };
 
   const flipCamera = () => {
     haptic(10);
@@ -692,9 +657,9 @@ export default function CameraPage() {
 
   // Give FLIK full camera control
   useFlikActions('Camera', {
-    takePhoto,
-    savePhoto,
-    retake,
+    takePhoto: () => takePhoto(),
+    savePhoto: () => savePhoto(),
+    retake: () => retake(),
     flipCamera: () => flipCamera(),
     setFlashMode: (mode) => setFlashMode(mode),
     toggleFlash: () => setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'),
@@ -806,8 +771,8 @@ export default function CameraPage() {
         {/* Camera Guidance */}
         {!photo && settings.cameraGuidance && <CameraGuidance videoRef={videoRef} isActive={hasStream && !photo} />}
 
-        {/* Face tracker - pause when photo is taken */}
-        {!photo && faceTrackingEnabled && hasStream && <FaceTracker
+        {/* Face tracker */}
+        {!photo && faceTrackingEnabled && <FaceTracker
           videoRef={videoRef}
           isActive={hasStream && !photo}
           mirrored={facingMode === 'user'}

@@ -64,7 +64,7 @@ export default function Profile() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParams.get('q') || "");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [filterType, setFilterType] = useState(searchParams.get('type') || "all");
+  const [filterType, setFilterType] = useState(searchParams.get('type') || "image");
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || "newest");
   const [dateFilter, setDateFilter] = useState(searchParams.get('date') || "all");
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
@@ -269,10 +269,14 @@ export default function Profile() {
   };
 
   const handleLogout = async () => {
-    // Clear only FLIK-specific keys, not all localStorage
-    ['flik_button_position', 'theme', 'app_language', 'profile_stats_expanded'].forEach(key => {
-      localStorage.removeItem(key);
-    });
+    // Clear local state
+    setSearchQuery("");
+    setSelectedItems([]);
+    setSelectedItem(null);
+    setEditingTitle(null);
+    setEditingPrompt(null);
+    setDeleteConfirm(null);
+    localStorage.clear();
     sessionStorage.clear();
     await base44.auth.logout();
   };
@@ -352,7 +356,7 @@ export default function Profile() {
       setSelectedItem(null);
       setDeleteConfirm(null);
       
-      // Undo by recreating the item
+      // Real undo with duplicate check
       toast((t) => (
         <div className="flex items-center gap-3">
           <span>Creation deleted</span>
@@ -360,6 +364,13 @@ export default function Profile() {
             size="sm"
             onClick={async () => {
               try {
+                // Check if item still exists
+                const exists = await base44.entities.Creation.filter({ id: itemToDelete.id });
+                if (exists.length > 0) {
+                  toast.error('Item already exists', { id: t.id });
+                  return;
+                }
+                
                 const { id, created_date, updated_date, created_by, ...dataWithoutMeta } = itemToDelete;
                 await base44.entities.Creation.create(dataWithoutMeta);
                 await queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
@@ -378,13 +389,21 @@ export default function Profile() {
     }
   };
 
-  const handleBatchDelete = useCallback(() => {
+  const handleBatchDelete = () => {
     if (selectedItems.length === 0) return;
     setDeleteConfirm('batch');
-  }, [selectedItems.length]);
+  };
 
   const confirmBatchDelete = async () => {
    const total = selectedItems.length;
+
+   // Warning for large bulk operations
+   if (total > BATCH_DELETE_WARNING_THRESHOLD) {
+     if (!window.confirm(`You're about to delete ${total} items. This may take a while. Continue?`)) {
+       setDeleteConfirm(null);
+       return;
+     }
+   }
 
    setIsBatchDeleting(true);
    setBatchDeleteProgress(0);
@@ -392,9 +411,8 @@ export default function Profile() {
    const toastId = toast.loading(`Deleting 0/${total} items...`);
 
    let failed = 0;
-   const isBatchDeletingRef = { current: true };
    const timeout = setTimeout(() => {
-     if (isBatchDeletingRef.current) {
+     if (isBatchDeleting) {
        toast.error('Batch delete timed out. Some items may not have been deleted.', { id: toastId });
        setIsBatchDeleting(false);
        setDeleteConfirm(null);
@@ -414,7 +432,6 @@ export default function Profile() {
    }
 
    clearTimeout(timeout);
-   isBatchDeletingRef.current = false;
     
     if (failed === 0) {
       toast.success(`${total} ${total === 1 ? 'item' : 'items'} deleted successfully`, { id: toastId });
@@ -1137,13 +1154,13 @@ export default function Profile() {
                               <span className="hidden sm:inline">Imagine</span>
                             </Button>
                             <Button
-                             size="sm"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               handleDelete(item.id);
-                             }}
-                             className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
-                             title="Delete image"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteMutation.mutate(item.id);
+                              }}
+                              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
+                              title="Delete image"
                             >
                               <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               <span className="hidden sm:inline">Delete</span>
