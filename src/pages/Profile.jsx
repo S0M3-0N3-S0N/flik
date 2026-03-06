@@ -418,6 +418,7 @@ export default function Profile() {
    }
 
    clearTimeout(timeout);
+   isBatchDeletingRef.current = false;
     
     if (failed === 0) {
       toast.success(`${total} ${total === 1 ? 'item' : 'items'} deleted successfully`, { id: toastId });
