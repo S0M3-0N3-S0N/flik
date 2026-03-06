@@ -382,10 +382,10 @@ export default function Profile() {
     }
   };
 
-  const handleBatchDelete = () => {
+  const handleBatchDelete = useCallback(() => {
     if (selectedItems.length === 0) return;
     setDeleteConfirm('batch');
-  };
+  }, [selectedItems.length]);
 
   const confirmBatchDelete = async () => {
    const total = selectedItems.length;
