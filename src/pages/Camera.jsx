@@ -61,6 +61,7 @@ export default function CameraPage() {
   const [facingMode, setFacingMode] = useState('environment');
   const [modeIndex, setModeIndex] = useState(0);
   const [flashMode, setFlashMode] = useState('off');
+  const [flashColorMode, setFlashColorMode] = useState('white');
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
