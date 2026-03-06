@@ -3,135 +3,56 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Sun } from "lucide-react";
 import Lighting3DInteractive from "./Lighting3DInteractive";
 
-const LIGHTING_ANGLES = [
-  {
-    id: "top",
-    label: "Top",
-    prompt: "Apply top-down lighting to this image, create dramatic shadows under features, studio-style overhead light, emphasize depth and contours"
-  },
-  {
-    id: "front",
-    label: "Front",
-    prompt: "Apply even front lighting to this image, flattering soft light from the front, minimal harsh shadows, perfectly balanced illumination"
-  },
-  {
-    id: "right",
-    label: "Right",
-    prompt: "Apply right-side lighting to this image, strong light from the right, emphasize texture and depth, create modeling shadows on the left"
-  },
-  {
-    id: "left",
-    label: "Left",
-    prompt: "Apply left-side lighting to this image, strong light from the left, emphasize texture and dimension, create shadows on the right side"
-  },
-  {
-    id: "back",
-    label: "Back",
-    prompt: "Apply backlit effect to this image, rim lighting around the edges, subject glowing against darker background, dramatic separation from background"
-  },
-  {
-    id: "bottom",
-    label: "Bottom",
-    prompt: "Apply bottom-up lighting to this image, dramatic uplighting effect, create moody atmospheric shadows, theatrical lighting style"
-  }
-];
-
 export default function LightingAngleOptions({ onSelect, onBack }) {
   const [selectedAngle, setSelectedAngle] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [rotation, setRotation] = useState(0);
-  const containerRef = React.useRef(null);
+
+  const LIGHTING_ANGLES = [
+    {
+      id: "top",
+      label: "Top",
+      prompt: "Apply top-down lighting to this image, create dramatic shadows under features, studio-style overhead light, emphasize depth and contours"
+    },
+    {
+      id: "front",
+      label: "Front",
+      prompt: "Apply even front lighting to this image, flattering soft light from the front, minimal harsh shadows, perfectly balanced illumination"
+    },
+    {
+      id: "right",
+      label: "Right",
+      prompt: "Apply right-side lighting to this image, strong light from the right, emphasize texture and depth, create modeling shadows on the left"
+    },
+    {
+      id: "left",
+      label: "Left",
+      prompt: "Apply left-side lighting to this image, strong light from the left, emphasize texture and dimension, create shadows on the right side"
+    },
+    {
+      id: "back",
+      label: "Back",
+      prompt: "Apply backlit effect to this image, rim lighting around the edges, subject glowing against darker background, dramatic separation from background"
+    },
+    {
+      id: "bottom",
+      label: "Bottom",
+      prompt: "Apply bottom-up lighting to this image, dramatic uplighting effect, create moody atmospheric shadows, theatrical lighting style"
+    }
+  ];
 
   const handleSelect = (angle) => {
     setSelectedAngle(angle.id);
-    const tool = {
+    onSelect({
       id: "lighting",
       label: "Fix Lighting",
       prompt: angle.prompt,
       selectedAngle: angle.id
-    };
-    onSelect(tool);
+    });
   };
 
-  const getAngleFromCoords = (clientX, clientY) => {
-    if (!containerRef.current) return rotation;
-    const rect = containerRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
-    return angle + 90;
-  };
-
-  const getPromptFromAngle = (angle) => {
-    const normalized = ((angle % 360) + 360) % 360;
-    if (normalized >= 315 || normalized < 45) return LIGHTING_ANGLES[1].prompt;
-    if (normalized >= 45 && normalized < 135) return LIGHTING_ANGLES[2].prompt;
-    if (normalized >= 135 && normalized < 225) return LIGHTING_ANGLES[0].prompt;
-    if (normalized >= 225 && normalized < 315) return LIGHTING_ANGLES[4].prompt;
-    return LIGHTING_ANGLES[1].prompt;
-  };
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
+  const handle3DSelect = (tool) => {
     setSelectedAngle(null);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    const newRotation = getAngleFromCoords(e.clientX, e.clientY);
-    setRotation(newRotation);
-  };
-
-  const handleMouseUp = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    const tool = {
-      id: "lighting",
-      label: "Fix Lighting",
-      prompt: getPromptFromAngle(rotation),
-      selectedAngle: "custom"
-    };
     onSelect(tool);
   };
-
-  const handleTouchStart = (e) => {
-    setIsDragging(true);
-    setSelectedAngle(null);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDragging) return;
-    const touch = e.touches[0];
-    const newRotation = getAngleFromCoords(touch.clientX, touch.clientY);
-    setRotation(newRotation);
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    const tool = {
-      id: "lighting",
-      label: "Fix Lighting",
-      prompt: getPromptFromAngle(rotation),
-      selectedAngle: "custom"
-    };
-    onSelect(tool);
-  };
-
-  React.useEffect(() => {
-    if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-      window.addEventListener("touchmove", handleTouchMove);
-      window.addEventListener("touchend", handleTouchEnd);
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-        window.removeEventListener("touchmove", handleTouchMove);
-        window.removeEventListener("touchend", handleTouchEnd);
-      };
-    }
-  }, [isDragging, rotation]);
 
   return (
     <div className="py-6 px-4 space-y-6">
