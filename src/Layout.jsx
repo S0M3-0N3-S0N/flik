@@ -307,7 +307,7 @@ function LayoutContent({ children, currentPageName }) {
 
         
         {/* Main Content */}
-        <main style={{ paddingBottom: currentPageName !== "Camera" ? 'calc(70px + env(safe-area-inset-bottom))' : '0' }}>
+        <main className="md:pt-20" style={{ paddingBottom: currentPageName !== "Camera" ? 'calc(70px + env(safe-area-inset-bottom))' : '0' }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
