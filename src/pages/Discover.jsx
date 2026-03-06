@@ -113,7 +113,20 @@ export default function Discover() {
         <DiscoverModal
           creation={selectedCreation}
           creations={creations}
-          onClose={() => setSelectedCreation(null)}
+          onClose={() => {
+            setSelectedCreation(null);
+            // Refresh like counts when modal closes
+            base44.entities.Like.list("-created_date", 1000).then((likes) => {
+              const counts = {};
+              const myLikes = {};
+              (likes || []).forEach((like) => {
+                counts[like.creation_id] = (counts[like.creation_id] || 0) + 1;
+                if (like.user_email === user?.email) myLikes[like.creation_id] = true;
+              });
+              setLikeCounts(counts);
+              setLikedByMe(myLikes);
+            });
+          }}
           currentUser={user}
         />
       )}
