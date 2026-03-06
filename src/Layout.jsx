@@ -230,7 +230,7 @@ function LayoutContent({ children, currentPageName }) {
         <MobileHeader currentPageName={currentPageName} />
 
         {/* Top Desktop Navigation */}
-        <nav className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl ${currentPageName === 'Camera' ? 'hidden' : 'hidden md:flex'}`} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <nav className="hidden"> style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="w-full flex items-center justify-center px-8 py-4 relative">
             <div className="absolute left-8 gradient-text font-bold text-lg tracking-wider">FLIK</div>
             
