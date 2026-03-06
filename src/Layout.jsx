@@ -47,7 +47,19 @@ function LayoutContent({ children, currentPageName }) {
   useEffect(() => {
     let isMounted = true;
     base44.auth.me()
-      .then(u => isMounted && setUser(u))
+      .then(async u => {
+        if (!isMounted) return;
+        setUser(u);
+        // Fetch UserProfile for profile picture
+        if (u?.email) {
+          try {
+            const profiles = await base44.entities.UserProfile.filter({ email: u.email });
+            if (isMounted && profiles?.[0]?.profile_picture) {
+              setUser(prev => prev ? { ...prev, profile_picture: profiles[0].profile_picture } : prev);
+            }
+          } catch {}
+        }
+      })
       .catch(() => {});
     return () => { isMounted = false; };
   }, []);
