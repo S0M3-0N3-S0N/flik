@@ -68,19 +68,18 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   const handleShare = async () => {
     const url = `${window.location.origin}${window.location.pathname}?discover=${current.id}`;
-    let copied = false;
+    let succeeded = false;
     if (navigator.share) {
       try {
         await navigator.share({ url });
-        copied = true;
+        succeeded = true;
       } catch {}
     }
-    if (!copied) {
+    if (!succeeded) {
       try {
         await navigator.clipboard.writeText(url);
-        copied = true;
+        succeeded = true;
       } catch {
-        // fallback
         const el = document.createElement("textarea");
         el.value = url;
         el.style.position = "fixed";
@@ -88,12 +87,12 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
         document.body.appendChild(el);
         el.focus();
         el.select();
-        try { document.execCommand("copy"); copied = true; } catch {}
+        try { document.execCommand("copy"); succeeded = true; } catch {}
         document.body.removeChild(el);
       }
     }
-    if (copied) {
-      base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" });
+    if (succeeded) {
+      base44.entities.Share.create({ creation_id: current.id, user_email: currentUser?.email, platform: "link_copy" }).catch(() => {});
       toast.success("Link copied!");
     } else {
       toast.error("Could not copy link");
