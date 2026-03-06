@@ -276,9 +276,17 @@ export default function CameraPage() {
     track.applyConstraints({ advanced: [{ torch: on }] }).catch(() => {});
   }, []);
 
-  const setScreenFlash = useCallback((brightness) => {
+  const setScreenFlash = useCallback((brightness, color = 'white') => {
     if (videoRef.current) {
-      videoRef.current.style.filter = brightness > 0 ? `brightness(${brightness})` : 'none';
+      if (brightness > 0) {
+        let filter = `brightness(${brightness})`;
+        if (color === 'orange') filter += ' hue-rotate(30deg) saturate(1.5)';
+        else if (color === 'red') filter += ' hue-rotate(-10deg) saturate(1.8)';
+        else if (color === 'cyan') filter += ' hue-rotate(190deg) saturate(1.5)';
+        videoRef.current.style.filter = filter;
+      } else {
+        videoRef.current.style.filter = 'none';
+      }
     }
   }, []);
 
