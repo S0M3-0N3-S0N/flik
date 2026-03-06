@@ -153,13 +153,13 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === "ArrowRight") navigateCreation(1);
-      if (e.key === "ArrowLeft") navigateCreation(-1);
+      if (e.key === "ArrowRight") setCurrentIndex(prev => Math.min(prev + 1, creations.length - 1));
+      if (e.key === "ArrowLeft") setCurrentIndex(prev => Math.max(prev - 1, 0));
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [creations?.length]);
+  }, [creations?.length, onClose]);
 
   if (!current) return null;
 
