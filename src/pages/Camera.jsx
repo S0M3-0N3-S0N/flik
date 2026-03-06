@@ -637,7 +637,7 @@ export default function CameraPage() {
     clearInterval(timerRef.current);
   };
 
-  const retake = () => {
+  const retake = useCallback(() => {
     setPhoto(null);
     setSavedPhoto(null);
     setExposure(0);
@@ -647,7 +647,7 @@ export default function CameraPage() {
     }
     setZoomValue(1);
     startCamera(facingMode);
-  };
+  }, [facingMode, startCamera]);
 
   const flipCamera = () => {
     haptic(10);
