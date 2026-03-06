@@ -574,7 +574,7 @@ export default function CameraPage() {
   const takePhoto = () => {
     haptic([10, 5, 30]);
     runCountdown(() => {
-      const shouldFlash = flashMode === 'on' || flashMode === 'auto';
+      const shouldFlash = flashMode === 'on';
       if (shouldFlash) {
         if (facingMode === 'user') {
           // Front camera: use screen flash
