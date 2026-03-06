@@ -8,7 +8,7 @@ import { createPageUrl } from "@/utils";
 
 export default function DiscoverModal({ creation, creations, onClose, currentUser }) {
   const [currentIndex, setCurrentIndex] = useState(
-    creations?.findIndex(c => c.id === creation?.id) ?? 0
+    creations?.findIndex((c) => c.id === creation?.id) ?? 0
   );
   const [likes, setLikes] = useState([]);
   const [isLiked, setIsLiked] = useState(false);
@@ -22,9 +22,9 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   useEffect(() => {
     if (!current?.id) return;
-    base44.entities.Like.filter({ creation_id: current.id }).then(data => {
+    base44.entities.Like.filter({ creation_id: current.id }).then((data) => {
       setLikes(data || []);
-      setIsLiked((data || []).some(l => l.user_email === currentUser?.email));
+      setIsLiked((data || []).some((l) => l.user_email === currentUser?.email));
     });
     setPromptExpanded(false);
   }, [current?.id, currentUser?.email]);
@@ -33,9 +33,9 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
     if (!current?.created_by) return;
     // Fetch both UserProfile (for display name/bio) and User (for profile picture)
     Promise.all([
-      base44.entities.UserProfile.filter({ email: current.created_by }),
-      base44.entities.User.filter({ email: current.created_by })
-    ]).then(([profiles, users]) => {
+    base44.entities.UserProfile.filter({ email: current.created_by }),
+    base44.entities.User.filter({ email: current.created_by })]
+    ).then(([profiles, users]) => {
       const profile = profiles?.[0] || null;
       const user = users?.[0] || null;
       setCreatorProfile({
@@ -44,7 +44,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
         // UserProfile fields take priority, but use User's profile_picture if UserProfile doesn't have one
         profile_picture: profile?.profile_picture || user?.profile_picture || null,
         // full_name from UserProfile if set, otherwise from User
-        display_name: profile?.full_name || user?.full_name || current.created_by?.split("@")[0],
+        display_name: profile?.full_name || user?.full_name || current.created_by?.split("@")[0]
       });
     });
   }, [current?.created_by]);
@@ -54,13 +54,13 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
     setIsLiking(true);
     try {
       if (isLiked) {
-        const myLike = likes.find(l => l.user_email === currentUser.email);
+        const myLike = likes.find((l) => l.user_email === currentUser.email);
         if (myLike) await base44.entities.Like.delete(myLike.id);
-        setLikes(prev => prev.filter(l => l.user_email !== currentUser.email));
+        setLikes((prev) => prev.filter((l) => l.user_email !== currentUser.email));
         setIsLiked(false);
       } else {
         await base44.entities.Like.create({ creation_id: current.id, user_email: currentUser.email });
-        setLikes(prev => [...prev, { user_email: currentUser.email }]);
+        setLikes((prev) => [...prev, { user_email: currentUser.email }]);
         setIsLiked(true);
       }
     } catch (err) {
@@ -92,7 +92,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
         document.body.appendChild(el);
         el.focus();
         el.select();
-        try { document.execCommand("copy"); copied = true; } catch {}
+        try {document.execCommand("copy");copied = true;} catch {}
         document.body.removeChild(el);
       }
     }
@@ -123,7 +123,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
   };
 
   const navigateCreation = (dir) => {
-    setCurrentIndex(prev => {
+    setCurrentIndex((prev) => {
       const next = prev + dir;
       if (next < 0 || next >= creations.length) return prev;
       return next;
@@ -170,8 +170,8 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 bg-black/95 flex flex-col md:items-center md:justify-center md:p-4"
-        onClick={onClose}
-      >
+        onClick={onClose}>
+
         {/* ── DESKTOP LAYOUT ── */}
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -179,25 +179,25 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: "spring", damping: 25 }}
           className="hidden md:flex relative w-full max-w-4xl bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[92vh]"
-          onClick={e => e.stopPropagation()}
-        >
+          onClick={(e) => e.stopPropagation()}>
+
           {/* Image */}
           <div className="flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[92vh] relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             <img
               src={current.url}
               alt={current.title || "Creation"}
-              className="max-w-full max-h-[92vh] object-contain"
-            />
-            {currentIndex > 0 && (
-              <button onClick={() => navigateCreation(-1)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all">
+              className="max-w-full max-h-[92vh] object-contain" />
+
+            {currentIndex > 0 &&
+            <button onClick={() => navigateCreation(-1)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-            )}
-            {currentIndex < (creations?.length ?? 1) - 1 && (
-              <button onClick={() => navigateCreation(1)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all">
+            }
+            {currentIndex < (creations?.length ?? 1) - 1 &&
+            <button onClick={() => navigateCreation(1)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all">
                 <ChevronRight className="w-5 h-5" />
               </button>
-            )}
+            }
           </div>
 
           {/* Side Panel */}
@@ -205,11 +205,11 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
-                  {creatorProfile?.profile_picture ? (
-                    <img src={creatorProfile.profile_picture} alt="Creator" className="w-full h-full object-cover" />
-                  ) : (
-                    current.created_by?.[0]?.toUpperCase() || <User className="w-4 h-4" />
-                  )}
+                  {creatorProfile?.profile_picture ?
+                  <img src={creatorProfile.profile_picture} alt="Creator" className="w-full h-full object-cover" /> :
+
+                  current.created_by?.[0]?.toUpperCase() || <User className="w-4 h-4" />
+                  }
                 </div>
                 <div>
                   <p className="text-white text-sm font-semibold">{creatorProfile?.display_name || current.created_by?.split("@")[0] || "Creator"}</p>
@@ -221,8 +221,8 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {current.prompt && (
-                <div className="space-y-2">
+              {current.prompt &&
+              <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">⌘ Prompt</p>
                     <button onClick={handleCopyPrompt} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs transition-all">
@@ -234,32 +234,32 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
                     <p className="text-sm text-white/70 leading-relaxed">{current.prompt}</p>
                   </div>
                 </div>
-              )}
-              {current.metadata?.model && (
-                <div className="space-y-2">
+              }
+              {current.metadata?.model &&
+              <div className="space-y-2">
                   <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">ⓘ Information</p>
                   <div className="space-y-2 p-3 rounded-xl bg-white/5 border border-white/5">
-                    {current.metadata?.model && (
-                      <div className="flex justify-between text-sm">
+                    {current.metadata?.model &&
+                  <div className="flex justify-between text-sm">
                         <span className="text-white/50">Model</span>
                         <span className="text-white font-medium">{current.metadata.model}</span>
                       </div>
-                    )}
-                    {current.metadata?.style?.length > 0 && (
-                      <div className="flex justify-between text-sm">
+                  }
+                    {current.metadata?.style?.length > 0 &&
+                  <div className="flex justify-between text-sm">
                         <span className="text-white/50">Style</span>
                         <span className="text-white font-medium">{current.metadata.style.join(", ")}</span>
                       </div>
-                    )}
-                    {current.metadata?.aspectRatio && (
-                      <div className="flex justify-between text-sm">
+                  }
+                    {current.metadata?.aspectRatio &&
+                  <div className="flex justify-between text-sm">
                         <span className="text-white/50">Ratio</span>
                         <span className="text-white font-medium">{current.metadata.aspectRatio}</span>
                       </div>
-                    )}
+                  }
                   </div>
                 </div>
-              )}
+              }
             </div>
 
             <div className="px-4 py-3 border-t border-white/10 flex flex-col gap-2 flex-shrink-0">
@@ -268,16 +268,16 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
                   onClick={handleLike}
                   disabled={isLiking}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center ${
-                    isLiked ? "bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30" : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"
-                  }`}
-                >
+                  isLiked ? "bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30" : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"}`
+                  }>
+
                   <Heart className={`w-4 h-4 ${isLiked ? "fill-[#FF6B35]" : ""}`} />
                   <span>{likes.length}</span>
                 </button>
                 <button
                   onClick={handleShare}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition-all flex-1 justify-center"
-                >
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition-all flex-1 justify-center">
+
                   <Share2 className="w-4 h-4" />
                   Share
                 </button>
@@ -285,8 +285,8 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
               <button
                 onClick={handleRecreate}
                 className="w-full py-2.5 rounded-xl font-bold text-sm text-black flex items-center justify-center gap-2 transition-all hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)" }}
-              >
+                style={{ background: "linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)" }}>
+
                 <RefreshCw className="w-4 h-4" />
                 Recreate
               </button>
@@ -301,15 +301,15 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
           className="md:hidden flex flex-col w-full h-full"
-          onClick={e => e.stopPropagation()}
-        >
+          onClick={(e) => e.stopPropagation()}>
+
           {/* Image area - top ~55% */}
           <div className="relative flex-shrink-0" style={{ height: '55vh' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             <img
               src={current.url}
               alt={current.title || "Creation"}
-              className="w-full h-full object-cover"
-            />
+              className="w-full h-full object-cover" />
+
             {/* Gradient fade at bottom */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
 
@@ -317,8 +317,8 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
               <button
                 onClick={handleShare}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm font-medium border border-white/20"
-              >
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm font-medium border border-white/20">
+
                 <Share2 className="w-4 h-4" />
                 Share
               </button>
@@ -327,11 +327,11 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
                   onClick={handleLike}
                   disabled={isLiking}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full backdrop-blur-sm text-sm font-medium border transition-all ${
-                    isLiked
-                      ? "bg-[#FF6B35]/30 text-[#FF6B35] border-[#FF6B35]/50"
-                      : "bg-black/60 text-white border-white/20"
-                  }`}
-                >
+                  isLiked ?
+                  "bg-[#FF6B35]/30 text-[#FF6B35] border-[#FF6B35]/50" :
+                  "bg-black/60 text-white border-white/20"}`
+                  }>
+
                   <Heart className={`w-4 h-4 ${isLiked ? "fill-[#FF6B35]" : ""}`} />
                   <span>{likes.length}</span>
                 </button>
@@ -339,16 +339,16 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             </div>
 
             {/* Prev/Next arrows */}
-            {currentIndex > 0 && (
-              <button onClick={() => navigateCreation(-1)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 flex items-center justify-center text-white">
+            {currentIndex > 0 &&
+            <button onClick={() => navigateCreation(-1)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 flex items-center justify-center text-white">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-            )}
-            {currentIndex < (creations?.length ?? 1) - 1 && (
-              <button onClick={() => navigateCreation(1)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 flex items-center justify-center text-white">
+            }
+            {currentIndex < (creations?.length ?? 1) - 1 &&
+            <button onClick={() => navigateCreation(1)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 flex items-center justify-center text-white">
                 <ChevronRight className="w-5 h-5" />
               </button>
-            )}
+            }
           </div>
 
           {/* Bottom sheet */}
@@ -359,14 +359,14 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             </div>
 
             {/* Author row */}
-            <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
+            <div className="px-5 py-3 rounded-[10px] flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-sm font-bold overflow-hidden flex-shrink-0">
-                  {creatorProfile?.profile_picture ? (
-                    <img src={creatorProfile.profile_picture} alt="Creator" className="w-full h-full object-cover" />
-                  ) : (
-                    current.created_by?.[0]?.toUpperCase() || <User className="w-4 h-4" />
-                  )}
+                  {creatorProfile?.profile_picture ?
+                  <img src={creatorProfile.profile_picture} alt="Creator" className="w-full h-full object-cover" /> :
+
+                  current.created_by?.[0]?.toUpperCase() || <User className="w-4 h-4" />
+                  }
                 </div>
                 <div>
                   <p className="text-white font-semibold text-sm">{creatorProfile?.display_name || current.created_by?.split("@")[0] || "Creator"}</p>
@@ -380,16 +380,16 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {/* Prompt */}
-              {current.prompt && (
-                <div className="space-y-2">
+              {current.prompt &&
+              <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-bold text-white/50 uppercase tracking-widest flex items-center gap-1.5">
                       <span className="text-[#FF6B35]">⌘</span> Prompt
                     </p>
                     <button
-                      onClick={handleCopyPrompt}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition-all border border-white/10"
-                    >
+                    onClick={handleCopyPrompt}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition-all border border-white/10">
+
                       {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                       {copied ? "Copied!" : "Copy"}
                     </button>
@@ -398,47 +398,47 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
                     <p className={`text-sm text-white/70 leading-relaxed ${!promptExpanded ? "line-clamp-3" : ""}`}>
                       {current.prompt}
                     </p>
-                    {current.prompt.length > 120 && (
-                      <button
-                        onClick={() => setPromptExpanded(!promptExpanded)}
-                        className="flex items-center gap-1 mt-2 text-xs text-white/40 hover:text-white/60 transition-colors"
-                      >
+                    {current.prompt.length > 120 &&
+                  <button
+                    onClick={() => setPromptExpanded(!promptExpanded)}
+                    className="flex items-center gap-1 mt-2 text-xs text-white/40 hover:text-white/60 transition-colors">
+
                         {promptExpanded ? "Show less" : "See all"}
                         <ChevronDown className={`w-3 h-3 transition-transform ${promptExpanded ? "rotate-180" : ""}`} />
                       </button>
-                    )}
+                  }
                   </div>
                 </div>
-              )}
+              }
 
               {/* Info */}
-              {(current.metadata?.model || current.metadata?.style?.length > 0 || current.metadata?.aspectRatio) && (
-                <div className="space-y-2">
+              {(current.metadata?.model || current.metadata?.style?.length > 0 || current.metadata?.aspectRatio) &&
+              <div className="space-y-2">
                   <p className="text-xs font-bold text-white/50 uppercase tracking-widest flex items-center gap-1.5">
                     <span className="text-[#FF6B35]">ⓘ</span> Information
                   </p>
                   <div className="rounded-2xl bg-white/5 border border-white/5 divide-y divide-white/5">
-                    {current.metadata?.model && (
-                      <div className="flex justify-between items-center px-4 py-3">
+                    {current.metadata?.model &&
+                  <div className="flex justify-between items-center px-4 py-3">
                         <span className="text-sm text-white/50">Model</span>
                         <span className="text-sm text-white font-semibold">{current.metadata.model}</span>
                       </div>
-                    )}
-                    {current.metadata?.style?.length > 0 && (
-                      <div className="flex justify-between items-center px-4 py-3">
+                  }
+                    {current.metadata?.style?.length > 0 &&
+                  <div className="flex justify-between items-center px-4 py-3">
                         <span className="text-sm text-white/50">Style</span>
                         <span className="text-sm text-white font-semibold">{current.metadata.style.join(", ")}</span>
                       </div>
-                    )}
-                    {current.metadata?.aspectRatio && (
-                      <div className="flex justify-between items-center px-4 py-3">
+                  }
+                    {current.metadata?.aspectRatio &&
+                  <div className="flex justify-between items-center px-4 py-3">
                         <span className="text-sm text-white/50">Ratio</span>
                         <span className="text-sm text-white font-semibold">{current.metadata.aspectRatio}</span>
                       </div>
-                    )}
+                  }
                   </div>
                 </div>
-              )}
+              }
 
               {/* Spacer for recreate button */}
               <div className="h-16" />
@@ -449,8 +449,8 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
               <button
                 onClick={handleRecreate}
                 className="w-full py-4 rounded-2xl font-bold text-base text-black flex items-center justify-center gap-2 transition-all active:scale-95"
-                style={{ background: "linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)" }}
-              >
+                style={{ background: "linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)" }}>
+
                 <RefreshCw className="w-5 h-5" />
                 Recreate
               </button>
@@ -458,6 +458,6 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
-  );
+    </AnimatePresence>);
+
 }
