@@ -304,7 +304,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
           onClick={e => e.stopPropagation()}
         >
           {/* Image area - top ~55% */}
-          <div className="relative flex-shrink-0" style={{ height: '55vh' }}>
+          <div className="relative flex-shrink-0" style={{ height: '55vh' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             <img
               src={current.url}
               alt={current.title || "Creation"}
