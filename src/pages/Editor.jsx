@@ -1200,7 +1200,7 @@ export default function Editor() {
   }, [transform]);
 
   return (
-    <div className="h-screen w-screen flex flex-col lg:flex-row overflow-hidden">
+    <div className="fixed inset-0 flex flex-col lg:flex-row overflow-hidden">
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
