@@ -67,9 +67,6 @@ export default function Discover() {
           <p className="text-white/50 text-sm sm:text-base md:text-lg max-w-xl mx-auto leading-relaxed">
             Explore what creators are making with FLIK
           </p>
-          {!isLoading && creations.length > 0 && (
-            <p className="text-white/25 text-xs mt-3">{creations.length} creations</p>
-          )}
         </motion.div>
 
         {/* Grid */}
