@@ -34,7 +34,7 @@ export const STYLE_OPTIONS = [
   { id: "barbie", label: "Barbie", icon: Star, prompt: "Transform this image into Barbie doll style: pink glamorous aesthetic, perfect proportions, bright colors, dreamy plastic-toy look" },
   { id: "south_park", label: "South Park", icon: Tv, prompt: "Transform this image into South Park cartoon style: simple flat cut-paper look, basic geometric shapes, crude animation style matching the show" },
   { id: "family_guy", label: "Family Guy", icon: Smile, prompt: "Transform this image into Family Guy cartoon style: thick black outlines, simple round faces, flat colors, Seth MacFarlane animation aesthetic" },
-  { id: "simpsons", label: "Simpsons", icon: Smile, prompt: "Transform this image into The Simpsons cartoon style: yellow skin, overbite, simple features, bright flat colors, Matt Groening illustration style" },
+
   { id: "rick_morty", label: "Rick & Morty", icon: Cpu, prompt: "Transform this image into Rick and Morty cartoon style: simple line art, limited color palette, squiggly outlines, sci-fi adult animated aesthetic" },
   { id: "disney", label: "Disney", icon: Flower2, prompt: "Transform this image into classic Disney animation style: expressive large eyes, smooth curves, vibrant colors, warm and magical feel" },
   { id: "pixar", label: "Pixar 3D", icon: Film, prompt: "Transform this image into Pixar 3D CGI style: glossy realistic textures, expressive characters, warm studio lighting, polished animated movie look" },
