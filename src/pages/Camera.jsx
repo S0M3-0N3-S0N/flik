@@ -528,6 +528,39 @@ export default function CameraPage() {
       ctx.putImageData(imageData, 0, 0);
     }
 
+    // Bake vintage timestamp onto the photo if enabled
+    if (showTimestamp) {
+      const now = new Date();
+      const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+      const month = months[now.getMonth()];
+      const day = String(now.getDate()).padStart(2, "0");
+      const year = now.getFullYear();
+      let hours = now.getHours();
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      const hoursStr = String(hours).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+
+      const fontSize = Math.round(canvas.width * 0.04);
+      ctx.font = `bold ${fontSize}px "Courier New", Courier, monospace`;
+      ctx.textAlign = "right";
+      ctx.letterSpacing = "0.05em";
+
+      const line1 = `${month}.${day} ${year}`;
+      const line2 = `${hoursStr}:${minutes} ${ampm}`;
+      const x = canvas.width - Math.round(canvas.width * 0.025);
+      const y1 = canvas.height - Math.round(canvas.height * 0.1);
+      const y2 = canvas.height - Math.round(canvas.height * 0.055);
+
+      // Glow/shadow for vintage effect
+      ctx.shadowColor = "rgba(255, 180, 0, 0.9)";
+      ctx.shadowBlur = Math.round(fontSize * 0.5);
+      ctx.fillStyle = "#FFD700";
+      ctx.fillText(line1, x, y1);
+      ctx.fillText(line2, x, y2);
+      ctx.shadowBlur = 0;
+    }
+
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     setPhoto(dataUrl);
     setSavedPhoto(null);
