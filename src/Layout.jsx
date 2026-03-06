@@ -307,7 +307,7 @@ function LayoutContent({ children, currentPageName }) {
 
         
         {/* Main Content */}
-        <main className="pb-20 md:pb-0">
+        <main className="pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
