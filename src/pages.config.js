@@ -47,20 +47,20 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Generate from './pages/Generate';
-import Discover from './pages/Discover';
-import Profile from './pages/Profile';
-import Editor from './pages/Editor';
 import Camera from './pages/Camera';
+import Discover from './pages/Discover';
+import Editor from './pages/Editor';
+import Generate from './pages/Generate';
+import Profile from './pages/Profile';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Generate": Generate,
-    "Discover": Discover,
-    "Profile": Profile,
-    "Editor": Editor,
     "Camera": Camera,
+    "Discover": Discover,
+    "Editor": Editor,
+    "Generate": Generate,
+    "Profile": Profile,
 }
 
 export const pagesConfig = {
