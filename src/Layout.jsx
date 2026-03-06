@@ -402,11 +402,11 @@ function LayoutContent({ children, currentPageName }) {
         import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
 
         export default function Layout({ children, currentPageName }) {
-          return (
+        return (
           <ErrorBoundaryWrapper>
             <FlikProvider>
               <LayoutContent children={children} currentPageName={currentPageName} />
             </FlikProvider>
           </ErrorBoundaryWrapper>
-          );
-          }
+        );
+        }
