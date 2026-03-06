@@ -361,7 +361,7 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
             {/* Author row */}
             <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-sm font-bold overflow-hidden flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-sm font-bold overflow-hidden flex-shrink-0">
                   {creatorProfile?.profile_picture ? (
                     <img src={creatorProfile.profile_picture} alt="Creator" className="w-full h-full object-cover" />
                   ) : (
