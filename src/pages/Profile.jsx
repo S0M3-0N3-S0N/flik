@@ -269,14 +269,10 @@ export default function Profile() {
   };
 
   const handleLogout = async () => {
-    // Clear local state
-    setSearchQuery("");
-    setSelectedItems([]);
-    setSelectedItem(null);
-    setEditingTitle(null);
-    setEditingPrompt(null);
-    setDeleteConfirm(null);
-    localStorage.clear();
+    // Clear only FLIK-specific keys, not all localStorage
+    ['flik_button_position', 'theme', 'app_language', 'profile_stats_expanded'].forEach(key => {
+      localStorage.removeItem(key);
+    });
     sessionStorage.clear();
     await base44.auth.logout();
   };
