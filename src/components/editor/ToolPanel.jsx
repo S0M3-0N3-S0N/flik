@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ToolOptions from "@/components/editor/ToolOptions";
+import FlashColorOptions from "@/components/editor/FlashColorOptions";
 
 const tools = [
   { 
