@@ -41,6 +41,12 @@ export const STYLE_OPTIONS = [
   { id: "manga", label: "Manga", icon: PenLine, prompt: "Transform this image into Japanese manga art style: black and white, dramatic shading, expressive eyes, ink hatching, classic manga panel aesthetic" },
   { id: "lego", label: "LEGO", icon: Circle, prompt: "Transform this image into LEGO style: blocky plastic figures, bright primary colors, stud details, toy-like construction aesthetic" },
   { id: "claymation", label: "Claymation", icon: Droplet, prompt: "Transform this image into claymation stop-motion style: clay texture, handmade imperfections, moldable characters like Wallace and Gromit" },
+  { id: "cat_animal", label: "Cat", icon: Cat, prompt: "Redraw this image replacing all human subjects with cute cats, keeping the same pose, outfit and composition" },
+  { id: "dog_animal", label: "Dog", icon: Dog, prompt: "Redraw this image replacing all human subjects with cute dogs, keeping the same pose, outfit and composition" },
+  { id: "rabbit_animal", label: "Rabbit", icon: Rabbit, prompt: "Redraw this image replacing all human subjects with cute rabbits, keeping the same pose, outfit and composition" },
+  { id: "bird_animal", label: "Bird", icon: Bird, prompt: "Redraw this image replacing all human subjects with colorful birds, keeping the same pose and composition" },
+  { id: "fox_animal", label: "Fox", icon: Cat, prompt: "Redraw this image replacing all human subjects with foxes, keeping the same pose, outfit and composition, cute anthropomorphic style" },
+  { id: "frog_animal", label: "Frog", icon: Bug, prompt: "Redraw this image replacing all human subjects with cute frogs, keeping the same pose and composition, Pepe-inspired or cartoon frog style" },
 ];
 
 export default function ToolOptions({ tool, onSelect, onBack }) {

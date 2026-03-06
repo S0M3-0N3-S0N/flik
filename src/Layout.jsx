@@ -307,7 +307,7 @@ function LayoutContent({ children, currentPageName }) {
 
         
         {/* Main Content */}
-        <main className="md:pt-20" style={{ paddingBottom: currentPageName !== "Camera" ? 'calc(70px + env(safe-area-inset-bottom))' : '0' }}>
+        <main className="pb-20 md:pb-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -323,7 +323,7 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Bottom Navigation Bar - Mobile Only */}
         {currentPageName !== "Camera" && (
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-3 py-2 gap-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)' }}>
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-3 py-2 gap-1 [body[data-modal-open]_&]:hidden" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)' }}>
               <button
                 onClick={(e) => {
                   if (currentPageName === "Editor") {
