@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Sun } from "lucide-react";
+import Lighting3DInteractive from "./Lighting3DInteractive";
 
 const LIGHTING_ANGLES = [
   {
