@@ -30,6 +30,23 @@ export const STYLE_OPTIONS = [
   { id: "impressionist", label: "Impressionist", icon: Flower2, prompt: "Transform this image in the style of impressionist painters like Monet: loose brush strokes, light and color emphasis" },
   { id: "cyberpunk", label: "Cyberpunk", icon: Cpu, prompt: "Transform this image into a cyberpunk digital art style with neon colors, futuristic tech elements, and dystopian aesthetic" },
   { id: "studio_ghibli", label: "Ghibli", icon: Wind, prompt: "Transform this image in the style of Studio Ghibli: soft warm colors, hand-painted look, magical whimsical atmosphere" },
+  { id: "bratz", label: "Bratz Doll", icon: Sparkles, prompt: "Transform this image into Bratz doll art style: big eyes with heavy makeup, glossy lips, fashion-forward outfit, bold and stylized doll aesthetic" },
+  { id: "barbie", label: "Barbie", icon: Star, prompt: "Transform this image into Barbie doll style: pink glamorous aesthetic, perfect proportions, bright colors, dreamy plastic-toy look" },
+  { id: "south_park", label: "South Park", icon: Tv, prompt: "Transform this image into South Park cartoon style: simple flat cut-paper look, basic geometric shapes, crude animation style matching the show" },
+  { id: "family_guy", label: "Family Guy", icon: Smile, prompt: "Transform this image into Family Guy cartoon style: thick black outlines, simple round faces, flat colors, Seth MacFarlane animation aesthetic" },
+  { id: "simpsons", label: "Simpsons", icon: Smile, prompt: "Transform this image into The Simpsons cartoon style: yellow skin, overbite, simple features, bright flat colors, Matt Groening illustration style" },
+  { id: "rick_morty", label: "Rick & Morty", icon: Cpu, prompt: "Transform this image into Rick and Morty cartoon style: simple line art, limited color palette, squiggly outlines, sci-fi adult animated aesthetic" },
+  { id: "disney", label: "Disney", icon: Flower2, prompt: "Transform this image into classic Disney animation style: expressive large eyes, smooth curves, vibrant colors, warm and magical feel" },
+  { id: "pixar", label: "Pixar 3D", icon: Film, prompt: "Transform this image into Pixar 3D CGI style: glossy realistic textures, expressive characters, warm studio lighting, polished animated movie look" },
+  { id: "manga", label: "Manga", icon: PenLine, prompt: "Transform this image into Japanese manga art style: black and white, dramatic shading, expressive eyes, ink hatching, classic manga panel aesthetic" },
+  { id: "lego", label: "LEGO", icon: Circle, prompt: "Transform this image into LEGO style: blocky plastic figures, bright primary colors, stud details, toy-like construction aesthetic" },
+  { id: "claymation", label: "Claymation", icon: Droplet, prompt: "Transform this image into claymation stop-motion style: clay texture, handmade imperfections, moldable characters like Wallace and Gromit" },
+  { id: "cat_animal", label: "Cat", icon: Cat, prompt: "Redraw this image replacing all human subjects with cute cats, keeping the same pose, outfit and composition" },
+  { id: "dog_animal", label: "Dog", icon: Dog, prompt: "Redraw this image replacing all human subjects with cute dogs, keeping the same pose, outfit and composition" },
+  { id: "rabbit_animal", label: "Rabbit", icon: Rabbit, prompt: "Redraw this image replacing all human subjects with cute rabbits, keeping the same pose, outfit and composition" },
+  { id: "bird_animal", label: "Bird", icon: Bird, prompt: "Redraw this image replacing all human subjects with colorful birds, keeping the same pose and composition" },
+  { id: "fox_animal", label: "Fox", icon: Cat, prompt: "Redraw this image replacing all human subjects with foxes, keeping the same pose, outfit and composition, cute anthropomorphic style" },
+  { id: "frog_animal", label: "Frog", icon: Bug, prompt: "Redraw this image replacing all human subjects with cute frogs, keeping the same pose and composition, Pepe-inspired or cartoon frog style" },
 ];
 
 export default function ToolOptions({ tool, onSelect, onBack }) {
