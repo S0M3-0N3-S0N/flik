@@ -505,9 +505,7 @@ function LayoutContent({ children, currentPageName }) {
         );
         }
 
-        import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
-
-        export default function Layout({ children, currentPageName }) {
+export default function Layout({ children, currentPageName }) {
           return (
           <ErrorBoundaryWrapper>
             <FlikProvider>
