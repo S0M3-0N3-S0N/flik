@@ -35,7 +35,9 @@ function LayoutContent({ children, currentPageName }) {
   const [isDraggingFlik, setIsDraggingFlik] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showMobileNav, setShowMobileNav] = useState(true);
+  const [showDesktopNav, setShowDesktopNav] = useState(true);
   const mobileNavTimeoutRef = useRef(null);
+  const desktopNavTimeoutRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -233,7 +235,16 @@ function LayoutContent({ children, currentPageName }) {
         <MobileHeader currentPageName={currentPageName} />
 
         {/* Top Desktop Navigation */}
-        <nav className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl ${currentPageName === 'Camera' ? 'hidden' : 'hidden md:flex'}`} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <nav 
+          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${currentPageName === 'Camera' ? 'hidden' : 'hidden md:flex'} ${
+            showDesktopNav ? 'translate-y-0' : '-translate-y-full'
+          }`}
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+          onMouseEnter={() => {
+            setShowDesktopNav(true);
+            if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
+          }}
+        >
           <div className="w-full flex items-center justify-center px-8 py-4 relative">
             <div className="absolute left-8 gradient-text font-bold text-lg tracking-wider">FLIK</div>
             
@@ -453,11 +464,15 @@ function LayoutContent({ children, currentPageName }) {
             </nav>
         )}
 
-        {/* Auto-hide mobile nav timer */}
+        {/* Auto-hide nav timers */}
         {currentPageName !== "Camera" && (
           <div 
-            className="md:hidden fixed inset-0 pointer-events-none"
+            className="fixed inset-0 pointer-events-none"
             onMouseMove={() => {
+              setShowDesktopNav(true);
+              if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
+              desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 3000);
+              
               if (!showMobileNav) setShowMobileNav(true);
               if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
               mobileNavTimeoutRef.current = setTimeout(() => setShowMobileNav(false), 3000);
@@ -477,6 +492,10 @@ function LayoutContent({ children, currentPageName }) {
           }}
           onMouseDown={handleFlikDragStart}
           onTouchStart={handleFlikDragStart}
+          onMouseEnter={() => {
+            setShowDesktopNav(true);
+            if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
+          }}
           style={{
             bottom: `calc(${flikPosition.bottom}px + env(safe-area-inset-bottom))`,
             right: `${flikPosition.right}px`,
