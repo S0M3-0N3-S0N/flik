@@ -124,6 +124,17 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
   };
 
   if (selectedTool) {
+    if (selectedTool.id === "flash") {
+      return (
+        <FlashColorOptions
+          onSelect={(toolWithOption) => {
+            setSelectedTool(null);
+            onToolSelect(toolWithOption);
+          }}
+          onBack={() => setSelectedTool(null)}
+        />
+      );
+    }
     return (
       <ToolOptions
         tool={selectedTool}
