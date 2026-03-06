@@ -705,6 +705,7 @@ export default function CameraPage() {
     flipCamera: () => flipCamera(),
     setFlashMode: (mode) => setFlashMode(mode),
     toggleFlash: () => setFlashMode(m => m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'),
+    setFlashColor: (color) => setFlashColorMode(color),
     setZoom: (val) => applyZoom(val),
     setZoomPreset: (preset) => setZoomPreset(preset),
     toggleGrid: () => dispatchSettings({ key: 'showGrid', value: !settings.showGrid }),
