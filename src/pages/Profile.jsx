@@ -625,7 +625,7 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="fixed inset-0 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <Toaster 
         position="top-center"
         theme="dark"

@@ -52,7 +52,7 @@ export default function Discover() {
   }, [creations, user?.email]);
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 pt-8 pb-12 md:pt-16 md:pb-16">
+    <div className="fixed inset-0 overflow-y-auto px-4 sm:px-6 pt-8 pb-12 md:pt-16 md:pb-16">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div

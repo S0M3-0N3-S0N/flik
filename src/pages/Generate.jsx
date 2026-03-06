@@ -469,7 +469,7 @@ export default function Generate() {
   };
 
   return (
-    <div className="h-[calc(100dvh-4rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="fixed inset-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <section className="relative py-10 sm:py-16 md:py-20 px-4 sm:px-6 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <motion.div 
