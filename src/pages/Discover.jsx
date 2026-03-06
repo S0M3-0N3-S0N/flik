@@ -60,10 +60,6 @@ export default function Discover() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10 md:mb-14"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-xs font-semibold mb-5 tracking-wider uppercase">
-            <Zap className="w-3 h-3" />
-            Community
-          </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
             Created by the community,{" "}
             <span className="gradient-text">powered by imagination</span>
