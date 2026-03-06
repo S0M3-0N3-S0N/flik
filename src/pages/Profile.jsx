@@ -1154,13 +1154,13 @@ export default function Profile() {
                               <span className="hidden sm:inline">Imagine</span>
                             </Button>
                             <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteMutation.mutate(item.id);
-                              }}
-                              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
-                              title="Delete image"
+                             size="sm"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleDelete(item.id);
+                             }}
+                             className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 h-8 sm:h-9 text-[10px] sm:text-xs backdrop-blur-2xl font-medium px-2 sm:px-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-1"
+                             title="Delete image"
                             >
                               <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               <span className="hidden sm:inline">Delete</span>
