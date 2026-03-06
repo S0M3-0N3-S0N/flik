@@ -55,7 +55,7 @@ export const STYLE_OPTIONS = [
 ];
 
 export default function ToolOptions({ tool, onSelect, onBack }) {
-  const options = tool.id === "recolor" ? COLOR_GRADE_OPTIONS : STYLE_OPTIONS;
+  const options = tool.id === "recolor" ? COLOR_GRADE_OPTIONS : tool.id === "flash" ? FLASH_OPTIONS : STYLE_OPTIONS;
 
   return (
     <motion.div
