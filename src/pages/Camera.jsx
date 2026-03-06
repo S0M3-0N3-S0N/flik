@@ -815,10 +815,8 @@ export default function CameraPage() {
         {/* Focus square */}
         {!photo && <FocusSquare position={focusPos} locked={afLocked} />}
 
-        {/* Vintage timestamp - only in viewfinder, not on photo preview */}
-        {!photo && showTimestamp && <VintageTimestamp />}
-
-
+        {/* Vintage timestamp */}
+        {showTimestamp && <VintageTimestamp />}
 
         {/* Exposure slider */}
         <AnimatePresence>
