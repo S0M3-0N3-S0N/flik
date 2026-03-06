@@ -573,18 +573,18 @@ export default function CameraPage() {
 
   const takePhoto = () => {
     haptic([10, 5, 30]);
+    // Prevent double-tap from spawning two countdowns
+    if (countdown > 0) return;
     runCountdown(() => {
       const shouldFlash = flashMode === 'on';
       if (shouldFlash) {
         if (facingMode === 'user') {
-          // Front camera: use screen flash
           setScreenFlash(3);
           setTimeout(() => {
             captureFrame();
             setScreenFlash(0);
           }, 80);
         } else {
-          // Rear camera: use torch
           setTorch(true);
           setTimeout(captureFrame, 100);
         }
