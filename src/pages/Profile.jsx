@@ -390,14 +390,6 @@ export default function Profile() {
   const confirmBatchDelete = async () => {
    const total = selectedItems.length;
 
-   // Warning for large bulk operations
-   if (total > BATCH_DELETE_WARNING_THRESHOLD) {
-     if (!window.confirm(`You're about to delete ${total} items. This may take a while. Continue?`)) {
-       setDeleteConfirm(null);
-       return;
-     }
-   }
-
    setIsBatchDeleting(true);
    setBatchDeleteProgress(0);
    setBatchDeleteFailed(0);
