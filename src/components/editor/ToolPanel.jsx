@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ToolOptions from "@/components/editor/ToolOptions";
 import FlashColorOptions from "@/components/editor/FlashColorOptions";
+import LightingAngleOptions from "@/components/editor/LightingAngleOptions";
 
 const tools = [
   { 
@@ -105,7 +106,7 @@ const tools = [
 
 const categories = ["Enhancement", "Creative", "Edit"];
 
-const TOOLS_WITH_OPTIONS = ["recolor", "style", "flash"];
+const TOOLS_WITH_OPTIONS = ["recolor", "style", "flash", "lighting"];
 
 export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
   const [selectedTool, setSelectedTool] = useState(null);
@@ -127,6 +128,17 @@ export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
     if (selectedTool.id === "flash") {
       return (
         <FlashColorOptions
+          onSelect={(toolWithOption) => {
+            setSelectedTool(null);
+            onToolSelect(toolWithOption);
+          }}
+          onBack={() => setSelectedTool(null)}
+        />
+      );
+    }
+    if (selectedTool.id === "lighting") {
+      return (
+        <LightingAngleOptions
           onSelect={(toolWithOption) => {
             setSelectedTool(null);
             onToolSelect(toolWithOption);
