@@ -33,6 +33,8 @@ function LayoutContent({ children, currentPageName }) {
   });
   const [isDraggingFlik, setIsDraggingFlik] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [showMobileNav, setShowMobileNav] = useState(true);
+  const mobileNavTimeoutRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -323,7 +325,20 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Bottom Navigation Bar - Mobile Only */}
         {currentPageName !== "Camera" && (
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-3 py-2 gap-1 [body[data-modal-open]_&]:hidden" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)' }}>
+          <nav 
+            className={`md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-3 py-2 gap-1 [body[data-modal-open]_&]:hidden transition-all duration-300 ${
+              showMobileNav ? 'translate-y-0' : 'translate-y-full'
+            }`}
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)' }}
+            onMouseEnter={() => {
+              setShowMobileNav(true);
+              if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
+            }}
+            onTouchStart={() => {
+              setShowMobileNav(true);
+              if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
+            }}
+          >
               <button
                 onClick={(e) => {
                   if (currentPageName === "Editor") {
@@ -435,6 +450,23 @@ function LayoutContent({ children, currentPageName }) {
                 <span className="text-[10px] font-medium"></span>
               </button>
             </nav>
+        )}
+
+        {/* Auto-hide mobile nav timer */}
+        {currentPageName !== "Camera" && (
+          <div 
+            className="md:hidden fixed inset-0 pointer-events-none"
+            onMouseMove={() => {
+              if (!showMobileNav) setShowMobileNav(true);
+              if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
+              mobileNavTimeoutRef.current = setTimeout(() => setShowMobileNav(false), 3000);
+            }}
+            onTouchMove={() => {
+              if (!showMobileNav) setShowMobileNav(true);
+              if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
+              mobileNavTimeoutRef.current = setTimeout(() => setShowMobileNav(false), 3000);
+            }}
+          />
         )}
 
         {/* Global FLIK Button - Draggable (Desktop Only) */}
