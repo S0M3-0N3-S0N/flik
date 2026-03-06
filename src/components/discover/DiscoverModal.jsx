@@ -31,22 +31,18 @@ export default function DiscoverModal({ creation, creations, onClose, currentUse
 
   useEffect(() => {
     if (!current?.created_by) return;
-    // Fetch both UserProfile (for display name/bio) and User (for profile picture)
-    Promise.all([
-      base44.entities.UserProfile.filter({ email: current.created_by }),
-      base44.entities.User.filter({ email: current.created_by })
-    ]).then(([profiles, users]) => {
-      const profile = profiles?.[0] || null;
-      const user = users?.[0] || null;
-      setCreatorProfile({
-        ...(user || {}),
-        ...(profile || {}),
-        // UserProfile fields take priority, but use User's profile_picture if UserProfile doesn't have one
-        profile_picture: profile?.profile_picture || user?.profile_picture || null,
-        // full_name from UserProfile if set, otherwise from User
-        display_name: profile?.full_name || user?.full_name || current.created_by?.split("@")[0],
+    // Only fetch UserProfile - avoids admin-only User entity access issue
+    base44.entities.UserProfile.filter({ email: current.created_by })
+      .then((profiles) => {
+        const profile = profiles?.[0] || null;
+        setCreatorProfile({
+          profile_picture: profile?.profile_picture || null,
+          display_name: profile?.full_name || current.created_by?.split("@")[0],
+        });
+      })
+      .catch(() => {
+        setCreatorProfile({ display_name: current.created_by?.split("@")[0], profile_picture: null });
       });
-    });
   }, [current?.created_by]);
 
   const handleLike = async () => {
