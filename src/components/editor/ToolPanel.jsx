@@ -104,7 +104,7 @@ const tools = [
 
 const categories = ["Enhancement", "Creative", "Edit"];
 
-const TOOLS_WITH_OPTIONS = ["recolor", "style", "flash"];
+const TOOLS_WITH_OPTIONS = ["recolor", "style"];
 
 export default function ToolPanel({ onToolSelect, isProcessing, hasImage }) {
   const [selectedTool, setSelectedTool] = useState(null);

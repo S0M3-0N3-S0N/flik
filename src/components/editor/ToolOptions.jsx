@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Film, Sun, Droplets, Camera, Zap, Sparkles, Leaf, Circle, Paintbrush, Droplet, Star, PenLine, BookOpen, Flower2, Cpu, Wind, Moon, Flame, Waves, CloudSnow, Eye, Sunset, Palette, Contrast, Tv, Smile } from "lucide-react";
+import { ArrowLeft, Film, Sun, Droplets, Camera, Zap, Sparkles, Leaf, Circle, Paintbrush, Droplet, Star, PenLine, BookOpen, Flower2, Cpu, Wind, Moon, Flame, Waves, CloudSnow, Eye, Sunset, Palette, Contrast, Tv, Smile, Cat, Dog, Bird, Fish, Rabbit, Bug } from "lucide-react";
 
 export const COLOR_GRADE_OPTIONS = [
   { id: "cinematic", label: "Cinematic", icon: Film, prompt: "Apply a cinematic color grade: deep shadows, rich contrast, teal and orange tones, film-like quality" },
@@ -19,17 +19,6 @@ export const COLOR_GRADE_OPTIONS = [
   { id: "desert_sand", label: "Desert Sand", icon: Sunset, prompt: "Apply a desert sand color grade: warm sandy yellows, dusty oranges, dry earthy tones, arid landscape feel" },
   { id: "matte_fade", label: "Matte Fade", icon: Contrast, prompt: "Apply a matte fade color grade: crushed blacks, flat contrast, desaturated mid-tones, modern editorial look" },
   { id: "candy_pop", label: "Candy Pop", icon: Palette, prompt: "Apply a candy pop color grade: hyper-saturated pinks, yellows and blues, playful vivid tones, fun and energetic" },
-];
-
-export const FLASH_OPTIONS = [
-  { id: "flash_white", label: "White Flash", icon: Zap, prompt: "Apply a classic white camera flash effect to this photo: bright direct white flash lighting on the subject, high contrast, sharp highlights blown out slightly, deep rich shadows in background, vivid colors with slight overexposure, authentic point-and-shoot flash photography aesthetic" },
-  { id: "flash_golden", label: "Golden Flash", icon: Sun, prompt: "Apply a warm golden flash effect to this photo: warm amber-golden flash lighting on the subject, golden hour tones with flash overexposure, rich highlights, dramatic contrast against the background, luxurious warm flash photography look" },
-  { id: "flash_blue", label: "Blue Flash", icon: Droplets, prompt: "Apply a cool blue flash effect to this photo: icy blue-tinted flash lighting on the subject, cool overexposed highlights, deep blue-tinted shadows, crisp high-contrast cyberpunk-inspired flash photography look" },
-  { id: "flash_pink", label: "Pink Flash", icon: Sparkles, prompt: "Apply a pink/magenta flash effect to this photo: vibrant pink or magenta flash lighting on the subject, pop-art inspired overexposed highlights, deep contrasting shadows, Y2K or nightlife party flash photography aesthetic" },
-  { id: "flash_red", label: "Red Flash", icon: Flame, prompt: "Apply a dramatic red flash effect to this photo: intense red-tinted flash lighting on the subject, overexposed red highlights, dark moody shadows, high-contrast editorial photography with red gel flash look" },
-  { id: "flash_green", label: "Green Flash", icon: Leaf, prompt: "Apply a vibrant green flash effect to this photo: electric neon-green flash lighting on the subject, rave or nightclub green gel lighting, high-contrast overexposed highlights, dark dramatic shadows, cyberpunk green flash aesthetic" },
-  { id: "flash_purple", label: "Purple Flash", icon: Moon, prompt: "Apply a purple/violet flash effect to this photo: deep violet or purple flash lighting on the subject, editorial purple gel flash, overexposed highlights with purple tones, dramatic shadowed background, moody high-fashion flash photography" },
-  { id: "flash_strobe", label: "Strobe", icon: Zap, prompt: "Apply a multi-exposure strobe flash effect to this photo: multiple ghost exposures suggesting motion, high-contrast strobe lighting, dramatic freeze-frame moments, nightclub strobe photography aesthetic" },
 ];
 
 export const STYLE_OPTIONS = [
@@ -55,7 +44,7 @@ export const STYLE_OPTIONS = [
 ];
 
 export default function ToolOptions({ tool, onSelect, onBack }) {
-  const options = tool.id === "recolor" ? COLOR_GRADE_OPTIONS : tool.id === "flash" ? FLASH_OPTIONS : STYLE_OPTIONS;
+  const options = tool.id === "recolor" ? COLOR_GRADE_OPTIONS : STYLE_OPTIONS;
 
   return (
     <motion.div
