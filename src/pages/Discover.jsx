@@ -98,9 +98,9 @@ export default function Discover() {
             </p>
           </motion.div>
         ) : (
-          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 sm:gap-5 md:gap-6">
+          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 sm:gap-4">
             {creations.map((creation, index) => (
-              <div key={creation.id} className="mb-4 sm:mb-5 md:mb-6 break-inside-avoid">
+              <div key={creation.id} className="mb-3 sm:mb-4 break-inside-avoid">
                 <DiscoverCard
                   creation={creation}
                   likeCount={likeCounts[creation.id] || 0}
