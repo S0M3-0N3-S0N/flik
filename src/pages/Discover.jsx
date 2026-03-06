@@ -52,21 +52,28 @@ export default function Discover() {
   }, [creations, user?.email]);
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 py-12 md:py-16">
+    <div className="min-h-screen px-4 sm:px-6 pt-8 pb-12 md:pt-16 md:pb-16">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16 md:mb-20"
+          className="text-center mb-10 md:mb-14"
         >
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-xs font-semibold mb-5 tracking-wider uppercase">
+            <Zap className="w-3 h-3" />
+            Community
+          </div>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
             Created by the community,{" "}
             <span className="gradient-text">powered by imagination</span>
           </h1>
-          <p className="text-white/60 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/50 text-sm sm:text-base md:text-lg max-w-xl mx-auto leading-relaxed">
             Explore what creators are making with FLIK
           </p>
+          {!isLoading && creations.length > 0 && (
+            <p className="text-white/25 text-xs mt-3">{creations.length} creations</p>
+          )}
         </motion.div>
 
         {/* Grid */}
