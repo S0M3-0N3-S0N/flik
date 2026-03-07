@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Send, Loader2, X, Image as ImageIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
+import WorldChatMessage from "@/components/WorldChatMessage";
 
 export default function WorldChat() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function WorldChat() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
@@ -26,10 +28,26 @@ export default function WorldChat() {
     staleTime: 1000,
   });
 
+  // Fetch reactions
+  const { data: reactions = [] } = useQuery({
+    queryKey: ["worldChatReactions"],
+    queryFn: () => base44.entities.WorldChatMessageReaction.list(),
+    refetchInterval: 2000,
+    staleTime: 1000,
+  });
+
   // Subscribe to real-time updates
   useEffect(() => {
     const unsubscribe = base44.entities.WorldChatMessage.subscribe((event) => {
       queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
+    });
+    return unsubscribe;
+  }, [queryClient]);
+
+  // Subscribe to reaction updates
+  useEffect(() => {
+    const unsubscribe = base44.entities.WorldChatMessageReaction.subscribe((event) => {
+      queryClient.invalidateQueries({ queryKey: ["worldChatReactions"] });
     });
     return unsubscribe;
   }, [queryClient]);
@@ -102,6 +120,36 @@ export default function WorldChat() {
     reader.readAsDataURL(file);
   };
 
+  // React to message
+  const reactMutation = useMutation({
+    mutationFn: async (data) => {
+      const existing = reactions.find(
+        (r) => r.message_id === data.messageId && r.emoji === data.emoji && r.reactor_email === data.reactorEmail
+      );
+
+      if (existing) {
+        return base44.entities.WorldChatMessageReaction.delete(existing.id);
+      } else {
+        return base44.entities.WorldChatMessageReaction.create({
+          message_id: data.messageId,
+          emoji: data.emoji,
+          reactor_email: data.reactorEmail,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["worldChatReactions"] });
+    },
+  });
+
+  const handleReact = (messageId, emoji, reactorEmail) => {
+    reactMutation.mutate({ messageId, emoji, reactorEmail });
+  };
+
+  const handleReply = (message) => {
+    setReplyingTo(message);
+  };
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() && !selectedImage) {
       toast.error("Please enter a message or select an image");
@@ -130,12 +178,20 @@ export default function WorldChat() {
       setIsUploading(false);
     }
 
-    createMessageMutation.mutate({
+    const messageData = {
       content: messageInput,
       sender_name: user.userProfile?.username || user.full_name,
       sender_profile_picture: user.userProfile?.profile_picture || user.profile_picture || "",
       image_url: imageUrl || "",
-    });
+    };
+
+    if (replyingTo) {
+      messageData.parent_message_id = replyingTo.id;
+      messageData.original_message_author_email = replyingTo.created_by;
+    }
+
+    createMessageMutation.mutate(messageData);
+    setReplyingTo(null);
   };
 
   return (
@@ -181,55 +237,25 @@ export default function WorldChat() {
           ) : (
             <div className="columns-2 sm:columns-3 md:columns-4 gap-3 sm:gap-4">
               <AnimatePresence mode="popLayout">
-                {[...messages].reverse().map((message, index) => (
-                  <div key={message.id} className="mb-3 sm:mb-4 break-inside-avoid">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors group cursor-default"
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        {message.sender_profile_picture ? (
-                          <img
-                            src={message.sender_profile_picture}
-                            alt={message.sender_name}
-                            className="w-8 h-8 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs">
-                            {message.sender_name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">{message.sender_name}</p>
-                          <p className="text-xs text-white/40">{new Date(message.created_date).toLocaleTimeString()}</p>
-                        </div>
-                        {(user?.role === "admin" || user?.email === message.created_by) && (
-                          <button
-                            onClick={() => deleteMessageMutation.mutate(message.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-red-400 flex-shrink-0"
-                            title="Delete message"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
+                {[...messages].reverse().map((message) => {
+                  const parentMessage = message.parent_message_id
+                    ? messages.find((m) => m.id === message.parent_message_id)
+                    : null;
 
-                      {message.image_url && (
-                        <img
-                          src={message.image_url}
-                          alt="Message"
-                          className="rounded-lg w-full mb-3 border border-white/10"
-                        />
-                      )}
-
-                      {message.content && (
-                        <p className="text-sm text-white/90 break-words">{message.content}</p>
-                      )}
-                    </motion.div>
-                  </div>
-                ))}
+                  return (
+                    <WorldChatMessage
+                      key={message.id}
+                      message={message}
+                      reactions={reactions}
+                      userEmail={user?.email}
+                      onReact={handleReact}
+                      onReply={handleReply}
+                      onDelete={(id) => deleteMessageMutation.mutate(id)}
+                      parentMessage={parentMessage}
+                      isDeletable={user?.role === "admin" || user?.email === message.created_by}
+                    />
+                  );
+                })}
               </AnimatePresence>
             </div>
           )}
@@ -239,6 +265,21 @@ export default function WorldChat() {
       {/* Input Area */}
       <div className="fixed bottom-0 left-0 right-0 z-40 glass-card border-t border-white/5 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 py-4">
+          {replyingTo && (
+            <div className="mb-3 pb-3 border-b border-white/10 flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-xs text-white/60">Replying to {replyingTo.sender_name}</p>
+                <p className="text-sm text-white/80 line-clamp-1">{replyingTo.content}</p>
+              </div>
+              <button
+                onClick={() => setReplyingTo(null)}
+                className="ml-2 p-1 text-white/40 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {imagePreview && (
             <div className="relative inline-block mb-3">
               <img
