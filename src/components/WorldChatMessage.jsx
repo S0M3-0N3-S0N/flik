@@ -26,6 +26,10 @@ export default function WorldChatMessage({
   }, {});
 
   const handleReaction = (emoji) => {
+    if (!userEmail) {
+      toast.error("You must be logged in to react");
+      return;
+    }
     onReact(message.id, emoji, userEmail);
     setShowEmojiPicker(false);
   };
