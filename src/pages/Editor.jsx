@@ -844,6 +844,17 @@ export default function Editor() {
     }
   }, [currentImage, adjustments, transform, selectedFilter, brushStrokes, paintStrokes, stickers, getProcessedImageBlob]);
 
+  const handleLayersChange = useCallback((newLayers) => {
+    setLayers(newLayers);
+    // Sync sticker visibility/opacity back from layers
+    const stickerLayers = newLayers.filter(l => l.type === 'sticker');
+    setStickers(prev => prev.map(s => {
+      const match = stickerLayers.find(l => l.id === s.id);
+      if (!match) return null; // deleted
+      return { ...s, visible: match.visible, opacity: match.opacity };
+    }).filter(Boolean));
+  }, []);
+
   const handleTextImageGenerated = useCallback((imageUrl) => {
     setStickers(prev => [...prev, {
       url: imageUrl,
