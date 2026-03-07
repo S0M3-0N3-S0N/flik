@@ -27,16 +27,14 @@ export default function WorldChat() {
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["worldChatMessages"],
     queryFn: () => base44.entities.WorldChatMessage.list("-created_date", 100),
-    refetchInterval: 2000,
-    staleTime: 1000,
+    staleTime: Infinity,
   });
 
   // Fetch reactions
   const { data: reactions = [] } = useQuery({
     queryKey: ["worldChatReactions"],
     queryFn: () => base44.entities.WorldChatMessageReaction.list(),
-    refetchInterval: 2000,
-    staleTime: 1000,
+    staleTime: Infinity,
   });
 
   // Subscribe to real-time updates
@@ -46,8 +44,12 @@ export default function WorldChat() {
         queryClient.setQueryData(["worldChatMessages"], (old) =>
           old?.filter((msg) => msg.id !== event.id) || []
         );
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
+      } else if (event.type === "create") {
+        queryClient.setQueryData(["worldChatMessages"], (old) => [event.data, ...(old || [])]);
+      } else if (event.type === "update") {
+        queryClient.setQueryData(["worldChatMessages"], (old) =>
+          old?.map((msg) => (msg.id === event.id ? event.data : msg)) || []
+        );
       }
     });
     return unsubscribe;
