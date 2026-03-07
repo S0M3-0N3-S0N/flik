@@ -33,7 +33,12 @@ export default function WorldChat() {
   // Get current user
   useEffect(() => {
     base44.auth.me()
-      .then(u => setUser(u))
+      .then(async (u) => {
+        if (u?.email) {
+          const profile = await base44.entities.UserProfile.filter({ email: u.email });
+          setUser({ ...u, profile: profile?.[0] });
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -119,8 +124,8 @@ export default function WorldChat() {
 
     createMessageMutation.mutate({
       content: messageInput,
-      sender_name: user.full_name,
-      sender_profile_picture: user.profile_picture || "",
+      sender_name: user.profile?.username || user.full_name,
+      sender_profile_picture: user.profile?.profile_picture || user.profile_picture || "",
       image_url: imageUrl || "",
     });
   };
