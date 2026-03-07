@@ -294,7 +294,7 @@ export default function WorldChat() {
       </div>
 
       {/* Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 glass-card border-t border-white/5 backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-40 glass-card border-t border-white/5 backdrop-blur-xl" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="max-w-4xl mx-auto px-4 py-4">
           {replyingTo && (
             <div className="mb-3 pb-3 border-b border-white/10 flex items-center justify-between">
