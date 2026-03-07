@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { createPageUrl } from "@/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, X, Image as ImageIcon, Globe } from "lucide-react";
+import { Send, Loader2, X, Image as ImageIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -144,15 +142,8 @@ export default function WorldChat() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10 md:mb-14 relative"
+          className="text-center mb-10 md:mb-14"
         >
-          <Link 
-            to={createPageUrl("Profile")}
-            className="absolute -top-7 left-0 md:hidden p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label="Back to Profile"
-          >
-            <X className="w-5 h-5" />
-          </Link>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
             <span className="gradient-text">World Chat</span>
           </h1>
