@@ -341,7 +341,9 @@ export default function SpotRemoval({
               <div className="space-y-2">
                 <Label className="text-white/60 text-xs">Reference Images</Label>
                 <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {referenceImages.map((url, idx) => (
+                  {referenceImages.map((ref, idx) => {
+                    const url = typeof ref === 'string' ? ref : ref?.url;
+                    return (
                     <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 group border border-white/10 bg-white/5">
                       <img src={url} alt={`Reference ${idx + 1}`} className="w-full h-full object-cover" onError={(e) => {
                         console.error(`Failed to load image ${idx}:`, url);
