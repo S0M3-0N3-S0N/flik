@@ -195,10 +195,11 @@ export default function WorldChat() {
       setIsUploading(true);
       try {
         const uploadResult = await base44.integrations.Core.UploadFile({
-          file: selectedImage,
+          file: new Blob([selectedImage], { type: selectedImage.type }),
         });
         imageUrl = uploadResult.file_url;
       } catch (error) {
+        console.error("Upload error:", error);
         toast.error("Failed to upload image");
         setIsUploading(false);
         return;
@@ -207,7 +208,7 @@ export default function WorldChat() {
     }
 
     const messageData = {
-      content: messageInput.trim(),
+      content: messageInput.trim() || "",
       sender_name: user.userProfile?.username || user.full_name,
       sender_profile_picture: user.userProfile?.profile_picture || user.profile_picture || "",
       image_url: selectedGifUrl || imageUrl || "",
@@ -218,7 +219,11 @@ export default function WorldChat() {
       messageData.original_message_author_email = replyingTo.created_by;
     }
 
-    createMessageMutation.mutate(messageData);
+    try {
+      await createMessageMutation.mutateAsync(messageData);
+    } catch (error) {
+      console.error("Send message error:", error);
+    }
   };
 
   const isLoading = messagesLoading || reactionsLoading;
