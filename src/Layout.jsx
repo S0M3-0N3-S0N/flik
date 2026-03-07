@@ -561,6 +561,15 @@ function LayoutContent({ children, currentPageName }) {
         <FlikChatErrorBoundary>
           <FlikChat />
         </FlikChatErrorBoundary>
+
+        {/* Welcome Slideshow */}
+        <FlikWelcomeSlideshow
+          open={showWelcomeSlideshow}
+          onClose={() => {
+            setShowWelcomeSlideshow(false);
+            localStorage.setItem('flik_tour_seen', '1');
+          }}
+        />
       </div>
     </LanguageContext.Provider>
   );
