@@ -52,6 +52,7 @@ import Discover from './pages/Discover';
 import Editor from './pages/Editor';
 import Generate from './pages/Generate';
 import Profile from './pages/Profile';
+import WorldChat from './pages/WorldChat';
 import __Layout from './Layout.jsx';
 
 
@@ -61,6 +62,7 @@ export const PAGES = {
     "Editor": Editor,
     "Generate": Generate,
     "Profile": Profile,
+    "WorldChat": WorldChat,
 }
 
 export const pagesConfig = {
