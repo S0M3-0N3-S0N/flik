@@ -24,6 +24,7 @@ import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import StickerOverlay from "@/components/editor/StickerOverlay";
 import PromptExtractor from "@/components/editor/PromptExtractor";
+import LayersPanel from "@/components/editor/LayersPanel";
 import { useFlikActions } from "@/components/useFlikActions";
 
 async function removeWhiteBackground(imageUrl) {
