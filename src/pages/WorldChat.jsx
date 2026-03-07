@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 
 export default function WorldChat() {
+  const navigate = useNavigate();
   const [messageInput, setMessageInput] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
