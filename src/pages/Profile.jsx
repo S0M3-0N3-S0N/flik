@@ -1285,8 +1285,12 @@ export default function Profile() {
               {/* Author row */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {user?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    {user?.profile_picture ? (
+                      <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
+                    ) : (
+                      user?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'
+                    )}
                   </div>
                   <div>
                     <p className="text-white text-sm font-semibold">{user?.display_name || user?.full_name || 'You'}</p>
