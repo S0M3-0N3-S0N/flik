@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Eye, EyeOff, Trash2, GripVertical, Image, Paintbrush, SlidersHorizontal, Layers, Sticker } from "lucide-react";
+import { Eye, EyeOff, Trash2, GripVertical, Image, Paintbrush, SlidersHorizontal, Layers, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 const LAYER_ICONS = {
