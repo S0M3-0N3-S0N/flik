@@ -43,6 +43,11 @@ function LayoutContent({ children, currentPageName }) {
 
   const t = (key) => translations[language]?.[key] || translations['en'][key] || key;
 
+  // Save language to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('app_language', language);
+  }, [language]);
+
   const isChildRoute = !['Editor', 'Generate', 'Profile'].includes(currentPageName);
 
   // Auto-hide desktop nav after 3 seconds of inactivity
