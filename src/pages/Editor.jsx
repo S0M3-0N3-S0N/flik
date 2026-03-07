@@ -1213,6 +1213,7 @@ export default function Editor() {
                 { value: "adjust", icon: <Settings2 className="w-4 h-4" />, title: "Adjustments" },
                 { value: "filters", icon: <Filter className="w-4 h-4" />, title: "Filters" },
                 { value: "transform", icon: <RotateCw className="w-4 h-4" />, title: "Transform" },
+                { value: "layers", icon: <Layers className="w-4 h-4" />, title: "Layers" },
                 { value: "crop", icon: <CropIcon className="w-4 h-4" />, title: "Crop" },
                 { value: "remove", icon: <Wand2 className="w-4 h-4" />, title: "Magic Brush" },
                 ...(user?.role === 'admin' ? [
