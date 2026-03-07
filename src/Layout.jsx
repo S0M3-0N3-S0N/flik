@@ -35,10 +35,9 @@ function LayoutContent({ children, currentPageName }) {
   const [isDraggingFlik, setIsDraggingFlik] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showMobileNav, setShowMobileNav] = useState(true);
-  const [showDesktopNav, setShowDesktopNav] = useState(false);
+  const [showDesktopNav, setShowDesktopNav] = useState(true);
   const mobileNavTimeoutRef = useRef(null);
   const desktopNavTimeoutRef = useRef(null);
-  const [isRopeAnimating, setIsRopeAnimating] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,12 +45,28 @@ function LayoutContent({ children, currentPageName }) {
 
   const isChildRoute = !['Editor', 'Generate', 'Profile'].includes(currentPageName);
 
-  const handleRopePull = () => {
-    if (isRopeAnimating) return;
-    setIsRopeAnimating(true);
-    setShowDesktopNav(prev => !prev);
-    setTimeout(() => setIsRopeAnimating(false), 400);
-  };
+  // Auto-hide desktop nav after 3 seconds of inactivity
+  useEffect(() => {
+    if (currentPageName === 'Camera') return;
+    
+    const handleActivity = () => {
+      setShowDesktopNav(true);
+      if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
+      desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 3000);
+    };
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    // Start initial timer
+    desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 3000);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+      if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
+    };
+  }, [currentPageName]);
 
   // Auto-hide mobile nav after 3 seconds of inactivity
   useEffect(() => {
@@ -267,7 +282,7 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Top Desktop Navigation */}
         <nav 
-          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-500 ease-in-out ${currentPageName === 'Camera' ? 'hidden' : 'hidden md:flex'} ${
+          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${currentPageName === 'Camera' ? 'hidden' : 'hidden md:flex'} ${
             showDesktopNav ? 'translate-y-0' : '-translate-y-full'
           }`}
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -346,59 +361,7 @@ function LayoutContent({ children, currentPageName }) {
           </div>
         </nav>
 
-        {/* Blind Rope Pull - Desktop Only */}
-        {currentPageName !== 'Camera' && (
-          <div className="hidden md:flex fixed top-0 left-1/2 -translate-x-1/2 z-[60] flex-col items-center pointer-events-none">
-            {/* Rope string - moves with nav */}
-            <motion.div
-              animate={{ y: showDesktopNav ? 64 : 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="flex flex-col items-center pointer-events-auto cursor-pointer"
-              onClick={handleRopePull}
-            >
-              {/* Rope body */}
-              <div
-                className="w-[5px] relative overflow-hidden"
-                style={{
-                  height: showDesktopNav ? '28px' : '48px',
-                  transition: 'height 0.5s ease-in-out',
-                  background: `repeating-linear-gradient(
-                    160deg,
-                    rgba(255,255,255,0.9) 0px,
-                    rgba(220,200,160,0.8) 2px,
-                    rgba(255,255,255,0.9) 4px,
-                    rgba(200,180,140,0.7) 6px,
-                    rgba(255,255,255,0.9) 8px
-                  )`,
-                  borderRadius: '3px',
-                  boxShadow: '0 0 4px rgba(0,0,0,0.5)',
-                }}
-              />
-              {/* Rope knob (tapered cone shape) */}
-              <motion.div
-                animate={{ rotate: isRopeAnimating ? [0, -8, 8, -5, 5, 0] : 0 }}
-                transition={{ duration: 0.4 }}
-                style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: '8px solid transparent',
-                  borderRight: '8px solid transparent',
-                  borderTop: '6px solid rgba(200, 175, 130, 0.9)',
-                }}
-              />
-              <div
-                style={{
-                  width: '18px',
-                  height: '22px',
-                  background: 'linear-gradient(180deg, rgba(210,185,140,0.95) 0%, rgba(170,140,100,0.95) 100%)',
-                  borderRadius: '3px 3px 6px 6px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2)',
-                }}
-              />
-            </motion.div>
-          </div>
-        )}
-
+        
         {/* Main Content */}
         <main className="pb-20 md:pb-0">
           <AnimatePresence mode="wait">
