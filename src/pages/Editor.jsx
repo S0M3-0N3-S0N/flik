@@ -132,6 +132,10 @@ export default function Editor() {
   const [isEyeDropperActive, setIsEyeDropperActive] = useState(false);
   const [stickers, setStickers] = useState([]);
 
+  // Layers state
+  const [layers, setLayers] = useState([]);
+  const [selectedLayerId, setSelectedLayerId] = useState(null);
+
   const location = useLocation();
 
   // Fetch user on mount
