@@ -42,7 +42,13 @@ export default function WorldChat() {
   // Subscribe to real-time updates
   useEffect(() => {
     const unsubscribe = base44.entities.WorldChatMessage.subscribe((event) => {
-      queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
+      if (event.type === "delete") {
+        queryClient.setQueryData(["worldChatMessages"], (old) =>
+          old?.filter((msg) => msg.id !== event.id) || []
+        );
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
+      }
     });
     return unsubscribe;
   }, [queryClient]);
