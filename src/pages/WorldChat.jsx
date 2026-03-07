@@ -75,8 +75,9 @@ export default function WorldChat() {
       queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
       toast.success("Message deleted");
     },
-    onError: () => {
-      toast.error("Failed to delete message");
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast.error(error?.message || "Failed to delete message");
     },
   });
 
