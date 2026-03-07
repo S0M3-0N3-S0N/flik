@@ -361,7 +361,8 @@ export default function SpotRemoval({
                         <X className="w-5 h-5 text-white" />
                       </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
