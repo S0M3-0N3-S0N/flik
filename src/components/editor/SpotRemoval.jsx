@@ -156,7 +156,8 @@ export default function SpotRemoval({
   const handleAddSelectedImages = () => {
     if (selectedGalleryImages.length > 0) {
       const currentRefs = Array.isArray(referenceImages) ? referenceImages : [];
-      onReferenceImagesChange([...currentRefs, ...selectedGalleryImages]);
+      const newRefs = selectedGalleryImages.map(url => ({ url, title: 'Gallery Image' }));
+      onReferenceImagesChange([...currentRefs, ...newRefs]);
       toast.success(`${selectedGalleryImages.length} image${selectedGalleryImages.length > 1 ? 's' : ''} added from gallery`);
       setSelectedGalleryImages([]);
       setShowGalleryPicker(false);
