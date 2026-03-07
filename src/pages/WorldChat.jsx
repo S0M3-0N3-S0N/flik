@@ -58,7 +58,17 @@ export default function WorldChat() {
   // Subscribe to reaction updates
   useEffect(() => {
     const unsubscribe = base44.entities.WorldChatMessageReaction.subscribe((event) => {
-      queryClient.invalidateQueries({ queryKey: ["worldChatReactions"] });
+      if (event.type === "delete") {
+        queryClient.setQueryData(["worldChatReactions"], (old) =>
+          old?.filter((reaction) => reaction.id !== event.id) || []
+        );
+      } else if (event.type === "create") {
+        queryClient.setQueryData(["worldChatReactions"], (old) => [...(old || []), event.data]);
+      } else if (event.type === "update") {
+        queryClient.setQueryData(["worldChatReactions"], (old) =>
+          old?.map((reaction) => (reaction.id === event.id ? event.data : reaction)) || []
+        );
+      }
     });
     return unsubscribe;
   }, [queryClient]);
@@ -76,9 +86,7 @@ export default function WorldChat() {
         console.error("Error loading user:", error);
       }
     })();
-    // Clear any stale cache on mount
-    queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
-    queryClient.invalidateQueries({ queryKey: ["worldChatReactions"] });
+
   }, [queryClient]);
 
   // Auto-scroll to bottom
@@ -95,7 +103,6 @@ export default function WorldChat() {
       setMessageInput("");
       setSelectedImage(null);
       setImagePreview(null);
-      queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
       toast.success("Message sent!");
     },
     onError: (error) => {
@@ -117,9 +124,7 @@ export default function WorldChat() {
      },
      onError: (error) => {
        queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
-       if (error?.status !== 404) {
-         toast.error("Failed to delete message");
-       }
+       toast.error("Failed to delete message");
      },
    });
 
@@ -158,7 +163,7 @@ export default function WorldChat() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["worldChatReactions"] });
+      // Reactions handled by subscription
     },
   });
 
