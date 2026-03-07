@@ -35,6 +35,10 @@ export default function WorldChatMessage({
   };
 
   const handleReply = () => {
+    if (!userEmail) {
+      toast.error("You must be logged in to reply");
+      return;
+    }
     onReply(message);
   };
 
