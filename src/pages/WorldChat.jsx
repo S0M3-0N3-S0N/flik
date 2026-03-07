@@ -369,6 +369,16 @@ export default function WorldChat() {
                 <button
                   type="button"
                   onClick={() => {
+                    document.getElementById("world-attach-menu")?.classList.add("hidden");
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                >
+                  <Grid3x3 className="w-4 h-4 text-[#FF6B35]" />
+                  <span className="text-sm">From Gallery</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     setShowGifModal(true);
                     document.getElementById("world-attach-menu")?.classList.add("hidden");
                   }}
