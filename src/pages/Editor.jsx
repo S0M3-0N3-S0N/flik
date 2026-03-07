@@ -1411,6 +1411,15 @@ export default function Editor() {
               <TextGeneratorPanel onTextImageGenerated={handleTextImageGenerated} isProcessing={isProcessing} user={user} />
             </TabsContent>
 
+            <TabsContent value="layers" className="mt-0">
+              <LayersPanel
+                layers={layers}
+                onLayersChange={handleLayersChange}
+                onLayerSelect={setSelectedLayerId}
+                selectedLayerId={selectedLayerId}
+              />
+            </TabsContent>
+
 
           </div>
         </Tabs>
