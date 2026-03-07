@@ -20,6 +20,7 @@ export default function WorldChat() {
     queryKey: ["worldChatMessages"],
     queryFn: () => base44.entities.WorldChatMessage.list("-created_date", 100),
     refetchInterval: 2000,
+    staleTime: 1000,
   });
 
   // Subscribe to real-time updates
@@ -73,11 +74,11 @@ export default function WorldChat() {
     mutationFn: (messageId) => base44.entities.WorldChatMessage.delete(messageId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
-      toast.success("Message deleted");
     },
     onError: (error) => {
-      console.error("Delete error:", error);
-      toast.error(error?.message || "Failed to delete message");
+      if (error?.status !== 404) {
+        toast.error("You don't have permission to delete this message");
+      }
     },
   });
 
