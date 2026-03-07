@@ -1297,6 +1297,34 @@ export default function Editor() {
               )}
             </TabsContent>
 
+            <TabsContent value="layers" className="mt-0">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Layers</h3>
+              {currentImage ? (
+                <div className="space-y-2">
+                  {stickers.map((sticker, idx) => (
+                    <div key={sticker.id} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
+                      <img src={sticker.url} alt="sticker" className="w-8 h-8 object-contain rounded" />
+                      <span className="text-xs text-white/70 flex-1 truncate">Sticker {idx + 1}</span>
+                      <button onClick={() => setStickers(prev => prev.filter(s => s.id !== sticker.id))} className="text-white/40 hover:text-white transition-colors">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 opacity-60">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center">
+                      <Layers className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-xs text-white/70 flex-1">Base Image</span>
+                  </div>
+                  {stickers.length === 0 && (
+                    <p className="text-white/40 text-sm mt-2">No layers yet. Add stickers or text to create layers.</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-white/40 text-sm">Upload an image to start</p>
+              )}
+            </TabsContent>
+
             <TabsContent value="crop" className="mt-0">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Crop & Resize</h3>
               {currentImage
