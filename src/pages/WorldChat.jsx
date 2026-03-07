@@ -134,87 +134,94 @@ export default function WorldChat() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col pt-20 md:pt-24">
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-40 glass-card border-b border-white/5 backdrop-blur-xl md:mt-16">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold gradient-text">World Chat</h1>
-          <p className="text-xs text-white/60 mt-1">Global real-time conversations</p>
-        </div>
-      </div>
+    <div className="fixed inset-0 overflow-y-auto px-4 sm:px-6 pt-8 pb-12 md:pt-16 md:pb-16 bg-[#0A0A0A]">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-10 md:mb-14"
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+            <span className="gradient-text">World Chat</span>
+          </h1>
+          <p className="text-white/50 text-sm sm:text-base max-w-xl mx-auto">Global real-time conversations</p>
+        </motion.div>
 
-      {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto max-w-4xl mx-auto w-full px-4 space-y-4 pb-32">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-96">
-            <Loader2 className="w-6 h-6 animate-spin text-[#FF6B35]" />
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-96 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-              <Send className="w-8 h-8 text-white/30" />
+        {/* Messages Container */}
+        <div className="w-full">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-40">
+              <Loader2 className="w-10 h-10 text-[#FF6B35] animate-spin" />
             </div>
-            <p className="text-white/60">No messages yet. Start the conversation!</p>
-          </div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {[...messages].reverse().map((message, index) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="flex gap-3 group"
-              >
-                {message.sender_profile_picture ? (
-                  <img
-                    src={message.sender_profile_picture}
-                    alt={message.sender_name}
-                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center flex-shrink-0 text-white font-semibold text-sm">
-                    {message.sender_name.charAt(0).toUpperCase()}
+          ) : messages.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-40"
+            >
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center mx-auto mb-8 border border-[#FF6B35]/20">
+                <Send className="w-12 h-12 text-[#FF6B35]" />
+              </div>
+              <h3 className="text-white text-2xl font-semibold mb-3">No messages yet</h3>
+              <p className="text-white/50 max-w-sm mx-auto text-base">Start the conversation with the world!</p>
+            </motion.div>
+          ) : (
+            <div className="columns-2 sm:columns-3 md:columns-4 gap-3 sm:gap-4">
+              <AnimatePresence mode="popLayout">
+                {[...messages].reverse().map((message, index) => (
+                  <div key={message.id} className="mb-3 sm:mb-4 break-inside-avoid">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors group cursor-default"
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        {message.sender_profile_picture ? (
+                          <img
+                            src={message.sender_profile_picture}
+                            alt={message.sender_name}
+                            className="w-8 h-8 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs">
+                            {message.sender_name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{message.sender_name}</p>
+                          <p className="text-xs text-white/40">{new Date(message.created_date).toLocaleTimeString()}</p>
+                        </div>
+                        {user?.role === "admin" && (
+                          <button
+                            onClick={() => deleteMessageMutation.mutate(message.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-red-400 flex-shrink-0"
+                            title="Delete message"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {message.image_url && (
+                        <img
+                          src={message.image_url}
+                          alt="Message"
+                          className="rounded-lg w-full mb-3 border border-white/10"
+                        />
+                      )}
+
+                      {message.content && (
+                        <p className="text-sm text-white/90 break-words">{message.content}</p>
+                      )}
+                    </motion.div>
                   </div>
-                )}
-
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold text-white">
-                      {message.sender_name}
-                    </span>
-                    <span className="text-xs text-white/40">
-                      {new Date(message.created_date).toLocaleTimeString()}
-                    </span>
-
-                    {user?.role === "admin" && (
-                      <button
-                        onClick={() => deleteMessageMutation.mutate(message.id)}
-                        className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-red-400"
-                        title="Delete message"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {message.image_url && (
-                    <img
-                      src={message.image_url}
-                      alt="Message image"
-                      className="rounded-lg max-w-xs mb-2 border border-white/10"
-                    />
-                  )}
-
-                  {message.content && (
-                    <p className="text-sm text-white/90 break-words">{message.content}</p>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
-        <div ref={messagesEndRef} />
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Input Area */}
