@@ -781,7 +781,7 @@ export default function Profile() {
                   <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
                     <Mail className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">Contact</span>
+                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">{t("profile.contact")}</span>
                 </div>
                 {!isEditingEmail && (
                   <button 
@@ -804,10 +804,10 @@ export default function Profile() {
                   <div className="flex gap-2">
                     <Button onClick={handleEmailUpdate} size="sm" className="flex-1 btn-gradient text-white h-8 sm:h-9 text-xs sm:text-sm">
                       <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
-                      Save
-                    </Button>
-                    <Button onClick={() => setIsEditingEmail(false)} size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-8 sm:h-9 text-xs sm:text-sm">
-                      Cancel
+                      {t("profile.save")}
+                      </Button>
+                      <Button onClick={() => setIsEditingEmail(false)} size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-8 sm:h-9 text-xs sm:text-sm">
+                      {t("profile.cancel")}
                     </Button>
                   </div>
                 </div>
@@ -840,7 +840,7 @@ export default function Profile() {
                   <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
                     <TrendingUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">Stats</span>
+                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">{t("profile.stats")}</span>
                 </div>
                 <button 
                   onClick={() => setShowStatsExpanded(!showStatsExpanded)}
@@ -860,9 +860,9 @@ export default function Profile() {
                       exit={{ opacity: 0, height: 0 }}
                       className="text-xs text-white/50 space-y-1 pt-2 border-t border-white/10"
                     >
-                      <div className="flex justify-between"><span>Today:</span><span className="text-white/70">{stats.today}</span></div>
-                      <div className="flex justify-between"><span>This Week:</span><span className="text-white/70">{stats.thisWeek}</span></div>
-                      <div className="flex justify-between"><span>This Month:</span><span className="text-white/70">{stats.thisMonth}</span></div>
+                      <div className="flex justify-between"><span>{t("profile.today")}:</span><span className="text-white/70">{stats.today}</span></div>
+                       <div className="flex justify-between"><span>{t("profile.this_week")}:</span><span className="text-white/70">{stats.thisWeek}</span></div>
+                       <div className="flex justify-between"><span>{t("profile.this_month")}:</span><span className="text-white/70">{stats.thisMonth}</span></div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -893,7 +893,7 @@ export default function Profile() {
             <div className="relative flex-1">
               <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/30 pointer-events-none" />
               <Input
-                placeholder="Search your creations..."
+                placeholder={t("profile.search_creations")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 sm:pl-12 h-11 sm:h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl sm:rounded-2xl text-sm sm:text-base focus:border-[#FF6B35]/40 focus:ring-1 focus:ring-[#FF6B35]/20 transition-all"
@@ -1026,18 +1026,18 @@ export default function Profile() {
                 {creations.length === 0 ? <Sparkles className="w-10 h-10 text-[#FF6B35]" /> : <Search className="w-10 h-10 text-[#FF6B35]" />}
               </div>
               <h3 className="text-white text-xl font-semibold mb-2">
-                {creations.length === 0 ? 'No creations yet' : 'No results found'}
-              </h3>
-              <p className="text-white/40 mb-6 max-w-sm mx-auto">
-                {creations.length === 0 
-                  ? "Start creating amazing content with FLIK's AI tools"
-                  : 'Try adjusting your filters or search query'}
+                 {creations.length === 0 ? t("profile.no_creations") : t("profile.no_results")}
+               </h3>
+               <p className="text-white/40 mb-6 max-w-sm mx-auto">
+                 {creations.length === 0 
+                   ? t("profile.create_first")
+                   : t("profile.adjust_filters")}
               </p>
               {creations.length === 0 && (
                 <Button onClick={() => navigate(createPageUrl('Generate'))} className="btn-gradient text-white px-8 h-11">
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Create Your First Masterpiece
-                </Button>
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    {t("profile.create_masterpiece")}
+                  </Button>
               )}
             </motion.div>
           ) : (
@@ -1189,8 +1189,8 @@ export default function Profile() {
                     disabled={currentPage === 1}
                     className="bg-white/5 hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed h-10 sm:h-11 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-medium text-sm sm:text-base transition-all hover:scale-105"
                   >
-                    <span className="hidden sm:inline">Previous</span>
-                    <span className="sm:hidden">Prev</span>
+                    <span className="hidden sm:inline">{t("profile.previous")}</span>
+                    <span className="sm:hidden">{t("profile.prev")}</span>
                   </Button>
                   <div className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-br from-white/10 to-white/5 rounded-xl sm:rounded-2xl border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
                     <span className="text-white font-bold text-base sm:text-lg">
@@ -1202,7 +1202,7 @@ export default function Profile() {
                     disabled={currentPage === totalPages}
                     className="bg-white/5 hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed h-10 sm:h-11 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-medium text-sm sm:text-base transition-all hover:scale-105"
                   >
-                    Next
+                    {t("profile.next")}
                   </Button>
                 </div>
               )}
@@ -1232,10 +1232,10 @@ export default function Profile() {
           <DialogHeader>
             <DialogTitle className="text-xl text-white flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-400" />
-              {deleteConfirm === 'batch' ? `Delete ${selectedItems.length} Items?` : 'Delete Creation?'}
+              {deleteConfirm === 'batch' ? t("profile.delete_items").replace("{{count}}", selectedItems.length) : t("profile.delete_creation")}
             </DialogTitle>
             <DialogDescription className="text-white/50">
-              This action cannot be undone. This will permanently delete {deleteConfirm === 'batch' ? 'these creations' : 'your creation'}.
+              {t("profile.delete_warning").replace("{{target}}", deleteConfirm === 'batch' ? 'these creations' : 'your creation')}
             </DialogDescription>
           </DialogHeader>
           {deleteConfirm === 'batch' && batchDeleteProgress > 0 && (
