@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { X, MessageCircle, Smile } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { format } from "date-fns";
 
 const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "✨", "🎉"];
 
@@ -66,7 +65,7 @@ export default function WorldChatMessage({
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{message.sender_name}</p>
-            <p className="text-xs text-white/40">{format(new Date(message.created_date), 'HH:mm')}</p>
+            <p className="text-xs text-white/40">{new Date(message.created_date).toLocaleTimeString()}</p>
           </div>
           {isDeletable && (
             <button
