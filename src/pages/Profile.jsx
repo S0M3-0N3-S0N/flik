@@ -129,7 +129,7 @@ export default function Profile() {
     const handleTouchEnd = async () => {
       if (isPullRefreshActive.current && pullDistance > 80) {
         await queryClient.invalidateQueries({ queryKey: ['profileCreations'] });
-        toast.success('Refreshed!');
+        toast.success(t('profile.refreshed'));
       }
       touchStartY.current = 0;
       setPullDistance(0);
@@ -200,16 +200,16 @@ export default function Profile() {
     }
 
     setIsUploading(true);
-    const toastId = toast.loading('Uploading profile picture...');
+    const toastId = toast.loading(t('profile.uploading'));
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       await base44.auth.updateMe({ profile_picture: file_url });
       await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      toast.success('Profile picture updated!', { id: toastId });
+      toast.success(t('profile.picture_updated'), { id: toastId });
       base44.analytics.track({ eventName: 'profile_picture_updated' });
     } catch (error) {
       console.error("Failed to upload profile picture:", error);
-      toast.error('Failed to upload profile picture', { id: toastId });
+      toast.error(t('profile.upload_failed'), { id: toastId });
     } finally {
       setIsUploading(false);
     }
@@ -217,12 +217,12 @@ export default function Profile() {
 
   const handleEmailUpdate = async () => {
     if (!emailInput.trim()) {
-      toast.error('Email cannot be empty');
+      toast.error(t('profile.email_cannot_be_empty'));
       return;
     }
     
     if (!validateEmail(emailInput)) {
-      toast.error('Please enter a valid email address');
+      toast.error(t('profile.invalid_email'));
       return;
     }
 
@@ -231,7 +231,7 @@ export default function Profile() {
       await base44.auth.updateMe({ contact_email: emailInput });
       await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setIsEditingEmail(false);
-      toast.success('Email updated successfully!', { id: toastId });
+      toast.success(t('profile.email_updated'), { id: toastId });
       base44.analytics.track({ eventName: 'profile_email_updated' });
     } catch (error) {
       console.error("Failed to update email:", error);
@@ -246,7 +246,7 @@ export default function Profile() {
 
   const handleNameUpdate = async () => {
     if (!nameInput.trim()) {
-      toast.error('Name cannot be empty');
+      toast.error(t('profile.name_cannot_be_empty'));
       return;
     }
 
@@ -255,7 +255,7 @@ export default function Profile() {
       await base44.auth.updateMe({ display_name: nameInput });
       await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setIsEditingName(false);
-      toast.success('Name updated successfully!', { id: toastId });
+      toast.success(t('profile.name_updated'), { id: toastId });
       base44.analytics.track({ eventName: 'profile_name_updated' });
     } catch (error) {
       console.error("Failed to update name:", error);
@@ -359,7 +359,7 @@ export default function Profile() {
       // Real undo with duplicate check
       toast((t) => (
         <div className="flex items-center gap-3">
-          <span>Creation deleted</span>
+          <span>{t('profile.creation_deleted')}</span>
           <Button
             size="sm"
             onClick={async () => {
@@ -374,7 +374,7 @@ export default function Profile() {
                 const { id, created_date, updated_date, created_by, ...dataWithoutMeta } = itemToDelete;
                 await base44.entities.Creation.create(dataWithoutMeta);
                 await queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
-                toast.success('Creation restored!', { id: t.id });
+                toast.success(t('profile.restored'), { id: t.id });
                 base44.analytics.track({ eventName: 'profile_creation_restored' });
               } catch (error) {
                 toast.error('Failed to restore', { id: t.id });
@@ -382,7 +382,7 @@ export default function Profile() {
             }}
             className="h-7 px-3 bg-white/10 hover:bg-white/20 text-white text-xs"
           >
-            Undo
+            {t('profile.undo')}
           </Button>
         </div>
       ), { duration: BATCH_DELETE_TOAST_DURATION });
@@ -738,7 +738,7 @@ export default function Profile() {
               <div className="mt-2 sm:mt-4 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
-                  Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  {t('profile.joined')} {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </span>
               </div>
             </div>
@@ -942,7 +942,7 @@ export default function Profile() {
                 className="p-3 sm:p-5 rounded-2xl bg-gradient-to-r from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
               >
                 <span className="text-white font-medium text-sm sm:text-base">
-                  {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected
+                  {t('profile.item_selected').replace('{{count}}', selectedItems.length).replace('{{plural}}', selectedItems.length > 1 ? 's' : '')}
                   {batchDeleteProgress > 0 && (
                     <span className="ml-2 text-xs text-white/60">({batchDeleteProgress}% deleted)</span>
                   )}
@@ -965,7 +965,7 @@ export default function Profile() {
                     onClick={() => setSelectedItems([])}
                     className="flex-1 min-w-[80px] sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-2 sm:px-4 text-xs sm:text-sm"
                   >
-                    Clear
+                    {t('profile.clear')}
                   </Button>
                   <Button
                    size="sm"
@@ -982,7 +982,7 @@ export default function Profile() {
                    title="Edit selected in Photo Studio"
                   >
                    <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                   <span className="hidden sm:inline ml-1">Edit</span>
+                   <span className="hidden sm:inline ml-1">{t('profile.edit')}</span>
                   </Button>
                   <Button
                    size="sm"
@@ -999,7 +999,7 @@ export default function Profile() {
                    title="Use as reference in Imagine AI"
                   >
                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                   <span className="hidden sm:inline ml-1">Imagine</span>
+                   <span className="hidden sm:inline ml-1">{t('profile.imagine')}</span>
                   </Button>
                   <Button
                    size="sm"
@@ -1008,7 +1008,7 @@ export default function Profile() {
                    className="flex-1 min-w-[80px] sm:flex-none bg-red-500/20 hover:bg-red-500/30 text-red-400 border-0 h-9 px-2 sm:px-3 text-xs sm:text-sm disabled:opacity-50"
                   >
                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                   <span className="hidden sm:inline ml-1">Delete</span>
+                   <span className="hidden sm:inline ml-1">{t('profile.delete')}</span>
                   </Button>
                 </div>
               </motion.div>
@@ -1125,7 +1125,7 @@ export default function Profile() {
                           <div>
                             <h3 
                               className="font-bold text-white text-sm sm:text-base lg:text-lg line-clamp-2 mb-1 drop-shadow-lg"
-                              dangerouslySetInnerHTML={{ __html: highlightText(item.title || 'Untitled', searchQuery) }}
+                              dangerouslySetInnerHTML={{ __html: highlightText(item.title || t('profile.untitled'), searchQuery) }}
                             />
                             {item.prompt && (
                               <p 
@@ -1145,7 +1145,7 @@ export default function Profile() {
                               title="Edit in Photo Studio"
                             >
                               <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">Edit</span>
+                              <span className="hidden sm:inline">{t('profile.edit')}</span>
                             </Button>
                             <Button
                               size="sm"
@@ -1160,7 +1160,7 @@ export default function Profile() {
                               title="Imagine similar image"
                             >
                               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">Imagine</span>
+                              <span className="hidden sm:inline">{t('profile.imagine')}</span>
                             </Button>
                             <Button
                               size="sm"
@@ -1172,7 +1172,7 @@ export default function Profile() {
                               title="Delete image"
                             >
                               <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">Delete</span>
+                              <span className="hidden sm:inline">{t('profile.delete')}</span>
                             </Button>
                             </div>
                         </div>
@@ -1217,7 +1217,7 @@ export default function Profile() {
           <DialogHeader>
             <DialogTitle>{t("profile.change_password")}</DialogTitle>
             <DialogDescription className="text-white/50">
-              To change your password, you need to sign out and use the "Forgot Password" link on the login page.
+             {t('profile.password_info')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-4">
@@ -1259,14 +1259,14 @@ export default function Profile() {
               className="flex-1 bg-transparent border-white/20 text-white hover:bg-white/10"
               disabled={batchDeleteProgress > 0}
             >
-              Cancel
+              {t('profile.cancel')}
             </Button>
             <Button 
               onClick={deleteConfirm === 'batch' ? confirmBatchDelete : confirmDelete} 
               className="flex-1 bg-red-500 hover:bg-red-600 text-white"
               disabled={batchDeleteProgress > 0}
             >
-              {deleteMutation.isPending || batchDeleteProgress > 0 ? 'Deleting...' : 'Delete'}
+              {deleteMutation.isPending || batchDeleteProgress > 0 ? t('profile.deleting') : t('profile.delete')}
             </Button>
           </div>
         </DialogContent>
@@ -1317,7 +1317,7 @@ export default function Profile() {
                 {selectedItem?.prompt && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5"><span className="text-[#FF6B35]">⌘</span> Prompt</p>
+                      <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">{t('profile.prompt_label')}</p>
                       {editingPrompt === selectedItem?.id ? (
                         <Button size="sm" onClick={() => { if (newPrompt.trim()) updateMutation.mutate({ id: selectedItem.id, data: { prompt: newPrompt } }); }} disabled={updateMutation.isPending} className="h-7 text-xs px-3 btn-gradient text-white">
                           {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
@@ -1344,7 +1344,7 @@ export default function Profile() {
                 {/* Title */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Title</p>
+                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t('nav.my_creations')}</p>
                     {editingTitle === selectedItem?.id ? (
                       <Button size="sm" onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } })} disabled={updateMutation.isPending} className="h-7 text-xs px-3 btn-gradient text-white">
                         {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
@@ -1370,23 +1370,23 @@ export default function Profile() {
                 {/* Metadata */}
                 {selectedItem?.metadata && (
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5"><span className="text-[#FF6B35]">ⓘ</span> Information</p>
+                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">{t('profile.information')}</p>
                     <div className="rounded-xl bg-white/5 border border-white/5 divide-y divide-white/5">
                       {selectedItem.metadata?.model && (
                         <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-white/50">Model</span>
+                          <span className="text-xs text-white/50">{t('profile.model')}</span>
                           <span className="text-xs text-white font-medium">{selectedItem.metadata.model}</span>
                         </div>
                       )}
                       {selectedItem.metadata?.style?.length > 0 && (
                         <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-white/50">Style</span>
+                          <span className="text-xs text-white/50">{t('profile.style')}</span>
                           <span className="text-xs text-white font-medium">{selectedItem.metadata.style.join(', ')}</span>
                         </div>
                       )}
                       {selectedItem.metadata?.aspectRatio && (
                         <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-white/50">Ratio</span>
+                          <span className="text-xs text-white/50">{t('profile.ratio')}</span>
                           <span className="text-xs text-white font-medium">{selectedItem.metadata.aspectRatio}</span>
                         </div>
                       )}
@@ -1402,10 +1402,10 @@ export default function Profile() {
                 )}
                 <div className="flex gap-2">
                   <button onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))} className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-medium border border-white/10 transition-all">
-                    <Edit className="w-4 h-4" /> Edit
+                    <Edit className="w-4 h-4" /> {t('profile.edit')}
                   </button>
                   <button onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)} className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-black text-sm font-bold transition-all active:scale-95" style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}>
-                    <Download className="w-4 h-4" /> Download
+                    <Download className="w-4 h-4" /> {t('profile.download')}
                   </button>
                   <button onClick={() => handleDelete(selectedItem.id)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all">
                     <Trash2 className="w-4 h-4" />
@@ -1508,14 +1508,14 @@ export default function Profile() {
                     onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))}
                     className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-white/10 border border-white/15 active:scale-95 transition-all"
                   >
-                    <Edit className="w-4 h-4" /> Edit
+                    <Edit className="w-4 h-4" /> {t('profile.edit')}
                   </button>
                   <button
                     onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
                     className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-black flex items-center justify-center gap-2 active:scale-95 transition-all"
                     style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}
                   >
-                    <Download className="w-4 h-4" /> Download
+                    <Download className="w-4 h-4" /> {t('profile.download')}
                   </button>
                   <button
                     onClick={() => handleDelete(selectedItem.id)}
