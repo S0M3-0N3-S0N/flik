@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, X, Image as ImageIcon, Plus, Upload, Grid3x3, Film } from "lucide-react";
+import { Send, Loader2, X, Plus, Upload, Grid3x3, Film } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import WorldChatMessage from "@/components/WorldChatMessage";
@@ -12,6 +12,10 @@ import GifSearchModal from "@/components/GifSearchModal";
 
 export default function WorldChat() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const messagesEndRef = useRef(null);
+
+  // Local state
   const [messageInput, setMessageInput] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -19,61 +23,35 @@ export default function WorldChat() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [showGifModal, setShowGifModal] = useState(false);
   const [selectedGifUrl, setSelectedGifUrl] = useState(null);
-  const messagesEndRef = useRef(null);
-  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [messageList, setMessageList] = useState([]);
+  const [reactionList, setReactionList] = useState([]);
 
-  // Fetch messages
-  const { data: messages = [], isLoading } = useQuery({
+  // Fetch initial messages
+  const { isLoading: messagesLoading } = useQuery({
     queryKey: ["worldChatMessages"],
-    queryFn: () => base44.entities.WorldChatMessage.list("-created_date", 100),
+    queryFn: async () => {
+      const msgs = await base44.entities.WorldChatMessage.list("-created_date", 100);
+      setMessageList(msgs);
+      return msgs;
+    },
     staleTime: Infinity,
+    gcTime: Infinity,
   });
 
-  // Fetch reactions
-  const { data: reactions = [] } = useQuery({
+  // Fetch initial reactions
+  const { isLoading: reactionsLoading } = useQuery({
     queryKey: ["worldChatReactions"],
-    queryFn: () => base44.entities.WorldChatMessageReaction.list(),
+    queryFn: async () => {
+      const reacts = await base44.entities.WorldChatMessageReaction.list();
+      setReactionList(reacts);
+      return reacts;
+    },
     staleTime: Infinity,
+    gcTime: Infinity,
   });
 
-  // Subscribe to real-time updates
-  useEffect(() => {
-    const unsubscribe = base44.entities.WorldChatMessage.subscribe((event) => {
-      if (event.type === "delete") {
-        queryClient.setQueryData(["worldChatMessages"], (old) =>
-          old?.filter((msg) => msg.id !== event.id) || []
-        );
-      } else if (event.type === "create") {
-        queryClient.setQueryData(["worldChatMessages"], (old) => [event.data, ...(old || [])]);
-      } else if (event.type === "update") {
-        queryClient.setQueryData(["worldChatMessages"], (old) =>
-          old?.map((msg) => (msg.id === event.id ? event.data : msg)) || []
-        );
-      }
-    });
-    return unsubscribe;
-  }, [queryClient]);
-
-  // Subscribe to reaction updates
-  useEffect(() => {
-    const unsubscribe = base44.entities.WorldChatMessageReaction.subscribe((event) => {
-      if (event.type === "delete") {
-        queryClient.setQueryData(["worldChatReactions"], (old) =>
-          old?.filter((reaction) => reaction.id !== event.id) || []
-        );
-      } else if (event.type === "create") {
-        queryClient.setQueryData(["worldChatReactions"], (old) => [...(old || []), event.data]);
-      } else if (event.type === "update") {
-        queryClient.setQueryData(["worldChatReactions"], (old) =>
-          old?.map((reaction) => (reaction.id === event.id ? event.data : reaction)) || []
-        );
-      }
-    });
-    return unsubscribe;
-  }, [queryClient]);
-
-  // Get current user
+  // Load user
   useEffect(() => {
     (async () => {
       try {
@@ -86,15 +64,46 @@ export default function WorldChat() {
         console.error("Error loading user:", error);
       }
     })();
+  }, []);
 
-  }, [queryClient]);
+  // Subscribe to message changes
+  useEffect(() => {
+    const unsubscribe = base44.entities.WorldChatMessage.subscribe((event) => {
+      if (event.type === "create") {
+        setMessageList((prev) => [event.data, ...prev]);
+      } else if (event.type === "update") {
+        setMessageList((prev) =>
+          prev.map((msg) => (msg.id === event.id ? event.data : msg))
+        );
+      } else if (event.type === "delete") {
+        setMessageList((prev) => prev.filter((msg) => msg.id !== event.id));
+      }
+    });
+    return unsubscribe;
+  }, []);
 
-  // Auto-scroll to bottom
+  // Subscribe to reaction changes
+  useEffect(() => {
+    const unsubscribe = base44.entities.WorldChatMessageReaction.subscribe((event) => {
+      if (event.type === "create") {
+        setReactionList((prev) => [...prev, event.data]);
+      } else if (event.type === "update") {
+        setReactionList((prev) =>
+          prev.map((r) => (r.id === event.id ? event.data : r))
+        );
+      } else if (event.type === "delete") {
+        setReactionList((prev) => prev.filter((r) => r.id !== event.id));
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messageList]);
 
-  // Create message mutation
+  // Create message
   const createMessageMutation = useMutation({
     mutationFn: async (messageData) => {
       return base44.entities.WorldChatMessage.create(messageData);
@@ -103,30 +112,47 @@ export default function WorldChat() {
       setMessageInput("");
       setSelectedImage(null);
       setImagePreview(null);
+      setSelectedGifUrl(null);
+      setReplyingTo(null);
       toast.success("Message sent!");
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to send message");
-      console.error(error);
     },
   });
 
-  // Delete message mutation
-   const deleteMessageMutation = useMutation({
-     mutationFn: (messageId) => base44.entities.WorldChatMessage.delete(messageId),
-     onMutate: (messageId) => {
-       queryClient.setQueryData(["worldChatMessages"], (old) =>
-         old?.filter((msg) => msg.id !== messageId) || []
-       );
-     },
-     onSuccess: () => {
-       toast.success("Message deleted");
-     },
-     onError: (error) => {
-       queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
-       toast.error("Failed to delete message");
-     },
-   });
+  // Delete message
+  const deleteMessageMutation = useMutation({
+    mutationFn: (messageId) => base44.entities.WorldChatMessage.delete(messageId),
+    onSuccess: () => {
+      toast.success("Message deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete message");
+    },
+  });
+
+  // Add reaction
+  const reactMutation = useMutation({
+    mutationFn: async (data) => {
+      const existing = reactionList.find(
+        (r) =>
+          r.message_id === data.messageId &&
+          r.emoji === data.emoji &&
+          r.reactor_email === data.reactorEmail
+      );
+
+      if (existing) {
+        return base44.entities.WorldChatMessageReaction.delete(existing.id);
+      } else {
+        return base44.entities.WorldChatMessageReaction.create({
+          message_id: data.messageId,
+          emoji: data.emoji,
+          reactor_email: data.reactorEmail,
+        });
+      }
+    },
+  });
 
   const handleImageSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -143,36 +169,6 @@ export default function WorldChat() {
       setImagePreview(event.target?.result);
     };
     reader.readAsDataURL(file);
-  };
-
-  // React to message
-  const reactMutation = useMutation({
-    mutationFn: async (data) => {
-      const existing = reactions.find(
-        (r) => r.message_id === data.messageId && r.emoji === data.emoji && r.reactor_email === data.reactorEmail
-      );
-
-      if (existing) {
-        return base44.entities.WorldChatMessageReaction.delete(existing.id);
-      } else {
-        return base44.entities.WorldChatMessageReaction.create({
-          message_id: data.messageId,
-          emoji: data.emoji,
-          reactor_email: data.reactorEmail,
-        });
-      }
-    },
-    onSuccess: () => {
-      // Reactions handled by subscription
-    },
-  });
-
-  const handleReact = (messageId, emoji, reactorEmail) => {
-    reactMutation.mutate({ messageId, emoji, reactorEmail });
-  };
-
-  const handleReply = (message) => {
-    setReplyingTo(message);
   };
 
   const handleSelectGif = (gifUrl) => {
@@ -223,9 +219,9 @@ export default function WorldChat() {
     }
 
     createMessageMutation.mutate(messageData);
-    setReplyingTo(null);
-    setSelectedGifUrl(null);
   };
+
+  const isLoading = messagesLoading || reactionsLoading;
 
   return (
     <div className="fixed inset-0 overflow-y-auto px-4 sm:px-6 pt-8 pb-12 md:pt-16 md:pb-16 bg-[#0A0A0A]">
@@ -255,7 +251,7 @@ export default function WorldChat() {
             <div className="flex items-center justify-center py-40">
               <Loader2 className="w-10 h-10 text-[#FF6B35] animate-spin" />
             </div>
-          ) : messages.length === 0 ? (
+          ) : messageList.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -270,19 +266,21 @@ export default function WorldChat() {
           ) : (
             <div className="columns-2 sm:columns-3 md:columns-4 gap-3 sm:gap-4">
               <AnimatePresence mode="popLayout">
-                {[...messages].reverse().map((message) => {
+                {[...messageList].reverse().map((message) => {
                   const parentMessage = message.parent_message_id
-                    ? messages.find((m) => m.id === message.parent_message_id)
+                    ? messageList.find((m) => m.id === message.parent_message_id)
                     : null;
 
                   return (
                     <WorldChatMessage
                       key={message.id}
                       message={message}
-                      reactions={reactions}
+                      reactions={reactionList}
                       userEmail={user?.email}
-                      onReact={handleReact}
-                      onReply={handleReply}
+                      onReact={(messageId, emoji, reactorEmail) =>
+                        reactMutation.mutate({ messageId, emoji, reactorEmail })
+                      }
+                      onReply={() => setReplyingTo(message)}
                       onDelete={(id) => deleteMessageMutation.mutate(id)}
                       parentMessage={parentMessage}
                       isDeletable={user?.role === "admin" || user?.email === message.created_by}
@@ -292,6 +290,7 @@ export default function WorldChat() {
               </AnimatePresence>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -334,17 +333,15 @@ export default function WorldChat() {
           )}
 
           <div className="flex gap-2 relative">
-            {/* Attachments Menu Button */}
             <div className="relative group">
               <button
                 type="button"
                 onClick={() => {
-                  const menu = document.getElementById('world-attach-menu');
+                  const menu = document.getElementById("world-attach-menu");
                   if (menu) {
-                    menu.classList.toggle('hidden');
+                    menu.classList.toggle("hidden");
                   }
                 }}
-                id="world-attach-menu-btn"
                 className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition-colors disabled:opacity-50"
                 disabled={isUploading || createMessageMutation.isPending}
                 title="Add attachments"
@@ -352,12 +349,11 @@ export default function WorldChat() {
                 <Plus className="w-5 h-5 text-white/60" />
               </button>
 
-              {/* Popup Menu */}
-              <div 
+              <div
                 id="world-attach-menu"
                 className="hidden absolute bottom-full left-0 mb-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl min-w-[180px]"
               >
-                <label className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors cursor-pointer disabled:opacity-50">
+                <label className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors cursor-pointer">
                   <Upload className="w-4 h-4 text-[#FF6B35]" />
                   <span className="text-sm">Upload Image</span>
                   <input
@@ -365,7 +361,7 @@ export default function WorldChat() {
                     accept="image/*"
                     onChange={(e) => {
                       handleImageSelect(e);
-                      document.getElementById('world-attach-menu')?.classList.add('hidden');
+                      document.getElementById("world-attach-menu")?.classList.add("hidden");
                     }}
                     className="hidden"
                     disabled={isUploading || createMessageMutation.isPending}
@@ -374,18 +370,8 @@ export default function WorldChat() {
                 <button
                   type="button"
                   onClick={() => {
-                    document.getElementById('world-attach-menu')?.classList.add('hidden');
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
-                >
-                  <Grid3x3 className="w-4 h-4 text-[#FF6B35]" />
-                  <span className="text-sm">From Gallery</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
                     setShowGifModal(true);
-                    document.getElementById('world-attach-menu')?.classList.add('hidden');
+                    document.getElementById("world-attach-menu")?.classList.add("hidden");
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
                 >
@@ -412,7 +398,11 @@ export default function WorldChat() {
 
             <Button
               onClick={handleSendMessage}
-              disabled={isUploading || createMessageMutation.isPending || (!messageInput.trim() && !selectedImage && !selectedGifUrl)}
+              disabled={
+                isUploading ||
+                createMessageMutation.isPending ||
+                (!messageInput.trim() && !selectedImage && !selectedGifUrl)
+              }
               className="btn-gradient px-4 py-2.5 h-auto"
             >
               {isUploading || createMessageMutation.isPending ? (
