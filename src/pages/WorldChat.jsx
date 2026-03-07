@@ -76,7 +76,10 @@ export default function WorldChat() {
         console.error("Error loading user:", error);
       }
     })();
-  }, []);
+    // Clear any stale cache on mount
+    queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
+    queryClient.invalidateQueries({ queryKey: ["worldChatReactions"] });
+  }, [queryClient]);
 
   // Auto-scroll to bottom
   useEffect(() => {
