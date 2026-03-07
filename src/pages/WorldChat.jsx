@@ -96,17 +96,19 @@ export default function WorldChat() {
   // Delete message mutation
    const deleteMessageMutation = useMutation({
      mutationFn: (messageId) => base44.entities.WorldChatMessage.delete(messageId),
+     onMutate: (messageId) => {
+       queryClient.setQueryData(["worldChatMessages"], (old) =>
+         old?.filter((msg) => msg.id !== messageId) || []
+       );
+     },
      onSuccess: () => {
        toast.success("Message deleted");
-       queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
      },
      onError: (error) => {
-       if (error?.status === 404) {
-         queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
-         return;
+       queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
+       if (error?.status !== 404) {
+         toast.error("Failed to delete message");
        }
-       toast.error("Failed to delete message");
-       console.error(error);
      },
    });
 
