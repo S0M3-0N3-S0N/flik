@@ -348,9 +348,18 @@ function LayoutContent({ children, currentPageName }) {
               </button>
             </div>
 
+            <div className="flex items-center gap-3 absolute right-8">
+              <button
+                onClick={() => setShowWelcomeSlideshow(true)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition-all"
+                title="FLIK Tour"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
+
             <button
               onClick={() => navigate(currentPageName === "Profile" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Profile"))}
-              className="flex items-center gap-3 transition-all group absolute right-8"
+              className="flex items-center gap-3 transition-all group"
             >
               <div className={`w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
                 currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10 group-hover:border-white/20"
