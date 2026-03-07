@@ -371,6 +371,7 @@ function LayoutContent({ children, currentPageName }) {
                 )}
               </div>
             </button>
+            </div>
           </div>
         </nav>
 
