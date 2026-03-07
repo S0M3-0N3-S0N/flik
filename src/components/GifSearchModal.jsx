@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, Search, Flame, Sparkles } from "lucide-react";
+import { X, Loader2, Search, Flame, Sparkles, Zap, Heart, Gift, AlertCircle, Smile, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 
-const POPULAR_SEARCHES = ["🔥 fire", "😂 laugh", "❤️ love", "🎉 celebrate", "😱 shock", "💀 dead", "😎 cool", "👏 clap"];
+const POPULAR_SEARCHES = [
+  { icon: Flame, label: "fire" },
+  { icon: Smile, label: "laugh" },
+  { icon: Heart, label: "love" },
+  { icon: Gift, label: "celebrate" },
+  { icon: AlertCircle, label: "shock" },
+  { icon: Zap, label: "energy" },
+  { icon: Smile, label: "cool" },
+  { icon: ThumbsUp, label: "clap" }
+];
 const TRENDING_TERMS = ["trending", "viral", "funny", "cute", "amazing"];
 
 export default function GifSearchModal({ onSelectGif, onClose }) {
@@ -48,10 +57,9 @@ export default function GifSearchModal({ onSelectGif, onClose }) {
     setIsLoading(false);
   };
 
-  const handleQuickSearch = (tag) => {
-    const cleanTerm = tag.split(" ").slice(1).join(" ");
-    setSearchTerm(cleanTerm);
-    handleSearch(cleanTerm);
+  const handleQuickSearch = (label) => {
+    setSearchTerm(label);
+    handleSearch(label);
   };
 
   const handleSelectGif = (gifUrl) => {
@@ -101,14 +109,15 @@ export default function GifSearchModal({ onSelectGif, onClose }) {
 
           {/* Quick Search Tags */}
           <div className="flex flex-wrap gap-2">
-            {POPULAR_SEARCHES.map((tag) => (
+            {POPULAR_SEARCHES.map(({ icon: Icon, label }) => (
               <button
-                key={tag}
+                key={label}
                 type="button"
-                onClick={() => handleQuickSearch(tag)}
-                className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-[#FF6B35]/30 border border-white/10 hover:border-[#FF6B35]/50 text-white text-xs font-medium transition-all hover:scale-105"
+                onClick={() => handleQuickSearch(label)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-[#FF6B35]/30 border border-white/10 hover:border-[#FF6B35]/50 text-white text-xs font-medium transition-all hover:scale-105"
               >
-                {tag}
+                <Icon className="w-3.5 h-3.5" />
+                {label}
               </button>
             ))}
           </div>
