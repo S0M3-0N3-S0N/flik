@@ -822,7 +822,7 @@ export default function Editor() {
     setStickers(prev => prev.map(s => {
       const match = stickerLayers.find(l => l.id === s.id);
       if (!match) return null; // deleted
-      return { ...s, visible: match.visible, opacity: match.opacity };
+      return { ...s, visible: match.visible, opacity: match.opacity, blendMode: match.blendMode };
     }).filter(Boolean));
   }, []);
 
