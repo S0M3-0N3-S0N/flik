@@ -317,17 +317,7 @@ function LayoutContent({ children, currentPageName }) {
                 </button>
               )}
 
-              <button
-                onClick={() => navigate(createPageUrl("WorldChat"))}
-                className={`flex items-center gap-2 transition-all ${
-                  currentPageName === "WorldChat" 
-                    ? "text-white" 
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Globe className="w-5 h-5" />
-                <span className="text-sm font-medium">World Chat</span>
-              </button>
+
 
               {user?.role === 'admin' && (
                 <button
