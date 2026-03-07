@@ -242,7 +242,6 @@ export default function WorldChat() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
             <span className="gradient-text">World Chat</span>
           </h1>
-          <p className="text-white/50 text-sm sm:text-base max-w-xl mx-auto">Global real-time conversations</p>
         </motion.div>
 
         {/* Messages Container */}
