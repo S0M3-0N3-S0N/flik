@@ -22,6 +22,11 @@ export default function ResultModal({
   const [userFeedback, setUserFeedback] = useState(null);
   const [imageLoadError, setImageLoadError] = useState(false);
 
+  // Reset error state when result image changes
+  React.useEffect(() => {
+    setImageLoadError(false);
+  }, [resultImage]);
+
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveToGallery = async () => {
