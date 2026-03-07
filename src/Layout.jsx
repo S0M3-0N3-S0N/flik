@@ -437,17 +437,7 @@ function LayoutContent({ children, currentPageName }) {
                 <span className="text-[9px] font-medium">Generate</span>
               </button>
 
-              <button
-                onClick={() => navigate(createPageUrl("WorldChat"))}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
-                  currentPageName === "WorldChat" 
-                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                    : "text-white/60"
-                }`}
-              >
-                <Globe className="w-5 h-5" />
-                <span className="text-[9px] font-medium">World</span>
-              </button>
+
 
               {user?.role === 'admin' && (
                 <button
