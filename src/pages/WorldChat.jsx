@@ -224,7 +224,7 @@ export default function WorldChat() {
   const isLoading = messagesLoading || reactionsLoading;
 
   return (
-    <div className="fixed inset-0 overflow-y-auto px-4 sm:px-6 pt-8 pb-12 md:pt-16 md:pb-16 bg-[#0A0A0A]">
+    <div className="fixed inset-0 overflow-y-auto px-4 sm:px-6 pt-8 pb-20 md:pt-16 md:pb-16 bg-[#0A0A0A]" style={{ paddingTop: 'calc(8px + env(safe-area-inset-top))' }}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
