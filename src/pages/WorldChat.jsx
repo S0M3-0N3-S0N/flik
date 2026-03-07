@@ -148,7 +148,7 @@ export default function WorldChat() {
         >
           <Link 
             to={createPageUrl("Profile")}
-            className="absolute -top-1 left-0 md:hidden p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="absolute -top-8 left-0 md:hidden p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Back to Profile"
           >
             <X className="w-5 h-5" />
