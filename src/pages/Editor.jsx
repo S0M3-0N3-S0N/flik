@@ -1263,10 +1263,10 @@ export default function Editor() {
                 { value: "transform", icon: <RotateCw className="w-4 h-4" />, title: "Transform" },
                 { value: "crop", icon: <CropIcon className="w-4 h-4" />, title: "Crop" },
                 { value: "remove", icon: <Wand2 className="w-4 h-4" />, title: "Magic Brush" },
-                { value: "layers", icon: <Layers className="w-4 h-4" />, title: "Layers" },
                 ...(user?.role === 'admin' ? [
                   { value: "paint", icon: <Paintbrush className="w-4 h-4" />, title: "Paint" },
                   { value: "text", icon: <Type className="w-4 h-4" />, title: "Text Generator" },
+                  { value: "layers", icon: <span className="relative flex items-center justify-center"><Layers className="w-4 h-4" /><span className="absolute -top-1.5 -right-1.5 text-[8px] leading-none">🚧</span></span>, title: "Layers (Under Construction)" },
                 ] : [])
               ].map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value} className="flex-shrink-0 min-w-[40px] data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title={tab.title}>
