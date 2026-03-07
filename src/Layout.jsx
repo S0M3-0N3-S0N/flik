@@ -35,9 +35,10 @@ function LayoutContent({ children, currentPageName }) {
   const [isDraggingFlik, setIsDraggingFlik] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showMobileNav, setShowMobileNav] = useState(true);
-  const [showDesktopNav, setShowDesktopNav] = useState(true);
+  const [showDesktopNav, setShowDesktopNav] = useState(false);
   const mobileNavTimeoutRef = useRef(null);
   const desktopNavTimeoutRef = useRef(null);
+  const [isRopeAnimating, setIsRopeAnimating] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
