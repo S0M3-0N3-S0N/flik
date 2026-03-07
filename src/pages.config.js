@@ -49,18 +49,20 @@
  */
 import Camera from './pages/Camera';
 import Discover from './pages/Discover';
+import Editor from './pages/Editor';
 import Generate from './pages/Generate';
 import Profile from './pages/Profile';
-import Editor from './pages/Editor';
+import WorldChat from './pages/WorldChat';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Camera": Camera,
     "Discover": Discover,
+    "Editor": Editor,
     "Generate": Generate,
     "Profile": Profile,
-    "Editor": Editor,
+    "WorldChat": WorldChat,
 }
 
 export const pagesConfig = {
