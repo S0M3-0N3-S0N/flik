@@ -93,18 +93,18 @@ export default function WorldChat() {
     },
   });
 
-  // Delete message mutation (admin only)
-  const deleteMessageMutation = useMutation({
-    mutationFn: (messageId) => base44.entities.WorldChatMessage.delete(messageId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
-    },
-    onError: (error) => {
-      if (error?.status !== 404) {
-        toast.error("You don't have permission to delete this message");
-      }
-    },
-  });
+  // Delete message mutation
+   const deleteMessageMutation = useMutation({
+     mutationFn: (messageId) => base44.entities.WorldChatMessage.delete(messageId),
+     onSuccess: () => {
+       toast.success("Message deleted");
+       queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
+     },
+     onError: (error) => {
+       toast.error("Failed to delete message");
+       console.error(error);
+     },
+   });
 
   const handleImageSelect = async (e) => {
     const file = e.target.files?.[0];
