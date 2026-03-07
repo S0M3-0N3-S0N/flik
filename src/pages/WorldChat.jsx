@@ -32,14 +32,17 @@ export default function WorldChat() {
 
   // Get current user
   useEffect(() => {
-    base44.auth.me()
-      .then(async (u) => {
+    (async () => {
+      try {
+        const u = await base44.auth.me();
         if (u?.email) {
-          const profile = await base44.entities.UserProfile.filter({ email: u.email });
-          setUser({ ...u, profile: profile?.[0] });
+          const profiles = await base44.entities.UserProfile.filter({ email: u.email });
+          setUser({ ...u, userProfile: profiles?.[0] });
         }
-      })
-      .catch(() => {});
+      } catch (error) {
+        console.error("Error loading user:", error);
+      }
+    })();
   }, []);
 
   // Auto-scroll to bottom
@@ -124,8 +127,8 @@ export default function WorldChat() {
 
     createMessageMutation.mutate({
       content: messageInput,
-      sender_name: user.profile?.username || user.full_name,
-      sender_profile_picture: user.profile?.profile_picture || user.profile_picture || "",
+      sender_name: user.userProfile?.username || user.full_name,
+      sender_profile_picture: user.userProfile?.profile_picture || user.profile_picture || "",
       image_url: imageUrl || "",
     });
   };
