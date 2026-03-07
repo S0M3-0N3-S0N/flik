@@ -95,7 +95,7 @@ export default function StickerOverlay({ stickers, onStickersChange, zoom, pan, 
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
-      {stickers.map(sticker => (
+      {stickers.filter(s => s.visible !== false).map(sticker => (
         <div
           key={sticker.id}
           className="absolute pointer-events-auto"
@@ -104,6 +104,7 @@ export default function StickerOverlay({ stickers, onStickersChange, zoom, pan, 
             top: `${sticker.y}%`,
             width: `${sticker.width}%`,
             transform: `rotate(${sticker.rotation || 0}deg)`,
+            opacity: sticker.opacity ?? 1,
             cursor: 'move',
           }}
           onMouseDown={(e) => { e.stopPropagation(); handleStickerMouseDown(e, sticker.id, 'drag'); }}
