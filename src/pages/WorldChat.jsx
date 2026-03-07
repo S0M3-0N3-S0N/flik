@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, X, Image as ImageIcon, Images } from "lucide-react";
+import { Send, Loader2, X, Image as ImageIcon, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import WorldChatMessage from "@/components/WorldChatMessage";
@@ -312,7 +312,7 @@ export default function WorldChat() {
             </label>
 
             <button className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition-colors disabled:opacity-50" disabled={isUploading || createMessageMutation.isPending} title="Select from gallery">
-              <Images className="w-5 h-5 text-white/60" />
+              <Plus className="w-5 h-5 text-white/60" />
             </button>
 
             <input
