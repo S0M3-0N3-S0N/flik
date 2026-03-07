@@ -22,6 +22,12 @@ function LayoutContent({ children, currentPageName }) {
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en');
+  
+  // Persist language to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('app_language', language);
+  }, [language]);
+
   const [user, setUser] = useState(null);
   const { isOpen, setIsOpen, messages } = useFlik();
   const [flikPosition, setFlikPosition] = useState(() => {
