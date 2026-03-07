@@ -641,10 +641,10 @@ export default function Profile() {
           {/* World Chat Button - Top Corner */}
           <button
             onClick={() => navigate(createPageUrl("WorldChat"))}
-            className="absolute top-3 right-3 sm:top-6 sm:right-6 z-10 flex items-center justify-center rounded-full w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 border border-[#FF6B35]/30 hover:border-[#FF6B35]/60 text-white hover:text-white transition-all hover:scale-105 active:scale-95 group"
+            className="absolute top-3 right-3 sm:top-6 sm:right-6 z-10 text-white/60 hover:text-white transition-all"
             title="Open World Chat"
           >
-            <Earth className="w-4 h-4 sm:w-5 sm:h-5 group-hover:text-[#FF6B35]" />
+            <Earth className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
           <div className="relative flex flex-col md:flex-row items-center gap-3 sm:gap-6 md:gap-8 mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
             <div className="relative group">
