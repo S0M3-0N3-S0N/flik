@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe, HelpCircle } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
@@ -9,7 +9,6 @@ import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
 import MobileHeader from "@/components/layout/MobileHeader";
 import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
-import FlikWelcomeSlideshow from "@/components/FlikWelcomeSlideshow";
 import { base44 } from "@/api/base44Client";
 
 export const LanguageContext = React.createContext();
@@ -32,9 +31,6 @@ function LayoutContent({ children, currentPageName }) {
     } catch {
       return { bottom: 24, right: 24 };
     }
-  });
-  const [showWelcomeSlideshow, setShowWelcomeSlideshow] = useState(() => {
-    return !localStorage.getItem('flik_tour_seen');
   });
   const [isDraggingFlik, setIsDraggingFlik] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -348,30 +344,20 @@ function LayoutContent({ children, currentPageName }) {
               </button>
             </div>
 
-            <div className="flex items-center gap-3 absolute right-8">
-              <button
-                onClick={() => setShowWelcomeSlideshow(true)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition-all"
-                title="FLIK Tour"
-              >
-                <HelpCircle className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={() => navigate(currentPageName === "Profile" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Profile"))}
-                className="flex items-center gap-3 transition-all group"
-              >
-                <div className={`w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
-                  currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10 group-hover:border-white/20"
-                }`}>
-                  {user?.profile_picture ? (
-                    <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
-                  ) : (
-                    user?.full_name?.charAt(0).toUpperCase() || <User className="w-5 h-5" />
-                  )}
-                </div>
-              </button>
-            </div>
+            <button
+              onClick={() => navigate(currentPageName === "Profile" ? window.scrollTo({ top: 0, behavior: 'smooth' }) : createPageUrl("Profile"))}
+              className="flex items-center gap-3 transition-all group absolute right-8"
+            >
+              <div className={`w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
+                currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10 group-hover:border-white/20"
+              }`}>
+                {user?.profile_picture ? (
+                  <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  user?.full_name?.charAt(0).toUpperCase() || <User className="w-5 h-5" />
+                )}
+              </div>
+            </button>
           </div>
         </nav>
 
@@ -490,14 +476,6 @@ function LayoutContent({ children, currentPageName }) {
               </button>
 
               <button
-                onClick={() => setShowWelcomeSlideshow(true)}
-                className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 text-white/60"
-              >
-                <HelpCircle className="w-5 h-5" />
-                <span className="text-[9px] font-medium">Tour</span>
-              </button>
-
-              <button
                 onClick={(e) => {
                   if (currentPageName === "Profile") {
                     if (isChildRoute) {
@@ -561,15 +539,6 @@ function LayoutContent({ children, currentPageName }) {
         <FlikChatErrorBoundary>
           <FlikChat />
         </FlikChatErrorBoundary>
-
-        {/* Welcome Slideshow */}
-        <FlikWelcomeSlideshow
-          open={showWelcomeSlideshow}
-          onClose={() => {
-            setShowWelcomeSlideshow(false);
-            localStorage.setItem('flik_tour_seen', '1');
-          }}
-        />
       </div>
     </LanguageContext.Provider>
   );
