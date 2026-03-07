@@ -145,8 +145,15 @@ export default function WorldChat() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10 md:mb-14"
+          className="relative text-center mb-10 md:mb-14"
         >
+          <button
+            onClick={() => navigate(createPageUrl("Profile"))}
+            className="absolute top-0 left-0 p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+            title="Back to Profile"
+          >
+            <X className="w-5 h-5" />
+          </button>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
             <span className="gradient-text">World Chat</span>
           </h1>
