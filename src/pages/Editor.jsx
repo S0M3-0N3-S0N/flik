@@ -1292,6 +1292,7 @@ export default function Editor() {
                 { value: "transform", icon: <RotateCw className="w-4 h-4" />, title: "Transform" },
                 { value: "crop", icon: <CropIcon className="w-4 h-4" />, title: "Crop" },
                 { value: "remove", icon: <Wand2 className="w-4 h-4" />, title: "Magic Brush" },
+                { value: "layers", icon: <Layers className="w-4 h-4" />, title: "Layers" },
                 ...(user?.role === 'admin' ? [
                   { value: "paint", icon: <Paintbrush className="w-4 h-4" />, title: "Paint" },
                   { value: "text", icon: <Type className="w-4 h-4" />, title: "Text Generator" },
