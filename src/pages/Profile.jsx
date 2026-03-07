@@ -5,7 +5,7 @@ import { debounce } from "lodash";
 import { 
   Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, 
   Pencil, Check, X, Lock, Globe, Search, Trash2, Download, Edit, Wand2, Sparkles,
-  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff
+  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff, Earth
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
