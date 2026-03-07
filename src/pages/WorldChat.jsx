@@ -4,10 +4,11 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, X, Image as ImageIcon, Plus, Upload, Grid3x3 } from "lucide-react";
+import { Send, Loader2, X, Image as ImageIcon, Plus, Upload, Grid3x3, Film } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import WorldChatMessage from "@/components/WorldChatMessage";
+import GifSearchModal from "@/components/GifSearchModal";
 
 export default function WorldChat() {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ export default function WorldChat() {
   const [imagePreview, setImagePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
+  const [showGifModal, setShowGifModal] = useState(false);
+  const [selectedGifUrl, setSelectedGifUrl] = useState(null);
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
@@ -150,9 +153,16 @@ export default function WorldChat() {
     setReplyingTo(message);
   };
 
+  const handleSelectGif = (gifUrl) => {
+    setSelectedGifUrl(gifUrl);
+    setMessageInput("");
+    setSelectedImage(null);
+    setImagePreview(null);
+  };
+
   const handleSendMessage = async () => {
-    if (!messageInput.trim() && !selectedImage) {
-      toast.error("Please enter a message or select an image");
+    if (!messageInput.trim() && !selectedImage && !selectedGifUrl) {
+      toast.error("Please enter a message, select an image, or choose a GIF");
       return;
     }
 
@@ -182,7 +192,7 @@ export default function WorldChat() {
       content: messageInput,
       sender_name: user.userProfile?.username || user.full_name,
       sender_profile_picture: user.userProfile?.profile_picture || user.profile_picture || "",
-      image_url: imageUrl || "",
+      image_url: selectedGifUrl || imageUrl || "",
     };
 
     if (replyingTo) {
@@ -192,6 +202,7 @@ export default function WorldChat() {
 
     createMessageMutation.mutate(messageData);
     setReplyingTo(null);
+    setSelectedGifUrl(null);
   };
 
   return (
@@ -280,10 +291,10 @@ export default function WorldChat() {
             </div>
           )}
 
-          {imagePreview && (
+          {(imagePreview || selectedGifUrl) && (
             <div className="relative inline-block mb-3">
               <img
-                src={imagePreview}
+                src={imagePreview || selectedGifUrl}
                 alt="Preview"
                 className="max-h-24 rounded-lg border border-white/10"
               />
@@ -291,6 +302,7 @@ export default function WorldChat() {
                 onClick={() => {
                   setSelectedImage(null);
                   setImagePreview(null);
+                  setSelectedGifUrl(null);
                 }}
                 className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white"
               >
@@ -347,6 +359,17 @@ export default function WorldChat() {
                   <Grid3x3 className="w-4 h-4 text-[#FF6B35]" />
                   <span className="text-sm">From Gallery</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowGifModal(true);
+                    document.getElementById('world-attach-menu')?.classList.add('hidden');
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                >
+                  <Film className="w-4 h-4 text-[#FF6B35]" />
+                  <span className="text-sm">Search GIFs</span>
+                </button>
               </div>
             </div>
 
@@ -367,7 +390,7 @@ export default function WorldChat() {
 
             <Button
               onClick={handleSendMessage}
-              disabled={isUploading || createMessageMutation.isPending || (!messageInput.trim() && !selectedImage)}
+              disabled={isUploading || createMessageMutation.isPending || (!messageInput.trim() && !selectedImage && !selectedGifUrl)}
               className="btn-gradient px-4 py-2.5 h-auto"
             >
               {isUploading || createMessageMutation.isPending ? (
@@ -379,6 +402,16 @@ export default function WorldChat() {
           </div>
         </div>
       </div>
+
+      {/* GIF Search Modal */}
+      <AnimatePresence>
+        {showGifModal && (
+          <GifSearchModal
+            onSelectGif={handleSelectGif}
+            onClose={() => setShowGifModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
