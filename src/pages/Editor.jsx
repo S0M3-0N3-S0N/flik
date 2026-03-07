@@ -138,6 +138,65 @@ export default function Editor() {
 
   const location = useLocation();
 
+  // Sync layers when image/stickers/adjustments/paint change
+  useEffect(() => {
+    if (!currentImage) { setLayers([]); return; }
+
+    setLayers(prev => {
+      const baseLayer = {
+        id: 'base-image',
+        type: 'image',
+        name: currentImage.name || 'Base Image',
+        thumbnail: currentImage.preview || currentImage.url,
+        visible: true,
+        opacity: 1,
+      };
+
+      const adjustmentsLayer = {
+        id: 'adjustments',
+        type: 'adjustments',
+        name: 'Adjustments',
+        visible: true,
+        opacity: 1,
+      };
+
+      const filterLayer = selectedFilter ? {
+        id: 'filter',
+        type: 'filter',
+        name: selectedFilter.label || 'Filter',
+        visible: true,
+        opacity: 1,
+      } : null;
+
+      const paintLayer = paintStrokes.length > 0 ? {
+        id: 'paint',
+        type: 'paint',
+        name: `Paint (${paintStrokes.length} strokes)`,
+        visible: true,
+        opacity: 1,
+      } : null;
+
+      const stickerLayers = stickers.map(s => ({
+        id: s.id,
+        type: 'sticker',
+        name: 'Sticker',
+        url: s.url,
+        visible: s.visible !== false,
+        opacity: s.opacity ?? 1,
+      }));
+
+      const newLayers = [
+        baseLayer,
+        adjustmentsLayer,
+        ...(filterLayer ? [filterLayer] : []),
+        ...(paintLayer ? [paintLayer] : []),
+        ...stickerLayers,
+      ];
+
+      return newLayers;
+    });
+  }, [currentImage, selectedFilter, paintStrokes.length, stickers.length]);
+
   // Fetch user on mount
   useEffect(() => {
     let isMounted = true;
