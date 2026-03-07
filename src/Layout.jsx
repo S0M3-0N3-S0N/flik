@@ -9,6 +9,7 @@ import FlikChat from "@/components/FlikChat";
 import FlikChatErrorBoundary from "@/components/FlikChatErrorBoundary";
 import MobileHeader from "@/components/layout/MobileHeader";
 import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
+import FlikWelcomeSlideshow from "@/components/FlikWelcomeSlideshow";
 import { base44 } from "@/api/base44Client";
 
 export const LanguageContext = React.createContext();
