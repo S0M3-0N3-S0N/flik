@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock, Type, Paintbrush, Droplet, Zap, Hand, Layers } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock, Type, Paintbrush, Droplet, Zap, Hand } from "lucide-react";
 import { toast } from "sonner";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -1213,7 +1213,6 @@ export default function Editor() {
                 { value: "adjust", icon: <Settings2 className="w-4 h-4" />, title: "Adjustments" },
                 { value: "filters", icon: <Filter className="w-4 h-4" />, title: "Filters" },
                 { value: "transform", icon: <RotateCw className="w-4 h-4" />, title: "Transform" },
-                { value: "layers", icon: <Layers className="w-4 h-4" />, title: "Layers" },
                 { value: "crop", icon: <CropIcon className="w-4 h-4" />, title: "Crop" },
                 { value: "remove", icon: <Wand2 className="w-4 h-4" />, title: "Magic Brush" },
                 ...(user?.role === 'admin' ? [
@@ -1292,34 +1291,6 @@ export default function Editor() {
                     </div>
                   )}
                 </>
-              ) : (
-                <p className="text-white/40 text-sm">Upload an image to start</p>
-              )}
-            </TabsContent>
-
-            <TabsContent value="layers" className="mt-0">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Layers</h3>
-              {currentImage ? (
-                <div className="space-y-2">
-                  {stickers.map((sticker, idx) => (
-                    <div key={sticker.id} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
-                      <img src={sticker.url} alt="sticker" className="w-8 h-8 object-contain rounded" />
-                      <span className="text-xs text-white/70 flex-1 truncate">Sticker {idx + 1}</span>
-                      <button onClick={() => setStickers(prev => prev.filter(s => s.id !== sticker.id))} className="text-white/40 hover:text-white transition-colors">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 opacity-60">
-                    <div className="w-8 h-8 rounded bg-gradient-to-br from-[#FF6B35] to-[#FFB800] flex items-center justify-center">
-                      <Layers className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-xs text-white/70 flex-1">Base Image</span>
-                  </div>
-                  {stickers.length === 0 && (
-                    <p className="text-white/40 text-sm mt-2">No layers yet. Add stickers or text to create layers.</p>
-                  )}
-                </div>
               ) : (
                 <p className="text-white/40 text-sm">Upload an image to start</p>
               )}
