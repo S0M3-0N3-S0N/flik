@@ -151,7 +151,7 @@ export default function WorldChat() {
         </motion.div>
 
         {/* Messages Container */}
-        <div className="w-full max-w-2xl mx-auto mb-32">
+        <div className="w-full">
           {isLoading ? (
             <div className="flex items-center justify-center py-40">
               <Loader2 className="w-10 h-10 text-[#FF6B35] animate-spin" />
@@ -169,60 +169,58 @@ export default function WorldChat() {
               <p className="text-white/50 max-w-sm mx-auto text-base">Start the conversation with the world!</p>
             </motion.div>
           ) : (
-            <div className="space-y-3">
+            <div className="columns-2 sm:columns-3 md:columns-4 gap-3 sm:gap-4">
               <AnimatePresence mode="popLayout">
-                {[...messages].reverse().map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors group"
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      {message.sender_profile_picture ? (
-                        <img
-                          src={message.sender_profile_picture}
-                          alt={message.sender_name}
-                          className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
-                          {message.sender_name.charAt(0).toUpperCase()}
+                {[...messages].reverse().map((message, index) => (
+                  <div key={message.id} className="mb-3 sm:mb-4 break-inside-avoid">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors group cursor-default"
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        {message.sender_profile_picture ? (
+                          <img
+                            src={message.sender_profile_picture}
+                            alt={message.sender_name}
+                            className="w-8 h-8 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs">
+                            {message.sender_name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{message.sender_name}</p>
+                          <p className="text-xs text-white/40">{new Date(message.created_date).toLocaleTimeString()}</p>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-white">{message.sender_name}</p>
-                          {(user?.role === "admin" || user?.email === message.created_by) && (
-                            <button
-                              onClick={() => deleteMessageMutation.mutate(message.id)}
-                              className="text-white/40 hover:text-red-400 transition-colors flex-shrink-0"
-                              title="Delete message"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                        <p className="text-xs text-white/40">{new Date(message.created_date).toLocaleTimeString()}</p>
+                        {(user?.role === "admin" || user?.email === message.created_by) && (
+                          <button
+                            onClick={() => deleteMessageMutation.mutate(message.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-red-400 flex-shrink-0"
+                            title="Delete message"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
-                    </div>
 
-                    {message.image_url && (
-                      <img
-                        src={message.image_url}
-                        alt="Message"
-                        className="rounded-lg w-full mb-3 border border-white/10"
-                      />
-                    )}
+                      {message.image_url && (
+                        <img
+                          src={message.image_url}
+                          alt="Message"
+                          className="rounded-lg w-full mb-3 border border-white/10"
+                        />
+                      )}
 
-                    {message.content && (
-                      <p className="text-sm text-white/90 break-words">{message.content}</p>
-                    )}
-                  </motion.div>
+                      {message.content && (
+                        <p className="text-sm text-white/90 break-words">{message.content}</p>
+                      )}
+                    </motion.div>
+                  </div>
                 ))}
               </AnimatePresence>
-              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
