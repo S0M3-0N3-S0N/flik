@@ -207,7 +207,7 @@ export default function WorldChat() {
     }
 
     const messageData = {
-      content: messageInput,
+      content: messageInput.trim(),
       sender_name: user.userProfile?.username || user.full_name,
       sender_profile_picture: user.userProfile?.profile_picture || user.profile_picture || "",
       image_url: selectedGifUrl || imageUrl || "",
