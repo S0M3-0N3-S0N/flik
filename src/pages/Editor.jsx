@@ -164,6 +164,8 @@ export default function Editor() {
     setMagicBrushPrompt("");
     setMagicBrushImages([]);
     setStickers([]);
+    setLayers([]);
+    setSelectedLayerId(null);
     setNeedsFit(true);
   }, []);
 
