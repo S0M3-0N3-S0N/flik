@@ -46,28 +46,12 @@ function LayoutContent({ children, currentPageName }) {
 
   const isChildRoute = !['Editor', 'Generate', 'Profile'].includes(currentPageName);
 
-  // Auto-hide desktop nav after 3 seconds of inactivity
-  useEffect(() => {
-    if (currentPageName === 'Camera') return;
-    
-    const handleActivity = () => {
-      setShowDesktopNav(true);
-      if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
-      desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 3000);
-    };
-
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('touchstart', handleActivity);
-
-    // Start initial timer
-    desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 3000);
-
-    return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('touchstart', handleActivity);
-      if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
-    };
-  }, [currentPageName]);
+  const handleRopePull = () => {
+    if (isRopeAnimating) return;
+    setIsRopeAnimating(true);
+    setShowDesktopNav(prev => !prev);
+    setTimeout(() => setIsRopeAnimating(false), 400);
+  };
 
   // Auto-hide mobile nav after 3 seconds of inactivity
   useEffect(() => {
