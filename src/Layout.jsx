@@ -52,7 +52,7 @@ function LayoutContent({ children, currentPageName }) {
     const handleActivity = () => {
       setShowDesktopNav(true);
       if (desktopNavTimeoutRef.current) clearTimeout(desktopNavTimeoutRef.current);
-      desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 6000);
+      desktopNavTimeoutRef.current = setTimeout(() => setShowDesktopNav(false), 12000);
     };
 
     window.addEventListener('mousemove', handleActivity);
