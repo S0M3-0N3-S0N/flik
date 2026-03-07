@@ -637,6 +637,16 @@ export default function Profile() {
           {/* Background Glow Effect */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
+          
+          {/* World Chat Button - Top Corner */}
+          <button
+            onClick={() => navigate(createPageUrl("WorldChat"))}
+            className="absolute top-3 right-3 sm:top-6 sm:right-6 z-10 flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 border border-[#FF6B35]/30 hover:border-[#FF6B35]/60 text-white hover:text-white transition-all hover:scale-105 active:scale-95 group min-h-[44px]"
+            title="Open World Chat"
+          >
+            <Globe className="w-4 h-4 sm:w-5 sm:h-5 group-hover:text-[#FF6B35]" />
+            <span className="hidden sm:inline text-xs sm:text-sm font-medium">World Chat</span>
+          </button>
           <div className="relative flex flex-col md:flex-row items-center gap-3 sm:gap-6 md:gap-8 mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
             <div className="relative group">
               <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30 relative">
