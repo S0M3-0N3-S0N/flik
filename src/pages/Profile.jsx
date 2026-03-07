@@ -644,8 +644,7 @@ export default function Profile() {
             className="absolute top-3 right-3 sm:top-6 sm:right-6 z-10 flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 border border-[#FF6B35]/30 hover:border-[#FF6B35]/60 text-white hover:text-white transition-all hover:scale-105 active:scale-95 group min-h-[44px]"
             title="Open World Chat"
           >
-            <Globe className="w-4 h-4 sm:w-5 sm:h-5 group-hover:text-[#FF6B35]" />
-            <span className="hidden sm:inline text-xs sm:text-sm font-medium">World Chat</span>
+            <Earth className="w-4 h-4 sm:w-5 sm:h-5 group-hover:text-[#FF6B35]" />
           </button>
           <div className="relative flex flex-col md:flex-row items-center gap-3 sm:gap-6 md:gap-8 mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
             <div className="relative group">
