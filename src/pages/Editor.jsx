@@ -139,61 +139,32 @@ export default function Editor() {
   const location = useLocation();
 
   // Sync layers when image/stickers/adjustments/paint change
+  // Preserves user-set visibility/opacity for existing layers
   useEffect(() => {
     if (!currentImage) { setLayers([]); return; }
 
     setLayers(prev => {
-      const baseLayer = {
-        id: 'base-image',
-        type: 'image',
-        name: currentImage.name || 'Base Image',
-        thumbnail: currentImage.preview || currentImage.url,
-        visible: true,
-        opacity: 1,
+      const prevMap = Object.fromEntries(prev.map(l => [l.id, l]));
+
+      const merge = (newLayer) => {
+        const existing = prevMap[newLayer.id];
+        if (existing) return { ...newLayer, visible: existing.visible, opacity: existing.opacity };
+        return newLayer;
       };
 
-      const adjustmentsLayer = {
-        id: 'adjustments',
-        type: 'adjustments',
-        name: 'Adjustments',
-        visible: true,
-        opacity: 1,
-      };
+      const baseLayer = merge({ id: 'base-image', type: 'image', name: currentImage.name || 'Base Image', thumbnail: currentImage.preview || currentImage.url, visible: true, opacity: 1 });
+      const adjustmentsLayer = merge({ id: 'adjustments', type: 'adjustments', name: 'Adjustments', visible: true, opacity: 1 });
+      const filterLayer = selectedFilter ? merge({ id: 'filter', type: 'filter', name: selectedFilter.label || 'Filter', visible: true, opacity: 1 }) : null;
+      const paintLayer = paintStrokes.length > 0 ? merge({ id: 'paint', type: 'paint', name: `Paint (${paintStrokes.length} strokes)`, visible: true, opacity: 1 }) : null;
+      const stickerLayers = stickers.map(s => merge({ id: s.id, type: 'sticker', name: 'Sticker', url: s.url, visible: s.visible !== false, opacity: s.opacity ?? 1 }));
 
-      const filterLayer = selectedFilter ? {
-        id: 'filter',
-        type: 'filter',
-        name: selectedFilter.label || 'Filter',
-        visible: true,
-        opacity: 1,
-      } : null;
-
-      const paintLayer = paintStrokes.length > 0 ? {
-        id: 'paint',
-        type: 'paint',
-        name: `Paint (${paintStrokes.length} strokes)`,
-        visible: true,
-        opacity: 1,
-      } : null;
-
-      const stickerLayers = stickers.map(s => ({
-        id: s.id,
-        type: 'sticker',
-        name: 'Sticker',
-        url: s.url,
-        visible: s.visible !== false,
-        opacity: s.opacity ?? 1,
-      }));
-
-      const newLayers = [
+      return [
         baseLayer,
         adjustmentsLayer,
         ...(filterLayer ? [filterLayer] : []),
         ...(paintLayer ? [paintLayer] : []),
         ...stickerLayers,
       ];
-
-      return newLayers;
     });
   }, [currentImage, selectedFilter, paintStrokes.length, stickers.length]);
 
