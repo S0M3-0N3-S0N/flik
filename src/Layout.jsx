@@ -33,6 +33,9 @@ function LayoutContent({ children, currentPageName }) {
       return { bottom: 24, right: 24 };
     }
   });
+  const [showWelcomeSlideshow, setShowWelcomeSlideshow] = useState(() => {
+    return !localStorage.getItem('flik_tour_seen');
+  });
   const [isDraggingFlik, setIsDraggingFlik] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showMobileNav, setShowMobileNav] = useState(true);
