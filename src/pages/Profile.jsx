@@ -5,7 +5,7 @@ import { debounce } from "lodash";
 import { 
   Mail, Calendar, Image as ImageIcon, Video, LogOut, Camera, Loader2, 
   Pencil, Check, X, Lock, Globe, Search, Trash2, Download, Edit, Wand2, Sparkles,
-  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff, Earth
+  ChevronDown, CheckSquare, Square, AlertCircle, TrendingUp, Play, ImageOff, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,7 +129,7 @@ export default function Profile() {
     const handleTouchEnd = async () => {
       if (isPullRefreshActive.current && pullDistance > 80) {
         await queryClient.invalidateQueries({ queryKey: ['profileCreations'] });
-        toast.success(t('profile.refreshed'));
+        toast.success('Refreshed!');
       }
       touchStartY.current = 0;
       setPullDistance(0);
@@ -200,16 +200,16 @@ export default function Profile() {
     }
 
     setIsUploading(true);
-    const toastId = toast.loading(t('profile.uploading'));
+    const toastId = toast.loading('Uploading profile picture...');
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       await base44.auth.updateMe({ profile_picture: file_url });
       await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      toast.success(t('profile.picture_updated'), { id: toastId });
+      toast.success('Profile picture updated!', { id: toastId });
       base44.analytics.track({ eventName: 'profile_picture_updated' });
     } catch (error) {
       console.error("Failed to upload profile picture:", error);
-      toast.error(t('profile.upload_failed'), { id: toastId });
+      toast.error('Failed to upload profile picture', { id: toastId });
     } finally {
       setIsUploading(false);
     }
@@ -217,12 +217,12 @@ export default function Profile() {
 
   const handleEmailUpdate = async () => {
     if (!emailInput.trim()) {
-      toast.error(t('profile.email_cannot_be_empty'));
+      toast.error('Email cannot be empty');
       return;
     }
     
     if (!validateEmail(emailInput)) {
-      toast.error(t('profile.invalid_email'));
+      toast.error('Please enter a valid email address');
       return;
     }
 
@@ -231,7 +231,7 @@ export default function Profile() {
       await base44.auth.updateMe({ contact_email: emailInput });
       await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setIsEditingEmail(false);
-      toast.success(t('profile.email_updated'), { id: toastId });
+      toast.success('Email updated successfully!', { id: toastId });
       base44.analytics.track({ eventName: 'profile_email_updated' });
     } catch (error) {
       console.error("Failed to update email:", error);
@@ -246,7 +246,7 @@ export default function Profile() {
 
   const handleNameUpdate = async () => {
     if (!nameInput.trim()) {
-      toast.error(t('profile.name_cannot_be_empty'));
+      toast.error('Name cannot be empty');
       return;
     }
 
@@ -255,7 +255,7 @@ export default function Profile() {
       await base44.auth.updateMe({ display_name: nameInput });
       await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setIsEditingName(false);
-      toast.success(t('profile.name_updated'), { id: toastId });
+      toast.success('Name updated successfully!', { id: toastId });
       base44.analytics.track({ eventName: 'profile_name_updated' });
     } catch (error) {
       console.error("Failed to update name:", error);
@@ -359,7 +359,7 @@ export default function Profile() {
       // Real undo with duplicate check
       toast((t) => (
         <div className="flex items-center gap-3">
-          <span>{t('profile.creation_deleted')}</span>
+          <span>Creation deleted</span>
           <Button
             size="sm"
             onClick={async () => {
@@ -374,7 +374,7 @@ export default function Profile() {
                 const { id, created_date, updated_date, created_by, ...dataWithoutMeta } = itemToDelete;
                 await base44.entities.Creation.create(dataWithoutMeta);
                 await queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });
-                toast.success(t('profile.restored'), { id: t.id });
+                toast.success('Creation restored!', { id: t.id });
                 base44.analytics.track({ eventName: 'profile_creation_restored' });
               } catch (error) {
                 toast.error('Failed to restore', { id: t.id });
@@ -382,7 +382,7 @@ export default function Profile() {
             }}
             className="h-7 px-3 bg-white/10 hover:bg-white/20 text-white text-xs"
           >
-            {t('profile.undo')}
+            Undo
           </Button>
         </div>
       ), { duration: BATCH_DELETE_TOAST_DURATION });
@@ -637,15 +637,6 @@ export default function Profile() {
           {/* Background Glow Effect */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFB800]/5 rounded-full blur-[120px] pointer-events-none" />
-          
-          {/* World Chat Button - Top Corner */}
-          <button
-            onClick={() => navigate(createPageUrl("WorldChat"))}
-            className="absolute top-3 right-3 sm:top-6 sm:right-6 z-10 text-white/60 hover:text-white transition-all"
-            title="Open World Chat"
-          >
-            <Earth className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
           <div className="relative flex flex-col md:flex-row items-center gap-3 sm:gap-6 md:gap-8 mb-4 sm:mb-8 md:mb-10 text-center md:text-left">
             <div className="relative group">
               <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-3xl bg-gradient-to-br from-[#FF6B35] via-[#F72C25] to-[#FFB800] p-1 shadow-2xl shadow-[#FF6B35]/30 relative">
@@ -738,7 +729,7 @@ export default function Profile() {
               <div className="mt-2 sm:mt-4 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm text-white/40 justify-center md:justify-start">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span title={`${new Date(user.created_date).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}>
-                  {t('profile.joined')} {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  Joined {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </span>
               </div>
             </div>
@@ -781,7 +772,7 @@ export default function Profile() {
                   <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
                     <Mail className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">{t("profile.contact")}</span>
+                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">Contact</span>
                 </div>
                 {!isEditingEmail && (
                   <button 
@@ -804,10 +795,10 @@ export default function Profile() {
                   <div className="flex gap-2">
                     <Button onClick={handleEmailUpdate} size="sm" className="flex-1 btn-gradient text-white h-8 sm:h-9 text-xs sm:text-sm">
                       <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
-                      {t("profile.save")}
-                      </Button>
-                      <Button onClick={() => setIsEditingEmail(false)} size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-8 sm:h-9 text-xs sm:text-sm">
-                      {t("profile.cancel")}
+                      Save
+                    </Button>
+                    <Button onClick={() => setIsEditingEmail(false)} size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-8 sm:h-9 text-xs sm:text-sm">
+                      Cancel
                     </Button>
                   </div>
                 </div>
@@ -840,7 +831,7 @@ export default function Profile() {
                   <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
                     <TrendingUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#FF6B35]" />
                   </div>
-                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">{t("profile.stats")}</span>
+                  <span className="text-white/60 text-[11px] sm:text-sm font-medium leading-tight">Stats</span>
                 </div>
                 <button 
                   onClick={() => setShowStatsExpanded(!showStatsExpanded)}
@@ -860,9 +851,9 @@ export default function Profile() {
                       exit={{ opacity: 0, height: 0 }}
                       className="text-xs text-white/50 space-y-1 pt-2 border-t border-white/10"
                     >
-                      <div className="flex justify-between"><span>{t("profile.today")}:</span><span className="text-white/70">{stats.today}</span></div>
-                       <div className="flex justify-between"><span>{t("profile.this_week")}:</span><span className="text-white/70">{stats.thisWeek}</span></div>
-                       <div className="flex justify-between"><span>{t("profile.this_month")}:</span><span className="text-white/70">{stats.thisMonth}</span></div>
+                      <div className="flex justify-between"><span>Today:</span><span className="text-white/70">{stats.today}</span></div>
+                      <div className="flex justify-between"><span>This Week:</span><span className="text-white/70">{stats.thisWeek}</span></div>
+                      <div className="flex justify-between"><span>This Month:</span><span className="text-white/70">{stats.thisMonth}</span></div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -893,7 +884,7 @@ export default function Profile() {
             <div className="relative flex-1">
               <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/30 pointer-events-none" />
               <Input
-                placeholder={t("profile.search_creations")}
+                placeholder="Search your creations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 sm:pl-12 h-11 sm:h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl sm:rounded-2xl text-sm sm:text-base focus:border-[#FF6B35]/40 focus:ring-1 focus:ring-[#FF6B35]/20 transition-all"
@@ -942,7 +933,7 @@ export default function Profile() {
                 className="p-3 sm:p-5 rounded-2xl bg-gradient-to-r from-[#FF6B35]/10 to-[#FFB800]/10 border border-[#FF6B35]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
               >
                 <span className="text-white font-medium text-sm sm:text-base">
-                  {t('profile.item_selected').replace('{{count}}', selectedItems.length).replace('{{plural}}', selectedItems.length > 1 ? 's' : '')}
+                  {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected
                   {batchDeleteProgress > 0 && (
                     <span className="ml-2 text-xs text-white/60">({batchDeleteProgress}% deleted)</span>
                   )}
@@ -965,7 +956,7 @@ export default function Profile() {
                     onClick={() => setSelectedItems([])}
                     className="flex-1 min-w-[80px] sm:flex-none bg-white/10 hover:bg-white/20 text-white border-0 h-9 px-2 sm:px-4 text-xs sm:text-sm"
                   >
-                    {t('profile.clear')}
+                    Clear
                   </Button>
                   <Button
                    size="sm"
@@ -982,7 +973,7 @@ export default function Profile() {
                    title="Edit selected in Photo Studio"
                   >
                    <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                   <span className="hidden sm:inline ml-1">{t('profile.edit')}</span>
+                   <span className="hidden sm:inline ml-1">Edit</span>
                   </Button>
                   <Button
                    size="sm"
@@ -999,7 +990,7 @@ export default function Profile() {
                    title="Use as reference in Imagine AI"
                   >
                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                   <span className="hidden sm:inline ml-1">{t('profile.imagine')}</span>
+                   <span className="hidden sm:inline ml-1">Imagine</span>
                   </Button>
                   <Button
                    size="sm"
@@ -1008,7 +999,7 @@ export default function Profile() {
                    className="flex-1 min-w-[80px] sm:flex-none bg-red-500/20 hover:bg-red-500/30 text-red-400 border-0 h-9 px-2 sm:px-3 text-xs sm:text-sm disabled:opacity-50"
                   >
                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                   <span className="hidden sm:inline ml-1">{t('profile.delete')}</span>
+                   <span className="hidden sm:inline ml-1">Delete</span>
                   </Button>
                 </div>
               </motion.div>
@@ -1026,18 +1017,18 @@ export default function Profile() {
                 {creations.length === 0 ? <Sparkles className="w-10 h-10 text-[#FF6B35]" /> : <Search className="w-10 h-10 text-[#FF6B35]" />}
               </div>
               <h3 className="text-white text-xl font-semibold mb-2">
-                 {creations.length === 0 ? t("profile.no_creations") : t("profile.no_results")}
-               </h3>
-               <p className="text-white/40 mb-6 max-w-sm mx-auto">
-                 {creations.length === 0 
-                   ? t("profile.create_first")
-                   : t("profile.adjust_filters")}
+                {creations.length === 0 ? 'No creations yet' : 'No results found'}
+              </h3>
+              <p className="text-white/40 mb-6 max-w-sm mx-auto">
+                {creations.length === 0 
+                  ? "Start creating amazing content with FLIK's AI tools"
+                  : 'Try adjusting your filters or search query'}
               </p>
               {creations.length === 0 && (
                 <Button onClick={() => navigate(createPageUrl('Generate'))} className="btn-gradient text-white px-8 h-11">
-                    <Wand2 className="w-4 h-4 mr-2" />
-                    {t("profile.create_masterpiece")}
-                  </Button>
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Create Your First Masterpiece
+                </Button>
               )}
             </motion.div>
           ) : (
@@ -1125,7 +1116,7 @@ export default function Profile() {
                           <div>
                             <h3 
                               className="font-bold text-white text-sm sm:text-base lg:text-lg line-clamp-2 mb-1 drop-shadow-lg"
-                              dangerouslySetInnerHTML={{ __html: highlightText(item.title || t('profile.untitled'), searchQuery) }}
+                              dangerouslySetInnerHTML={{ __html: highlightText(item.title || 'Untitled', searchQuery) }}
                             />
                             {item.prompt && (
                               <p 
@@ -1145,7 +1136,7 @@ export default function Profile() {
                               title="Edit in Photo Studio"
                             >
                               <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">{t('profile.edit')}</span>
+                              <span className="hidden sm:inline">Edit</span>
                             </Button>
                             <Button
                               size="sm"
@@ -1160,7 +1151,7 @@ export default function Profile() {
                               title="Imagine similar image"
                             >
                               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">{t('profile.imagine')}</span>
+                              <span className="hidden sm:inline">Imagine</span>
                             </Button>
                             <Button
                               size="sm"
@@ -1172,7 +1163,7 @@ export default function Profile() {
                               title="Delete image"
                             >
                               <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              <span className="hidden sm:inline">{t('profile.delete')}</span>
+                              <span className="hidden sm:inline">Delete</span>
                             </Button>
                             </div>
                         </div>
@@ -1189,8 +1180,8 @@ export default function Profile() {
                     disabled={currentPage === 1}
                     className="bg-white/5 hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed h-10 sm:h-11 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-medium text-sm sm:text-base transition-all hover:scale-105"
                   >
-                    <span className="hidden sm:inline">{t("profile.previous")}</span>
-                    <span className="sm:hidden">{t("profile.prev")}</span>
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
                   </Button>
                   <div className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-br from-white/10 to-white/5 rounded-xl sm:rounded-2xl border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
                     <span className="text-white font-bold text-base sm:text-lg">
@@ -1202,7 +1193,7 @@ export default function Profile() {
                     disabled={currentPage === totalPages}
                     className="bg-white/5 hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed h-10 sm:h-11 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-medium text-sm sm:text-base transition-all hover:scale-105"
                   >
-                    {t("profile.next")}
+                    Next
                   </Button>
                 </div>
               )}
@@ -1217,7 +1208,7 @@ export default function Profile() {
           <DialogHeader>
             <DialogTitle>{t("profile.change_password")}</DialogTitle>
             <DialogDescription className="text-white/50">
-             {t('profile.password_info')}
+              To change your password, you need to sign out and use the "Forgot Password" link on the login page.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-4">
@@ -1232,10 +1223,10 @@ export default function Profile() {
           <DialogHeader>
             <DialogTitle className="text-xl text-white flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-400" />
-              {deleteConfirm === 'batch' ? t("profile.delete_items").replace("{{count}}", selectedItems.length) : t("profile.delete_creation")}
+              {deleteConfirm === 'batch' ? `Delete ${selectedItems.length} Items?` : 'Delete Creation?'}
             </DialogTitle>
             <DialogDescription className="text-white/50">
-              {t("profile.delete_warning").replace("{{target}}", deleteConfirm === 'batch' ? 'these creations' : 'your creation')}
+              This action cannot be undone. This will permanently delete {deleteConfirm === 'batch' ? 'these creations' : 'your creation'}.
             </DialogDescription>
           </DialogHeader>
           {deleteConfirm === 'batch' && batchDeleteProgress > 0 && (
@@ -1259,14 +1250,14 @@ export default function Profile() {
               className="flex-1 bg-transparent border-white/20 text-white hover:bg-white/10"
               disabled={batchDeleteProgress > 0}
             >
-              {t('profile.cancel')}
+              Cancel
             </Button>
             <Button 
               onClick={deleteConfirm === 'batch' ? confirmBatchDelete : confirmDelete} 
               className="flex-1 bg-red-500 hover:bg-red-600 text-white"
               disabled={batchDeleteProgress > 0}
             >
-              {deleteMutation.isPending || batchDeleteProgress > 0 ? t('profile.deleting') : t('profile.delete')}
+              {deleteMutation.isPending || batchDeleteProgress > 0 ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </DialogContent>
@@ -1317,7 +1308,7 @@ export default function Profile() {
                 {selectedItem?.prompt && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">{t('profile.prompt_label')}</p>
+                      <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5"><span className="text-[#FF6B35]">⌘</span> Prompt</p>
                       {editingPrompt === selectedItem?.id ? (
                         <Button size="sm" onClick={() => { if (newPrompt.trim()) updateMutation.mutate({ id: selectedItem.id, data: { prompt: newPrompt } }); }} disabled={updateMutation.isPending} className="h-7 text-xs px-3 btn-gradient text-white">
                           {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
@@ -1344,7 +1335,7 @@ export default function Profile() {
                 {/* Title */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t('nav.my_creations')}</p>
+                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Title</p>
                     {editingTitle === selectedItem?.id ? (
                       <Button size="sm" onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } })} disabled={updateMutation.isPending} className="h-7 text-xs px-3 btn-gradient text-white">
                         {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
@@ -1370,23 +1361,23 @@ export default function Profile() {
                 {/* Metadata */}
                 {selectedItem?.metadata && (
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5">{t('profile.information')}</p>
+                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-1.5"><span className="text-[#FF6B35]">ⓘ</span> Information</p>
                     <div className="rounded-xl bg-white/5 border border-white/5 divide-y divide-white/5">
                       {selectedItem.metadata?.model && (
                         <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-white/50">{t('profile.model')}</span>
+                          <span className="text-xs text-white/50">Model</span>
                           <span className="text-xs text-white font-medium">{selectedItem.metadata.model}</span>
                         </div>
                       )}
                       {selectedItem.metadata?.style?.length > 0 && (
                         <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-white/50">{t('profile.style')}</span>
+                          <span className="text-xs text-white/50">Style</span>
                           <span className="text-xs text-white font-medium">{selectedItem.metadata.style.join(', ')}</span>
                         </div>
                       )}
                       {selectedItem.metadata?.aspectRatio && (
                         <div className="flex justify-between items-center px-3 py-2.5">
-                          <span className="text-xs text-white/50">{t('profile.ratio')}</span>
+                          <span className="text-xs text-white/50">Ratio</span>
                           <span className="text-xs text-white font-medium">{selectedItem.metadata.aspectRatio}</span>
                         </div>
                       )}
@@ -1402,10 +1393,10 @@ export default function Profile() {
                 )}
                 <div className="flex gap-2">
                   <button onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))} className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-medium border border-white/10 transition-all">
-                    <Edit className="w-4 h-4" /> {t('profile.edit')}
+                    <Edit className="w-4 h-4" /> Edit
                   </button>
                   <button onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)} className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-black text-sm font-bold transition-all active:scale-95" style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}>
-                    <Download className="w-4 h-4" /> {t('profile.download')}
+                    <Download className="w-4 h-4" /> Download
                   </button>
                   <button onClick={() => handleDelete(selectedItem.id)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all">
                     <Trash2 className="w-4 h-4" />
@@ -1508,14 +1499,14 @@ export default function Profile() {
                     onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))}
                     className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-white/10 border border-white/15 active:scale-95 transition-all"
                   >
-                    <Edit className="w-4 h-4" /> {t('profile.edit')}
+                    <Edit className="w-4 h-4" /> Edit
                   </button>
                   <button
                     onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
                     className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-black flex items-center justify-center gap-2 active:scale-95 transition-all"
                     style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}
                   >
-                    <Download className="w-4 h-4" /> {t('profile.download')}
+                    <Download className="w-4 h-4" /> Download
                   </button>
                   <button
                     onClick={() => handleDelete(selectedItem.id)}

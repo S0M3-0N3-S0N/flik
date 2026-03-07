@@ -43,11 +43,6 @@ function LayoutContent({ children, currentPageName }) {
 
   const t = (key) => translations[language]?.[key] || translations['en'][key] || key;
 
-  // Save language to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('app_language', language);
-  }, [language]);
-
   const isChildRoute = !['Editor', 'Generate', 'Profile'].includes(currentPageName);
 
   // Auto-hide desktop nav after 3 seconds of inactivity
@@ -322,8 +317,6 @@ function LayoutContent({ children, currentPageName }) {
                 </button>
               )}
 
-
-
               {user?.role === 'admin' && (
                 <button
                   onClick={() => navigate(createPageUrl("Camera"))}
@@ -385,7 +378,7 @@ function LayoutContent({ children, currentPageName }) {
         </main>
 
         {/* Bottom Navigation Bar - Mobile Only */}
-        {currentPageName !== "Camera" && currentPageName !== "WorldChat" && (
+        {currentPageName !== "Camera" && (
           <nav 
             className={`md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-3 py-2 gap-1 [body[data-modal-open]_&]:hidden transition-all duration-300 ${
               showMobileNav ? 'translate-y-0' : 'translate-y-full'
@@ -441,8 +434,6 @@ function LayoutContent({ children, currentPageName }) {
                 <Wand2 className="w-5 h-5" />
                 <span className="text-[9px] font-medium">Generate</span>
               </button>
-
-
 
               {user?.role === 'admin' && (
                 <button
