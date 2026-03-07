@@ -195,7 +195,7 @@ export default function WorldChat() {
                           <p className="text-sm font-semibold text-white truncate">{message.sender_name}</p>
                           <p className="text-xs text-white/40">{new Date(message.created_date).toLocaleTimeString()}</p>
                         </div>
-                        {user?.role === "admin" && (
+                        {(user?.role === "admin" || user?.email === message.created_by) && (
                           <button
                             onClick={() => deleteMessageMutation.mutate(message.id)}
                             className="opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-red-400 flex-shrink-0"
