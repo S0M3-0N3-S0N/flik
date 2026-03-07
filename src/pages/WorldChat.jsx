@@ -101,6 +101,10 @@ export default function WorldChat() {
        queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
      },
      onError: (error) => {
+       if (error?.status === 404) {
+         queryClient.invalidateQueries({ queryKey: ["worldChatMessages"] });
+         return;
+       }
        toast.error("Failed to delete message");
        console.error(error);
      },
