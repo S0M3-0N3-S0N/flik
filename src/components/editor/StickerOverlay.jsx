@@ -136,8 +136,8 @@ export default function StickerOverlay({ stickers, onStickersChange, zoom, pan, 
               {/* Rotate */}
               <button
                 className="absolute -top-3 -right-3 w-6 h-6 bg-[#FF6B35] rounded-full flex items-center justify-center shadow-md z-10 cursor-grab"
-                onMouseDown={(e) => handleStickerMouseDown(e, sticker.id, 'rotate')}
-                onTouchStart={(e) => handleStickerMouseDown(e, sticker.id, 'rotate')}
+                onMouseDown={(e) => { e.stopPropagation(); handleStickerMouseDown(e, sticker.id, 'rotate'); }}
+                onTouchStart={(e) => { e.stopPropagation(); handleStickerMouseDown(e, sticker.id, 'rotate'); }}
               >
                 <RotateCw className="w-3 h-3 text-white" />
               </button>
