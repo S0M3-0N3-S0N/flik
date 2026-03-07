@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 const LAYER_ICONS = {
   image: Image,
-  sticker: Sticker,
+  sticker: Star,
   paint: Paintbrush,
   adjustments: SlidersHorizontal,
   filter: Layers,
