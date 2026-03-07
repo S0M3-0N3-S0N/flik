@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, X, Image as ImageIcon, Plus } from "lucide-react";
+import { Send, Loader2, X, Image as ImageIcon, Plus, Upload, Grid3x3 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import WorldChatMessage from "@/components/WorldChatMessage";
@@ -299,21 +299,56 @@ export default function WorldChat() {
             </div>
           )}
 
-          <div className="flex gap-2">
-            <label className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition-colors">
-              <ImageIcon className="w-5 h-5 text-white/60" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
+          <div className="flex gap-2 relative">
+            {/* Attachments Menu Button */}
+            <div className="relative group">
+              <button
+                type="button"
+                onClick={() => {
+                  const menu = document.getElementById('world-attach-menu');
+                  if (menu) {
+                    menu.classList.toggle('hidden');
+                  }
+                }}
+                id="world-attach-menu-btn"
+                className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition-colors disabled:opacity-50"
                 disabled={isUploading || createMessageMutation.isPending}
-              />
-            </label>
+                title="Add attachments"
+              >
+                <Plus className="w-5 h-5 text-white/60" />
+              </button>
 
-            <button className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition-colors disabled:opacity-50" disabled={isUploading || createMessageMutation.isPending} title="Select from gallery">
-              <Plus className="w-5 h-5 text-white/60" />
-            </button>
+              {/* Popup Menu */}
+              <div 
+                id="world-attach-menu"
+                className="hidden absolute bottom-full left-0 mb-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl min-w-[180px]"
+              >
+                <label className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors cursor-pointer disabled:opacity-50">
+                  <Upload className="w-4 h-4 text-[#FF6B35]" />
+                  <span className="text-sm">Upload Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      handleImageSelect(e);
+                      document.getElementById('world-attach-menu')?.classList.add('hidden');
+                    }}
+                    className="hidden"
+                    disabled={isUploading || createMessageMutation.isPending}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById('world-attach-menu')?.classList.add('hidden');
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                >
+                  <Grid3x3 className="w-4 h-4 text-[#FF6B35]" />
+                  <span className="text-sm">From Gallery</span>
+                </button>
+              </div>
+            </div>
 
             <input
               type="text"
