@@ -263,7 +263,7 @@ export default function WorldChat() {
                       onReply={handleReply}
                       onDelete={(id) => deleteMessageMutation.mutate(id)}
                       parentMessage={parentMessage}
-                      isDeletable={user?.role === "admin" || user?.email === message.created_by}
+                      isDeletable={user?.role === "admin"}
                     />
                   );
                 })}
