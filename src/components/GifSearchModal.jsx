@@ -65,9 +65,6 @@ export default function GifSearchModal({ onSelectGif, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#F72C25]">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
             <h2 className="text-2xl font-bold text-white">GIF Library</h2>
           </div>
           <button
