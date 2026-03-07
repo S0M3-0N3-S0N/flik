@@ -70,8 +70,9 @@ export default function WorldChatMessage({
           {isDeletable && (
             <button
               onClick={() => onDelete(message.id)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-red-400 flex-shrink-0"
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-red-400 flex-shrink-0 disabled:opacity-50"
               title="Delete message"
+              disabled={false}
             >
               <X className="w-4 h-4" />
             </button>
