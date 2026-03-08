@@ -1405,6 +1405,13 @@ export default function Editor() {
           className="h-14 border-b border-white/5 flex items-center justify-between px-4 lg:px-6 glass-card flex-shrink-0"
         >
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(createPageUrl("Generate"))}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
+              title="Go to Imagine AI"
+            >
+              <X className="w-4 h-4" />
+            </button>
             {activeTab === "remove" && currentImage && (
               <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg items-center gap-2 hidden sm:flex">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
