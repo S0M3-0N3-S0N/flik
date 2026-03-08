@@ -137,11 +137,24 @@ export default function Editor() {
   const [mobilePanelHeight, setMobilePanelHeight] = useState(45); // % of dvh
   const mobileDragStartY = useRef(null);
   const mobileDragStartHeight = useRef(null);
+  const mobileLiveHeight = useRef(45); // tracks live height without re-renders
+  const asideRef = useRef(null);
+  const mainCanvasRef = useRef(null);
+  const rafRef = useRef(null);
+
+  const applyHeightToDOM = (height) => {
+    if (window.innerWidth >= 1024) return;
+    if (asideRef.current) asideRef.current.style.height = `${height}dvh`;
+    if (mainCanvasRef.current) mainCanvasRef.current.style.height = `${100 - height}dvh`;
+  };
 
   const handlePanelDragStart = (e) => {
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     mobileDragStartY.current = clientY;
-    mobileDragStartHeight.current = mobilePanelHeight;
+    mobileDragStartHeight.current = mobileLiveHeight.current;
+    // Disable CSS transition during drag for instant response
+    if (asideRef.current) asideRef.current.style.transition = 'none';
+    if (mainCanvasRef.current) mainCanvasRef.current.style.transition = 'none';
   };
 
   const handlePanelDragMove = (e) => {
@@ -151,18 +164,24 @@ export default function Editor() {
     const viewportH = window.innerHeight;
     const deltaPct = (deltaY / viewportH) * 100;
     const newHeight = Math.min(70, Math.max(10, mobileDragStartHeight.current + deltaPct));
-    setMobilePanelHeight(newHeight);
+    mobileLiveHeight.current = newHeight;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => applyHeightToDOM(newHeight));
   };
 
   const handlePanelDragEnd = () => {
     if (mobileDragStartY.current === null) return;
     mobileDragStartY.current = null;
-    // Snap to nearest state: collapsed (10%), half (45%), expanded (70%)
-    setMobilePanelHeight(prev => {
-      if (prev < 22) return 10;
-      if (prev < 57) return 45;
-      return 70;
-    });
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    // Snap to nearest state
+    const current = mobileLiveHeight.current;
+    const snapped = current < 22 ? 10 : current < 57 ? 45 : 70;
+    mobileLiveHeight.current = snapped;
+    // Re-enable transition for snap animation
+    if (asideRef.current) asideRef.current.style.transition = '';
+    if (mainCanvasRef.current) mainCanvasRef.current.style.transition = '';
+    applyHeightToDOM(snapped);
+    setMobilePanelHeight(snapped);
   };
 
   // Layers state
