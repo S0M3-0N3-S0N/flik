@@ -1286,8 +1286,21 @@ export default function Editor() {
       <motion.aside
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="order-2 lg:order-1 w-full lg:w-80 h-[45dvh] lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        style={{ height: window.innerWidth < 1024 ? `${mobilePanelHeight}dvh` : undefined }}
+        className="order-2 lg:order-1 w-full lg:w-80 lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-150 ease-out"
       >
+        {/* Drag handle - mobile only */}
+        <div
+          className="lg:hidden flex justify-center items-center pt-2 pb-1 cursor-grab active:cursor-grabbing touch-none"
+          onTouchStart={handlePanelDragStart}
+          onTouchMove={handlePanelDragMove}
+          onTouchEnd={handlePanelDragEnd}
+          onMouseDown={handlePanelDragStart}
+          onMouseMove={(e) => e.buttons === 1 && handlePanelDragMove(e)}
+          onMouseUp={handlePanelDragEnd}
+        >
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="flex overflow-x-auto no-scrollbar bg-white/5 mx-1 sm:mx-2 my-4 p-1 rounded-xl h-auto gap-1 flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
               {[
