@@ -138,6 +138,7 @@ export default function Editor() {
   const [selectedLayerId, setSelectedLayerId] = useState(null);
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Sync layers when image/stickers/adjustments/paint change
   // Preserves user-set visibility/opacity for existing layers
