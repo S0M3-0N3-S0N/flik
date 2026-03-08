@@ -916,6 +916,22 @@ export default function Editor() {
   }, [resetImageState, emblaApi]);
 
   // Keyboard shortcuts
+  // Global mouse listeners for mobile panel drag
+  useEffect(() => {
+    const onMove = (e) => {
+      if (mobileDragStartY.current !== null) handlePanelDragMove(e);
+    };
+    const onUp = () => {
+      if (mobileDragStartY.current !== null) handlePanelDragEnd();
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [mobilePanelHeight]);
+
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (!e || !currentImage) return;
