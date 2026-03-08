@@ -651,6 +651,7 @@ export default function Editor() {
       const transformedImage = { url: blobUrl, preview: blobUrl, name: "transformed.png" };
       setCurrentImage(prev => prev ? transformedImage : null);
       setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? transformedImage : img));
+      // Preserve adjustments and filter after transform (already baked into new image via generateCanvas)
       setAdjustments({ ...DEFAULT_ADJUSTMENTS });
       setSelectedFilter(null);
       setTransform({ rotate: 0, flipH: false, flipV: false });
