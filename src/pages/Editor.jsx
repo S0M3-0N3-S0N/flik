@@ -133,6 +133,38 @@ export default function Editor() {
   const [isEyeDropperActive, setIsEyeDropperActive] = useState(false);
   const [stickers, setStickers] = useState([]);
 
+  // Mobile panel drag state
+  const [mobilePanelHeight, setMobilePanelHeight] = useState(45); // % of dvh
+  const mobileDragStartY = useRef(null);
+  const mobileDragStartHeight = useRef(null);
+
+  const handlePanelDragStart = (e) => {
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    mobileDragStartY.current = clientY;
+    mobileDragStartHeight.current = mobilePanelHeight;
+  };
+
+  const handlePanelDragMove = (e) => {
+    if (mobileDragStartY.current === null) return;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = mobileDragStartY.current - clientY;
+    const viewportH = window.innerHeight;
+    const deltaPct = (deltaY / viewportH) * 100;
+    const newHeight = Math.min(70, Math.max(10, mobileDragStartHeight.current + deltaPct));
+    setMobilePanelHeight(newHeight);
+  };
+
+  const handlePanelDragEnd = () => {
+    if (mobileDragStartY.current === null) return;
+    mobileDragStartY.current = null;
+    // Snap to nearest state: collapsed (10%), half (45%), expanded (70%)
+    setMobilePanelHeight(prev => {
+      if (prev < 22) return 10;
+      if (prev < 57) return 45;
+      return 70;
+    });
+  };
+
   // Layers state
   const [layers, setLayers] = useState([]);
   const [selectedLayerId, setSelectedLayerId] = useState(null);
