@@ -1319,10 +1319,11 @@ export default function Editor() {
   return (
     <div className="fixed inset-0 flex flex-col lg:flex-row overflow-hidden">
       <motion.aside
+        ref={asideRef}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         style={{ height: window.innerWidth < 1024 ? `${mobilePanelHeight}dvh` : undefined }}
-        className="order-2 lg:order-1 w-full lg:w-80 lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-150 ease-out"
+        className="order-2 lg:order-1 w-full lg:w-80 lg:h-auto flex-shrink-0 border-t lg:border-t-0 lg:border-r border-white/5 glass-card overflow-y-auto z-20 bg-[#0A0A0A] scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-[height] duration-300 ease-out"
       >
         {/* Drag handle - mobile only */}
         <div
