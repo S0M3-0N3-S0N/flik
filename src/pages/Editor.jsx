@@ -527,8 +527,7 @@ export default function Editor() {
       const enhancedImage = { url: resultImage, preview: resultImage, name: "enhanced_image.png" };
       setCurrentImage(enhancedImage);
       setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? enhancedImage : img));
-      setAdjustments({ ...DEFAULT_ADJUSTMENTS });
-      setSelectedFilter(null);
+      // Preserve adjustments and filter - only reset brush strokes and transform
       setBrushStrokes([]);
       setPaintStrokes([]);
       setMagicBrushPrompt("");
