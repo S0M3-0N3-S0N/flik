@@ -1479,7 +1479,7 @@ export default function Editor() {
         </Tabs>
       </motion.aside>
       
-      <main className="flex-1 flex flex-col order-1 lg:order-2 lg:h-auto relative min-h-0" style={{ height: window.innerWidth < 1024 ? `${100 - mobilePanelHeight}dvh` : undefined }}>
+      <main ref={mainCanvasRef} className="flex-1 flex flex-col order-1 lg:order-2 lg:h-auto relative min-h-0 transition-[height] duration-300 ease-out" style={{ height: window.innerWidth < 1024 ? `${100 - mobilePanelHeight}dvh` : undefined }}>
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
