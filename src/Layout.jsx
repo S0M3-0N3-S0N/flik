@@ -282,7 +282,7 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Top Desktop Navigation */}
         <nav 
-          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${currentPageName === 'Camera' ? 'hidden' : 'hidden md:flex'} ${
+          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${currentPageName === 'Camera' || currentPageName === 'Editor' ? 'hidden' : 'hidden md:flex'} ${
             showDesktopNav ? 'translate-y-0' : '-translate-y-full'
           }`}
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
