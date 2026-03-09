@@ -64,20 +64,40 @@ export default function SpotRemoval({
         10
       );
 
+      // Upload current image for visual context if available
+      let imageUrls = [];
+      if (currentImage) {
+        try {
+          const imgUrl = currentImage.preview || currentImage.url;
+          // Only upload if it's a data URL (local file), otherwise use directly
+          if (imgUrl.startsWith('data:')) {
+            const res = await fetch(imgUrl);
+            const blob = await res.blob();
+            const file = new File([blob], 'current_image.png', { type: 'image/png' });
+            const uploaded = await base44.integrations.Core.UploadFile({ file });
+            if (uploaded?.file_url) imageUrls = [uploaded.file_url];
+          } else {
+            imageUrls = [imgUrl];
+          }
+        } catch (e) { /* ignore image upload errors */ }
+      }
+
       // Use AI to enhance the prompt
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are an expert image editing AI assistant. A user is using the Magic Brush tool and has written this prompt:
 
   "${userPrompt}"
 
+  ${imageUrls.length > 0 ? 'I have attached the current image they are editing so you can see its content and give more relevant suggestions.' : ''}
   ${learnedPrompts.length > 0 ? `Based on successful prompts from other users:\n${learnedPrompts.map((p, i) => `${i + 1}. "${p.prompt}"`).join('\n')}` : ''}
 
   Provide 3 enhanced versions of their prompt that will give better results. Make them:
-  - More specific and descriptive
-  - Include better visual details
+  - Specific to what you see in the image (if provided)
+  - More descriptive with visual details
   - Maintain the user's original intent
 
   Return ONLY the 3 suggestions, nothing else.`,
+        file_urls: imageUrls.length > 0 ? imageUrls : undefined,
         response_json_schema: {
           type: "object",
           properties: {
