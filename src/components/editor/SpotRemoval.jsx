@@ -64,23 +64,34 @@ export default function SpotRemoval({
         10
       );
 
-      // Upload current image for visual context if available
+      // Collect all image URLs for context: current image + reference images
       let imageUrls = [];
+
       if (currentImage) {
         try {
           const imgUrl = currentImage.preview || currentImage.url;
-          // Only upload if it's a data URL (local file), otherwise use directly
           if (imgUrl.startsWith('data:')) {
             const res = await fetch(imgUrl);
             const blob = await res.blob();
             const file = new File([blob], 'current_image.png', { type: 'image/png' });
             const uploaded = await base44.integrations.Core.UploadFile({ file });
-            if (uploaded?.file_url) imageUrls = [uploaded.file_url];
+            if (uploaded?.file_url) imageUrls.push(uploaded.file_url);
           } else {
-            imageUrls = [imgUrl];
+            imageUrls.push(imgUrl);
           }
-        } catch (e) { /* ignore image upload errors */ }
+        } catch (e) { /* ignore */ }
       }
+
+      // Add reference images (up to 3 to avoid overloading the LLM)
+      if (Array.isArray(referenceImages) && referenceImages.length > 0) {
+        for (const ref of referenceImages.slice(0, 3)) {
+          const url = typeof ref === 'string' ? ref : ref?.url;
+          if (url) imageUrls.push(url);
+        }
+      }
+
+      const hasCurrentImage = currentImage != null;
+      const hasRefImages = Array.isArray(referenceImages) && referenceImages.length > 0;
 
       // Use AI to enhance the prompt
       const response = await base44.integrations.Core.InvokeLLM({
@@ -88,11 +99,13 @@ export default function SpotRemoval({
 
   "${userPrompt}"
 
-  ${imageUrls.length > 0 ? 'I have attached the current image they are editing so you can see its content and give more relevant suggestions.' : ''}
+  ${hasCurrentImage ? 'The first attached image is the photo they are currently editing.' : ''}
+  ${hasRefImages ? `They have also provided ${Math.min(referenceImages.length, 3)} reference image(s) showing the style or content they want to achieve.` : ''}
+  ${imageUrls.length > 0 ? 'Use all attached images to give highly specific, relevant suggestions.' : ''}
   ${learnedPrompts.length > 0 ? `Based on successful prompts from other users:\n${learnedPrompts.map((p, i) => `${i + 1}. "${p.prompt}"`).join('\n')}` : ''}
 
   Provide 3 enhanced versions of their prompt that will give better results. Make them:
-  - Specific to what you see in the image (if provided)
+  - Specific to what you see in the images (if provided)
   - More descriptive with visual details
   - Maintain the user's original intent
 
