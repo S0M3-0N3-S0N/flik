@@ -1405,6 +1405,7 @@ export default function Editor() {
                     onPromptChange={setMagicBrushPrompt}
                     referenceImages={magicBrushImages}
                     onReferenceImagesChange={setMagicBrushImages}
+                    currentImage={currentImage}
                   />
                   {brushStrokes.length > 0 && (
                     <div className="mt-4 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20">
