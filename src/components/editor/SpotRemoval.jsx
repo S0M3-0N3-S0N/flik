@@ -18,13 +18,15 @@ export default function SpotRemoval({
   prompt,
   onPromptChange,
   referenceImages = [],
-  onReferenceImagesChange
+  onReferenceImagesChange,
+  currentImage = null
 }) {
 
   const [isUploading, setIsUploading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const suppressSuggestionsRef = useRef(false);
   const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [galleryCreations, setGalleryCreations] = useState([]);
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
