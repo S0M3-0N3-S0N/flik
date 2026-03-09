@@ -39,9 +39,15 @@ export default function SpotRemoval({
       return;
     }
 
+    // Don't re-trigger if a suggestion was just picked
+    if (suppressSuggestionsRef.current) {
+      suppressSuggestionsRef.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       getAISuggestions(prompt);
-    }, 1500); // Wait 1.5s after user stops typing
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [prompt]);
