@@ -303,6 +303,7 @@ export default function SpotRemoval({
                   <button
                     key={idx}
                     onClick={() => {
+                      suppressSuggestionsRef.current = true;
                       onPromptChange(suggestion);
                       setShowSuggestions(false);
                       toast.success("Prompt enhanced!");
