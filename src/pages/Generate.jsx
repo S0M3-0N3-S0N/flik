@@ -262,9 +262,12 @@ export default function Generate() {
       // Step 2: Generate all images
       const promises = promptsToGenerate.map(async (finalPrompt) => {
         try {
+          const moodboardSuffix = activeMoodboardStyle?.styleProfile?.prompt_enhancement
+            ? `, ${activeMoodboardStyle.styleProfile.prompt_enhancement}`
+            : "";
           let fullPrompt = selectedStyleObjects.length > 0
-            ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}, masterpiece, high quality, detailed`
-            : `${finalPrompt}, masterpiece, high quality, detailed`;
+            ? `((${styleInstruction})), ${finalPrompt}, ${styleInstruction}${moodboardSuffix}, masterpiece, high quality, detailed`
+            : `${finalPrompt}${moodboardSuffix}, masterpiece, high quality, detailed`;
           
           // CRITICAL: Aspect ratio must be enforced at the START of the prompt for best results
           if (aspectRatio === "16:9") {
