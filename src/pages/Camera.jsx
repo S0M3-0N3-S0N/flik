@@ -238,7 +238,11 @@ export default function CameraPage() {
   useEffect(() => {
     startCamera();
     
-    base44.entities.Creation.list('-updated_date', 1)
+    base44.auth.me()
+      .then(user => {
+        if (!user?.email) return [];
+        return base44.entities.Creation.filter({ created_by: user.email }, '-updated_date', 1);
+      })
       .then(creations => {
         if (creations && creations.length > 0) setLatestCreation(creations[0]);
       })
