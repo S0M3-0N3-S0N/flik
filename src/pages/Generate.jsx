@@ -404,8 +404,9 @@ export default function Generate() {
 
   const confirmGallerySelection = useCallback(() => {
     // Check if this is for moodboard gallery pick
-    if (moodboardGalleryCallback && selectedGalleryImages.length > 0) {
-      moodboardGalleryCallback(selectedGalleryImages);
+    if (moodboardGalleryCallbackRef.current && selectedGalleryImages.length > 0) {
+      moodboardGalleryCallbackRef.current(selectedGalleryImages);
+      moodboardGalleryCallbackRef.current = null;
       setMoodboardGalleryCallback(null);
       setShowMoodboard(true);
     // Check if this is for extract prompt
