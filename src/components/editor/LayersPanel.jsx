@@ -135,6 +135,7 @@ export default function LayersPanel({ layers, onLayersChange, onLayerSelect, sel
         return (
           <div
             key={layer.id}
+            ref={el => layerRefs.current[index] = el}
             draggable={!isBase}
             onDragStart={!isBase ? (e) => handleDragStart(e, index) : undefined}
             onDragOver={(e) => handleDragOver(e, index)}
