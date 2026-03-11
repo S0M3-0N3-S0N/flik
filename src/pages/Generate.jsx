@@ -630,7 +630,6 @@ export default function Generate() {
                     >
                       <Layers className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       <span className="hidden xs:inline">Moodboard</span>
-                      <span className="bg-[#FF6B35]/20 text-[#FF6B35] text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-[#FF6B35]/30 leading-none">SOON</span>
                     </div>
                   )}
 
