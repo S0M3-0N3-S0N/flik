@@ -728,6 +728,12 @@ export default function Generate() {
 
                 </div>
 
+                {activeMoodboardStyle && (
+                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-[10px] font-medium flex-shrink-0">
+                    <Layers className="w-3 h-3" />
+                    Style Active
+                  </div>
+                )}
                 <Button
                   onClick={handleGenerate}
                   disabled={(!prompt.trim() && uploadedImages.length === 0) || isGenerating}
