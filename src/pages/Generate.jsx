@@ -60,6 +60,7 @@ export default function Generate() {
   const [showMoodboard, setShowMoodboard] = useState(false);
   const [activeMoodboardStyle, setActiveMoodboardStyle] = useState(null); // { styleProfile, strength }
   const [moodboardGalleryCallback, setMoodboardGalleryCallback] = useState(null);
+  const moodboardGalleryCallbackRef = useRef(null);
   const imgToImgFileRef = useRef(null);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
