@@ -604,21 +604,16 @@ export default function Generate() {
                   </button>
 
                   <button
-                    onClick={() => setShowExtractPrompt(true)}
-                    className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
-                    title="Extract prompt from image"
+                    onClick={() => setShowMoodboard(true)}
+                    className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
+                      activeMoodboardStyle
+                        ? 'bg-[#FF6B35]/10 text-[#FF6B35]'
+                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                    }`}
+                    title="Moodboard Style Engine"
                   >
-                    <LayoutList className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="hidden xs:inline">Extract</span>
-                  </button>
-
-                  <button
-                    onClick={() => { setShowImageToImage(true); setImgToImgSource(null); }}
-                    className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
-                    title="Generate similar image from reference"
-                  >
-                    <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="hidden xs:inline">Img2Img</span>
+                    <Layers className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="hidden xs:inline">{activeMoodboardStyle ? 'Style On' : 'Moodboard'}</span>
                   </button>
 
                   <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
