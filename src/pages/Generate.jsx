@@ -1044,6 +1044,45 @@ export default function Generate() {
         </DialogContent>
       </Dialog>
 
+      {/* Moodboard Dialog */}
+      <Dialog open={showMoodboard} onOpenChange={setShowMoodboard}>
+        <DialogContent className="max-w-lg w-[96vw] max-h-[90vh] overflow-y-auto bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border border-white/10 text-white rounded-2xl p-5 shadow-2xl">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-bold gradient-text flex items-center gap-2">
+                <Layers className="w-5 h-5 text-[#FF6B35]" />
+                Moodboard Style Engine
+              </DialogTitle>
+              {activeMoodboardStyle && (
+                <button
+                  onClick={() => { setActiveMoodboardStyle(null); }}
+                  className="text-xs text-red-400/70 hover:text-red-400 transition-colors ml-4"
+                >
+                  Clear Style
+                </button>
+              )}
+            </div>
+            <p className="text-white/40 text-xs mt-1">
+              {activeMoodboardStyle
+                ? `✓ Style active — all generations will match your moodboard aesthetic`
+                : 'Upload references to extract a style fingerprint for consistent generations'}
+            </p>
+          </DialogHeader>
+          <div className="mt-3">
+            <MoodboardPanel
+              onApplyMoodboard={(moodboard) => {
+                setActiveMoodboardStyle(moodboard);
+                setShowMoodboard(false);
+              }}
+              onGalleryOpen={(callback) => {
+                setMoodboardGalleryCallback(() => callback);
+                setShowGallery(true);
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Extract Prompt Dialog */}
       <Dialog open={showExtractPrompt} onOpenChange={setShowExtractPrompt}>
         <DialogContent className="max-w-md w-[95vw] sm:w-[90vw] bg-gradient-to-br from-[#0a0a0a] via-[#141414] to-[#0a0a0a] border border-white/10 text-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
