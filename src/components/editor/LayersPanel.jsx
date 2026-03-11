@@ -23,8 +23,41 @@ export default function LayersPanel({ layers, onLayersChange, onLayerSelect, sel
   const [dragIndex, setDragIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const layerRefs = useRef([]);
+  const containerRef = useRef(null);
 
-  // Simple HTML5 drag-and-drop (avoids nested scroll container issues)
+  // Touch drag support
+  const handleTouchDragStart = (e, index) => {
+    setDragIndex(index);
+  };
+
+  const handleTouchDragMove = (e) => {
+    if (dragIndex === null) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const elements = layerRefs.current;
+    for (let i = 0; i < elements.length; i++) {
+      if (!elements[i]) continue;
+      const rect = elements[i].getBoundingClientRect();
+      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        setDragOverIndex(i);
+        break;
+      }
+    }
+  };
+
+  const handleTouchDragEnd = () => {
+    if (dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+      const reordered = Array.from(layers);
+      const [removed] = reordered.splice(dragIndex, 1);
+      reordered.splice(dragOverIndex, 0, removed);
+      onLayersChange(reordered);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // Mouse drag support
   const handleDragStart = (e, index) => {
     setDragIndex(index);
     e.dataTransfer.effectAllowed = "move";
