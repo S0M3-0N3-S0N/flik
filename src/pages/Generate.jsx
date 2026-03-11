@@ -402,8 +402,13 @@ export default function Generate() {
   }, [selectedGalleryImages]);
 
   const confirmGallerySelection = useCallback(() => {
+    // Check if this is for moodboard gallery pick
+    if (moodboardGalleryCallback && selectedGalleryImages.length > 0) {
+      moodboardGalleryCallback(selectedGalleryImages);
+      setMoodboardGalleryCallback(null);
+      setShowMoodboard(true);
     // Check if this is for extract prompt
-    if (window.__extractPromptCallback && selectedGalleryImages.length === 1) {
+    } else if (window.__extractPromptCallback && selectedGalleryImages.length === 1) {
       window.__extractPromptCallback({
         url: selectedGalleryImages[0].url,
         thumbnail_url: selectedGalleryImages[0].url
