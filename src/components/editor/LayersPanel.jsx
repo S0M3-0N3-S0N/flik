@@ -152,7 +152,12 @@ export default function LayersPanel({ layers, onLayersChange, onLayerSelect, sel
             >
               {/* Drag handle */}
               {!isBase ? (
-                <div className="text-white/20 hover:text-white/60 cursor-grab active:cursor-grabbing flex-shrink-0">
+                <div
+                  className="text-white/20 hover:text-white/60 cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+                  onTouchStart={(e) => { e.stopPropagation(); handleTouchDragStart(e, index); }}
+                  onTouchMove={handleTouchDragMove}
+                  onTouchEnd={handleTouchDragEnd}
+                >
                   <GripVertical className="w-3.5 h-3.5" />
                 </div>
               ) : (
