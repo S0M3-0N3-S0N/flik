@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Eye, EyeOff, Trash2, GripVertical, Image, Paintbrush, SlidersHorizontal, Layers, Star, Filter, ChevronDown, ChevronUp } from "lucide-react";
 
 const LAYER_ICONS = {
