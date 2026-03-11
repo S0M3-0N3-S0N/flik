@@ -300,7 +300,8 @@ export default function Generate() {
               batchSize: promptsToGenerate.length,
               aspectRatio,
               negativePrompt,
-              imageStrength: uploadedImages.length > 0 ? imageStrength : null
+              imageStrength: uploadedImages.length > 0 ? imageStrength : null,
+              moodboardApplied: !!activeMoodboardStyle
             }
           });
 
