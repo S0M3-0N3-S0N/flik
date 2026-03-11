@@ -218,9 +218,14 @@ export default function Generate() {
       const styleLabels = selectedStyleObjects.map(s => s.label).join(" + ");
       
       const sanitizedPrompt = prompt.substring(0, 500).replace(/[<>]/g, '');
+
+      // Build moodboard style injection
+      const moodboardEnhancement = activeMoodboardStyle?.styleProfile?.prompt_enhancement
+        ? `\n\nACTIVE MOODBOARD STYLE (apply at ${Math.round((activeMoodboardStyle.strength || 0.7) * 100)}% strength): ${activeMoodboardStyle.styleProfile.prompt_enhancement}`
+        : "";
       
       const llmAnalysis = await base44.integrations.Core.InvokeLLM({
-        prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${sanitizedPrompt}".
+        prompt: `Act as an expert AI Art Prompt Engineer. Analyze this request: "${sanitizedPrompt}".${moodboardEnhancement}
         
         ${uploadedImages.length > 0 ? `IMPORTANT: The user has attached reference images. You MUST analyze these images visually. Your enhanced prompt should describe the key visual elements of these images (subject, composition, colors) to ensure the generated image relates ${imageStrength > 0.7 ? "EXTREMELY STRICTLY (maintain exact composition and forms)" : imageStrength < 0.4 ? "loosely (use as vague inspiration)" : "strongly"} to them, while applying the user's text prompt as a modification or style.` : ""}
         ${aiModel === AI_MODEL_OPTIONS.GEMINI ? "SMART MODE ACTIVE: Use your internet capabilities to look up specific details about any real-world entities, current events, or specific character designs mentioned in the prompt to ensure maximum accuracy." : ""}
