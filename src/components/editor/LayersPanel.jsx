@@ -183,7 +183,7 @@ export default function LayersPanel({ layers, onLayersChange, onLayerSelect, sel
                 <p className={`text-xs font-medium truncate ${layer.visible ? "text-white" : "text-white/30 line-through"}`}>
                   {layer.name}
                 </p>
-                <p className="text-[10px] text-white/30 capitalize">{layer.type}</p>
+
               </div>
 
               {/* Expand toggle (for sticker/paint layers - phase 2 controls) */}
