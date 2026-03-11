@@ -1082,7 +1082,9 @@ export default function Generate() {
                 setShowMoodboard(false);
               }}
               onGalleryOpen={(callback) => {
-                setMoodboardGalleryCallback(() => callback);
+                moodboardGalleryCallbackRef.current = callback;
+                setMoodboardGalleryCallback(callback);
+                setShowMoodboard(false);
                 setShowGallery(true);
               }}
             />
