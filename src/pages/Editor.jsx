@@ -25,7 +25,7 @@ import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import StickerOverlay from "@/components/editor/StickerOverlay";
 import PromptExtractor from "@/components/editor/PromptExtractor";
-import LayersPanel from "@/components/editor/LayersPanel";
+import FlowEditor from "@/components/editor/FlowEditor";
 import { useFlikActions } from "@/components/useFlikActions";
 
 async function removeWhiteBackground(imageUrl) {
@@ -1349,7 +1349,7 @@ export default function Editor() {
                 ...(user?.role === 'admin' ? [
                   { value: "paint", icon: <Paintbrush className="w-4 h-4" />, title: "Paint" },
                   { value: "text", icon: <Type className="w-4 h-4" />, title: "Text Generator" },
-                  { value: "layers", icon: <span className="relative flex items-center justify-center"><Layers className="w-4 h-4" /><span className="absolute -top-1.5 -right-1.5 text-[8px] leading-none">🚧</span></span>, title: "Layers (Under Construction)" },
+                  { value: "layers", icon: <Layers className="w-4 h-4" />, title: "Flow Editor" },
                 ] : [])
               ].map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value} className="flex-shrink-0 min-w-[40px] data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title={tab.title}>
@@ -1467,11 +1467,15 @@ export default function Editor() {
             </TabsContent>
 
             <TabsContent value="layers" className="mt-0">
-              <LayersPanel
-                layers={layers}
-                onLayersChange={handleLayersChange}
-                onLayerSelect={setSelectedLayerId}
-                selectedLayerId={selectedLayerId}
+              <FlowEditor
+                currentImage={currentImage}
+                onApplyResult={(url) => {
+                  const newImg = { url, preview: url, name: 'flow_result.png' };
+                  setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
+                  setCurrentImage(newImg);
+                  setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? newImg : img));
+                  setNeedsFit(true);
+                }}
               />
             </TabsContent>
 

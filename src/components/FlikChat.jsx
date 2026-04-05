@@ -591,7 +591,6 @@ export default function FlikChat() {
     const timeoutId = setTimeout(() => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
-        setError("Request timed out. Please try again.");
         setIsTyping(false);
       }
     }, 60000); // 60 second timeout

@@ -3,7 +3,6 @@ import { Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function ExposureSlider({ position, value, min = -2, max = 2, onChange }) {
-  if (!position) return null;
   const trackRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -38,6 +37,8 @@ export default function ExposureSlider({ position, value, min = -2, max = 2, onC
       window.removeEventListener('touchend', onUp);
     };
   }, [isDragging, min, max]);
+
+  if (!position) return null;
 
   const fillPercent = ((value - min) / (max - min)) * 100;
 
