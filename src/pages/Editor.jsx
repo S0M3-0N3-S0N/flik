@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock, Type, Paintbrush, Droplet, Zap, Hand, Layers } from "lucide-react";
+import { Download, Settings2, Sparkles, Filter, Wand2, RotateCw, RotateCcw, X, Crop as CropIcon, ZoomIn, ZoomOut, Move, Maximize2, Loader2, Save, Upload, Grid3x3, ChevronLeft, ChevronRight, Lock, Unlock, Type, Paintbrush, GitBranch, Hand } from "lucide-react";
 import { toast } from "sonner";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -25,7 +25,7 @@ import ProcessingOverlay from "@/components/editor/ProcessingOverlay";
 import ResultModal from "@/components/editor/ResultModal";
 import StickerOverlay from "@/components/editor/StickerOverlay";
 import PromptExtractor from "@/components/editor/PromptExtractor";
-import FlowEditor from "@/components/editor/FlowEditor";
+
 import { useFlikActions } from "@/components/useFlikActions";
 
 async function removeWhiteBackground(imageUrl) {
@@ -1349,7 +1349,6 @@ export default function Editor() {
                 ...(user?.role === 'admin' ? [
                   { value: "paint", icon: <Paintbrush className="w-4 h-4" />, title: "Paint" },
                   { value: "text", icon: <Type className="w-4 h-4" />, title: "Text Generator" },
-                  { value: "layers", icon: <Layers className="w-4 h-4" />, title: "Flow Editor" },
                 ] : [])
               ].map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value} className="flex-shrink-0 min-w-[40px] data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF6B35] data-[state=active]:to-[#FFB800]" title={tab.title}>
@@ -1466,20 +1465,6 @@ export default function Editor() {
               <TextGeneratorPanel onTextImageGenerated={handleTextImageGenerated} isProcessing={isProcessing} user={user} />
             </TabsContent>
 
-            <TabsContent value="layers" className="mt-0">
-              <FlowEditor
-                currentImage={currentImage}
-                onApplyResult={(url) => {
-                  const newImg = { url, preview: url, name: 'flow_result.png' };
-                  setUndoHistory(prev => [...prev, { image: currentImage, adjustments, filter: selectedFilter, transform, brushStrokes, paintStrokes }]);
-                  setCurrentImage(newImg);
-                  setLoadedImages(prev => prev.map((img, i) => i === currentImageIndex ? newImg : img));
-                  setNeedsFit(true);
-                }}
-              />
-            </TabsContent>
-
-
           </div>
         </Tabs>
       </motion.aside>
@@ -1492,11 +1477,12 @@ export default function Editor() {
         >
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(createPageUrl("Generate"))}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
-              title="Go to Imagine AI"
+              onClick={() => navigate(createPageUrl("FlowEditor"))}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-all text-xs"
+              title="Open Flow Editor"
             >
-              <X className="w-4 h-4" />
+              <GitBranch className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Flow Editor</span>
             </button>
             {activeTab === "remove" && currentImage && (
               <div className="text-xs lg:text-sm text-white/60 bg-white/5 px-2 lg:px-3 py-1 rounded-lg items-center gap-2 hidden sm:flex">
