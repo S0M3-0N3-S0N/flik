@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { Image, Filter, SlidersHorizontal, Wand2, Type, Download, Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 
@@ -57,19 +57,59 @@ function NodeHeader({ icon: Icon, label, color }) {
 
 // ── Image Input Node ──────────────────────────────────────────────
 export function ImageInputNode({ data, selected }) {
+  const fileInputRef = useRef(null);
+  const imageUrls = data.imageUrls || (data.imageUrl ? [data.imageUrl] : []);
+
+  const handleAddImages = (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const newUrls = [...imageUrls, ev.target.result];
+        data.onChange?.({ imageUrls: newUrls });
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemove = (idx) => {
+    const newUrls = imageUrls.filter((_, i) => i !== idx);
+    data.onChange?.({ imageUrls: newUrls });
+  };
+
   return (
     <NodeWrapper selected={selected} status={data.status} hasInput={false} accentColor="#FF6B35">
       <NodeHeader icon={Image} label="Image Input" color="#FF6B35" />
-      <div className="p-3">
-        {data.imageUrl ? (
-          <img src={data.imageUrl} alt="Input" className="w-full h-24 object-cover rounded-xl" />
+      <div className="p-3 min-w-[180px]">
+        {imageUrls.length > 0 ? (
+          <div className="grid grid-cols-2 gap-1.5 mb-2">
+            {imageUrls.map((url, idx) => (
+              <div key={idx} className="relative group">
+                <img src={url} alt={`Input ${idx + 1}`} className="w-full h-16 object-cover rounded-lg" />
+                <button
+                  onClick={() => handleRemove(idx)}
+                  className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 text-white/70 hover:text-red-400 text-[10px] flex items-center justify-center nodrag opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="w-full h-16 rounded-xl bg-white/5 border border-dashed border-white/10 flex items-center justify-center">
-            <span className="text-[10px] text-white/30">No image</span>
+          <div className="w-full h-16 rounded-xl bg-[#1a1a1a] border border-dashed border-white/10 flex items-center justify-center mb-2">
+            <span className="text-[10px] text-white/30">No images</span>
           </div>
         )}
-        {data.imageUrl && (
-          <p className="text-[10px] text-white/30 mt-2 text-center">Source Image</p>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full text-[10px] bg-[#FF6B35]/15 hover:bg-[#FF6B35]/25 border border-[#FF6B35]/30 text-[#FF6B35] rounded-lg py-1 nodrag transition-colors"
+        >
+          + Add Image{imageUrls.length > 0 ? 's' : ''}
+        </button>
+        <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleAddImages} className="hidden" />
+        {imageUrls.length > 0 && (
+          <p className="text-[10px] text-white/30 mt-1.5 text-center">{imageUrls.length} image{imageUrls.length !== 1 ? 's' : ''}</p>
         )}
       </div>
     </NodeWrapper>
@@ -211,7 +251,7 @@ export function OutputNode({ data, selected }) {
             </button>
           </>
         ) : (
-          <div className="w-full h-16 rounded-xl bg-white/5 border border-dashed border-white/10 flex items-center justify-center">
+          <div className="w-full h-16 rounded-xl bg-[#1a1a1a] border border-dashed border-white/10 flex items-center justify-center">
             <span className="text-[10px] text-white/30">Run flow to see result</span>
           </div>
         )}

@@ -113,7 +113,7 @@ export default function FlowEditorPage() {
 
   React.useEffect(() => {
     setNodes(nds => nds.map(n =>
-      n.type === "imageInput" ? { ...n, data: { ...n.data, imageUrl } } : n
+      n.type === "imageInput" ? { ...n, data: { ...n.data, imageUrls: imageUrl ? [imageUrl] : [] } } : n
     ));
   }, [imageUrl]);
 
@@ -134,7 +134,7 @@ export default function FlowEditorPage() {
       status: "idle",
       onChange: (patch) => updateNodeData(id, patch),
     };
-    if (type === "imageInput") defaultData.imageUrl = imageUrl;
+    if (type === "imageInput") defaultData.imageUrls = imageUrl ? [imageUrl] : [];
     if (type === "adjustments") { defaultData.brightness = 0; defaultData.contrast = 0; defaultData.saturation = 0; }
     if (type === "filter") defaultData.filter = "None";
     if (type === "generate") defaultData.tool = "Enhance";
@@ -178,7 +178,8 @@ export default function FlowEditorPage() {
 
       try {
         if (node.type === "imageInput") {
-          outputs[nodeId] = node.data.imageUrl;
+          const urls = node.data.imageUrls?.length ? node.data.imageUrls : (node.data.imageUrl ? [node.data.imageUrl] : []);
+          outputs[nodeId] = urls.length === 1 ? urls[0] : urls;
           updateNodeData(nodeId, { status: "done" });
 
         } else if (node.type === "filter") {
@@ -380,7 +381,7 @@ export default function FlowEditorPage() {
           </button>
           <button
             onClick={runFlow}
-            disabled={isRunning || !currentImage}
+            disabled={isRunning}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
