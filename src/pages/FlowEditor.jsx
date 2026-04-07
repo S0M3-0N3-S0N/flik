@@ -41,11 +41,7 @@ const nodeTypes = {
 
 const NODE_PALETTE = [
 { type: "imageInput", label: "Image Input", icon: Image, color: "#FF6B35" },
-{ type: "filter", label: "Filter", icon: Filter, color: "#9B59B6" },
-{ type: "adjustments", label: "Adjustments", icon: SlidersHorizontal, color: "#4ECDC4" },
-{ type: "generate", label: "AI Transform", icon: Sparkles, color: "#FF6B35" },
 { type: "magicBrush", label: "Magic Brush", icon: Wand2, color: "#F72C25" },
-{ type: "textGenerator", label: "Text Gen", icon: Type, color: "#FFB800" },
 { type: "output", label: "Output", icon: Download, color: "#4ECDC4" }];
 
 
@@ -95,6 +91,7 @@ export default function FlowEditorPage() {
   const navigate = useNavigate();
   const [currentImage, setCurrentImage] = useState(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryTargetNodeId, setGalleryTargetNodeId] = useState(null);
   const [savedResult, setSavedResult] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -276,12 +273,22 @@ export default function FlowEditorPage() {
   }, []);
 
   const handleGallerySelect = useCallback((image) => {
-    const img = Array.isArray(image) ? image[0] : image;
-    if (img) {
-      setCurrentImage({ url: img.url || img.thumbnail_url, preview: img.url || img.thumbnail_url, name: 'gallery_image.png' });
+    const imgs = Array.isArray(image) ? image : [image];
+    if (galleryTargetNodeId) {
+      // Add to specific imageInput node
+      setNodes(nds => nds.map(n => {
+        if (n.id !== galleryTargetNodeId) return n;
+        const existing = n.data.imageUrls || [];
+        const newUrls = imgs.map(i => i.url || i.thumbnail_url).filter(Boolean);
+        return { ...n, data: { ...n.data, imageUrls: [...existing, ...newUrls] } };
+      }));
+      setGalleryTargetNodeId(null);
+    } else {
+      const img = imgs[0];
+      if (img) setCurrentImage({ url: img.url || img.thumbnail_url, preview: img.url || img.thumbnail_url, name: 'gallery_image.png' });
     }
     setIsGalleryOpen(false);
-  }, []);
+  }, [galleryTargetNodeId, setNodes]);
 
   const resetFlow = useCallback(() => {
     setNodes(makeInitialNodes(imageUrl));
@@ -439,14 +446,12 @@ export default function FlowEditorPage() {
       {/* ReactFlow Canvas */}
       <div ref={reactFlowWrapper} className="flex-1 min-h-0">
         <ReactFlow
-          nodes={nodes.map((n) => ({
-            ...n,
+          nodes={nodes.map((n) => ({            ...n,
             data: {
               ...n.data,
               onChange: (patch) => updateNodeData(n.id, patch),
-              onApply: n.type === "output" && n.data.resultUrl ?
-              () => handleSaveResult(n.data.resultUrl) :
-              undefined
+              onApply: n.type === "output" && n.data.resultUrl ? () => handleSaveResult(n.data.resultUrl) : undefined,
+              onGalleryOpen: n.type === "imageInput" ? () => { setGalleryTargetNodeId(n.id); setIsGalleryOpen(true); } : undefined,
             }
           }))}
           edges={edges}
