@@ -125,32 +125,32 @@ export function MagicBrushNode({ data, selected }) {
 
 // ── Output Node ───────────────────────────────────────────────────
 export function OutputNode({ data, selected }) {
-  return (
-    <div className="opacity-100 rounded-2xl relative border overflow-hidden transition-all duration-200 min-w-[180px] border-white/10"
+  return null;
 
-    style={{ backgroundColor: '#111111' }}>
-      
-      <Handle type="target" position={Position.Left} className="!w-3 !h-3 !rounded-full !border-2 !bg-[#0A0A0A]" style={{ borderColor: '#4ECDC4' }} />
-      <div className="absolute top-2 right-2">{STATUS_ICON[data.status || 'idle']}</div>
-      <NodeHeader icon={Download} label="Output" color="#4ECDC4" />
-      <div className="p-3" style={{ backgroundColor: '#111111' }}>
-        {data.resultUrl ?
-        <>
-            <img src={data.resultUrl} alt="Result" className="w-full h-28 object-cover rounded-xl" />
-            <button
-            onClick={() => data.onApply?.()}
-            className="mt-2 w-full text-[11px] bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white rounded-lg py-1.5 font-semibold nodrag hover:opacity-90 transition-opacity">
-            
-              Save to Gallery
-            </button>
-          </> :
 
-        <div className="w-full h-16 rounded-xl border border-dashed border-white/10 flex items-center justify-center" style={{ backgroundColor: '#1a1a1a' }}>
-            <span className="text-[10px] text-white/30">Run flow to see result</span>
-          </div>
-        }
-      </div>
-    </div>);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 
