@@ -276,10 +276,10 @@ export default function FlowEditorPage() {
     const imgs = Array.isArray(image) ? image : [image];
     if (galleryTargetNodeId) {
       // Add to specific imageInput node
-      setNodes((nds) => nds.map((n) => {
+      setNodes(nds => nds.map(n => {
         if (n.id !== galleryTargetNodeId) return n;
         const existing = n.data.imageUrls || [];
-        const newUrls = imgs.map((i) => i.url || i.thumbnail_url).filter(Boolean);
+        const newUrls = imgs.map(i => i.url || i.thumbnail_url).filter(Boolean);
         return { ...n, data: { ...n.data, imageUrls: [...existing, ...newUrls] } };
       }));
       setGalleryTargetNodeId(null);
@@ -445,48 +445,48 @@ export default function FlowEditorPage() {
 
       {/* ReactFlow Canvas */}
       <div ref={reactFlowWrapper} className="flex-1 min-h-0">
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
+        <ReactFlow
+          nodes={nodes.map((n) => ({            ...n,
+            data: {
+              ...n.data,
+              onChange: (patch) => updateNodeData(n.id, patch),
+              onApply: n.type === "output" && n.data.resultUrl ? () => handleSaveResult(n.data.resultUrl) : undefined,
+              onGalleryOpen: n.type === "imageInput" ? () => { setGalleryTargetNodeId(n.id); setIsGalleryOpen(true); } : undefined,
+            }
+          }))}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onInit={setReactFlowInstance}
+          nodeTypes={nodeTypes}
+          style={{ background: "#0A0A0A" }}
+          fitView
+          fitViewOptions={{ padding: 0.25 }}
+          defaultEdgeOptions={{
+            animated: true,
+            style: { stroke: "#FF6B35", strokeWidth: 2 }
+          }}
+          connectionLineStyle={{ stroke: "#FF6B35", strokeWidth: 2 }}
+          deleteKeyCode={["Backspace", "Delete"]}
+          proOptions={{ hideAttribution: true }}>
+          
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={24}
+            size={1}
+            color="rgba(255,255,255,0.07)" />
+          
+          <Controls className="!bottom-6 !left-6" showInteractive={false} />
+          <MiniMap
+            nodeColor={(n) => {
+              const colors = { imageInput: "#FF6B35", filter: "#9B59B6", adjustments: "#4ECDC4", generate: "#FF6B35", magicBrush: "#F72C25", textGenerator: "#FFB800", output: "#4ECDC4" };
+              return colors[n.type] || "#666";
+            }}
+            maskColor="rgba(0,0,0,0.75)"
+            className="!bottom-6 !right-6" />
+          
+        </ReactFlow>
       </div>
 
       <GalleryPicker
