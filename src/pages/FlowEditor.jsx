@@ -358,7 +358,7 @@ function FlowEditorInner() {
 
       <div className="flex flex-1 min-h-0">
         {/* ── Left palette ── */}
-        <aside className="flex-shrink-0 w-52 border-r border-white/5 flex flex-col gap-1 p-3 overflow-y-auto hidden md:flex" style={{ background: "#21c45d0a" }}>
+        <aside className="flex-shrink-0 w-52 border-r border-white/5 flex flex-col gap-1 p-3 overflow-y-auto hidden md:flex" style={{ background: "#0000000a" }}>
           <p className="text-[9px] font-semibold text-white/25 uppercase tracking-widest px-1 mb-1">Add Node</p>
           {PALETTE.map(({ type, label, icon: Icon, color, desc }) => (
             <button key={type} onClick={() => addNode(type)}
