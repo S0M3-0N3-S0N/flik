@@ -6,7 +6,6 @@ import {
   addEdge,
   Background,
   Controls,
-  MiniMap,
   BackgroundVariant,
   ReactFlowProvider,
 } from "@xyflow/react";
@@ -164,23 +163,38 @@ function FlowEditorInner() {
   }, []);
 
   // ── Run flow ────────────────────────────────────────────────────
+  // Collect ALL image URLs from all upstream nodes recursively
+  const collectAllRefs = useCallback((nodeId, outputs, visited = new Set()) => {
+    if (visited.has(nodeId)) return [];
+    visited.add(nodeId);
+    const inEdges = edges.filter(e => e.target === nodeId);
+    let refs = [];
+    for (const e of inEdges) {
+      const up = outputs[e.source];
+      if (up) {
+        if (up.imageUrls) refs.push(...up.imageUrls);
+        if (up.imageUrl) refs.push(up.imageUrl);
+      }
+      refs.push(...collectAllRefs(e.source, outputs, visited));
+    }
+    return [...new Set(refs.filter(Boolean))];
+  }, [edges]);
+
   const runFlow = useCallback(async () => {
     if (isRunning) return;
     setIsRunning(true);
     setRunError(null);
     setSavedOk(false);
 
-    // Reset all statuses
-    setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, status: "idle", resultUrl: undefined, resultPreview: undefined, inputPreview: undefined, error: undefined } })));
+    setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, status: "idle", resultUrl: undefined, resultPreview: undefined, allRefs: undefined, error: undefined } })));
 
     const order = topoSort(nodes, edges);
-    const outputs = {}; // nodeId -> { imageUrl, ...any }
+    const outputs = {};
 
     for (const nodeId of order) {
       const node = nodes.find(n => n.id === nodeId);
       if (!node) continue;
 
-      // Collect all upstream outputs for this node
       const inEdges = edges.filter(e => e.target === nodeId);
       const upstreamData = inEdges.reduce((acc, e) => {
         const up = outputs[e.source];
@@ -189,14 +203,16 @@ function FlowEditorInner() {
       }, {});
       const inputUrl = upstreamData.imageUrl || null;
 
-      updateNodeData(nodeId, { status: "running" });
+      // Collect ALL image refs from all connected upstream nodes
+      const allRefs = collectAllRefs(nodeId, outputs);
+
+      updateNodeData(nodeId, { status: "running", allRefs });
       await new Promise(r => setTimeout(r, 80));
 
       try {
         if (node.type === "imageInput") {
           const urls = node.data.imageUrls || [];
-          const url = urls[0] || null;
-          outputs[nodeId] = { imageUrl: url, imageUrls: urls };
+          outputs[nodeId] = { imageUrl: urls[0] || null, imageUrls: urls };
           updateNodeData(nodeId, { status: "done" });
 
         } else if (node.type === "blank") {
@@ -207,10 +223,9 @@ function FlowEditorInner() {
           if (!inputUrl) throw new Error("Magic Brush needs a connected image input");
           const prompt = node.data.prompt?.trim();
           if (!prompt) throw new Error("Please enter a prompt for Magic Brush");
-          updateNodeData(nodeId, { inputPreview: inputUrl });
           const result = await base44.integrations.Core.GenerateImage({
             prompt: `${prompt}. Apply to the reference image while preserving overall composition.`,
-            existing_image_urls: [inputUrl],
+            existing_image_urls: allRefs.length > 0 ? allRefs : [inputUrl],
           });
           outputs[nodeId] = { imageUrl: result.url };
           updateNodeData(nodeId, { status: "done" });
@@ -221,17 +236,20 @@ function FlowEditorInner() {
           const styleExtra = STYLE_PROMPTS[node.data.style || "None"];
           const fullPrompt = styleExtra ? `${prompt}. Style: ${styleExtra}.` : prompt;
           const genOpts = { prompt: fullPrompt };
-          if (inputUrl) genOpts.existing_image_urls = [inputUrl];
+          const refs = allRefs.length > 0 ? allRefs : (inputUrl ? [inputUrl] : null);
+          if (refs) genOpts.existing_image_urls = refs;
           const result = await base44.integrations.Core.GenerateImage(genOpts);
           outputs[nodeId] = { imageUrl: result.url };
           updateNodeData(nodeId, { status: "done", resultPreview: result.url });
 
         } else if (node.type === "output") {
           const finalUrl = inputUrl;
+          const allOutputRefs = allRefs;
           outputs[nodeId] = { imageUrl: finalUrl };
           updateNodeData(nodeId, {
             status: finalUrl ? "done" : "error",
             resultUrl: finalUrl,
+            allRefs: allOutputRefs,
             error: finalUrl ? undefined : "No image received from upstream",
           });
         }
@@ -244,7 +262,7 @@ function FlowEditorInner() {
     }
 
     setIsRunning(false);
-  }, [nodes, edges, isRunning, updateNodeData]);
+  }, [nodes, edges, isRunning, updateNodeData, collectAllRefs]);
 
   // ── Gallery select ──────────────────────────────────────────────
   const handleGallerySelect = useCallback((image) => {
@@ -395,11 +413,6 @@ function FlowEditorInner() {
           >
             <Background variant={BackgroundVariant.Dots} gap={28} size={1} color="rgba(255,255,255,0.06)" />
             <Controls className="!bottom-6 !left-6" showInteractive={false} />
-            <MiniMap
-              nodeColor={n => ({ imageInput: "#FF6B35", magicBrush: "#F72C25", imagineAI: "#FFB800", output: "#4ECDC4", blank: "#555" }[n.type] || "#555")}
-              maskColor="rgba(0,0,0,0.8)"
-              className="!bottom-6 !right-6"
-            />
           </ReactFlow>
         </div>
       </div>
