@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   ReactFlow,
   useNodesState,
@@ -7,240 +7,237 @@ import {
   Background,
   Controls,
   MiniMap,
-  BackgroundVariant } from
-"@xyflow/react";
+  BackgroundVariant,
+  ReactFlowProvider,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Play, Trash2, Loader2, Image, Filter, SlidersHorizontal,
-  Wand2, Type, Download, Sparkles, ArrowLeft, Upload, Grid3x3, CheckCircle2, X } from
-"lucide-react";
+  Play, Trash2, Loader2, Image, Wand2, Download, Sparkles,
+  FileText, ArrowLeft, RotateCcw, X, CheckCircle2, Plus,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import {
-  ImageInputNode,
-  FilterNode,
-  AdjustmentsNode,
-  MagicBrushNode,
-  TextGeneratorNode,
-  GenerateNode,
-  OutputNode } from
-"@/components/editor/flow/CustomNodes";
+  ImageInputNode, MagicBrushNode, ImagineAINode, BlankNode, OutputNode
+} from "@/components/editor/flow/CustomNodes";
 import GalleryPicker from "@/components/editor/GalleryPicker";
 
+// ── Node type registry ────────────────────────────────────────────
 const nodeTypes = {
   imageInput: ImageInputNode,
-  filter: FilterNode,
-  adjustments: AdjustmentsNode,
   magicBrush: MagicBrushNode,
-  textGenerator: TextGeneratorNode,
-  generate: GenerateNode,
-  output: OutputNode
+  imagineAI: ImagineAINode,
+  blank: BlankNode,
+  output: OutputNode,
 };
 
-const NODE_PALETTE = [
-{ type: "imageInput", label: "Image Input", icon: Image, color: "#FF6B35" },
-{ type: "magicBrush", label: "Magic Brush", icon: Wand2, color: "#F72C25" },
-{ type: "output", label: "Output", icon: Download, color: "#4ECDC4" }];
+// ── Palette ───────────────────────────────────────────────────────
+const PALETTE = [
+  { type: "imageInput", label: "Image Input", icon: Image, color: "#FF6B35", desc: "Load images into the flow" },
+  { type: "magicBrush", label: "Magic Brush", icon: Wand2, color: "#F72C25", desc: "Edit with AI + prompt" },
+  { type: "imagineAI", label: "Imagine AI", icon: Sparkles, color: "#FFB800", desc: "Generate visuals from text" },
+  { type: "output", label: "Output", icon: Download, color: "#4ECDC4", desc: "View & save result" },
+  { type: "blank", label: "Note", icon: FileText, color: "#888888", desc: "Add a note or label" },
+];
 
+// ── Edge defaults ─────────────────────────────────────────────────
+const EDGE_DEFAULTS = {
+  animated: true,
+  style: { stroke: "rgba(255,107,53,0.6)", strokeWidth: 2 },
+};
 
-function makeInitialNodes(imageUrl) {
-  return [
-  {
-    id: "input-1",
-    type: "imageInput",
-    position: { x: 100, y: 200 },
-    data: { imageUrl, status: "idle" }
-  },
-  {
-    id: "output-1",
-    type: "output",
-    position: { x: 650, y: 200 },
-    data: { status: "idle", resultUrl: null }
-  }];
-
-}
-
+// ── Topo sort ─────────────────────────────────────────────────────
 function topoSort(nodes, edges) {
   const adj = {};
   const indegree = {};
-  nodes.forEach((n) => {adj[n.id] = [];indegree[n.id] = 0;});
-  edges.forEach((e) => {
+  nodes.forEach(n => { adj[n.id] = []; indegree[n.id] = 0; });
+  edges.forEach(e => {
     if (adj[e.source]) {
       adj[e.source].push(e.target);
       indegree[e.target] = (indegree[e.target] || 0) + 1;
     }
   });
-  const queue = nodes.filter((n) => (indegree[n.id] || 0) === 0).map((n) => n.id);
+  const queue = nodes.filter(n => (indegree[n.id] || 0) === 0).map(n => n.id);
   const order = [];
   while (queue.length) {
     const cur = queue.shift();
     order.push(cur);
-    (adj[cur] || []).forEach((next) => {
-      indegree[next]--;
-      if (indegree[next] === 0) queue.push(next);
-    });
+    (adj[cur] || []).forEach(next => { indegree[next]--; if (indegree[next] === 0) queue.push(next); });
   }
   return order;
 }
 
-let nodeIdCounter = 200;
+// ── Initial graph ─────────────────────────────────────────────────
+const INITIAL_NODES = [
+  { id: "input-1", type: "imageInput", position: { x: 80, y: 200 }, data: { imageUrls: [], status: "idle" } },
+  { id: "imagine-1", type: "imagineAI", position: { x: 380, y: 200 }, data: { prompt: "", style: "None", status: "idle" } },
+  { id: "output-1", type: "output", position: { x: 680, y: 200 }, data: { status: "idle", resultUrl: null } },
+];
+const INITIAL_EDGES = [
+  { id: "e1", source: "input-1", target: "imagine-1", ...EDGE_DEFAULTS },
+  { id: "e2", source: "imagine-1", target: "output-1", ...EDGE_DEFAULTS },
+];
 
-export default function FlowEditorPage() {
+let nodeCounter = 100;
+
+// ── Style presets for ImagineAI ───────────────────────────────────
+const STYLE_PROMPTS = {
+  "None": "",
+  "Cinematic": "cinematic film look, dramatic lighting, deep colors, anamorphic lens flare, movie still aesthetic",
+  "Anime": "anime art style, clean lines, vibrant colors, manga aesthetic",
+  "Oil Painting": "oil painting style, visible brushstrokes, rich textures, classical art",
+  "Neon Glow": "neon glow effects, cyberpunk aesthetic, dark background with vivid neon accents",
+  "Sketch": "detailed pencil sketch, fine line art, shading",
+  "HDR": "HDR processing, rich details in highlights and shadows, vivid colors",
+  "Cartoon": "vibrant cartoon illustration style, bold outlines, saturated colors",
+};
+
+// ── Main component (inner, needs ReactFlowProvider) ───────────────
+function FlowEditorInner() {
   const navigate = useNavigate();
-  const [currentImage, setCurrentImage] = useState(null);
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [galleryTargetNodeId, setGalleryTargetNodeId] = useState(null);
-  const [savedResult, setSavedResult] = useState(null);
-  const fileInputRef = useRef(null);
-
-  const imageUrl = currentImage?.preview || currentImage?.url || null;
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(makeInitialNodes(null));
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
   const [isRunning, setIsRunning] = useState(false);
   const [runError, setRunError] = useState(null);
-  const reactFlowWrapper = useRef(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const [savedOk, setSavedOk] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryTargetId, setGalleryTargetId] = useState(null);
+  const [rfInstance, setRfInstance] = useState(null);
+  const wrapperRef = useRef(null);
 
+  // ── Node data updater ───────────────────────────────────────────
   const updateNodeData = useCallback((id, patch) => {
-    setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, ...patch } } : n));
+    setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, ...patch } } : n));
   }, [setNodes]);
 
-  React.useEffect(() => {
-    setNodes((nds) => nds.map((n) =>
-    n.type === "imageInput" ? { ...n, data: { ...n.data, imageUrls: imageUrl ? [imageUrl] : [] } } : n
-    ));
-  }, [imageUrl]);
+  // ── Build data map for a node (collects from all upstream nodes) ─
+  const buildNodeProps = useCallback((nodeId) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return {};
+    return {
+      onChange: (patch) => updateNodeData(nodeId, patch),
+      onGalleryOpen: node.type === "imageInput"
+        ? () => { setGalleryTargetId(nodeId); setIsGalleryOpen(true); }
+        : undefined,
+    };
+  }, [nodes, updateNodeData]);
 
+  // ── Connection handler ──────────────────────────────────────────
   const onConnect = useCallback((params) => {
     if (params.source === params.target) return;
-    const duplicate = edges.some((e) => e.source === params.source && e.target === params.target);
-    if (duplicate) return;
-    setEdges((eds) => addEdge({
-      ...params,
-      animated: true,
-      style: { stroke: "#FF6B35", strokeWidth: 2 }
-    }, eds));
+    const dup = edges.some(e => e.source === params.source && e.target === params.target);
+    if (dup) return;
+    setEdges(eds => addEdge({ ...params, ...EDGE_DEFAULTS }, eds));
   }, [edges, setEdges]);
 
+  // ── Add node ────────────────────────────────────────────────────
   const addNode = useCallback((type) => {
-    const id = `${type}-${++nodeIdCounter}`;
-    const defaultData = {
-      status: "idle",
-      onChange: (patch) => updateNodeData(id, patch)
-    };
-    if (type === "imageInput") defaultData.imageUrls = imageUrl ? [imageUrl] : [];
-    if (type === "adjustments") {defaultData.brightness = 0;defaultData.contrast = 0;defaultData.saturation = 0;}
-    if (type === "filter") defaultData.filter = "None";
-    if (type === "generate") defaultData.tool = "Enhance";
+    const id = `${type}-${++nodeCounter}`;
+    const viewport = rfInstance?.getViewport() || { x: 0, y: 0, zoom: 1 };
+    const cx = (wrapperRef.current?.clientWidth / 2 - viewport.x) / viewport.zoom;
+    const cy = (wrapperRef.current?.clientHeight / 2 - viewport.y) / viewport.zoom;
+    const defaultData = { status: "idle" };
+    if (type === "imageInput") defaultData.imageUrls = [];
+    if (type === "imagineAI") { defaultData.prompt = ""; defaultData.style = "None"; }
+    if (type === "output") defaultData.resultUrl = null;
+    if (type === "blank") defaultData.text = "";
+    setNodes(nds => [...nds, { id, type, position: { x: cx - 110, y: cy - 80 }, data: defaultData }]);
+  }, [rfInstance, setNodes]);
 
-    const viewport = reactFlowInstance?.getViewport() || { x: 0, y: 0, zoom: 1 };
-    const centerX = (reactFlowWrapper.current?.clientWidth / 2 - viewport.x) / viewport.zoom;
-    const centerY = (reactFlowWrapper.current?.clientHeight / 2 - viewport.y) / viewport.zoom;
-
-    setNodes((nds) => [...nds, {
-      id, type,
-      position: { x: centerX - 100, y: centerY - 80 },
-      data: defaultData
-    }]);
-  }, [imageUrl, reactFlowInstance, setNodes, updateNodeData]);
-
-  const deleteSelected = useCallback(() => {
-    setNodes((nds) => nds.filter((n) => !n.selected || n.type === "imageInput" || n.type === "output"));
-    setEdges((eds) => eds.filter((e) => !e.selected));
+  // ── Reset ───────────────────────────────────────────────────────
+  const resetFlow = useCallback(() => {
+    setNodes(INITIAL_NODES.map(n => ({ ...n, data: { ...n.data } })));
+    setEdges(INITIAL_EDGES.map(e => ({ ...e })));
+    setRunError(null);
+    setSavedOk(false);
   }, [setNodes, setEdges]);
 
+  // ── Save result ─────────────────────────────────────────────────
+  const handleSave = useCallback(async (url) => {
+    await base44.entities.Creation.create({
+      title: `Flow Result (${new Date().toLocaleString()})`,
+      type: "image", url, thumbnail_url: url,
+    });
+    setSavedOk(true);
+  }, []);
+
+  // ── Run flow ────────────────────────────────────────────────────
   const runFlow = useCallback(async () => {
     if (isRunning) return;
     setIsRunning(true);
     setRunError(null);
-    setSavedResult(null);
+    setSavedOk(false);
+
+    // Reset all statuses
+    setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, status: "idle", resultUrl: undefined, resultPreview: undefined, inputPreview: undefined, error: undefined } })));
 
     const order = topoSort(nodes, edges);
-    const outputs = {};
-
-    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, status: "idle", previewUrl: undefined } })));
+    const outputs = {}; // nodeId -> { imageUrl, ...any }
 
     for (const nodeId of order) {
-      const node = nodes.find((n) => n.id === nodeId);
+      const node = nodes.find(n => n.id === nodeId);
       if (!node) continue;
 
-      const inEdge = edges.find((e) => e.target === nodeId);
-      const inputUrl = inEdge ? outputs[inEdge.source] : null;
+      // Collect all upstream outputs for this node
+      const inEdges = edges.filter(e => e.target === nodeId);
+      const upstreamData = inEdges.reduce((acc, e) => {
+        const up = outputs[e.source];
+        if (up) Object.assign(acc, up);
+        return acc;
+      }, {});
+      const inputUrl = upstreamData.imageUrl || null;
 
       updateNodeData(nodeId, { status: "running" });
-      await new Promise((r) => setTimeout(r, 60));
+      await new Promise(r => setTimeout(r, 80));
 
       try {
         if (node.type === "imageInput") {
-          const urls = node.data.imageUrls?.length ? node.data.imageUrls : node.data.imageUrl ? [node.data.imageUrl] : [];
-          outputs[nodeId] = urls.length === 1 ? urls[0] : urls;
+          const urls = node.data.imageUrls || [];
+          const url = urls[0] || null;
+          outputs[nodeId] = { imageUrl: url, imageUrls: urls };
           updateNodeData(nodeId, { status: "done" });
 
-        } else if (node.type === "filter") {
-          outputs[nodeId] = inputUrl;
-          updateNodeData(nodeId, { status: "done", previewUrl: inputUrl });
-
-        } else if (node.type === "adjustments") {
-          outputs[nodeId] = inputUrl;
-          updateNodeData(nodeId, { status: "done", previewUrl: inputUrl });
-
-        } else if (node.type === "generate") {
-          if (!inputUrl) throw new Error("No input image");
-          const tool = node.data.tool || "Enhance";
-          const prompts = {
-            Enhance: "Professionally enhance this image: improve sharpness, lighting, colors, and overall quality.",
-            Cinematic: "Apply a cinematic film look: dramatic lighting, deep colors, anamorphic lens flare, movie still aesthetic.",
-            Cartoon: "Transform into vibrant cartoon/illustration style with bold outlines and saturated colors.",
-            "Neon Glow": "Add glowing neon light effects, cyberpunk aesthetic, dark background with vivid neon accents.",
-            "Oil Painting": "Transform into a masterful oil painting with visible brushstrokes and rich textures.",
-            Anime: "Convert to anime/manga art style with clean lines and vibrant colors.",
-            Sketch: "Convert to detailed pencil sketch with fine line art and shading.",
-            HDR: "Apply HDR processing: rich details in highlights and shadows, vivid colors."
-          };
-          const result = await base44.integrations.Core.GenerateImage({
-            prompt: `${prompts[tool] || prompts.Enhance} Apply to the reference image.`,
-            existing_image_urls: [inputUrl]
-          });
-          outputs[nodeId] = result.url;
-          updateNodeData(nodeId, { status: "done", previewUrl: result.url });
+        } else if (node.type === "blank") {
+          outputs[nodeId] = upstreamData;
+          updateNodeData(nodeId, { status: "done" });
 
         } else if (node.type === "magicBrush") {
-          if (!inputUrl) throw new Error("No input image");
+          if (!inputUrl) throw new Error("Magic Brush needs a connected image input");
           const prompt = node.data.prompt?.trim();
-          if (!prompt) throw new Error("Please enter a prompt");
+          if (!prompt) throw new Error("Please enter a prompt for Magic Brush");
+          updateNodeData(nodeId, { inputPreview: inputUrl });
           const result = await base44.integrations.Core.GenerateImage({
             prompt: `${prompt}. Apply to the reference image while preserving overall composition.`,
-            existing_image_urls: [inputUrl]
+            existing_image_urls: [inputUrl],
           });
-          outputs[nodeId] = result.url;
+          outputs[nodeId] = { imageUrl: result.url };
           updateNodeData(nodeId, { status: "done" });
 
-        } else if (node.type === "textGenerator") {
-          if (!inputUrl) throw new Error("No input image");
-          const text = node.data.text?.trim() || "FLIK";
-          const style = node.data.style?.trim() || "bold white text";
-          const result = await base44.integrations.Core.GenerateImage({
-            prompt: `Add the text "${text}" in ${style} style to this image. Keep the original image as the background.`,
-            existing_image_urls: [inputUrl]
-          });
-          outputs[nodeId] = result.url;
-          updateNodeData(nodeId, { status: "done" });
+        } else if (node.type === "imagineAI") {
+          const prompt = node.data.prompt?.trim();
+          if (!prompt) throw new Error("Please enter a prompt for Imagine AI");
+          const styleExtra = STYLE_PROMPTS[node.data.style || "None"];
+          const fullPrompt = styleExtra ? `${prompt}. Style: ${styleExtra}.` : prompt;
+          const genOpts = { prompt: fullPrompt };
+          if (inputUrl) genOpts.existing_image_urls = [inputUrl];
+          const result = await base44.integrations.Core.GenerateImage(genOpts);
+          outputs[nodeId] = { imageUrl: result.url };
+          updateNodeData(nodeId, { status: "done", resultPreview: result.url });
 
         } else if (node.type === "output") {
           const finalUrl = inputUrl;
-          outputs[nodeId] = finalUrl;
+          outputs[nodeId] = { imageUrl: finalUrl };
           updateNodeData(nodeId, {
-            status: "done",
+            status: finalUrl ? "done" : "error",
             resultUrl: finalUrl,
-            onApply: finalUrl ? () => handleSaveResult(finalUrl) : undefined
+            error: finalUrl ? undefined : "No image received from upstream",
           });
         }
       } catch (err) {
         updateNodeData(nodeId, { status: "error", error: err.message });
-        setRunError(`"${node.type}" failed: ${err.message}`);
+        setRunError(`Node "${node.type}" failed: ${err.message}`);
         setIsRunning(false);
         return;
       }
@@ -249,251 +246,173 @@ export default function FlowEditorPage() {
     setIsRunning(false);
   }, [nodes, edges, isRunning, updateNodeData]);
 
-  const handleSaveResult = useCallback(async (url) => {
-    try {
-      await base44.entities.Creation.create({
-        title: `Flow Result (${new Date().toLocaleString()})`,
-        type: 'image', url, thumbnail_url: url
-      });
-      setSavedResult(url);
-    } catch (e) {
-      console.error("Failed to save", e);
-    }
-  }, []);
-
-  const handleFileUpload = useCallback((e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setCurrentImage({ url: ev.target.result, preview: ev.target.result, name: file.name });
-    };
-    reader.readAsDataURL(file);
-  }, []);
-
+  // ── Gallery select ──────────────────────────────────────────────
   const handleGallerySelect = useCallback((image) => {
-    const imgs = Array.isArray(image) ? image : [image];
-    if (galleryTargetNodeId) {
-      // Add to specific imageInput node
+    if (galleryTargetId) {
+      const imgs = Array.isArray(image) ? image : [image];
+      const newUrls = imgs.map(i => i.url || i.thumbnail_url).filter(Boolean);
       setNodes(nds => nds.map(n => {
-        if (n.id !== galleryTargetNodeId) return n;
-        const existing = n.data.imageUrls || [];
-        const newUrls = imgs.map(i => i.url || i.thumbnail_url).filter(Boolean);
-        return { ...n, data: { ...n.data, imageUrls: [...existing, ...newUrls] } };
+        if (n.id !== galleryTargetId) return n;
+        return { ...n, data: { ...n.data, imageUrls: [...(n.data.imageUrls || []), ...newUrls] } };
       }));
-      setGalleryTargetNodeId(null);
-    } else {
-      const img = imgs[0];
-      if (img) setCurrentImage({ url: img.url || img.thumbnail_url, preview: img.url || img.thumbnail_url, name: 'gallery_image.png' });
+      setGalleryTargetId(null);
     }
     setIsGalleryOpen(false);
-  }, [galleryTargetNodeId, setNodes]);
+  }, [galleryTargetId, setNodes]);
 
-  const resetFlow = useCallback(() => {
-    setNodes(makeInitialNodes(imageUrl));
-    setEdges([]);
-    setRunError(null);
-    setSavedResult(null);
-  }, [imageUrl, setNodes, setEdges]);
+  // ── Inject callbacks into node data ────────────────────────────
+  const enrichedNodes = nodes.map(n => ({
+    ...n,
+    data: {
+      ...n.data,
+      onChange: (patch) => updateNodeData(n.id, patch),
+      onGalleryOpen: n.type === "imageInput"
+        ? () => { setGalleryTargetId(n.id); setIsGalleryOpen(true); }
+        : undefined,
+      onSave: n.type === "output" && n.data.resultUrl
+        ? () => handleSave(n.data.resultUrl)
+        : undefined,
+    },
+  }));
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-[#0A0A0A] overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-[#0A0A0A]">
       <style>{`
-        .react-flow__attribution { display: none; }
-        .react-flow__controls button { background: #1a1a1a !important; border-color: rgba(255,255,255,0.1) !important; color: white !important; }
-        .react-flow__controls button:hover { background: #2a2a2a !important; }
-        .react-flow__minimap { background: #111 !important; border: 1px solid rgba(255,255,255,0.05) !important; border-radius: 8px !important; }
+        .react-flow__attribution { display: none !important; }
+        .react-flow__controls { background: #111 !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 12px !important; overflow: hidden; }
+        .react-flow__controls-button { background: #111 !important; border-color: rgba(255,255,255,0.06) !important; color: rgba(255,255,255,0.5) !important; }
+        .react-flow__controls-button:hover { background: #1a1a1a !important; color: white !important; }
+        .react-flow__minimap { background: #111 !important; border: 1px solid rgba(255,255,255,0.06) !important; border-radius: 12px !important; }
+        .react-flow__edge-path { stroke: rgba(255,107,53,0.6) !important; }
+        .react-flow__edge.selected .react-flow__edge-path { stroke: #FF6B35 !important; }
+        .react-flow__connection-line { stroke: rgba(255,107,53,0.5) !important; }
       `}</style>
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#0f0f0f] flex-shrink-0 z-10">
+      {/* ── Header ── */}
+      <header className="flex-shrink-0 border-b border-white/5 flex items-center justify-between px-4 py-3" style={{ background: "#0f0f0f" }}>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(createPageUrl("Editor"))}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-all text-sm">
-            
-            <ArrowLeft className="w-4 h-4" />
+          <button onClick={() => navigate(createPageUrl("Editor"))}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-all text-xs">
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Photo Studio</span>
           </button>
-          <div className="flex items-center gap-2">
-            
-
-            
-            <span className="text-white font-semibold text-sm">Flow Editor</span>
-            <span className="text-white/30 text-xs hidden md:inline">Build AI pipelines</span>
+          <div className="w-px h-5 bg-white/10" />
+          <div>
+            <h1 className="text-sm font-bold text-white">Flow Editor</h1>
+            <p className="text-[10px] text-white/30 hidden sm:block">Build AI image pipelines</p>
           </div>
         </div>
 
-        {/* Image Source Controls */}
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 flex-shrink-0 bg-[#0a0a0a]">
-        <div className="flex items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-          {NODE_PALETTE.map(({ type, label, icon: Icon, color }) =>
-          <button
-            key={type}
-            onClick={() => addNode(type)}
-            title={`Add ${label}`}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 transition-all flex-shrink-0">
-            
-              <Icon className="w-3.5 h-3.5" style={{ color }} />
-              <span className="text-[11px] text-white/60 hidden sm:inline">{label}</span>
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-          <button
-            onClick={resetFlow}
-            title="Reset flow"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 border border-white/5 transition-all text-xs">
-            
-            Reset
+        <div className="flex items-center gap-2">
+          <button onClick={resetFlow}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-white/50 hover:text-white hover:bg-white/5 transition-all text-xs">
+            <RotateCcw className="w-3 h-3" />
+            <span className="hidden sm:inline">Reset</span>
           </button>
-          <button
-            onClick={deleteSelected}
-            title="Delete selected"
-            className="p-2 rounded-lg text-white/40 hover:text-red-400 hover:bg-white/5 transition-all">
-            
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={runFlow}
-            disabled={isRunning}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
-            
+          <button onClick={runFlow} disabled={isRunning}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+            style={{ background: "linear-gradient(135deg, #FF6B35, #F72C25)" }}>
             {isRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
             {isRunning ? "Running..." : "Run Flow"}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Error Banner */}
+      {/* ── Banners ── */}
       <AnimatePresence>
-        {runError &&
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 text-red-400 text-xs flex items-center justify-between flex-shrink-0">
-          
-            <span>{runError}</span>
-            <button onClick={() => setRunError(null)} className="ml-2 hover:text-red-300">
-              <X className="w-3.5 h-3.5" />
+        {runError && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex-shrink-0 flex items-center justify-between px-4 py-2 text-red-400 text-xs border-b border-red-500/20"
+            style={{ background: "rgba(239,68,68,0.08)" }}>
+            <span>⚠ {runError}</span>
+            <button onClick={() => setRunError(null)}><X className="w-3.5 h-3.5" /></button>
+          </motion.div>
+        )}
+        {savedOk && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex-shrink-0 flex items-center justify-between px-4 py-2 text-green-400 text-xs border-b border-green-500/20"
+            style={{ background: "rgba(74,222,128,0.08)" }}>
+            <div className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5" /> Saved to gallery!</div>
+            <button onClick={() => setSavedOk(false)}><X className="w-3.5 h-3.5" /></button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-1 min-h-0">
+        {/* ── Left palette ── */}
+        <aside className="flex-shrink-0 w-52 border-r border-white/5 flex flex-col gap-1 p-3 overflow-y-auto hidden md:flex" style={{ background: "#0c0c0c" }}>
+          <p className="text-[9px] font-semibold text-white/25 uppercase tracking-widest px-1 mb-1">Add Node</p>
+          {PALETTE.map(({ type, label, icon: Icon, color, desc }) => (
+            <button key={type} onClick={() => addNode(type)}
+              className="group flex items-start gap-2.5 p-2.5 rounded-xl border border-white/5 hover:border-white/12 text-left transition-all hover:scale-[1.01]"
+              style={{ background: "rgba(255,255,255,0.025)" }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `${color}20` }}>
+                <Icon className="w-3.5 h-3.5" style={{ color }} />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-white/75 group-hover:text-white transition-colors">{label}</p>
+                <p className="text-[9px] text-white/30 leading-tight">{desc}</p>
+              </div>
             </button>
-          </motion.div>
-        }
-      </AnimatePresence>
+          ))}
 
-      {/* Save Success Banner */}
-      <AnimatePresence>
-        {savedResult &&
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className="px-4 py-2 bg-green-500/10 border-b border-green-500/20 text-green-400 text-xs flex items-center justify-between flex-shrink-0">
-          
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Result saved to gallery!</span>
-            </div>
-            <button onClick={() => setSavedResult(null)}><X className="w-3.5 h-3.5" /></button>
-          </motion.div>
-        }
-      </AnimatePresence>
-
-      {/* No Image State */}
-      {!currentImage &&
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-0 pointer-events-none" style={{ top: '104px' }}>
-          <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-            <Sparkles className="w-10 h-10 text-white/20" />
+          <div className="mt-auto pt-3 border-t border-white/5">
+            <p className="text-[9px] text-white/20 leading-relaxed px-1">
+              Connect nodes by dragging from a handle. Delete edges by selecting and pressing Backspace.
+            </p>
           </div>
-          <p className="text-white/30 text-base font-medium">Upload an image to start</p>
-          <p className="text-white/20 text-sm mt-1">Then connect nodes to build your AI pipeline</p>
-        </div>
-      }
+        </aside>
 
-      {/* ReactFlow Canvas */}
-      <div ref={reactFlowWrapper} className="flex-1 min-h-0">
-        <ReactFlow
-          nodes={nodes.map((n) => ({            ...n,
-            data: {
-              ...n.data,
-              onChange: (patch) => updateNodeData(n.id, patch),
-              onApply: n.type === "output" && n.data.resultUrl ? () => handleSaveResult(n.data.resultUrl) : undefined,
-              onGalleryOpen: n.type === "imageInput" ? () => { setGalleryTargetNodeId(n.id); setIsGalleryOpen(true); } : undefined,
-            }
-          }))}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onInit={setReactFlowInstance}
-          nodeTypes={nodeTypes}
-          style={{ background: "#0A0A0A" }}
-          fitView
-          fitViewOptions={{ padding: 0.25 }}
-          defaultEdgeOptions={{
-            animated: true,
-            style: { stroke: "#FF6B35", strokeWidth: 2 }
-          }}
-          connectionLineStyle={{ stroke: "#FF6B35", strokeWidth: 2 }}
-          deleteKeyCode={["Backspace", "Delete"]}
-          proOptions={{ hideAttribution: true }}>
-          
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={24}
-            size={1}
-            color="rgba(255,255,255,0.07)" />
-          
-          <Controls className="!bottom-6 !left-6" showInteractive={false} />
-          <MiniMap
-            nodeColor={(n) => {
-              const colors = { imageInput: "#FF6B35", filter: "#9B59B6", adjustments: "#4ECDC4", generate: "#FF6B35", magicBrush: "#F72C25", textGenerator: "#FFB800", output: "#4ECDC4" };
-              return colors[n.type] || "#666";
-            }}
-            maskColor="rgba(0,0,0,0.75)"
-            className="!bottom-6 !right-6" />
-          
-        </ReactFlow>
+        {/* ── Mobile palette bar ── */}
+        <div className="md:hidden absolute bottom-16 left-0 right-0 z-20 flex items-center gap-1.5 px-3 py-2 border-t border-white/5 overflow-x-auto" style={{ background: "#0c0c0c" }}>
+          {PALETTE.map(({ type, label, icon: Icon, color }) => (
+            <button key={type} onClick={() => addNode(type)}
+              className="flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl border border-white/8 text-center"
+              style={{ background: "rgba(255,255,255,0.03)" }}>
+              <Icon className="w-4 h-4" style={{ color }} />
+              <span className="text-[9px] text-white/50">{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* ── Canvas ── */}
+        <div ref={wrapperRef} className="flex-1 min-w-0 min-h-0">
+          <ReactFlow
+            nodes={enrichedNodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={setRfInstance}
+            nodeTypes={nodeTypes}
+            defaultEdgeOptions={EDGE_DEFAULTS}
+            connectionLineStyle={{ stroke: "rgba(255,107,53,0.5)", strokeWidth: 2 }}
+            deleteKeyCode={["Backspace", "Delete"]}
+            fitView
+            fitViewOptions={{ padding: 0.3 }}
+            proOptions={{ hideAttribution: true }}
+            style={{ background: "#0A0A0A" }}
+          >
+            <Background variant={BackgroundVariant.Dots} gap={28} size={1} color="rgba(255,255,255,0.06)" />
+            <Controls className="!bottom-6 !left-6" showInteractive={false} />
+            <MiniMap
+              nodeColor={n => ({ imageInput: "#FF6B35", magicBrush: "#F72C25", imagineAI: "#FFB800", output: "#4ECDC4", blank: "#555" }[n.type] || "#555")}
+              maskColor="rgba(0,0,0,0.8)"
+              className="!bottom-6 !right-6"
+            />
+          </ReactFlow>
+        </div>
       </div>
 
-      <GalleryPicker
-        isOpen={isGalleryOpen}
-        onClose={() => setIsGalleryOpen(false)}
-        onSelect={handleGallerySelect} />
-      
-    </div>);
+      <GalleryPicker isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} onSelect={handleGallerySelect} />
+    </div>
+  );
+}
 
+export default function FlowEditorPage() {
+  return (
+    <ReactFlowProvider>
+      <FlowEditorInner />
+    </ReactFlowProvider>
+  );
 }
