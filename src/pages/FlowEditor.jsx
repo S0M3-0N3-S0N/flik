@@ -37,7 +37,7 @@ const PALETTE = [
   { type: "imageInput", label: "Image Input", icon: Image, color: "#FF6B35", desc: "Load images into the flow" },
   { type: "magicBrush", label: "Magic Brush", icon: Wand2, color: "#F72C25", desc: "Edit with AI + prompt" },
   { type: "imagineAI", label: "Imagine AI", icon: Sparkles, color: "#FFB800", desc: "Generate visuals from text" },
-  { type: "output", label: "Output", icon: Download, color: "#4ECDC4", desc: "View & save result" },
+  { type: "output", label: "Output", icon: Download, color: "#22c55eff", desc: "View & save result" },
   { type: "blank", label: "Note", icon: FileText, color: "#888888", desc: "Add a note or label" },
 ];
 
