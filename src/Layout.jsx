@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe, MessageSquare } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe, MessageSquare, MoreHorizontal, Grid3x3 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
@@ -33,6 +33,7 @@ function LayoutContent({ children, currentPageName }) {
     }
   });
   const [isDraggingFlik, setIsDraggingFlik] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showMobileNav, setShowMobileNav] = useState(true);
   const [showDesktopNav, setShowDesktopNav] = useState(true);
@@ -379,52 +380,91 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Bottom Navigation Bar - Mobile Only */}
         {currentPageName !== "Camera" && currentPageName !== "Editor" && currentPageName !== "FlowEditor" && (
-          <nav 
-            className={`md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-3 py-2 gap-1 [body[data-modal-open]_&]:hidden transition-all duration-300 ${
-              showMobileNav ? 'translate-y-0' : 'translate-y-full'
-            }`}
-            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)' }}
-            onMouseEnter={() => {
-              setShowMobileNav(true);
-              if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
-            }}
-            onTouchStart={() => {
-              setShowMobileNav(true);
-              if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
-            }}
-          >
-              <button
-                onClick={() => navigate(createPageUrl("Editor"))}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Editor" ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
-              >
+          <>
+            {/* "More" popup sheet */}
+            <AnimatePresence>
+              {showMoreMenu && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="md:hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+                    onClick={() => setShowMoreMenu(false)}
+                  />
+                  <motion.div
+                    initial={{ y: 60, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 60, opacity: 0 }}
+                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                    className="md:hidden fixed bottom-20 left-3 right-3 z-[70] rounded-2xl border border-white/10 p-4"
+                    style={{ background: "#1a1a1a" }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-semibold text-white">More</span>
+                      <button onClick={() => setShowMoreMenu(false)} className="text-white/40 hover:text-white">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: "Gallery", icon: Grid3x3, page: "Profile" },
+                        { label: "Discover", icon: Globe, page: "Discover" },
+                        { label: "FLIK AI", icon: Sparkles, page: null, action: () => { setIsOpen(true); setShowMoreMenu(false); } },
+                        ...(user?.role === 'admin' ? [
+                          { label: "Camera", icon: Camera, page: "Camera" },
+                        ] : []),
+                      ].map(({ label, icon: Icon, page, action }) => (
+                        <button
+                          key={label}
+                          onClick={() => {
+                            if (action) { action(); return; }
+                            navigate(createPageUrl(page));
+                            setShowMoreMenu(false);
+                          }}
+                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                            currentPageName === page
+                              ? "border-[#FF6B35]/40 bg-[#FF6B35]/10 text-[#FF6B35]"
+                              : "border-white/8 bg-white/4 text-white/60 hover:text-white hover:bg-white/8"
+                          }`}
+                        >
+                          <Icon className="w-5 h-5" />
+                          <span className="text-[11px] font-medium">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+
+            <nav 
+              className={`md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-2 py-1 gap-1 [body[data-modal-open]_&]:hidden transition-all duration-300 ${
+                showMobileNav ? 'translate-y-0' : 'translate-y-full'
+              }`}
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)' }}
+              onTouchStart={() => {
+                setShowMobileNav(true);
+                if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
+              }}
+            >
+              <button onClick={() => navigate(createPageUrl("Editor"))}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Editor" ? "text-[#FF6B35]" : "text-white/50"}`}>
                 <Image className="w-5 h-5" />
               </button>
 
-              <button
-                onClick={() => navigate(createPageUrl("Generate"))}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Generate" ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
-              >
+              <button onClick={() => navigate(createPageUrl("Generate"))}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Generate" ? "text-[#FF6B35]" : "text-white/50"}`}>
                 <Wand2 className="w-5 h-5" />
               </button>
 
-              <button
-                onClick={() => navigate(createPageUrl("Messages"))}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Messages" ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
-              >
+              <button onClick={() => navigate(createPageUrl("Messages"))}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Messages" ? "text-[#FF6B35]" : "text-white/50"}`}>
                 <MessageSquare className="w-5 h-5" />
               </button>
 
-              <button
-                onClick={() => setIsOpen(true)}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${isOpen ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
-              >
-                <Sparkles className="w-5 h-5" />
-              </button>
-
-              <button
-                onClick={() => navigate(createPageUrl("Profile"))}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Profile" ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
-              >
+              <button onClick={() => navigate(createPageUrl("Profile"))}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Profile" ? "text-[#FF6B35]" : "text-white/50"}`}>
                 <div className={`w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
                   currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
                 }`}>
@@ -435,7 +475,13 @@ function LayoutContent({ children, currentPageName }) {
                   )}
                 </div>
               </button>
+
+              <button onClick={() => setShowMoreMenu(prev => !prev)}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${showMoreMenu ? "text-[#FF6B35]" : "text-white/50"}`}>
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
             </nav>
+          </>
         )}
 
 
