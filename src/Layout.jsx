@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe, MessageSquare } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
@@ -394,105 +394,38 @@ function LayoutContent({ children, currentPageName }) {
             }}
           >
               <button
-                onClick={(e) => {
-                  if (currentPageName === "Editor") {
-                    if (isChildRoute) {
-                      e.preventDefault();
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  } else {
-                    navigate(createPageUrl("Editor"));
-                  }
-                }}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
-                  currentPageName === "Editor" 
-                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                    : "text-white/60"
-                }`}
+                onClick={() => navigate(createPageUrl("Editor"))}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Editor" ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
               >
                 <Image className="w-5 h-5" />
-                <span className="text-[9px] font-medium">Editor</span>
               </button>
 
               <button
-                onClick={(e) => {
-                  if (currentPageName === "Generate") {
-                    if (isChildRoute) {
-                      e.preventDefault();
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  } else {
-                    navigate(createPageUrl("Generate"));
-                  }
-                }}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
-                  currentPageName === "Generate" 
-                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                    : "text-white/60"
-                }`}
+                onClick={() => navigate(createPageUrl("Generate"))}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Generate" ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
               >
                 <Wand2 className="w-5 h-5" />
-                <span className="text-[9px] font-medium">Generate</span>
               </button>
 
-              {user?.role === 'admin' && (
-                <button
-                  onClick={() => navigate(createPageUrl("Camera"))}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
-                    currentPageName === "Camera"
-                      ? "text-[#FF6B35] bg-[#FF6B35]/10"
-                      : "text-white/60"
-                  }`}
-                >
-                  <Camera className="w-5 h-5" />
-                  <span className="text-[9px] font-medium">Camera</span>
-                </button>
-              )}
-
-              {user?.role === 'admin' && (
-                <button
-                  onClick={() => navigate(createPageUrl("Discover"))}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
-                    currentPageName === "Discover"
-                      ? "text-[#FF6B35] bg-[#FF6B35]/10"
-                      : "text-white/60"
-                  }`}
-                >
-                  <Globe className="w-5 h-5" />
-                  <span className="text-[9px] font-medium">Discover</span>
-                </button>
-              )}
+              <button
+                onClick={() => navigate(createPageUrl("Messages"))}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Messages" ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
+              >
+                <MessageSquare className="w-5 h-5" />
+              </button>
 
               <button
                 onClick={() => setIsOpen(true)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
-                  isOpen 
-                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                    : "text-white/60"
-                }`}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${isOpen ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
               >
                 <Sparkles className="w-5 h-5" />
-                <span className="text-[9px] font-medium">FLIK</span>
               </button>
 
               <button
-                onClick={(e) => {
-                  if (currentPageName === "Profile") {
-                    if (isChildRoute) {
-                      e.preventDefault();
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  } else {
-                    navigate(createPageUrl("Profile"));
-                  }
-                }}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-h-[44px] flex-1 ${
-                  currentPageName === "Profile" 
-                    ? "text-[#FF6B35] bg-[#FF6B35]/10" 
-                    : "text-white/60"
-                }`}
+                onClick={() => navigate(createPageUrl("Profile"))}
+                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Profile" ? "text-[#FF6B35] bg-[#FF6B35]/10" : "text-white/50 hover:text-white"}`}
               >
-                <div className={`w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
+                <div className={`w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
                   currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
                 }`}>
                   {user?.profile_picture ? (
@@ -501,7 +434,6 @@ function LayoutContent({ children, currentPageName }) {
                     user?.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />
                   )}
                 </div>
-                <span className="text-[10px] font-medium"></span>
               </button>
             </nav>
         )}
