@@ -881,7 +881,7 @@ export default function Profile() {
         {/* Friends Section */}
         <div className="bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 glass-card">
           <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-            <span className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FFB800]/20 flex items-center justify-center text-sm hidden">👥</span>
+            
             Friends
           </h2>
           <FriendsPanel currentUser={user} />
