@@ -1,79 +1,81 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Image as ImageIcon, ArrowLeft, Loader2, X, Search,
-  Lock, Users, UserPlus, Check, Clock, UserCheck, ChevronRight,
-  MoreVertical, Trash2, MessageSquare
+  Lock, Users, UserPlus, Check, Clock, UserCheck, Trash2,
+  MessageSquare, Smile, Phone, Video, Info, Grid3x3
 } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 
-// ── Avatar ────────────────────────────────────────────────────────
-function Avatar({ user, size = "md" }) {
-  const dim = size === "sm" ? "w-8 h-8 text-xs" : size === "lg" ? "w-12 h-12 text-base" : "w-10 h-10 text-sm";
+// ─────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────
+
+function Avatar({ user, size = "md", online = false }) {
+  const dims = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-12 h-12 text-base" };
   return (
-    <div className={`${dim} rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-bold flex-shrink-0 overflow-hidden`}>
-      {user?.profile_picture ? (
-        <img src={user.profile_picture} alt={user?.full_name} className="w-full h-full object-cover" />
-      ) : (
-        (user?.full_name || user?.email || "?")[0].toUpperCase()
-      )}
+    <div className="relative flex-shrink-0">
+      <div className={`${dims[size]} rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-bold overflow-hidden`}>
+        {user?.profile_picture
+          ? <img src={user.profile_picture} alt={user?.full_name} className="w-full h-full object-cover" />
+          : (user?.full_name || user?.email || "?")[0].toUpperCase()
+        }
+      </div>
+      {online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-[#0d0d0d]" />}
     </div>
   );
 }
 
-// ── GalleryPicker for messages ────────────────────────────────────
-function GalleryImagePicker({ currentUser, onSelect, onClose }) {
+function GalleryPicker({ currentUser, onSelect, onClose }) {
   const { data: creations = [], isLoading } = useQuery({
     queryKey: ["msgGallery", currentUser?.email],
-    queryFn: () =>
-      currentUser?.email
-        ? base44.entities.Creation.filter({ created_by: currentUser.email, type: "image" }, "-created_date", 40)
-        : [],
+    queryFn: () => currentUser?.email
+      ? base44.entities.Creation.filter({ created_by: currentUser.email, type: "image" }, "-created_date", 60)
+      : [],
     enabled: !!currentUser?.email,
     initialData: [],
   });
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center"
       onClick={onClose}
     >
       <motion.div
-        initial={{ y: 60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 60, opacity: 0 }}
+        initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="w-full sm:max-w-lg bg-[#141414] border border-white/10 rounded-t-3xl sm:rounded-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
-          <h3 className="font-semibold text-white text-sm">Send from Gallery</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white p-1">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+          <div>
+            <h3 className="font-bold text-white text-sm">Your Gallery</h3>
+            <p className="text-xs text-white/40 mt-0.5">Tap an image to attach</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition-all">
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-3 max-h-80 overflow-y-auto">
+        <div className="p-3 max-h-[60vh] overflow-y-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-[#FF6B35]" />
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-7 h-7 animate-spin text-[#FF6B35]" />
             </div>
           ) : creations.length === 0 ? (
-            <div className="text-center py-10 text-white/30 text-sm">No images in your gallery</div>
+            <div className="text-center py-16 text-white/30 text-sm">No images in your gallery yet</div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {creations.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => onSelect(c.thumbnail_url || c.url)}
-                  className="aspect-square rounded-xl overflow-hidden border border-white/5 hover:border-[#FF6B35]/50 transition-all active:scale-95 group"
+                <button key={c.id} onClick={() => onSelect(c.thumbnail_url || c.url)}
+                  className="aspect-square rounded-xl overflow-hidden border border-white/5 hover:border-[#FF6B35]/60 transition-all active:scale-95 group relative"
                 >
-                  <img src={c.thumbnail_url || c.url} alt={c.title} className="w-full h-full object-cover group-hover:brightness-75 transition-all" />
+                  <img src={c.thumbnail_url || c.url} alt={c.title || ""} className="w-full h-full object-cover group-hover:brightness-75 transition-all" />
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                    <Send className="w-5 h-5 text-white drop-shadow" />
+                  </div>
                 </button>
               ))}
             </div>
@@ -84,57 +86,136 @@ function GalleryImagePicker({ currentUser, onSelect, onClose }) {
   );
 }
 
-// ── Friend Request Mini-Panel ────────────────────────────────────
-function FriendRequestBanner({ record, onAccept, onDecline, requesterUser }) {
+function AddFriendModal({ user, allUsers, allFriendRecords, onSendRequest, onAcceptRequest, onClose }) {
+  const [query, setQuery] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 100); }, []);
+
+  const getRelationship = useCallback((email) =>
+    allFriendRecords.find(r =>
+      (r.requester_email === user?.email && r.recipient_email === email) ||
+      (r.recipient_email === user?.email && r.requester_email === email)
+    ), [allFriendRecords, user?.email]);
+
+  const results = query.trim()
+    ? allUsers.filter(u =>
+        u.email !== user?.email &&
+        (u.full_name?.toLowerCase().includes(query.toLowerCase()) ||
+         u.email?.toLowerCase().includes(query.toLowerCase()))
+      )
+    : [];
+
   return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-[#FF6B35]/10 border-b border-[#FF6B35]/20">
-      <Avatar user={requesterUser} size="sm" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-white truncate">
-          {requesterUser?.full_name || record.requester_email}
-        </p>
-        <p className="text-[10px] text-white/50">wants to be friends</p>
-      </div>
-      <div className="flex gap-1.5">
-        <button onClick={() => onAccept(record)} className="w-7 h-7 rounded-lg bg-[#FF6B35] text-white flex items-center justify-center text-xs">
-          <Check className="w-3.5 h-3.5" />
-        </button>
-        <button onClick={() => onDecline(record)} className="w-7 h-7 rounded-lg bg-white/10 text-white/60 flex items-center justify-center text-xs">
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="w-full sm:max-w-md bg-[#141414] border border-white/10 rounded-t-3xl sm:rounded-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+          <div>
+            <h3 className="font-bold text-white text-sm">Add Friends</h3>
+            <p className="text-xs text-white/40 mt-0.5">Search by name or email</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition-all">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-4 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
+              placeholder="Search people..."
+              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF6B35]/50 transition-colors"
+            />
+          </div>
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            {!query.trim() && (
+              <div className="text-center py-8">
+                <Users className="w-10 h-10 text-white/15 mx-auto mb-2" />
+                <p className="text-xs text-white/30">Start typing to search</p>
+              </div>
+            )}
+            {results.length === 0 && query.trim() && (
+              <p className="text-center text-xs text-white/30 py-6">No users found for "{query}"</p>
+            )}
+            {results.map(u => {
+              const rel = getRelationship(u.email);
+              const isAccepted = rel?.status === "accepted";
+              const isPendingOut = rel?.status === "pending" && rel?.requester_email === user?.email;
+              const isPendingIn = rel?.status === "pending" && rel?.recipient_email === user?.email;
+              return (
+                <div key={u.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 hover:bg-white/8 border border-white/5 transition-all">
+                  <Avatar user={u} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{u.full_name || u.email}</p>
+                    <p className="text-xs text-white/40 truncate">{u.email}</p>
+                  </div>
+                  {isAccepted ? (
+                    <span className="text-xs text-[#FF6B35] font-semibold px-2.5 py-1 rounded-xl bg-[#FF6B35]/10 flex items-center gap-1 whitespace-nowrap">
+                      <UserCheck className="w-3 h-3" /> Friends
+                    </span>
+                  ) : isPendingOut ? (
+                    <span className="text-xs text-[#FFB800]/70 font-semibold px-2.5 py-1 rounded-xl bg-[#FFB800]/10 whitespace-nowrap">Sent</span>
+                  ) : isPendingIn ? (
+                    <button onClick={() => onAcceptRequest(rel)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-xl text-white transition-all flex items-center gap-1 whitespace-nowrap"
+                      style={{ background: "linear-gradient(135deg,#FF6B35,#F72C25)" }}
+                    >
+                      <Check className="w-3.5 h-3.5" /> Accept
+                    </button>
+                  ) : (
+                    <button onClick={() => onSendRequest(u.email)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 text-white hover:bg-[#FF6B35]/20 hover:text-[#FF6B35] transition-all flex items-center gap-1 whitespace-nowrap"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" /> Add
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────
 export default function Messages() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null); // { url, file? }
+  const [imagePreview, setImagePreview] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showGallery, setShowGallery] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
-  const [friendSearchQuery, setFriendSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("chats"); // chats | requests
+  const [activeTab, setActiveTab] = useState("chats");
+  const [loadingMessages, setLoadingMessages] = useState(false);
+
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  const selectedUserRef = useRef(null);
+  const selectedFriendRef = useRef(null);
+  const userRef = useRef(null);
 
-  // keep ref in sync
-  useEffect(() => { selectedUserRef.current = selectedUser; }, [selectedUser]);
+  useEffect(() => { selectedFriendRef.current = selectedFriend; }, [selectedFriend]);
+  useEffect(() => { userRef.current = user; }, [user]);
 
-  useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
-  }, []);
+  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
-  // ── Data Fetching ────────────────────────────────────────────────
+  // ── Data ──────────────────────────────────────────────────────────
   const { data: allUsers = [] } = useQuery({
     queryKey: ["allUsers"],
     queryFn: () => base44.entities.User.list(),
@@ -156,61 +237,61 @@ export default function Messages() {
     initialData: [],
   });
 
-  const acceptedFriends = allFriendRecords
-    .filter(r => r.status === "accepted")
-    .map(r => {
-      const email = r.requester_email === user?.email ? r.recipient_email : r.requester_email;
-      return allUsers.find(u => u.email === email);
-    })
-    .filter(Boolean);
-
-  const pendingIncoming = allFriendRecords.filter(
-    r => r.status === "pending" && r.recipient_email === user?.email
-  );
-  const pendingOutgoing = allFriendRecords.filter(
-    r => r.status === "pending" && r.requester_email === user?.email
+  const acceptedFriends = useMemo(() =>
+    allFriendRecords
+      .filter(r => r.status === "accepted")
+      .map(r => {
+        const email = r.requester_email === user?.email ? r.recipient_email : r.requester_email;
+        return allUsers.find(u => u.email === email);
+      })
+      .filter(Boolean),
+    [allFriendRecords, allUsers, user?.email]
   );
 
-  const getRelationship = useCallback((targetEmail) => {
-    return allFriendRecords.find(
-      r =>
-        (r.requester_email === user?.email && r.recipient_email === targetEmail) ||
-        (r.recipient_email === user?.email && r.requester_email === targetEmail)
-    );
-  }, [allFriendRecords, user?.email]);
+  const pendingIncoming = useMemo(() =>
+    allFriendRecords.filter(r => r.status === "pending" && r.recipient_email === user?.email),
+    [allFriendRecords, user?.email]
+  );
 
-  const filteredFriends = searchQuery.trim()
-    ? acceptedFriends.filter(
-        f =>
+  const pendingOutgoing = useMemo(() =>
+    allFriendRecords.filter(r => r.status === "pending" && r.requester_email === user?.email),
+    [allFriendRecords, user?.email]
+  );
+
+  const filteredFriends = useMemo(() =>
+    searchQuery.trim()
+      ? acceptedFriends.filter(f =>
           f.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           f.email?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : acceptedFriends;
+        )
+      : acceptedFriends,
+    [acceptedFriends, searchQuery]
+  );
 
-  // Search results for add friend
-  const addFriendResults = friendSearchQuery.trim()
-    ? allUsers.filter(
-        u =>
-          u.email !== user?.email &&
-          (u.full_name?.toLowerCase().includes(friendSearchQuery.toLowerCase()) ||
-            u.email?.toLowerCase().includes(friendSearchQuery.toLowerCase()))
-      )
-    : [];
-
-  // ── Real-time messages ───────────────────────────────────────────
+  // ── Real-time messages ────────────────────────────────────────────
   useEffect(() => {
-    if (!selectedUser || !user) return;
-    loadMessages();
+    if (!selectedFriend || !user) return;
+    setLoadingMessages(true);
+    const load = async () => {
+      const [sent, received] = await Promise.all([
+        base44.entities.Message.filter({ sender_email: user.email, recipient_email: selectedFriend.email }),
+        base44.entities.Message.filter({ sender_email: selectedFriend.email, recipient_email: user.email }),
+      ]);
+      const sorted = [...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+      setMessages(sorted);
+      setLoadingMessages(false);
+    };
+    load();
 
     const unsub = base44.entities.Message.subscribe((event) => {
       const d = event.data;
-      const cur = selectedUserRef.current;
-      if (!cur) return;
+      const cur = selectedFriendRef.current;
+      const me = userRef.current;
+      if (!cur || !me) return;
       const relevant =
-        (d?.sender_email === cur.email && d?.recipient_email === user.email) ||
-        (d?.sender_email === user.email && d?.recipient_email === cur.email);
+        (d?.sender_email === cur.email && d?.recipient_email === me.email) ||
+        (d?.sender_email === me.email && d?.recipient_email === cur.email);
       if (!relevant) return;
-
       setMessages(prev => {
         if (event.type === "create") {
           if (prev.find(m => m.id === d.id)) return prev;
@@ -221,47 +302,34 @@ export default function Messages() {
       });
     });
     return unsub;
-  }, [selectedUser?.email, user?.email]);
+  }, [selectedFriend?.email, user?.email]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const loadMessages = async () => {
-    if (!user || !selectedUser) return;
-    const [sent, received] = await Promise.all([
-      base44.entities.Message.filter({ sender_email: user.email, recipient_email: selectedUser.email }),
-      base44.entities.Message.filter({ sender_email: selectedUser.email, recipient_email: user.email }),
-    ]);
-    const all = [...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
-    setMessages(all);
-  };
-
-  // ── Send Message ─────────────────────────────────────────────────
+  // ── Actions ────────────────────────────────────────────────────────
   const handleSend = async () => {
     if (!text.trim() && !imagePreview) return;
-    if (!selectedUser || !user) return;
+    if (!selectedFriend || !user) return;
     setIsSending(true);
     try {
-      let imageUrl = imagePreview?.url || null;
-
-      // If it's a local file (not gallery URL), upload it
+      let imageUrl = imagePreview?.galleryUrl || null;
       if (imagePreview?.file) {
         const result = await base44.integrations.Core.UploadFile({ file: imagePreview.file });
         imageUrl = result.file_url;
       }
-
       await base44.entities.Message.create({
         sender_email: user.email,
-        recipient_email: selectedUser.email,
+        recipient_email: selectedFriend.email,
         content: text.trim() || " ",
         ...(imageUrl ? { image_url: imageUrl } : {}),
       });
       setText("");
       setImagePreview(null);
       inputRef.current?.focus();
-    } catch (err) {
-      toast.error("Failed to send message. Note: file uploads require integration credits.");
+    } catch {
+      toast.error("Failed to send. Image uploads require integration credits.");
     } finally {
       setIsSending(false);
     }
@@ -272,22 +340,17 @@ export default function Messages() {
     if (!file) return;
     e.target.value = "";
     const reader = new FileReader();
-    reader.onload = ev => setImagePreview({ url: ev.target.result, file });
+    reader.onload = ev => setImagePreview({ previewUrl: ev.target.result, file });
     reader.readAsDataURL(file);
   };
 
   const handleGallerySelect = (url) => {
-    setImagePreview({ url, file: null }); // gallery URL, no upload needed
+    setImagePreview({ previewUrl: url, galleryUrl: url, file: null });
     setShowGallery(false);
   };
 
-  // ── Friend Actions ───────────────────────────────────────────────
-  const sendFriendRequest = async (recipientEmail) => {
-    await base44.entities.Friend.create({
-      requester_email: user.email,
-      recipient_email: recipientEmail,
-      status: "pending",
-    });
+  const sendFriendRequest = async (email) => {
+    await base44.entities.Friend.create({ requester_email: user.email, recipient_email: email, status: "pending" });
     refetchFriends();
     toast.success("Friend request sent!");
   };
@@ -313,162 +376,148 @@ export default function Messages() {
     setMessages(prev => prev.filter(m => m.id !== id));
   };
 
-  // ── Helpers ──────────────────────────────────────────────────────
-  const formatTime = (date) =>
-    new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-  const formatDate = (date) => {
-    const d = new Date(date);
+  // ── Helpers ────────────────────────────────────────────────────────
+  const formatTime = d => new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const formatDate = d => {
+    const date = new Date(d);
     const today = new Date();
-    if (d.toDateString() === today.toDateString()) return "Today";
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
-    return d.toLocaleDateString([], { month: "short", day: "numeric" });
+    if (date.toDateString() === today.toDateString()) return "Today";
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return date.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
   };
 
-  const groupedMessages = messages.reduce((groups, msg) => {
-    const key = new Date(msg.created_date).toDateString();
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(msg);
-    return groups;
-  }, {});
+  const groupedMessages = useMemo(() =>
+    messages.reduce((acc, msg) => {
+      const key = new Date(msg.created_date).toDateString();
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(msg);
+      return acc;
+    }, {}),
+    [messages]
+  );
 
+  // ── Render ──────────────────────────────────────────────────────────
   return (
-    <div
-      className="fixed inset-0 bg-[#0A0A0A] flex text-white overflow-hidden"
-      style={{ paddingTop: "env(safe-area-inset-top)" }}
-    >
-      {/* ── Sidebar ── */}
-      <div className={`${selectedUser ? "hidden md:flex" : "flex"} flex-col w-full md:w-72 lg:w-80 border-r border-white/5 bg-[#0d0d0d] flex-shrink-0`}>
-        {/* Header */}
-        <div className="px-4 pt-4 pb-3 border-b border-white/5 flex-shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-bold gradient-text">Messages</h1>
-            <div className="flex items-center gap-1">
-              {pendingIncoming.length > 0 && (
-                <button
-                  onClick={() => setActiveTab(activeTab === "requests" ? "chats" : "requests")}
-                  className={`relative flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    activeTab === "requests"
-                      ? "bg-[#FF6B35] text-white"
-                      : "bg-[#FF6B35]/15 text-[#FF6B35]"
-                  }`}
-                >
-                  <Clock className="w-3.5 h-3.5" />
-                  {pendingIncoming.length}
-                </button>
-              )}
-              <button
-                onClick={() => setShowAddFriend(true)}
-                className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-all"
-                title="Add friend"
-              >
-                <UserPlus className="w-4 h-4" />
-              </button>
-            </div>
+    <div className="fixed inset-0 bg-[#0A0A0A] flex text-white overflow-hidden" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+
+      {/* ══ SIDEBAR ══ */}
+      <div className={`${selectedFriend ? "hidden md:flex" : "flex"} flex-col w-full md:w-[300px] lg:w-[320px] border-r border-white/5 bg-[#0c0c0c] flex-shrink-0`}>
+
+        {/* Sidebar Header */}
+        <div className="px-4 pt-5 pb-3 flex-shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-bold text-white">Messages</h1>
+            <button onClick={() => setShowAddFriend(true)}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all text-white"
+              style={{ background: "linear-gradient(135deg,#FF6B35,#F72C25)" }}
+              title="Add friend"
+            >
+              <UserPlus className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Tabs */}
-          <div className="flex bg-white/5 p-0.5 rounded-xl gap-0.5">
+          <div className="flex bg-white/5 p-0.5 rounded-2xl gap-0.5 mb-3">
             {[
               { key: "chats", label: "Chats", icon: MessageSquare },
-              { key: "requests", label: `Requests${pendingIncoming.length > 0 ? ` (${pendingIncoming.length})` : ""}`, icon: Clock },
+              { key: "requests", label: "Requests", icon: Clock, badge: pendingIncoming.length },
             ].map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all relative ${
                   activeTab === tab.key
-                    ? "bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white"
+                    ? "bg-gradient-to-r from-[#FF6B35] to-[#F72C25] text-white shadow-lg"
                     : "text-white/50 hover:text-white"
                 }`}
               >
                 <tab.icon className="w-3.5 h-3.5" />
                 {tab.label}
+                {tab.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Search (chats tab only) */}
-        {activeTab === "chats" && (
-          <div className="px-3 py-2 border-b border-white/5 flex-shrink-0">
+          {/* Search (chats only) */}
+          {activeTab === "chats" && (
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none" />
-              <input
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search friends..."
-                className="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/8 rounded-xl text-xs text-white placeholder:text-white/30 outline-none focus:border-[#FF6B35]/40 transition-colors"
+              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search conversations..."
+                className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/8 rounded-xl text-xs text-white placeholder:text-white/30 outline-none focus:border-[#FF6B35]/40 transition-colors"
               />
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Chats Tab */}
         {activeTab === "chats" && (
           <div className="flex-1 overflow-y-auto">
             {acceptedFriends.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12 gap-3">
-                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
-                  <Lock className="w-7 h-7 text-white/20" />
+              <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12 gap-4">
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#FF6B35]/15 to-[#F72C25]/15 flex items-center justify-center border border-[#FF6B35]/20">
+                  <MessageSquare className="w-9 h-9 text-[#FF6B35]/60" />
                 </div>
-                <p className="text-white/40 text-sm font-medium">No friends yet</p>
-                <p className="text-white/20 text-xs">Add friends to start messaging</p>
-                <button
-                  onClick={() => setShowAddFriend(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all"
+                <div>
+                  <p className="text-white/60 text-sm font-semibold mb-1">No conversations yet</p>
+                  <p className="text-white/25 text-xs">Add friends to start chatting</p>
+                </div>
+                <button onClick={() => setShowAddFriend(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-semibold text-white transition-all"
                   style={{ background: "linear-gradient(135deg,#FF6B35,#F72C25)" }}
                 >
                   <UserPlus className="w-3.5 h-3.5" /> Add Friends
                 </button>
               </div>
             ) : filteredFriends.length === 0 ? (
-              <div className="text-center py-10 text-white/30 text-sm">No results</div>
+              <div className="text-center py-10 text-white/30 text-sm">No results found</div>
             ) : (
-              filteredFriends.map(friend => (
-                <button
-                  key={friend.id}
-                  onClick={() => setSelectedUser(friend)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left ${
-                    selectedUser?.id === friend.id ? "bg-white/5 border-r-2 border-[#FF6B35]" : ""
-                  }`}
-                >
-                  <Avatar user={friend} size="md" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white truncate">{friend.full_name || friend.email}</p>
-                    <p className="text-xs text-white/40 truncate">{friend.email}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />
-                </button>
-              ))
+              <div className="px-2 py-1 space-y-0.5">
+                {filteredFriends.map(friend => (
+                  <button key={friend.id} onClick={() => setSelectedFriend(friend)}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl transition-all text-left ${
+                      selectedFriend?.id === friend.id
+                        ? "bg-gradient-to-r from-[#FF6B35]/15 to-[#F72C25]/10 border border-[#FF6B35]/25"
+                        : "hover:bg-white/5 border border-transparent"
+                    }`}
+                  >
+                    <Avatar user={friend} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-white truncate">{friend.full_name || friend.email}</p>
+                      <p className="text-xs text-white/35 truncate mt-0.5">{friend.email}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         )}
 
         {/* Requests Tab */}
         {activeTab === "requests" && (
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div className="flex-1 overflow-y-auto p-3 space-y-4">
             {pendingIncoming.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-2 px-1">Incoming</p>
+                <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-2 px-1">Incoming ({pendingIncoming.length})</p>
                 <div className="space-y-2">
                   {pendingIncoming.map(record => {
                     const requester = allUsers.find(u => u.email === record.requester_email);
                     return (
-                      <div key={record.id} className="flex items-center gap-2.5 p-3 rounded-2xl bg-white/5 border border-white/8">
+                      <div key={record.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/8 hover:border-white/12 transition-all">
                         <Avatar user={requester} size="sm" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-white truncate">{requester?.full_name || record.requester_email}</p>
-                          <p className="text-xs text-white/40">Friend request</p>
+                          <p className="text-xs text-white/40">Wants to be friends</p>
                         </div>
                         <div className="flex gap-1.5">
-                          <button onClick={() => acceptRequest(record)} className="w-8 h-8 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/40 flex items-center justify-center transition-all">
-                            <Check className="w-4 h-4" />
+                          <button onClick={() => acceptRequest(record)} className="w-8 h-8 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35] hover:text-white flex items-center justify-center transition-all">
+                            <Check className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => declineRequest(record)} className="w-8 h-8 rounded-xl bg-white/5 text-white/40 hover:bg-red-400/20 hover:text-red-400 flex items-center justify-center transition-all">
-                            <X className="w-4 h-4" />
+                          <button onClick={() => declineRequest(record)} className="w-8 h-8 rounded-xl bg-white/5 text-white/40 hover:bg-red-500/20 hover:text-red-400 flex items-center justify-center transition-all">
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
@@ -479,19 +528,19 @@ export default function Messages() {
             )}
             {pendingOutgoing.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-2 px-1">Sent</p>
+                <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-2 px-1">Sent ({pendingOutgoing.length})</p>
                 <div className="space-y-2">
                   {pendingOutgoing.map(record => {
                     const recipient = allUsers.find(u => u.email === record.recipient_email);
                     return (
-                      <div key={record.id} className="flex items-center gap-2.5 p-3 rounded-2xl bg-white/5 border border-white/8">
+                      <div key={record.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/8 transition-all">
                         <Avatar user={recipient} size="sm" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-white truncate">{recipient?.full_name || record.recipient_email}</p>
-                          <p className="text-xs text-[#FFB800]/70">Pending...</p>
+                          <p className="text-xs text-[#FFB800]/60">Pending...</p>
                         </div>
-                        <button onClick={() => cancelRequest(record)} className="w-8 h-8 rounded-xl bg-white/5 text-white/30 hover:text-red-400 hover:bg-red-400/10 flex items-center justify-center transition-all">
-                          <X className="w-4 h-4" />
+                        <button onClick={() => cancelRequest(record)} className="w-8 h-8 rounded-xl bg-white/5 text-white/30 hover:text-red-400 hover:bg-red-400/10 flex items-center justify-center transition-all" title="Cancel">
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     );
@@ -500,8 +549,8 @@ export default function Messages() {
               </div>
             )}
             {pendingIncoming.length === 0 && pendingOutgoing.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-40 text-center gap-2">
-                <Clock className="w-10 h-10 text-white/15" />
+              <div className="flex flex-col items-center justify-center h-48 text-center gap-2">
+                <Clock className="w-10 h-10 text-white/10" />
                 <p className="text-sm text-white/30">No pending requests</p>
               </div>
             )}
@@ -509,169 +558,176 @@ export default function Messages() {
         )}
       </div>
 
-      {/* ── Chat Panel ── */}
-      {selectedUser ? (
-        <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      {/* ══ CHAT PANEL ══ */}
+      {selectedFriend ? (
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-[#0A0A0A]">
+
           {/* Chat Header */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-[#0d0d0d] flex-shrink-0">
-            <button onClick={() => setSelectedUser(null)} className="md:hidden text-white/60 hover:text-white p-1 -ml-1">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-[#0c0c0c] flex-shrink-0 backdrop-blur-xl">
+            <button onClick={() => setSelectedFriend(null)} className="md:hidden text-white/60 hover:text-white p-1 -ml-1 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <Avatar user={selectedUser} size="sm" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold">{selectedUser.full_name || selectedUser.email}</p>
-              <p className="text-xs text-white/40">{selectedUser.email}</p>
+            <Avatar user={selectedFriend} size="md" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white truncate">{selectedFriend.full_name || selectedFriend.email}</p>
+              <p className="text-xs text-white/35 truncate">{selectedFriend.email}</p>
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 min-h-0">
-            {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-center gap-3 opacity-40 pt-20">
-                <Users className="w-12 h-12" />
-                <p className="text-sm">Say hello! 👋</p>
+          {/* Messages area */}
+          <div className="flex-1 overflow-y-auto min-h-0 px-4 py-6 space-y-1"
+            style={{ backgroundImage: "radial-gradient(circle at 20% 50%, rgba(255,107,53,0.03) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(247,44,37,0.03) 0%, transparent 50%)" }}
+          >
+            {loadingMessages ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-7 h-7 animate-spin text-[#FF6B35]/50" />
               </div>
-            )}
-            {Object.entries(groupedMessages).map(([dateKey, msgs]) => (
-              <div key={dateKey}>
-                <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-px bg-white/8" />
-                  <span className="text-[10px] text-white/25 font-medium">{formatDate(msgs[0].created_date)}</span>
-                  <div className="flex-1 h-px bg-white/8" />
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center gap-4 pb-10">
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#FF6B35]/15 to-[#F72C25]/15 flex items-center justify-center border border-[#FF6B35]/20">
+                  <Avatar user={selectedFriend} size="lg" />
                 </div>
-                <div className="space-y-1">
-                  {msgs.map((msg, idx) => {
-                    const isMe = msg.sender_email === user?.email;
-                    const prevMsg = msgs[idx - 1];
-                    const nextMsg = msgs[idx + 1];
-                    const isFirst = !prevMsg || prevMsg.sender_email !== msg.sender_email;
-                    const isLast = !nextMsg || nextMsg.sender_email !== msg.sender_email;
+                <div>
+                  <p className="font-bold text-white text-base">{selectedFriend.full_name || selectedFriend.email}</p>
+                  <p className="text-white/40 text-sm mt-1">Say hello! 👋</p>
+                </div>
+              </div>
+            ) : (
+              Object.entries(groupedMessages).map(([dateKey, msgs]) => (
+                <div key={dateKey}>
+                  {/* Date separator */}
+                  <div className="flex items-center gap-3 my-6">
+                    <div className="flex-1 h-px bg-white/6" />
+                    <span className="text-[10px] text-white/25 font-medium bg-white/5 px-3 py-1 rounded-full">{formatDate(msgs[0].created_date)}</span>
+                    <div className="flex-1 h-px bg-white/6" />
+                  </div>
 
-                    return (
-                      <motion.div
-                        key={msg.id}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex items-end gap-2 group ${isMe ? "justify-end" : "justify-start"}`}
-                      >
-                        {/* Avatar for others */}
-                        {!isMe && (
-                          <div className="w-7 flex-shrink-0 self-end mb-0.5">
-                            {isLast && <Avatar user={selectedUser} size="sm" />}
-                          </div>
-                        )}
+                  <div className="space-y-1">
+                    {msgs.map((msg, idx) => {
+                      const isMe = msg.sender_email === user?.email;
+                      const prevMsg = msgs[idx - 1];
+                      const nextMsg = msgs[idx + 1];
+                      const isGroupStart = !prevMsg || prevMsg.sender_email !== msg.sender_email;
+                      const isGroupEnd = !nextMsg || nextMsg.sender_email !== msg.sender_email;
+                      const showAvatar = !isMe && isGroupEnd;
+                      const hasText = msg.content?.trim() && msg.content !== " ";
 
-                        <div className={`max-w-[72%] flex flex-col gap-0.5 ${isMe ? "items-end" : "items-start"}`}>
-                          {/* Image attachment */}
-                          {msg.image_url && (
-                            <img
-                              src={msg.image_url}
-                              alt="attachment"
-                              className={`max-w-full max-h-60 object-cover rounded-2xl ${
-                                isMe ? "rounded-br-sm" : "rounded-bl-sm"
-                              } border border-white/10`}
-                            />
-                          )}
-                          {/* Text bubble */}
-                          {msg.content?.trim() && msg.content !== " " && (
-                            <div className={`relative px-4 py-2.5 text-sm leading-relaxed select-text ${
-                              isMe
-                                ? "bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white rounded-2xl rounded-br-sm"
-                                : "bg-white/8 border border-white/8 text-white/90 rounded-2xl rounded-bl-sm"
-                            }`}>
-                              {msg.content}
-                              {/* Delete button on hover */}
-                              {isMe && (
-                                <button
-                                  onClick={() => deleteMessage(msg.id)}
-                                  className="absolute -left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-lg text-white/30 hover:text-red-400 transition-all"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                      return (
+                        <motion.div key={msg.id}
+                          initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ duration: 0.15 }}
+                          className={`flex items-end gap-2 group ${isMe ? "justify-end" : "justify-start"} ${isGroupStart ? "mt-3" : "mt-0.5"}`}
+                        >
+                          {/* Other user avatar */}
+                          {!isMe && (
+                            <div className="w-8 flex-shrink-0 self-end">
+                              {showAvatar && <Avatar user={selectedFriend} size="sm" />}
                             </div>
                           )}
-                          {/* Timestamp */}
-                          {isLast && (
-                            <span className="text-[10px] text-white/20 px-1">{formatTime(msg.created_date)}</span>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+
+                          <div className={`max-w-[70%] sm:max-w-[60%] flex flex-col gap-1 ${isMe ? "items-end" : "items-start"}`}>
+                            {/* Image */}
+                            {msg.image_url && (
+                              <div className={`overflow-hidden rounded-2xl border border-white/10 ${isMe ? "rounded-br-sm" : "rounded-bl-sm"}`}>
+                                <img src={msg.image_url} alt="attachment"
+                                  className="max-w-full max-h-64 object-cover block cursor-pointer hover:brightness-90 transition-all"
+                                  onClick={() => window.open(msg.image_url, "_blank")}
+                                />
+                              </div>
+                            )}
+
+                            {/* Text bubble */}
+                            {hasText && (
+                              <div className={`relative group/msg px-4 py-2.5 text-sm leading-relaxed break-words select-text ${
+                                isMe
+                                  ? "bg-gradient-to-br from-[#FF6B35] to-[#F72C25] text-white rounded-2xl rounded-br-sm shadow-lg shadow-[#FF6B35]/20"
+                                  : "bg-[#1a1a1a] border border-white/8 text-white/90 rounded-2xl rounded-bl-sm"
+                              }`}>
+                                {msg.content}
+                                {isMe && (
+                                  <button onClick={() => deleteMessage(msg.id)}
+                                    className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Timestamp */}
+                            {isGroupEnd && (
+                              <span className="text-[10px] text-white/20 px-1 select-none">{formatTime(msg.created_date)}</span>
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Image Preview */}
+          {/* Image preview */}
           <AnimatePresence>
             {imagePreview && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="px-4 py-2 border-t border-white/5 flex items-center gap-2 bg-[#0d0d0d] flex-shrink-0"
+                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                className="px-4 py-2.5 border-t border-white/5 bg-[#0c0c0c] flex items-center gap-3 flex-shrink-0"
               >
                 <div className="relative">
-                  <img src={imagePreview.url} alt="preview" className="w-14 h-14 object-cover rounded-xl border border-white/10" />
-                  <button
-                    onClick={() => setImagePreview(null)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-black/80 rounded-full flex items-center justify-center border border-white/20"
+                  <img src={imagePreview.previewUrl} alt="preview" className="w-16 h-16 object-cover rounded-xl border border-white/10" />
+                  <button onClick={() => setImagePreview(null)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-black/90 rounded-full flex items-center justify-center border border-white/20 hover:bg-red-500 transition-colors"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-2.5 h-2.5" />
                   </button>
                 </div>
-                <p className="text-xs text-white/40">{imagePreview.file ? "Upload on send" : "From gallery"}</p>
+                <div>
+                  <p className="text-xs text-white/70 font-medium">{imagePreview.file ? "Image attached" : "From your gallery"}</p>
+                  <p className="text-[10px] text-white/30 mt-0.5">{imagePreview.file ? "Will upload on send" : "Ready to send"}</p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Input Bar */}
-          <div
-            className="px-3 py-3 border-t border-white/5 bg-[#0d0d0d] flex-shrink-0"
+          <div className="px-3 py-3 border-t border-white/5 bg-[#0c0c0c] flex-shrink-0"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
           >
             <div className="flex items-center gap-2">
-              {/* Camera / Upload */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-10 h-10 flex items-center justify-center rounded-xl border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors flex-shrink-0"
-                title="Upload image"
+              {/* Upload from device */}
+              <button onClick={() => fileInputRef.current?.click()}
+                className="w-10 h-10 flex items-center justify-center rounded-xl border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-all flex-shrink-0"
+                title="Attach image"
               >
                 <ImageIcon className="w-4 h-4" />
               </button>
-              {/* Gallery picker */}
-              <button
-                onClick={() => setShowGallery(true)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors flex-shrink-0"
+              {/* Gallery */}
+              <button onClick={() => setShowGallery(true)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-all flex-shrink-0"
                 title="Send from Gallery"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                </svg>
+                <Grid3x3 className="w-4 h-4" />
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-              {/* Text input */}
-              <input
-                ref={inputRef}
-                value={text}
-                onChange={e => setText(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder="Message..."
-                className="flex-1 min-w-0 bg-white/5 border border-white/8 rounded-2xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF6B35]/40 transition-colors"
-              />
+              {/* Text Input */}
+              <div className="flex-1 min-w-0 relative">
+                <input ref={inputRef} value={text}
+                  onChange={e => setText(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  placeholder="Message..."
+                  className="w-full bg-white/5 border border-white/8 rounded-2xl px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF6B35]/50 transition-colors"
+                />
+              </div>
 
               {/* Send */}
-              <button
-                onClick={handleSend}
+              <button onClick={handleSend}
                 disabled={isSending || (!text.trim() && !imagePreview)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl text-white disabled:opacity-40 flex-shrink-0 active:scale-95 transition-all"
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-white disabled:opacity-30 flex-shrink-0 active:scale-95 transition-all hover:opacity-90"
                 style={{ background: "linear-gradient(135deg,#FF6B35,#F72C25)" }}
               >
                 {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -680,106 +736,42 @@ export default function Messages() {
           </div>
         </div>
       ) : (
-        <div className="hidden md:flex flex-1 items-center justify-center flex-col gap-4 text-white/20">
-          <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center">
-            <MessageSquare className="w-10 h-10 opacity-40" />
+        <div className="hidden md:flex flex-1 items-center justify-center flex-col gap-5 text-white/20"
+          style={{ backgroundImage: "radial-gradient(circle at 50% 50%, rgba(255,107,53,0.04) 0%, transparent 60%)" }}
+        >
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#FF6B35]/10 to-[#F72C25]/10 flex items-center justify-center border border-[#FF6B35]/15">
+            <MessageSquare className="w-11 h-11 text-[#FF6B35]/40" />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-white/30">Select a conversation</p>
-            <p className="text-sm text-white/20 mt-1">Choose a friend to start chatting</p>
+            <p className="font-bold text-white/30 text-base">Your Messages</p>
+            <p className="text-sm text-white/20 mt-1">Select a friend to start a conversation</p>
           </div>
+          <button onClick={() => setShowAddFriend(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white transition-all mt-2"
+            style={{ background: "linear-gradient(135deg,#FF6B35,#F72C25)" }}
+          >
+            <UserPlus className="w-4 h-4" /> Find Friends
+          </button>
         </div>
       )}
 
-      {/* ── Gallery Picker Modal ── */}
+      {/* ── Modals ── */}
       <AnimatePresence>
         {showGallery && (
-          <GalleryImagePicker
-            currentUser={user}
-            onSelect={handleGallerySelect}
-            onClose={() => setShowGallery(false)}
-          />
+          <GalleryPicker currentUser={user} onSelect={handleGallerySelect} onClose={() => setShowGallery(false)} />
         )}
       </AnimatePresence>
 
-      {/* ── Add Friend Modal ── */}
       <AnimatePresence>
         {showAddFriend && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-            onClick={() => setShowAddFriend(false)}
-          >
-            <motion.div
-              initial={{ y: 60, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 60, opacity: 0 }}
-              className="w-full sm:max-w-md bg-[#141414] border border-white/10 rounded-t-3xl sm:rounded-2xl overflow-hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
-                <h3 className="font-semibold text-white text-sm">Find & Add Friends</h3>
-                <button onClick={() => setShowAddFriend(false)} className="text-white/40 hover:text-white p-1">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="p-3">
-                <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
-                  <input
-                    value={friendSearchQuery}
-                    onChange={e => setFriendSearchQuery(e.target.value)}
-                    placeholder="Search by name or email..."
-                    autoFocus
-                    className="w-full pl-9 pr-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF6B35]/40 transition-colors"
-                  />
-                </div>
-                <div className="max-h-72 overflow-y-auto space-y-2">
-                  {!friendSearchQuery.trim() && (
-                    <p className="text-center text-xs text-white/30 py-6">Type a name or email to search</p>
-                  )}
-                  {addFriendResults.map(u => {
-                    const rel = getRelationship(u.email);
-                    const isAccepted = rel?.status === "accepted";
-                    const isPendingOut = rel?.status === "pending" && rel?.requester_email === user?.email;
-                    const isPendingIn = rel?.status === "pending" && rel?.recipient_email === user?.email;
-                    return (
-                      <div key={u.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
-                        <Avatar user={u} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">{u.full_name || u.email}</p>
-                          <p className="text-xs text-white/40 truncate">{u.email}</p>
-                        </div>
-                        {isAccepted ? (
-                          <span className="text-xs text-[#FF6B35] font-semibold px-2 py-1 rounded-lg bg-[#FF6B35]/10 flex items-center gap-1">
-                            <UserCheck className="w-3 h-3" /> Friends
-                          </span>
-                        ) : isPendingOut ? (
-                          <span className="text-xs text-[#FFB800]/70 font-semibold px-2 py-1 rounded-lg bg-[#FFB800]/10">Pending</span>
-                        ) : isPendingIn ? (
-                          <button
-                            onClick={() => acceptRequest(allFriendRecords.find(r => r.requester_email === u.email && r.recipient_email === user?.email))}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#FF6B35]/20 text-[#FF6B35] hover:bg-[#FF6B35]/40 transition-all flex items-center gap-1"
-                          >
-                            <Check className="w-3.5 h-3.5" /> Accept
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => sendFriendRequest(u.email)}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 text-white hover:bg-[#FF6B35]/20 hover:text-[#FF6B35] transition-all flex items-center gap-1"
-                          >
-                            <UserPlus className="w-3.5 h-3.5" /> Add
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          <AddFriendModal
+            user={user}
+            allUsers={allUsers}
+            allFriendRecords={allFriendRecords}
+            onSendRequest={sendFriendRequest}
+            onAcceptRequest={acceptRequest}
+            onClose={() => setShowAddFriend(false)}
+          />
         )}
       </AnimatePresence>
     </div>
