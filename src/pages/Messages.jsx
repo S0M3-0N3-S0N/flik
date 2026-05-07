@@ -8,6 +8,8 @@ import {
   MessageSquare, Smile, Phone, Video, Info, Grid3x3
 } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 // ─────────────────────────────────────────────
 // Sub-components
@@ -191,6 +193,7 @@ function AddFriendModal({ user, allUsers, allFriendRecords, onSendRequest, onAcc
 // Main Component
 // ─────────────────────────────────────────────
 export default function Messages() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -407,7 +410,15 @@ export default function Messages() {
         {/* Sidebar Header */}
         <div className="px-4 pt-5 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold text-white">Messages</h1>
+            <div className="flex items-center gap-2">
+              <button onClick={() => navigate(createPageUrl("Generate"))}
+                className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition-all"
+                title="Back to Generate"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <h1 className="text-xl font-bold text-white">Messages</h1>
+            </div>
             <button onClick={() => setShowAddFriend(true)}
               className="w-9 h-9 rounded-xl flex items-center justify-center transition-all text-white"
               style={{ background: "linear-gradient(135deg,#FF6B35,#F72C25)" }}
@@ -455,7 +466,7 @@ export default function Messages() {
 
         {/* Chats Tab */}
         {activeTab === "chats" && (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {acceptedFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12 gap-4">
                 <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#FF6B35]/15 to-[#F72C25]/15 flex items-center justify-center border border-[#FF6B35]/20">
@@ -498,7 +509,7 @@ export default function Messages() {
 
         {/* Requests Tab */}
         {activeTab === "requests" && (
-          <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          <div className="flex-1 overflow-y-auto p-3 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {pendingIncoming.length > 0 && (
               <div>
                 <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-2 px-1">Incoming ({pendingIncoming.length})</p>
@@ -575,7 +586,7 @@ export default function Messages() {
           </div>
 
           {/* Messages area */}
-          <div className="flex-1 overflow-y-auto min-h-0 px-4 py-6 space-y-1"
+          <div className="flex-1 overflow-y-auto min-h-0 px-4 py-6 space-y-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             style={{ backgroundImage: "radial-gradient(circle at 20% 50%, rgba(255,107,53,0.03) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(247,44,37,0.03) 0%, transparent 50%)" }}
           >
             {loadingMessages ? (
