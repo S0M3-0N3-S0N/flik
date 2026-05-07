@@ -283,7 +283,7 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Top Desktop Navigation */}
         <nav 
-          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${currentPageName === 'Camera' || currentPageName === 'Editor' || currentPageName === 'FlowEditor' ? 'hidden' : 'hidden md:flex'} ${
+          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${currentPageName === 'Camera' || currentPageName === 'Editor' || currentPageName === 'FlowEditor' || currentPageName === 'Messages' ? 'hidden' : 'hidden md:flex'} ${
             showDesktopNav ? 'translate-y-0' : '-translate-y-full'
           }`}
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -343,6 +343,18 @@ function LayoutContent({ children, currentPageName }) {
                 <Wand2 className="w-5 h-5" />
                 <span className="text-sm font-medium">Imagine AI</span>
               </button>
+
+              <button
+                onClick={() => navigate(createPageUrl("Messages"))}
+                className={`flex items-center gap-2 transition-all ${
+                  currentPageName === "Messages" 
+                    ? "text-white" 
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <MessageSquare className="w-5 h-5" />
+                <span className="text-sm font-medium">Messages</span>
+              </button>
             </div>
 
             <button
@@ -364,7 +376,7 @@ function LayoutContent({ children, currentPageName }) {
 
         
         {/* Main Content */}
-        <main className="pb-20 md:pb-0">
+        <main className={currentPageName === 'Messages' ? '' : 'pb-20 md:pb-0'}>
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -379,7 +391,7 @@ function LayoutContent({ children, currentPageName }) {
         </main>
 
         {/* Bottom Navigation Bar - Mobile Only */}
-        {currentPageName !== "Camera" && currentPageName !== "Editor" && currentPageName !== "FlowEditor" && (
+        {currentPageName !== "Camera" && currentPageName !== "Editor" && currentPageName !== "FlowEditor" && currentPageName !== "Messages" && (
           <>
             {/* "More" popup sheet */}
             <AnimatePresence>
@@ -408,7 +420,6 @@ function LayoutContent({ children, currentPageName }) {
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { label: "Gallery", icon: Grid3x3, page: "Profile" },
                         { label: "Discover", icon: Globe, page: "Discover" },
                         { label: "FLIK AI", icon: Sparkles, page: null, action: () => { setIsOpen(true); setShowMoreMenu(false); } },
                         ...(user?.role === 'admin' ? [
@@ -487,7 +498,7 @@ function LayoutContent({ children, currentPageName }) {
 
 
         {/* Global FLIK Button - Draggable (Desktop Only) */}
-        <motion.button
+        {currentPageName !== 'Messages' && <motion.button
           onClick={(e) => {
             if (!isDraggingFlik) setIsOpen(true);
           }}
@@ -511,7 +522,8 @@ function LayoutContent({ children, currentPageName }) {
               className="w-full h-full object-cover pointer-events-none"
             />
           </div>
-        </motion.button>
+        </motion.button>}
+
 
         {/* FLIK Chat Panel */}
         <FlikChatErrorBoundary>
