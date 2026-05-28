@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe, MessageSquare, MoreHorizontal, Grid3x3 } from "lucide-react";
+import { Sparkles, Image, Wand2, Settings, Sun, Moon, User, Menu, X, ArrowLeft, Video, Camera, Globe, MoreHorizontal, Grid3x3 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { translations } from "@/components/translations";
 import { FlikProvider, useFlik } from "@/components/FlikContext";
@@ -283,7 +283,7 @@ function LayoutContent({ children, currentPageName }) {
 
         {/* Top Desktop Navigation */}
         <nav 
-          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${currentPageName === 'Camera' || currentPageName === 'Editor' || currentPageName === 'Messages' ? 'hidden' : 'hidden md:flex'} ${
+          className={`fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5 backdrop-blur-xl transition-all duration-300 ${currentPageName === 'Camera' || currentPageName === 'Editor' ? 'hidden' : 'hidden md:flex'} ${
             showDesktopNav ? 'translate-y-0' : '-translate-y-full'
           }`}
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -344,17 +344,7 @@ function LayoutContent({ children, currentPageName }) {
                 <span className="text-sm font-medium">Imagine AI</span>
               </button>
 
-              <button
-                onClick={() => navigate(createPageUrl("Messages"))}
-                className={`flex items-center gap-2 transition-all ${
-                  currentPageName === "Messages" 
-                    ? "text-white" 
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                <MessageSquare className="w-5 h-5" />
-                <span className="text-sm font-medium">Messages</span>
-              </button>
+
             </div>
 
             <button
@@ -376,7 +366,7 @@ function LayoutContent({ children, currentPageName }) {
 
         
         {/* Main Content */}
-        <main className={currentPageName === 'Messages' ? '' : 'pb-20 md:pb-0'}>
+        <main className="pb-20 md:pb-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -391,7 +381,7 @@ function LayoutContent({ children, currentPageName }) {
         </main>
 
         {/* Bottom Navigation Bar - Mobile Only */}
-        {currentPageName !== "Camera" && currentPageName !== "Editor" && currentPageName !== "Messages" && (
+        {currentPageName !== "Camera" && currentPageName !== "Editor" && (
           <>
             {/* "More" popup sheet */}
             <AnimatePresence>
@@ -469,10 +459,6 @@ function LayoutContent({ children, currentPageName }) {
                 <Wand2 className="w-5 h-5" />
               </button>
 
-              <button onClick={() => navigate(createPageUrl("Messages"))}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Messages" ? "text-[#FF6B35]" : "text-white/50"}`}>
-                <MessageSquare className="w-5 h-5" />
-              </button>
 
               <button onClick={() => navigate(createPageUrl("Profile"))}
                 className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Profile" ? "text-[#FF6B35]" : "text-white/50"}`}>
@@ -498,7 +484,7 @@ function LayoutContent({ children, currentPageName }) {
 
 
         {/* Global FLIK Button - Draggable (Desktop Only) */}
-        {currentPageName !== 'Messages' && <motion.button
+        <motion.button
           onClick={(e) => {
             if (!isDraggingFlik) setIsOpen(true);
           }}
@@ -522,7 +508,7 @@ function LayoutContent({ children, currentPageName }) {
               className="w-full h-full object-cover pointer-events-none"
             />
           </div>
-        </motion.button>}
+        </motion.button>
 
 
         {/* FLIK Chat Panel */}

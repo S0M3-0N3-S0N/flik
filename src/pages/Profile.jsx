@@ -27,7 +27,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from 'sonner';
 import LoadingSkeleton from "@/components/profile/LoadingSkeleton";
-import FriendsPanel from "@/components/friends/FriendsPanel";
+
 import PublishButton from "@/components/discover/PublishButton";
 import {
   ITEMS_PER_PAGE,
@@ -878,14 +878,7 @@ export default function Profile() {
           </div>
         }
 
-        {/* Friends Section */}
-        <div className="bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 glass-card">
-          <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-            
-            Friends
-          </h2>
-          <FriendsPanel currentUser={user} />
-        </div>
+
 
         {/* Creations Section */}
         <div className="space-y-6">
