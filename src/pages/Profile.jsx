@@ -100,54 +100,7 @@ export default function Profile() {
     initialData: []
   });
 
-  // Pull-to-refresh functionality
-  const [isPulling, setIsPulling] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const touchStartY = useRef(0);
-  const isPullRefreshActive = useRef(false);
 
-  useEffect(() => {
-    const handleTouchStart = (e) => {
-      if (window.scrollY === 0 && e.touches?.length > 0) {
-        touchStartY.current = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      if (window.scrollY === 0 && touchStartY.current > 0 && e.touches?.length > 0) {
-        const touchY = e.touches[0].clientY;
-        const distance = touchY - touchStartY.current;
-        if (distance > 0 && distance < 150) {
-          setPullDistance(distance);
-          isPullRefreshActive.current = true;
-          if (distance > 80) {
-            setIsPulling(true);
-          }
-        }
-      }
-    };
-
-    const handleTouchEnd = async () => {
-      if (isPullRefreshActive.current && pullDistance > 80) {
-        await queryClient.invalidateQueries({ queryKey: ['profileCreations'] });
-        toast.success('Refreshed!');
-      }
-      touchStartY.current = 0;
-      setPullDistance(0);
-      setIsPulling(false);
-      isPullRefreshActive.current = false;
-    };
-
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart, { passive: true });
-      document.removeEventListener('touchmove', handleTouchMove, { passive: true });
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [pullDistance, queryClient]);
 
 
 
@@ -862,22 +815,6 @@ export default function Profile() {
             </div>
           </div>
         </div>
-
-        {/* Pull-to-refresh indicator */}
-        {pullDistance > 0 &&
-        <div
-          className="fixed top-16 left-0 right-0 z-40 flex justify-center"
-          style={{
-            transform: `translateY(${Math.min(pullDistance - 80, 50)}px)`,
-            transition: isPulling ? 'none' : 'transform 0.3s ease-out'
-          }}>
-          
-            <div className={`bg-white/10 backdrop-blur-xl rounded-full p-3 border border-white/20 ${isPulling ? 'scale-110' : ''} transition-transform`}>
-              <Loader2 className={`w-5 h-5 text-[#FF6B35] ${isPulling ? 'animate-spin' : ''}`} />
-            </div>
-          </div>
-        }
-
 
 
         {/* Creations Section */}
