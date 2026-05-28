@@ -439,45 +439,32 @@ function LayoutContent({ children, currentPageName }) {
               )}
             </AnimatePresence>
 
-            <nav 
-              className={`md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-white/5 backdrop-blur-xl flex items-center justify-around px-2 py-1 gap-1 [body[data-modal-open]_&]:hidden transition-all duration-300 ${
-                showMobileNav ? 'translate-y-0' : 'translate-y-full'
-              }`}
-              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)' }}
-              onTouchStart={() => {
-                setShowMobileNav(true);
-                if (mobileNavTimeoutRef.current) clearTimeout(mobileNavTimeoutRef.current);
-              }}
+            <div
+              className={`md:hidden fixed bottom-6 left-0 right-0 z-50 flex justify-center [body[data-modal-open]_&]:hidden transition-all duration-300 ${showMobileNav ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
-              <button onClick={() => navigate(createPageUrl("Editor"))}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Editor" ? "text-[#FF6B35]" : "text-white/50"}`}>
-                <Image className="w-5 h-5" />
-              </button>
-
-              <button onClick={() => navigate(createPageUrl("Generate"))}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Generate" ? "text-[#FF6B35]" : "text-white/50"}`}>
-                <Wand2 className="w-5 h-5" />
-              </button>
-
-
-              <button onClick={() => navigate(createPageUrl("Profile"))}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${currentPageName === "Profile" ? "text-[#FF6B35]" : "text-white/50"}`}>
-                <div className={`w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#F72C25] flex items-center justify-center text-white font-semibold text-xs border ${
-                  currentPageName === "Profile" ? "border-[#FF6B35]" : "border-white/10"
-                }`}>
-                  {user?.profile_picture ? (
-                    <img src={user.profile_picture} alt={user.full_name} className="w-full h-full object-cover" />
-                  ) : (
-                    user?.full_name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />
-                  )}
-                </div>
-              </button>
-
-              <button onClick={() => setShowMoreMenu(prev => !prev)}
-                className={`flex items-center justify-center p-3 rounded-xl transition-all flex-1 ${showMoreMenu ? "text-[#FF6B35]" : "text-white/50"}`}>
-                <MoreHorizontal className="w-5 h-5" />
-              </button>
-            </nav>
+              <nav className="flex items-center gap-1 bg-[#111111] border border-white/10 rounded-full px-2 py-2 shadow-2xl shadow-black/60 backdrop-blur-xl">
+                {[
+                  { icon: Image, page: 'Editor', label: 'Studio' },
+                  { icon: Wand2, page: 'Generate', label: 'Imagine' },
+                  { icon: User, page: 'Profile', label: 'Profile' },
+                  { icon: MoreHorizontal, page: null, label: 'More', action: () => setShowMoreMenu(prev => !prev) },
+                ].map(({ icon: Icon, page, label, action }) => {
+                  const isActive = page ? currentPageName === page : showMoreMenu;
+                  return (
+                    <button
+                      key={label}
+                      onClick={() => action ? action() : navigate(createPageUrl(page))}
+                      className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200 active:scale-90 ${
+                        isActive ? 'bg-white' : 'bg-transparent hover:bg-white/5'
+                      }`}
+                    >
+                      <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-black' : 'text-white/60'}`} />
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
           </>
         )}
 
