@@ -391,48 +391,55 @@ function LayoutContent({ children, currentPageName }) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="md:hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+                    className="md:hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-md"
                     onClick={() => setShowMoreMenu(false)}
                   />
                   <motion.div
-                    initial={{ y: 60, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 60, opacity: 0 }}
-                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="md:hidden fixed bottom-20 left-3 right-3 z-[70] rounded-2xl border border-white/10 p-4"
-                    style={{ background: "#1a1a1a" }}
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    transition={{ type: "spring", damping: 28, stiffness: 350 }}
+                    className="md:hidden fixed bottom-28 left-6 right-6 z-[70]"
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-semibold text-white">More</span>
-                      <button onClick={() => setShowMoreMenu(false)} className="text-white/40 hover:text-white">
-                        <X className="w-4 h-4" />
-                      </button>
+                    {/* Card */}
+                    <div className="rounded-3xl overflow-hidden" style={{ background: "rgba(28,28,30,0.95)", backdropFilter: "blur(40px)" }}>
+                      <p className="text-center text-white/50 text-sm font-medium pt-5 pb-3">More</p>
+                      <div className="grid grid-cols-4 gap-px bg-white/5 border-t border-white/5">
+                        {[
+                          { label: "Discover", icon: Globe, page: "Discover" },
+                          { label: "FLIK AI", icon: Sparkles, page: null, action: () => { setIsOpen(true); setShowMoreMenu(false); } },
+                          ...(user?.role === 'admin' ? [{ label: "Camera", icon: Camera, page: "Camera" }] : []),
+                        ].map(({ label, icon: Icon, page, action }) => {
+                          const isActive = page && currentPageName === page;
+                          return (
+                            <button
+                              key={label}
+                              onClick={() => {
+                                if (action) { action(); return; }
+                                navigate(createPageUrl(page));
+                                setShowMoreMenu(false);
+                              }}
+                              className="flex flex-col items-center gap-2 py-5 bg-[#1c1c1e] active:bg-white/10 transition-colors"
+                            >
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                                isActive ? 'bg-[#FF6B35]' : 'bg-white/10'
+                              }`}>
+                                <Icon className="w-5 h-5 text-white" />
+                              </div>
+                              <span className={`text-[11px] font-medium ${isActive ? 'text-[#FF6B35]' : 'text-white/70'}`}>{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: "Discover", icon: Globe, page: "Discover" },
-                        { label: "FLIK AI", icon: Sparkles, page: null, action: () => { setIsOpen(true); setShowMoreMenu(false); } },
-                        ...(user?.role === 'admin' ? [
-                          { label: "Camera", icon: Camera, page: "Camera" },
-                        ] : []),
-                      ].map(({ label, icon: Icon, page, action }) => (
-                        <button
-                          key={label}
-                          onClick={() => {
-                            if (action) { action(); return; }
-                            navigate(createPageUrl(page));
-                            setShowMoreMenu(false);
-                          }}
-                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                            currentPageName === page
-                              ? "border-[#FF6B35]/40 bg-[#FF6B35]/10 text-[#FF6B35]"
-                              : "border-white/8 bg-white/4 text-white/60 hover:text-white hover:bg-white/8"
-                          }`}
-                        >
-                          <Icon className="w-5 h-5" />
-                          <span className="text-[11px] font-medium">{label}</span>
-                        </button>
-                      ))}
+                    {/* X button outside */}
+                    <div className="flex justify-end mt-3 pr-1">
+                      <button
+                        onClick={() => setShowMoreMenu(false)}
+                        className="w-12 h-12 rounded-full bg-[#2c2c2e] flex items-center justify-center text-white/70 hover:text-white active:bg-white/10 transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
                   </motion.div>
                 </>
