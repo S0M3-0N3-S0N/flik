@@ -84,6 +84,8 @@ export default function Profile() {
     return localStorage.getItem('profile_stats_expanded') === 'true';
   });
   const [imageErrors, setImageErrors] = useState({});
+  const [mobileImageHeight, setMobileImageHeight] = useState(55);
+  const mobileSheetDragRef = useRef({ startY: null, startHeight: 55 });
 
   // Data Fetching
   const { data: user } = useQuery({
@@ -1347,7 +1349,7 @@ export default function Profile() {
           {/* ── MOBILE ── */}
           <div className="md:hidden flex flex-col w-full h-full" onClick={(e) => e.stopPropagation()}>
             {/* Image top ~55% */}
-            <div className="relative flex-shrink-0" style={{ height: '55vh' }}>
+            <div className="relative flex-shrink-0 transition-[height] duration-200 ease-out" style={{ height: `${mobileImageHeight}vh` }}>
               {selectedItem.type === 'video' ?
             <video src={selectedItem.url} controls className="w-full h-full object-cover" poster={selectedItem.thumbnail_url} /> :
 
@@ -1360,9 +1362,23 @@ export default function Profile() {
             </div>
 
             {/* Bottom sheet */}
-            <div className="flex-1 bg-[#111111] rounded-t-3xl -mt-4 flex flex-col overflow-hidden relative" style={{ maxHeight: 'calc(45vh + 16px)' }}>
-              <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-                <div className="w-10 h-1 rounded-full bg-white/20" />
+            <div className="flex-1 bg-[#111111] rounded-t-3xl -mt-4 flex flex-col overflow-hidden relative min-h-0">
+              <div
+                className="flex justify-center pt-3 pb-3 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  mobileSheetDragRef.current = { startY: e.clientY, startHeight: mobileImageHeight };
+                }}
+                onPointerMove={(e) => {
+                  if (mobileSheetDragRef.current.startY == null) return;
+                  const dy = e.clientY - mobileSheetDragRef.current.startY;
+                  const next = Math.max(15, Math.min(92, mobileSheetDragRef.current.startHeight + (dy / window.innerHeight) * 100));
+                  setMobileImageHeight(next);
+                }}
+                onPointerUp={() => { mobileSheetDragRef.current = { startY: null, startHeight: mobileImageHeight }; }}
+                onPointerCancel={() => { mobileSheetDragRef.current = { startY: null, startHeight: mobileImageHeight }; }}
+              >
+                <div className="w-10 h-1.5 rounded-full bg-white/30" />
               </div>
               {/* Author */}
               <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
