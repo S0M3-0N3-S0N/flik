@@ -84,6 +84,8 @@ export default function Profile() {
     return localStorage.getItem('profile_stats_expanded') === 'true';
   });
   const [imageErrors, setImageErrors] = useState({});
+  const [mobileImageHeight, setMobileImageHeight] = useState(55);
+  const mobileSheetDragRef = useRef({ startY: null, startHeight: 55 });
 
   // Data Fetching
   const { data: user } = useQuery({
@@ -577,7 +579,7 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="fixed inset-0 overflow-y-auto px-3 sm:px-4 md:px-6 pt-4 sm:pt-6 md:pt-8 pb-28 md:pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="fixed inset-0 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <Toaster
         position="top-center"
         theme="dark" />
@@ -621,7 +623,7 @@ export default function Profile() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="absolute -bottom-0.5 -right-0.5 sm:-bottom-2 sm:-right-2 w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
+                className="absolute -bottom-0.5 -right-0.5 sm:-bottom-2 sm:-right-2 w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
                 aria-label="Change profile picture">
                 
                 {isUploading ?
@@ -1203,7 +1205,7 @@ export default function Profile() {
 
       {/* Creation Detail — Discover-style modal */}
       {selectedItem &&
-      <div className="fixed inset-0 z-[80] bg-black/95 flex flex-col md:items-center md:justify-center md:p-4" onClick={() => setSelectedItem(null)}>
+      <div className="fixed inset-0 z-50 bg-black/95 flex flex-col md:items-center md:justify-center md:p-4" onClick={() => setSelectedItem(null)}>
           {/* ── DESKTOP ── */}
           <div
           className="hidden md:flex relative w-full max-w-4xl bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[92vh]"
@@ -1345,87 +1347,128 @@ export default function Profile() {
           </div>
 
           {/* ── MOBILE ── */}
-          <div className="md:hidden flex flex-col w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden" onClick={(e) => e.stopPropagation()}>
-            {/* Image — full, uncropped */}
-            <div className="relative w-full bg-black flex-shrink-0">
-              {selectedItem.type === 'video' ? (
-                <video src={selectedItem.url} controls className="w-full max-h-[60vh] object-contain" poster={selectedItem.thumbnail_url} />
-              ) : (
-                <img src={selectedItem.url} alt={selectedItem.title || 'Creation'} className="w-full max-h-[60vh] object-contain" />
-              )}
-              <button onClick={() => setSelectedItem(null)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white border border-white/20 z-10">
+          <div className="md:hidden flex flex-col w-full h-full" onClick={(e) => e.stopPropagation()}>
+            {/* Image top ~55% */}
+            <div className="relative flex-shrink-0 transition-[height] duration-200 ease-out" style={{ height: `${mobileImageHeight}vh` }}>
+              {selectedItem.type === 'video' ?
+            <video src={selectedItem.url} controls className="w-full h-full object-cover" poster={selectedItem.thumbnail_url} /> :
+
+            <img src={selectedItem.url} alt={selectedItem.title || 'Creation'} className="w-full h-full object-cover" />
+            }
+              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50 pointer-events-none" />
+              <button onClick={() => setSelectedItem(null)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white border border-white/20">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="bg-[#111111] rounded-t-3xl -mt-4 relative px-5 pt-5 pb-28 space-y-5">
-              {/* Title + date */}
-              <div>
-                {editingTitle === selectedItem?.id ? (
-                  <div className="space-y-2">
-                    <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="bg-white/5 border-white/10 text-white h-10 text-sm rounded-xl" autoFocus />
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } })} className="h-7 text-xs px-3 btn-gradient text-white">{updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}</Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingTitle(null)} className="text-xs text-white/40 h-7">Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="text-white font-bold text-lg leading-tight">{selectedItem?.title || 'Untitled'}</h2>
-                      <p className="text-white/40 text-xs mt-0.5">{selectedItem.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : ''}</p>
-                    </div>
-                    <button onClick={() => { setEditingTitle(selectedItem?.id); setNewTitle(selectedItem?.title || ''); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium border border-white/10 flex-shrink-0">
-                      <Edit className="w-3 h-3" /> Edit
-                    </button>
-                  </div>
-                )}
+            {/* Bottom sheet */}
+            <div className="flex-1 bg-[#111111] rounded-t-3xl -mt-4 flex flex-col overflow-hidden relative min-h-0">
+              <div
+                className="flex justify-center pt-3 pb-3 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  mobileSheetDragRef.current = { startY: e.clientY, startHeight: mobileImageHeight };
+                }}
+                onPointerMove={(e) => {
+                  if (mobileSheetDragRef.current.startY == null) return;
+                  const dy = e.clientY - mobileSheetDragRef.current.startY;
+                  const next = Math.max(15, Math.min(92, mobileSheetDragRef.current.startHeight + (dy / window.innerHeight) * 100));
+                  setMobileImageHeight(next);
+                }}
+                onPointerUp={() => { mobileSheetDragRef.current = { startY: null, startHeight: mobileImageHeight }; }}
+                onPointerCancel={() => { mobileSheetDragRef.current = { startY: null, startHeight: mobileImageHeight }; }}
+              >
+                <div className="w-10 h-1.5 rounded-full bg-white/30" />
+              </div>
+              {/* Author */}
+              <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
+                <div>
+                  <p className="text-white font-semibold text-sm gradient-text">{selectedItem.title || 'Untitled'}</p>
+                  <p className="text-white/40 text-xs">{selectedItem.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : ''}</p>
+                </div>
               </div>
 
-              {/* Prompt */}
-              {selectedItem?.prompt && (
+              {/* Scrollable */}
+              <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4 [&::-webkit-scrollbar]:hidden">
+                {/* Prompt */}
+                {selectedItem?.prompt &&
+              <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-white/50 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[#FF6B35]">⌘</span> Prompt</p>
+                      {editingPrompt === selectedItem?.id ?
+                  <Button size="sm" onClick={() => {if (newPrompt.trim()) updateMutation.mutate({ id: selectedItem.id, data: { prompt: newPrompt } });}} className="h-7 text-xs px-3 btn-gradient text-white">{updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}</Button> :
+
+                  <button onClick={() => {setEditingPrompt(selectedItem?.id);setNewPrompt(selectedItem?.prompt || '');}} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium border border-white/10">
+                          <Edit className="w-3 h-3" /> Edit
+                        </button>
+                  }
+                    </div>
+                    {editingPrompt === selectedItem?.id ?
+                <div className="space-y-2">
+                        <Textarea value={newPrompt} onChange={(e) => setNewPrompt(e.target.value)} className="bg-white/5 border-white/10 text-white min-h-[80px] text-sm rounded-xl" autoFocus />
+                        <Button size="sm" variant="ghost" onClick={() => setEditingPrompt(null)} className="text-xs text-white/40 h-7">Cancel</Button>
+                      </div> :
+
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                        <p className="text-sm text-white/70 leading-relaxed">{selectedItem.prompt}</p>
+                      </div>
+                }
+                  </div>
+              }
+
+                {/* Title Edit */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-white/50 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[#FF6B35]">⌘</span> Prompt</p>
-                    {editingPrompt === selectedItem?.id ? (
-                      <Button size="sm" onClick={() => { if (newPrompt.trim()) updateMutation.mutate({ id: selectedItem.id, data: { prompt: newPrompt } }); }} className="h-7 text-xs px-3 btn-gradient text-white">{updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}</Button>
-                    ) : (
-                      <button onClick={() => { setEditingPrompt(selectedItem?.id); setNewPrompt(selectedItem?.prompt || ''); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium border border-white/10">
+                    <p className="text-xs font-bold text-white/50 uppercase tracking-widest">Title</p>
+                    {editingTitle === selectedItem?.id ?
+                  <Button size="sm" onClick={() => updateMutation.mutate({ id: selectedItem.id, data: { title: newTitle } })} className="h-7 text-xs px-3 btn-gradient text-white">{updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}</Button> :
+
+                  <button onClick={() => {setEditingTitle(selectedItem?.id);setNewTitle(selectedItem?.title || '');}} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium border border-white/10">
                         <Edit className="w-3 h-3" /> Edit
                       </button>
-                    )}
+                  }
                   </div>
-                  {editingPrompt === selectedItem?.id ? (
-                    <div className="space-y-2">
-                      <Textarea value={newPrompt} onChange={(e) => setNewPrompt(e.target.value)} className="bg-white/5 border-white/10 text-white min-h-[80px] text-sm rounded-xl" autoFocus />
-                      <Button size="sm" variant="ghost" onClick={() => setEditingPrompt(null)} className="text-xs text-white/40 h-7">Cancel</Button>
-                    </div>
-                  ) : (
-                    <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
-                      <p className="text-sm text-white/70 leading-relaxed">{selectedItem.prompt}</p>
-                    </div>
-                  )}
+                  {editingTitle === selectedItem?.id ?
+                <div className="space-y-2">
+                      <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="bg-white/5 border-white/10 text-white h-10 text-sm rounded-xl" autoFocus />
+                      <Button size="sm" variant="ghost" onClick={() => setEditingTitle(null)} className="text-xs text-white/40 h-7">Cancel</Button>
+                    </div> :
+
+                <p className="text-sm text-white/80">{selectedItem?.title || 'Untitled'}</p>
+                }
                 </div>
-              )}
 
-              {user?.role === 'admin' &&
-                <PublishButton creation={selectedItem} onToggled={(published) => { queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] }); setSelectedItem((prev) => prev ? { ...prev, published_to_discover: published } : prev); }} className="w-full justify-center h-11" />
+                {user?.role === 'admin' &&
+              <PublishButton creation={selectedItem} onToggled={(published) => {queryClient.invalidateQueries({ queryKey: ['profileCreations', user?.email] });setSelectedItem((prev) => prev ? { ...prev, published_to_discover: published } : prev);}} className="w-full justify-center h-11" />
               }
-            </div>
 
-            {/* Sticky bottom actions */}
-            <div className="fixed bottom-0 left-0 right-0 px-4 pb-[100px] pt-3 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A] to-transparent">
-              <div className="flex gap-2">
-                <button onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))} className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-white/10 border border-white/15 active:scale-95 transition-all">
-                  <Edit className="w-4 h-4" /> Edit
-                </button>
-                <button onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)} className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-black flex items-center justify-center gap-2 active:scale-95 transition-all" style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}>
-                  <Download className="w-4 h-4" /> Download
-                </button>
-                <button onClick={() => handleDelete(selectedItem.id)} className="py-3.5 px-4 rounded-2xl font-bold text-sm text-red-400 flex items-center justify-center bg-red-500/10 border border-red-500/20 active:scale-95 transition-all">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {/* Spacer */}
+                <div className="h-20" />
+              </div>
+
+              {/* Sticky bottom actions */}
+              <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 pt-3 bg-gradient-to-t from-[#111111] via-[#111111] to-transparent space-y-2">
+                <div className="flex gap-2">
+                  <button
+                  onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-white/10 border border-white/15 active:scale-95 transition-all">
+                  
+                    <Edit className="w-4 h-4" /> Edit
+                  </button>
+                  <button
+                  onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-black flex items-center justify-center gap-2 active:scale-95 transition-all"
+                  style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}>
+                  
+                    <Download className="w-4 h-4" /> Download
+                  </button>
+                  <button
+                  onClick={() => handleDelete(selectedItem.id)}
+                  className="py-3.5 px-4 rounded-2xl font-bold text-sm text-red-400 flex items-center justify-center bg-red-500/10 border border-red-500/20 active:scale-95 transition-all">
+                  
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
