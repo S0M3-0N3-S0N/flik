@@ -1,0 +1,40 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "User email (unique identifier)"
+    },
+    "bio": {
+      "type": "string",
+      "description": "User biography/about section"
+    },
+    "website": {
+      "type": "string",
+      "description": "User's website or portfolio URL"
+    },
+    "profile_picture": {
+      "type": "string",
+      "description": "URL to user's profile picture"
+    },
+    "is_private": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether profile is private (only followers can see content)"
+    },
+    "allow_dms": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to allow direct messages from anyone"
+    },
+    "allow_comments": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to allow comments on creations"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}

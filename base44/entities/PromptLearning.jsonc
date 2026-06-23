@@ -1,0 +1,31 @@
+{
+  "name": "PromptLearning",
+  "type": "object",
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "description": "The prompt used by the user"
+    },
+    "tool_type": {
+      "type": "string",
+      "enum": [
+        "magic_brush",
+        "ai_tool",
+        "generate"
+      ],
+      "description": "Which tool was used"
+    },
+    "was_successful": {
+      "type": "boolean",
+      "description": "Whether the user kept the result"
+    },
+    "context": {
+      "type": "object",
+      "description": "Additional context like image type, user action"
+    }
+  },
+  "required": [
+    "prompt",
+    "tool_type"
+  ]
+}

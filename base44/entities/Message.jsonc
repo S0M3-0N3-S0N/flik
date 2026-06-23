@@ -1,0 +1,32 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "sender_email": {
+      "type": "string",
+      "description": "Email of sender"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Email of recipient"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image attached to message"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether recipient has read the message"
+    }
+  },
+  "required": [
+    "sender_email",
+    "recipient_email",
+    "content"
+  ]
+}

@@ -230,8 +230,6 @@ export default function Profile() {
     setEditingTitle(null);
     setEditingPrompt(null);
     setDeleteConfirm(null);
-    localStorage.clear();
-    sessionStorage.clear();
     await base44.auth.logout();
   };
 

@@ -1,0 +1,44 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_email": {
+      "type": "string",
+      "description": "Email of user receiving notification"
+    },
+    "actor_email": {
+      "type": "string",
+      "description": "Email of user who triggered the notification"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "like",
+        "comment",
+        "follow",
+        "message",
+        "system"
+      ],
+      "description": "Type of notification"
+    },
+    "related_creation_id": {
+      "type": "string",
+      "description": "ID of creation (for likes/comments)"
+    },
+    "content": {
+      "type": "string",
+      "description": "Notification message"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user has read this notification"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "actor_email",
+    "type",
+    "content"
+  ]
+}

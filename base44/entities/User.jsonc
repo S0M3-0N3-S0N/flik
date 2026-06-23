@@ -1,0 +1,24 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "profile_picture": {
+      "type": "string",
+      "description": "URL of the user's profile picture"
+    },
+    "contact_email": {
+      "type": "string",
+      "format": "email",
+      "description": "User's preferred contact email"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "User's display name"
+    }
+  },
+  "required": [
+    "profile_picture",
+    "contact_email",
+    "display_name"
+  ]
+}

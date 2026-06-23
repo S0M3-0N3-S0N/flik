@@ -1,0 +1,23 @@
+{
+  "name": "Hashtag",
+  "type": "object",
+  "properties": {
+    "tag": {
+      "type": "string",
+      "description": "Hashtag text (without #)"
+    },
+    "usage_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Number of times this hashtag has been used"
+    },
+    "is_trending": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this hashtag is currently trending"
+    }
+  },
+  "required": [
+    "tag"
+  ]
+}

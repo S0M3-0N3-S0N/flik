@@ -1,0 +1,48 @@
+{
+  "name": "Creation",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the creation"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "video"
+      ],
+      "description": "Type of creation"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL to the creation file"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "URL to thumbnail preview"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "Original prompt used to generate"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata like effects, duration, etc"
+    },
+    "published_to_discover": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this creation is published to Discover feed"
+    }
+  },
+  "required": [
+    "type",
+    "url"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "ModerationLog",
+  "type": "object",
+  "properties": {
+    "admin_email": {
+      "type": "string",
+      "description": "Email of admin taking action"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "delete_content",
+        "ban_user",
+        "warn_user",
+        "resolve_report",
+        "restore_content"
+      ],
+      "description": "Type of moderation action"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "creation",
+        "user",
+        "comment"
+      ],
+      "description": "Type of target"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "ID of target"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason for action"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "admin_email",
+    "action_type",
+    "target_type",
+    "target_id"
+  ]
+}

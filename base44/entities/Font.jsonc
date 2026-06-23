@@ -1,0 +1,28 @@
+{
+  "name": "Font",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "The text content of the font"
+    },
+    "style": {
+      "type": "string",
+      "description": "The style description of the font"
+    },
+    "imageUrl": {
+      "type": "string",
+      "description": "URL to the generated font image"
+    },
+    "usageCount": {
+      "type": "integer",
+      "default": 0,
+      "description": "How many times this font has been used"
+    }
+  },
+  "required": [
+    "text",
+    "style",
+    "imageUrl"
+  ]
+}

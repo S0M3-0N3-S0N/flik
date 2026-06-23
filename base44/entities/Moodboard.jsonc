@@ -1,0 +1,29 @@
+{
+  "name": "Moodboard",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the moodboard"
+    },
+    "image_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of reference image URLs"
+    },
+    "style_profile": {
+      "type": "object",
+      "description": "AI-generated style analysis: color_palette, lighting, textures, mood, style_summary, keywords, prompt_enhancement"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

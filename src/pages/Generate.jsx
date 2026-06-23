@@ -287,8 +287,8 @@ export default function Generate() {
             existing_image_urls: uploadedImages.length > 0 ? uploadedImages.map(u => u.url) : undefined
           });
 
-          // Save to DB
-          await base44.entities.Creation.create({
+          // Save to DB (create returns the saved entity, including its id)
+          const savedCreation = await base44.entities.Creation.create({
             title: prompt.slice(0, 100) || 'AI Generated Image',
             type: 'image',
             url: imageResult.url,
@@ -305,10 +305,7 @@ export default function Generate() {
               moodboardApplied: !!activeMoodboardStyle
             }
           });
-
-          // Fetch the saved creation to get its DB id
-          const savedCreations = await base44.entities.Creation.filter({ url: imageResult.url }, '-created_date', 1);
-          const dbId = savedCreations?.[0]?.id;
+          const dbId = savedCreation?.id;
 
           return {
             id: Date.now() + Math.random(),

@@ -1,0 +1,21 @@
+{
+  "name": "Share",
+  "type": "object",
+  "properties": {
+    "creation_id": {
+      "type": "string",
+      "description": "ID of the creation being shared"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of user who shared"
+    },
+    "platform": {
+      "type": "string",
+      "description": "Platform shared to (e.g. link_copy, whatsapp, twitter)"
+    }
+  },
+  "required": [
+    "creation_id"
+  ]
+}

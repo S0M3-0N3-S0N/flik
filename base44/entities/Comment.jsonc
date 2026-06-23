@@ -1,0 +1,26 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "creation_id": {
+      "type": "string",
+      "description": "ID of the creation being commented on"
+    },
+    "text": {
+      "type": "string",
+      "description": "Comment text"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Name of commenter"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of commenter"
+    }
+  },
+  "required": [
+    "creation_id",
+    "text"
+  ]
+}
