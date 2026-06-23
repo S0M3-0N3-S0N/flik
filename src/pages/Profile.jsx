@@ -577,7 +577,7 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="fixed inset-0 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="fixed inset-0 overflow-y-auto px-3 sm:px-4 md:px-6 pt-4 sm:pt-6 md:pt-8 pb-28 md:pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <Toaster
         position="top-center"
         theme="dark" />
@@ -621,7 +621,7 @@ export default function Profile() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="absolute -bottom-0.5 -right-0.5 sm:-bottom-2 sm:-right-2 w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
+                className="absolute -bottom-0.5 -right-0.5 sm:-bottom-2 sm:-right-2 w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#FF6B35] to-[#FFB800] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 cursor-pointer disabled:cursor-not-allowed shadow-lg hover:scale-110"
                 aria-label="Change profile picture">
                 
                 {isUploading ?
@@ -1203,7 +1203,7 @@ export default function Profile() {
 
       {/* Creation Detail — Discover-style modal */}
       {selectedItem &&
-      <div className="fixed inset-0 z-50 bg-black/95 flex flex-col md:items-center md:justify-center md:p-4" onClick={() => setSelectedItem(null)}>
+      <div className="fixed inset-0 z-[80] bg-black/95 flex flex-col md:items-center md:justify-center md:p-4" onClick={() => setSelectedItem(null)}>
           {/* ── DESKTOP ── */}
           <div
           className="hidden md:flex relative w-full max-w-4xl bg-[#141414] border border-white/10 rounded-2xl overflow-hidden max-h-[92vh]"
@@ -1347,7 +1347,7 @@ export default function Profile() {
           {/* ── MOBILE ── */}
           <div className="md:hidden flex flex-col w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden" onClick={(e) => e.stopPropagation()}>
             {/* Image — full, uncropped */}
-            <div className="relative w-full bg-black flex-shrink-0" style={{ minHeight: '40vh' }}>
+            <div className="relative w-full bg-black flex-shrink-0">
               {selectedItem.type === 'video' ? (
                 <video src={selectedItem.url} controls className="w-full max-h-[60vh] object-contain" poster={selectedItem.thumbnail_url} />
               ) : (
@@ -1415,7 +1415,7 @@ export default function Profile() {
             </div>
 
             {/* Sticky bottom actions */}
-            <div className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A] to-transparent">
+            <div className="fixed bottom-0 left-0 right-0 px-4 pb-[100px] pt-3 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A] to-transparent">
               <div className="flex gap-2">
                 <button onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))} className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-white/10 border border-white/15 active:scale-95 transition-all">
                   <Edit className="w-4 h-4" /> Edit
