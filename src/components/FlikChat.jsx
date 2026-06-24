@@ -58,6 +58,7 @@ export default function FlikChat() {
   const [showConversations, setShowConversations] = useState(false);
   const [isSavingConversation, setIsSavingConversation] = useState(false);
   const [normalMode, setNormalMode] = useState(true);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const scrollRef = useRef(null);
   const chatFileRef = useRef(null);
   const navigate = useNavigate();
@@ -121,6 +122,22 @@ export default function FlikChat() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+
+  // Close attach menu on outside click
+  useEffect(() => {
+    if (!showAttachMenu) return;
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('#attach-menu') && !e.target.closest('#attach-menu-btn')) {
+        setShowAttachMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showAttachMenu]);
 
   // Initialize voices for speech synthesis
   useEffect(() => {
@@ -311,17 +328,21 @@ export default function FlikChat() {
   const [lastFetchTime, setLastFetchTime] = useState(0);
 
   const fetchUserData = useCallback(async () => {
-    if (isFetchingUserDataRef.current) return;
+    if (isFetchingUserDataRef.current) return null;
     
     isFetchingUserDataRef.current = true;
     try {
       const userProfile = await base44.auth.me();
       const allCreations = await base44.entities.Creation.filter({ created_by: userProfile.email }, '-created_date', MAX_RECENT_CREATIONS, { data_env: "prod" });
-      setCachedUserData({ userProfile, allCreations });
+      const data = { userProfile, allCreations };
+      setCachedUserData(data);
       setLastFetchTime(Date.now());
+      return data;
     } catch (e) {
       console.error("Failed to fetch user data:", e);
-      setCachedUserData({ userProfile: null, allCreations: [] });
+      const fallback = { userProfile: null, allCreations: [] };
+      setCachedUserData(fallback);
+      return fallback;
     } finally {
       isFetchingUserDataRef.current = false;
     }
@@ -523,16 +544,6 @@ export default function FlikChat() {
     );
   }, [galleryCreations, gallerySearchTerm]);
   
-  // Memoize filtered creations to avoid duplicate filtering
-  const filteredGalleryCreationsForDialog = useMemo(() => {
-    if (!gallerySearchTerm.trim()) return galleryCreations;
-    const term = gallerySearchTerm.toLowerCase();
-    return galleryCreations.filter(c => 
-      (c.title?.toLowerCase().includes(term)) || 
-      (c.prompt?.toLowerCase().includes(term))
-    );
-  }, [galleryCreations, gallerySearchTerm]);
-
   const handleSend = async (retryInput = null, retryImages = null, retryMsgId = null) => {
     const messageContent = retryInput || input;
     const messageImages = retryImages || attachedImages;
@@ -596,12 +607,13 @@ export default function FlikChat() {
     }, 60000); // 60 second timeout
 
     try {
-      // Use cached data if available
-      if (!cachedUserData || Date.now() - lastFetchTime > CACHE_DURATION) {
-        await fetchUserData();
+      // Use cached data if available, otherwise fetch and use returned value directly
+      let userData = cachedUserData;
+      if (!userData || Date.now() - lastFetchTime > CACHE_DURATION) {
+        userData = await fetchUserData();
       }
 
-      const { userProfile = null, allCreations = [] } = cachedUserData || {};
+      const { userProfile = null, allCreations = [] } = userData || {};
       const contextImages = userUploadedImages && userUploadedImages.length > 0 
         ? userUploadedImages.map(img => img.url) 
         : [];
@@ -639,8 +651,8 @@ You're also integrated into the FLIK AI Creative Suite with these features avail
 🔗 Community: Like, comment, follow creators
 
 USER INFO:
-- Name: ${cachedUserData?.userProfile?.full_name || 'User'}
-- Total Creations: ${cachedUserData?.allCreations?.length || 0}${savedConversationsContext}
+- Name: ${userProfile?.full_name || 'User'}
+- Total Creations: ${allCreations?.length || 0}${savedConversationsContext}
 
 CONVERSATION HISTORY:
 ${messages.slice(-CONTEXT_MESSAGES_LIMIT).map(m => `${m.role === 'user' ? 'User' : 'FLIK'}: ${m.content}`).join('\n')}
@@ -664,13 +676,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
         }),
         file_urls: contextImages.length > 0 ? contextImages : undefined,
         add_context_from_internet: internetEnabled,
-        response_json_schema: normalMode ? {
-          type: "object",
-          properties: {
-            message: { type: "string" }
-          },
-          required: ["message"]
-        } : {
+        response_json_schema: {
           type: "object",
           properties: {
             message: { type: "string" },
@@ -933,6 +939,18 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
               <Button 
                 variant="ghost" 
                 size="icon" 
+                onClick={handleSaveConversation}
+                disabled={isSavingConversation || messages.length === 0}
+                className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px] disabled:opacity-30"
+                title="Save conversation"
+                aria-label="Save conversation"
+              >
+                {isSavingConversation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                size="icon" 
                 onClick={handleNewConversation}
                 className="text-white/60 hover:text-[#FF6B35] hover:bg-[#FF6B35]/10 h-11 w-11 min-h-[44px] min-w-[44px]"
                 title="New chat"
@@ -961,7 +979,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent" ref={scrollRef}>
+          <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent" ref={scrollRef}>
             {messages.length === 0 && (
               <div className="text-center py-12 px-4 space-y-8 flex flex-col items-center justify-center h-full">
               <motion.div 
@@ -1258,7 +1276,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
             )}
           </div>
 
-          <div className="p-4 border-t border-white/10 bg-[#1a1a1a] space-y-3" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom) + 8px)' }}>
+          <div className="p-3 sm:p-4 border-t border-white/10 bg-[#1a1a1a] space-y-2.5" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom) + 8px)' }}>
             {uploadError && (
               <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-xs text-red-400">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -1266,7 +1284,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
               </div>
             )}
             {attachedImages.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
                 {attachedImages.map((img) => (
                   <div key={img.id} className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 group">
                     <img src={img.url} alt={img.name || 'Attached'} className="w-full h-full object-cover" />
@@ -1288,104 +1306,100 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                   handleSend();
                 }
               }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-2"
             >
               {/* Attachments Menu Button */}
-              <div className="relative group">
+              <div className="relative">
                 <button
                   type="button"
-                  onClick={() => {
-                    const rect = document.getElementById('attach-menu-btn')?.getBoundingClientRect();
-                    const menu = document.getElementById('attach-menu');
-                    if (menu) {
-                      menu.classList.toggle('hidden');
-                    }
-                  }}
+                  onClick={() => setShowAttachMenu(prev => !prev)}
                   id="attach-menu-btn"
-                  className="w-12 h-12 min-h-[44px] min-w-[44px] rounded-full bg-[#2a2a2a] hover:bg-[#333333] flex items-center justify-center transition-all flex-shrink-0 shadow-lg"
+                  className="w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-[#2a2a2a] hover:bg-[#333333] flex items-center justify-center transition-all flex-shrink-0 shadow-lg"
                   title="Add attachments"
                 >
-                  <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
                 
                 {/* Popup Menu */}
-                <div 
-                  id="attach-menu"
-                  className="hidden absolute bottom-full left-0 mb-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl min-w-[180px]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      chatFileRef.current?.click();
-                      document.getElementById('attach-menu')?.classList.add('hidden');
-                    }}
-                    disabled={isUploadingChat}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left disabled:opacity-50"
+                {showAttachMenu && (
+                  <div 
+                    id="attach-menu"
+                    className="absolute bottom-full left-0 mb-2 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl min-w-[180px] z-10"
                   >
-                    {isUploadingChat ? <Loader2 className="w-4 h-4 animate-spin text-[#FF6B35]" /> : <Upload className="w-4 h-4 text-[#FF6B35]" />}
-                    <span className="text-sm">Upload Image</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleGalleryPick();
-                      document.getElementById('attach-menu')?.classList.add('hidden');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
-                  >
-                    <Grid3x3 className="w-4 h-4 text-[#FF6B35]" />
-                    <span className="text-sm">From Gallery</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInternetEnabled(!internetEnabled);
-                      document.getElementById('attach-menu')?.classList.add('hidden');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
-                  >
-                    <svg className={`w-4 h-4 ${internetEnabled ? 'text-[#FF6B35]' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      {internetEnabled ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                      ) : (
-                        <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        chatFileRef.current?.click();
+                        setShowAttachMenu(false);
+                      }}
+                      disabled={isUploadingChat}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left disabled:opacity-50"
+                    >
+                      {isUploadingChat ? <Loader2 className="w-4 h-4 animate-spin text-[#FF6B35]" /> : <Upload className="w-4 h-4 text-[#FF6B35]" />}
+                      <span className="text-sm">Upload Image</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleGalleryPick();
+                        setShowAttachMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                    >
+                      <Grid3x3 className="w-4 h-4 text-[#FF6B35]" />
+                      <span className="text-sm">From Gallery</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInternetEnabled(!internetEnabled);
+                        setShowAttachMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                    >
+                      <svg className={`w-4 h-4 ${internetEnabled ? 'text-[#FF6B35]' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {internetEnabled ? (
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
-                        </>
-                      )}
-                    </svg>
-                    <span className="text-sm">Internet {internetEnabled ? 'ON' : 'OFF'}</span>
-                  </button>
+                        ) : (
+                          <>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
+                          </>
+                        )}
+                      </svg>
+                      <span className="text-sm">Internet {internetEnabled ? 'ON' : 'OFF'}</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNormalMode(prev => !prev);
-                      document.getElementById('attach-menu')?.classList.add('hidden');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
-                  >
-                    <Palette className={`w-4 h-4 ${!normalMode ? 'text-[#FF6B35]' : 'text-white/40'}`} />
-                    <span className="text-sm">Creative Mode {!normalMode ? '(ON)' : '(OFF)'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleVoiceOutput();
-                      document.getElementById('attach-menu')?.classList.add('hidden');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
-                  >
-                    {voiceEnabled ? <Volume2 className={`w-4 h-4 text-[#FF6B35]`} /> : <VolumeX className="w-4 h-4 text-white/40" />}
-                    <span className="text-sm">Voice Output {voiceEnabled ? '(ON)' : '(OFF)'}</span>
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNormalMode(prev => !prev);
+                        setShowAttachMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                    >
+                      <Palette className={`w-4 h-4 ${!normalMode ? 'text-[#FF6B35]' : 'text-white/40'}`} />
+                      <span className="text-sm">Creative Mode {!normalMode ? '(ON)' : '(OFF)'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleVoiceOutput();
+                        setShowAttachMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/80 hover:text-white transition-colors text-left border-t border-white/5"
+                    >
+                      {voiceEnabled ? <Volume2 className={`w-4 h-4 text-[#FF6B35]`} /> : <VolumeX className="w-4 h-4 text-white/40" />}
+                      <span className="text-sm">Voice Output {voiceEnabled ? '(ON)' : '(OFF)'}</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Input Field with Mic */}
-              <div className="relative flex-1 flex items-center bg-[#2a2a2a] rounded-full h-12 px-5 shadow-lg">
+              <div className="relative flex-1 flex items-center bg-[#2a2a2a] rounded-full h-11 min-h-[44px] px-4 shadow-lg">
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -1413,7 +1427,7 @@ RESPONSE STYLE: Be a genuine, helpful friend. Be casual, warm, and thorough. Hel
                 type="submit" 
                 size="icon"
                 disabled={(!input.trim() && attachedImages.length === 0) || isTyping || isUploadingChat}
-                className="w-12 h-12 min-h-[44px] min-w-[44px] rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-xl hover:shadow-2xl hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-50 flex-shrink-0 p-0"
+                className="w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-gradient-to-br from-[#FF6B35] to-[#F72C25] hover:from-[#FF8B55] hover:to-[#FF4C45] text-white shadow-xl hover:shadow-2xl hover:shadow-[#FF6B35]/40 transition-all disabled:opacity-50 flex-shrink-0 p-0"
               >
                 {isTyping ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
