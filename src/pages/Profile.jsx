@@ -84,6 +84,7 @@ export default function Profile() {
     return localStorage.getItem('profile_stats_expanded') === 'true';
   });
   const [imageErrors, setImageErrors] = useState({});
+  const [mobileActionsVisible, setMobileActionsVisible] = useState(true);
   const [mobileImageHeight, setMobileImageHeight] = useState(55);
   const mobileSheetDragRef = useRef({ startY: null, startHeight: 55 });
 
@@ -1389,7 +1390,10 @@ export default function Profile() {
               </div>
 
               {/* Scrollable */}
-              <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4 [&::-webkit-scrollbar]:hidden">
+              <div
+                className="flex-1 overflow-y-auto px-5 pb-4 space-y-4 [&::-webkit-scrollbar]:hidden"
+                onScroll={(e) => setMobileActionsVisible(e.currentTarget.scrollTop < 10)}
+              >
                 {/* Prompt */}
                 {selectedItem?.prompt &&
               <div className="space-y-2">
@@ -1447,7 +1451,7 @@ export default function Profile() {
               </div>
 
               {/* Sticky bottom actions */}
-              <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 pt-3 bg-gradient-to-t from-[#111111] via-[#111111] to-transparent space-y-2">
+              <div className={`absolute bottom-0 left-0 right-0 px-5 pb-6 pt-3 bg-gradient-to-t from-[#111111] via-[#111111] to-transparent space-y-2 transition-all duration-300 ${mobileActionsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}>
                 <div className="flex gap-2">
                   <button
                   onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))}
