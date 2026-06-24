@@ -1363,31 +1363,6 @@ export default function Profile() {
 
             {/* Bottom sheet */}
             <div className="flex-1 bg-[#111111] rounded-t-3xl -mt-4 flex flex-col overflow-hidden relative min-h-0">
-              <div
-                className="flex justify-center pt-3 pb-3 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
-                onPointerDown={(e) => {
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  mobileSheetDragRef.current = { startY: e.clientY, startHeight: mobileImageHeight };
-                }}
-                onPointerMove={(e) => {
-                  if (mobileSheetDragRef.current.startY == null) return;
-                  const dy = e.clientY - mobileSheetDragRef.current.startY;
-                  const next = Math.max(15, Math.min(92, mobileSheetDragRef.current.startHeight + (dy / window.innerHeight) * 100));
-                  setMobileImageHeight(next);
-                }}
-                onPointerUp={() => { mobileSheetDragRef.current = { startY: null, startHeight: mobileImageHeight }; }}
-                onPointerCancel={() => { mobileSheetDragRef.current = { startY: null, startHeight: mobileImageHeight }; }}
-              >
-                <div className="w-10 h-1.5 rounded-full bg-white/30" />
-              </div>
-              {/* Author */}
-              <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
-                <div>
-                  <p className="text-white font-semibold text-sm gradient-text">{selectedItem.title || 'Untitled'}</p>
-                  <p className="text-white/40 text-xs">{selectedItem.created_date ? new Date(selectedItem.created_date).toLocaleDateString() : ''}</p>
-                </div>
-              </div>
-
               {/* Scrollable */}
               <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4 [&::-webkit-scrollbar]:hidden">
                 {/* Prompt */}
@@ -1446,30 +1421,7 @@ export default function Profile() {
                 <div className="h-20" />
               </div>
 
-              {/* Sticky bottom actions */}
-              <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 pt-3 bg-gradient-to-t from-[#111111] via-[#111111] to-transparent space-y-2">
-                <div className="flex gap-2">
-                  <button
-                  onClick={() => navigate(createPageUrl('Editor') + '?load=' + encodeURIComponent(selectedItem.url))}
-                  className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-white/10 border border-white/15 active:scale-95 transition-all">
-                  
-                    <Edit className="w-4 h-4" /> Edit
-                  </button>
-                  <button
-                  onClick={() => handleDownload(selectedItem.url, selectedItem.title || selectedItem.prompt, selectedItem.type)}
-                  className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-black flex items-center justify-center gap-2 active:scale-95 transition-all"
-                  style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F72C25 50%, #FFB800 100%)' }}>
-                  
-                    <Download className="w-4 h-4" /> Download
-                  </button>
-                  <button
-                  onClick={() => handleDelete(selectedItem.id)}
-                  className="py-3.5 px-4 rounded-2xl font-bold text-sm text-red-400 flex items-center justify-center bg-red-500/10 border border-red-500/20 active:scale-95 transition-all">
-                  
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
