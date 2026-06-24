@@ -607,29 +607,6 @@ export default function Generate() {
                     <span className="hidden xs:inline">Gallery</span>
                   </button>
 
-                  {user?.role === 'admin' ? (
-                    <button
-                      onClick={() => setShowMoodboard(true)}
-                      className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
-                        activeMoodboardStyle
-                          ? 'bg-[#FF6B35]/10 text-[#FF6B35]'
-                          : 'text-white/60 hover:bg-white/5 hover:text-white'
-                      }`}
-                      title="Moodboard Style Engine"
-                    >
-                      <Layers className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      <span className="hidden xs:inline">{activeMoodboardStyle ? 'Style On' : 'Moodboard'}</span>
-                    </button>
-                  ) : (
-                    <div
-                      className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-white/25 cursor-not-allowed whitespace-nowrap relative group"
-                      title="Coming Soon"
-                    >
-                      <Layers className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      <span className="hidden xs:inline">Moodboard</span>
-                    </div>
-                  )}
-
                   <Popover open={typeof window !== 'undefined' && window.innerWidth >= 768 ? undefined : false}>
                     <PopoverTrigger asChild>
                       <button 
