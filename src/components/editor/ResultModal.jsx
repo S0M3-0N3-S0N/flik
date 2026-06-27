@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye, RefreshCw, Loader2, BookImage } from "lucide-react";
+import { X, Download, ArrowRight, RotateCcw, Check, Columns, ScanEye, RefreshCw, Loader2, BookImage, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -21,6 +21,47 @@ export default function ResultModal({
   const [sliderPos, setSliderPos] = useState(50);
   const [userFeedback, setUserFeedback] = useState(null);
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const compareRef = useRef(null);
+  const draggingRef = useRef(false);
+
+  const updateSliderFromClientX = useCallback((clientX) => {
+    const el = compareRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    setSliderPos((x / rect.width) * 100);
+  }, []);
+
+  const handlePointerDown = useCallback((e) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    setIsDragging(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    updateSliderFromClientX(e.clientX);
+  }, [updateSliderFromClientX]);
+
+  const handlePointerMove = useCallback((e) => {
+    if (!draggingRef.current) return;
+    updateSliderFromClientX(e.clientX);
+  }, [updateSliderFromClientX]);
+
+  const handlePointerUp = useCallback((e) => {
+    draggingRef.current = false;
+    setIsDragging(false);
+    e.currentTarget?.releasePointerCapture?.(e.pointerId);
+  }, []);
+
+  // Keyboard support: arrow keys move slider by 2%
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSliderPos(prev => Math.max(0, prev - 2));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSliderPos(prev => Math.min(100, prev + 2));
+    }
+  }, []);
 
   // Reset error state when result image changes
   React.useEffect(() => {
@@ -127,18 +168,12 @@ export default function ResultModal({
           <div className="flex-1 overflow-hidden relative bg-black/50 flex items-center justify-center p-4">
             {mode === "compare" ? (
               <div 
-                className="relative w-full h-full max-w-5xl mx-auto flex items-center justify-center select-none cursor-col-resize group"
-                onMouseMove={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-                  setSliderPos((x / rect.width) * 100);
-                }}
-                onTouchMove={(e) => {
-                   const rect = e.currentTarget.getBoundingClientRect();
-                   const touch = e.touches[0];
-                   const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
-                   setSliderPos((x / rect.width) * 100);
-                }}
+                ref={compareRef}
+                className="relative w-full h-full max-w-5xl mx-auto flex items-center justify-center select-none touch-none"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
               >
                 {/* Result Image (Background) - No transform as it is baked */}
                 {imageLoadError ? (
@@ -169,25 +204,59 @@ export default function ResultModal({
                     style={transformStyle}
                   />
                   {/* Labels inside image */}
-                  <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-medium text-white/80 border border-white/10">
+                  <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full text-xs font-semibold text-white/90 border border-white/10 pointer-events-none">
                     Original
                   </div>
                 </div>
 
-                {/* Slider Handle */}
+                {/* Slider Divider Line with glow */}
                 <div 
-                  className="absolute top-0 bottom-0 w-0.5 bg-white cursor-col-resize shadow-[0_0_10px_rgba(0,0,0,0.5)] pointer-events-none"
-                  style={{ left: `${sliderPos}%` }}
+                  className="absolute top-0 bottom-0 w-[2px] bg-white pointer-events-none"
+                  style={{ 
+                    left: `${sliderPos}%`,
+                    transform: 'translateX(-50%)',
+                    boxShadow: '0 0 12px rgba(255,255,255,0.5), 0 0 4px rgba(255,107,53,0.4)',
+                    willChange: 'left'
+                  }}
+                />
+
+                {/* Draggable Handle */}
+                <div
+                  className={`absolute top-1/2 z-10 flex items-center justify-center transition-transform duration-150 ${
+                    isDragging ? 'scale-110' : 'hover:scale-105'
+                  }`}
+                  style={{ 
+                    left: `${sliderPos}%`,
+                    transform: `translate(-50%, -50%)`,
+                    willChange: 'left, transform'
+                  }}
                 >
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-black/80">
-                    <ScanEye className="w-4 h-4" />
+                  <div className={`w-11 h-11 rounded-full bg-white shadow-2xl flex items-center justify-center border-2 ${
+                    isDragging ? 'border-[#FF6B35] shadow-[#FF6B35]/30' : 'border-white/20'
+                  }`}>
+                    <ChevronLeft className="w-4 h-4 text-[#FF6B35] -mr-1" />
+                    <ChevronRight className="w-4 h-4 text-[#FF6B35] -ml-1" />
                   </div>
                 </div>
 
                  {/* Label for Enhanced */}
-                 <div className="absolute top-4 right-4 px-3 py-1 bg-[#FF6B35]/80 backdrop-blur-md rounded-full text-xs font-medium text-white border border-white/10 pointer-events-none">
+                 <div className="absolute top-4 right-4 px-3 py-1.5 bg-[#FF6B35]/80 backdrop-blur-md rounded-full text-xs font-semibold text-white border border-white/10 pointer-events-none">
                     Enhanced
                  </div>
+
+                 {/* Hint text when not dragging */}
+                 <AnimatePresence>
+                   {!isDragging && (
+                     <motion.div
+                       initial={{ opacity: 0 }}
+                       animate={{ opacity: 1 }}
+                       exit={{ opacity: 0 }}
+                       className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-full text-[11px] text-white/60 border border-white/10 pointer-events-none whitespace-nowrap"
+                     >
+                       Drag to compare
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
               </div>
             ) : (
               <div className="grid grid-cols-1 grid-rows-2 md:grid-cols-2 md:grid-rows-1 gap-4 w-full h-full max-w-7xl mx-auto overflow-hidden p-1">
